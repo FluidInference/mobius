@@ -8,6 +8,10 @@ Tools to export NVIDIA Parakeet‑TDT v3 (0.6B) RNNT ASR to CoreML, validate num
 2. Activate the repo `.venv` and install deps via `uv pip sync`.
 3. Run everything through `uv run` to keep resolutions reproducible.
 
+## Test Environment
+
+All tests and measurements referenced here were run on an Apple M4 Pro with 48 GB of RAM.
+
 ## Export CoreML packages
 
 Exports preprocessor, encoder, decoder, joint, and two fused variants (mel+encoder, joint+decision). Shapes and I/O match the fixed 15‑second window contract.
