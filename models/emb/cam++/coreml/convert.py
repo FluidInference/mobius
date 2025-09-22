@@ -104,7 +104,7 @@ def convert_campplus_to_coreml():
     coreml_model.output_description["embeddings"] = f"Speaker embeddings: ({BATCH_SIZE}, {EMBEDDING_DIM})"
 
     # Save the model
-    output_path = "./models/camplusplus_batch16.mlpackage"
+    output_path = f"./models/camplusplus_batch{BATCH_SIZE}.mlpackage"
     coreml_model.save(output_path)
     print(f"\n✓ Saved CoreML model to: {output_path}")
 

@@ -152,7 +152,8 @@ def main(audio_path):
 
     # Load CoreML model
     print("\n4. Loading CoreML model...")
-    coreml_model_path = Path("models/camplusplus_batch16.mlpackage")
+    BATCH_SIZE = 16
+    coreml_model_path = Path(f"models/camplusplus_batch{BATCH_SIZE}.mlpackage")
     coreml_model = ct.models.MLModel(str(coreml_model_path))
     print(f"   Loaded: {coreml_model_path}")
 
