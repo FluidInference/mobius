@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Test script to validate CoreML CAM++ embeddings model against reference PyTorch implementation.
     1. Takes an audio file as input
@@ -21,6 +20,10 @@ from camplusplus import CAMPPlus
 warnings.filterwarnings('ignore')
 
 def extract_fbank_features(waveform, sample_rate=16000):
+    # In Python here just for testing/demonstration.
+    # For production deployment, see fbank_extractor C++ code in the Senko diarization pipeline:
+    #   https://github.com/narcotic-sh/senko/tree/main/senko/fbank_extractor
+
     # Ensure waveform is 2D (1, num_samples)
     if waveform.dim() == 1:
         waveform = waveform.unsqueeze(0)

@@ -1,4 +1,5 @@
 # https://github.com/modelscope/3D-Speaker/tree/main/speakerlab/models/campplus
+# Commit hash f5764ed3a89da77330f7dcc9801f58992c3e3c74
 
 import torch
 import torch.nn as nn
@@ -15,15 +16,15 @@ class CAMPPlus(nn.Module):
        self.xvector = nn.Sequential(OrderedDict([
            ('tdnn', TDNNLayer(channels, init_channels, 5, stride=2, dilation=1, padding=-1))
        ]))
-       
+
        channels = init_channels
        blocks_config = [(12, 3, 1), (24, 3, 2), (16, 3, 2)]
-       
+
        for i, (num_layers, kernel_size, dilation) in enumerate(blocks_config):
            block = CAMDenseTDNNBlock(num_layers=num_layers, in_channels=channels, out_channels=growth_rate, bn_channels=bn_size * growth_rate, kernel_size=kernel_size, dilation=dilation, bias=False, memory_efficient=memory_efficient)
            self.xvector.add_module(f'block{i+1}', block)
            channels = channels + num_layers * growth_rate
-           
+
            self.xvector.add_module(f'transit{i+1}', TransitLayer(channels, channels // 2, False))
            channels //= 2
 
@@ -31,7 +32,7 @@ class CAMPPlus(nn.Module):
        out_nonlinear.add_module('batchnorm', nn.BatchNorm1d(channels))
        out_nonlinear.add_module('relu', nn.ReLU(inplace=True))
        self.xvector.add_module('out_nonlinear', out_nonlinear)
-       
+
        self.xvector.add_module('stats', StatsPool())
        self.xvector.add_module('dense', DenseLayer(channels * 2, embedding_size, False))
 
@@ -116,9 +117,9 @@ class TDNNLayer(nn.Module):
         if padding < 0:
             assert kernel_size % 2 == 1, 'Expect equal paddings, but got even kernel size ({})'.format(kernel_size)
             padding = (kernel_size - 1) // 2 * dilation
-            
+
         self.linear = nn.Conv1d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
-        
+
         self.nonlinear = nn.Sequential()
         self.nonlinear.add_module('batchnorm', nn.BatchNorm1d(out_channels))
         self.nonlinear.add_module('relu', nn.ReLU(inplace=True))
@@ -131,7 +132,7 @@ class CAMLayer(nn.Module):
     def __init__(self, bn_channels, out_channels, kernel_size, stride, padding, dilation, bias, reduction=2):
         super(CAMLayer, self).__init__()
         self.linear_local = nn.Conv1d(bn_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
-        self.linear1 = nn.Conv1d(bn_channels, bn_channels // reduction, 1) 
+        self.linear1 = nn.Conv1d(bn_channels, bn_channels // reduction, 1)
         self.relu = nn.ReLU(inplace=True)
         self.linear2 = nn.Conv1d(bn_channels // reduction, out_channels, 1)
         self.sigmoid = nn.Sigmoid()
@@ -151,17 +152,17 @@ class CAMDenseTDNNLayer(nn.Module):
         super(CAMDenseTDNNLayer, self).__init__()
         assert kernel_size % 2 == 1, 'Expect equal paddings, but got even kernel size ({})'.format(kernel_size)
         self.memory_efficient = memory_efficient
-        
+
         self.nonlinear1 = nn.Sequential()
         self.nonlinear1.add_module('batchnorm', nn.BatchNorm1d(in_channels))
         self.nonlinear1.add_module('relu', nn.ReLU(inplace=True))
-        
+
         self.linear1 = nn.Conv1d(in_channels, bn_channels, 1, bias=False)
-        
+
         self.nonlinear2 = nn.Sequential()
         self.nonlinear2.add_module('batchnorm', nn.BatchNorm1d(bn_channels))
         self.nonlinear2.add_module('relu', nn.ReLU(inplace=True))
-        
+
         padding = (kernel_size - 1) // 2 * dilation
         self.cam_layer = CAMLayer(bn_channels, out_channels, kernel_size, stride, padding, dilation, bias)
 
