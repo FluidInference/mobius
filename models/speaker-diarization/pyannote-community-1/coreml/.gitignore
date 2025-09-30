@@ -1,0 +1,5 @@
+pyannote-speaker-diarization-community-1/
+coreml_models/
+.matplotlib_cache/
+
+build/
