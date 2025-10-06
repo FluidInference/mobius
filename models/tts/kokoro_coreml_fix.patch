@@ -1,0 +1,25 @@
+diff --git a/kokoro/istftnet.py b/kokoro/istftnet.py
+index f1c536e..44c0b0f 100644
+--- a/kokoro/istftnet.py
++++ b/kokoro/istftnet.py
+@@ -191,7 +191,10 @@ class SineGen(nn.Module):
+         """
+         f0_buf = torch.zeros(f0.shape[0], f0.shape[1], self.dim, device=f0.device)
+         # fundamental component
+-        fn = torch.multiply(f0, torch.FloatTensor([[range(1, self.harmonic_num + 2)]]).to(f0.device))
++        # fn = torch.multiply(f0, torch.FloatTensor([[range(1, self.harmonic_num + 2)]]).to(f0.device))
++        harmonic_range = torch.arange(1, self.harmonic_num + 2, dtype=f0.dtype, device=f0.device)
++        harmonic_range = harmonic_range.view(1, 1, -1)
++        fn = f0 * harmonic_range
+         # generate sine waveforms
+         sine_waves = self._f02sine(fn) * self.sine_amp
+         # generate uv signal
+@@ -377,7 +380,7 @@ class AdainResBlk1d(nn.Module):
+ 
+     def forward(self, x, s):
+         out = self._residual(x, s)
+-        out = (out + self._shortcut(x)) * torch.rsqrt(torch.tensor(2))
++        out = (out + self._shortcut(x)) * torch.rsqrt(torch.tensor(2.0, dtype=torch.float32))
+         return out
+ 
+ 
