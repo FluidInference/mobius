@@ -12,6 +12,9 @@ import torch.nn.functional as F
 import math
 import numpy as np
 
+# %%
+
+
 # %% [markdown]
 # # Original Kokoro pipeline
 
@@ -101,7 +104,8 @@ def get_phonemes(
 # %%
 # Remove the trailing comma to make it a string instead of a tuple
 text = "The development of artificial intelligence has been one of the most transformative technological advances of the twenty."
-text = "I can't believe we finally made it to the summit after climbing for twelve exhausting hours through wind and rain, but wow, this view of the endless mountain ranges stretching to the horizon makes every single difficult step completely worth the journey."
+# text = "I can't believe we finally made it to the summit after climbing for twelve exhausting hours through wind and rain, but wow, this view of the endless mountain ranges stretching to the horizon makes every single difficult step completely worth the journey."
+text = "I can't believe we finally made it to the summit after climbing for twelve exhausting hours through wind and rain, but wow, this view of the endless mountain ranges stret."
 
 input_ids, ref_s = get_phonemes(pipeline, text, "af_heart")
 
@@ -421,32 +425,8 @@ class GeneratorDeterministic(nn.Module):
         
         return audio
 
-# %%
-
-
-# %%
-
-
-# %%
-
-
-# %%
-
-
 # %% [markdown]
-# # combiners
-
-# %%
-
-
-# %%
-
-
-# %% [markdown]
-# ## subcombiners
-
-# %%
-
+# ## Combiners
 
 # %%
 
@@ -631,10 +611,11 @@ mlmodel = ct.convert(
         ct.TensorType(name="audio", dtype=np.float32),
         ct.TensorType(name="audio_length_samples", dtype=np.int32),
         ct.TensorType(name="pred_dur", dtype=np.float32),
+        
     ],
     convert_to="mlprogram",
     compute_precision=ct.precision.FLOAT32,
-    minimum_deployment_target=ct.target.iOS16,
+    minimum_deployment_target=ct.target.iOS17
 )
 mlmodel.save("kokoro_completev21.mlpackage")
 
@@ -731,7 +712,7 @@ import soundfile as sf
 import torch
 
 SAMPLE_RATE = 24000
-MAX_TOKENS = 249   # must match export
+MAX_TOKENS = 168   # must match export
 
 def pad_to_max(input_ids: torch.Tensor, max_tokens: int):
     L = input_ids.shape[1]
@@ -803,14 +784,14 @@ text = "I can't believe we finally made it to the summit after climbing for twel
 
 
 # %%
-run_coreml_with_pt_inputs("kokoro_completev21.mlpackage", text+".", "af_heart")
+run_coreml_with_pt_inputs("kokoro_21_10s_ANE.mlpackage", text+".", "af_heart")
 
 
 # %%
 import coremltools as ct
 import coremltools.optimize as cto
 
-mlmodel = ct.models.MLModel("kokoro_completev21.mlpackage")  # single-function is safest
+mlmodel = ct.models.MLModel("kokoro_21_15s.mlpackage")  # single-function is safest
 
 # Build the INT8 weight quantization config
 op_cfg = cto.coreml.OpLinearQuantizerConfig(
@@ -822,7 +803,7 @@ cfg = cto.coreml.OptimizationConfig(global_config=op_cfg)
 
 # Quantize weights -> INT8 (W8)
 w8_model = cto.coreml.linear_quantize_weights(mlmodel, config=cfg)
-w8_model.save("kokoro_completev21_int8.mlpackage")
+w8_model.save("kokoro_21_15s_int8.mlpackage")
 
 
 # %%
@@ -831,6 +812,7 @@ print(ct.__version__)
 
 
 # %%
+# 15 seconds
 conjunctions = [ 
 "NVIDIA believes Trustworthy AI is a shared responsibility and we have established policies and",
 "Neoliberal economics emphasizes free markets minimal government intervention privatization and", 
@@ -856,7 +838,6 @@ for t in conjunctions:
 
 
 # %%
-    run_coreml_with_pt_inputs("kokoro_completev21.mlpackage", t + ".", "af_heart")
 
 
 
