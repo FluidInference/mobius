@@ -3,8 +3,10 @@
 This folder aggregates third-party knowledge bases and tooling snapshots that support our Core ML agent workflows. Each snapshot captures an upstream repository or release alongside local notes for attribution, updates, and usage.
 
 ## Current snapshots
+- `core-ml-on-device-llama.md` — Apple ML Research highlight detailing the Llama-3.1-8B-Instruct Core ML export, GPU tuning, KV-cache support, and Int4 quantization strategy for ~33 tok/s on M1 Max-class devices.
 - `neural-engine/` — Vendored documentation from [hollance/neural-engine](https://github.com/hollance/neural-engine) at commit [`10d30481b21ef12e88ca5cea2c886bb72b297de4`](https://github.com/hollance/neural-engine/commit/10d30481b21ef12e88ca5cea2c886bb72b297de4).
   - Reference: `neural-engine/AGENTS.md` for the full file index, summaries, and re-vendoring workflow.
+  - New: `neural-engine/docs/neural-engine-transformers.md` captures Apple’s 2022 ANE transformer deployment guide, covering distilbert export, ANE-optimized kernels, and performance validation tips.
 - `coremltools/` — Source snapshot of [apple/coremltools 9.0b1](https://github.com/apple/coremltools/releases/tag/9.0b1) (`511e360f51b8c84aa8e0bc8fb059adf456858be5`), trimmed to documentation assets.
   - Reference: `coremltools/AGENTS.md` for directory summaries, re-vendoring steps, and release highlights; the `docs/` and `docs-guides/` subfolders host the full API reference and conversion/optimization guides.
 
