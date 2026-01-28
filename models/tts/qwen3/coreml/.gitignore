@@ -1,0 +1,20 @@
+# Virtual environment
+.venv/
+
+# Model files (too large for git)
+*.mlpackage/
+model_0.6b/
+tokenizer_12hz/
+
+# Generated audio
+*.wav
+
+# Embeddings
+*.npy
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
