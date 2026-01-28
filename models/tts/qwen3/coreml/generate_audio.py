@@ -29,16 +29,22 @@ REPETITION_PENALTY = 1.05  # Official default
 # Best-of-N for prosody improvement
 N_CANDIDATES = 3
 
-def compute_prosody_score(audio, sr=24000):
-    """Compute prosody score (higher = more expressive)."""
+def compute_audio_score(audio, sr=24000):
+    """Compute audio quality score (higher = better quality + expressiveness)."""
     if len(audio) < sr * 0.5:
         return 0.0
+
+    # RMS level - penalize quiet audio heavily
+    rms = np.sqrt(np.mean(audio**2))
+    if rms < 0.05:  # Very quiet = bad
+        return 0.0
+    rms_score = min(rms / 0.15, 1.0) * 30  # Normalize to ~30 max
 
     # Energy variation (dB)
     frame_length = int(0.025 * sr)
     hop_length = int(0.010 * sr)
-    rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
-    rms_db = librosa.amplitude_to_db(rms + 1e-10)
+    rms_frames = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
+    rms_db = librosa.amplitude_to_db(rms_frames + 1e-10)
     energy_std = np.std(rms_db)
 
     # Pitch variation
@@ -49,8 +55,9 @@ def compute_prosody_score(audio, sr=24000):
     else:
         pitch_cv = 0.0
 
-    # Combined score
-    score = energy_std * 0.5 + pitch_cv * 0.5
+    # Combined score: RMS (loudness) + prosody (expressiveness)
+    prosody_score = energy_std * 0.5 + pitch_cv * 0.5
+    score = rms_score + prosody_score
     return score
 
 def sample_token(logits, suppress_mask, past_tokens=None, temperature=TEMPERATURE, top_k=TOP_K, rep_penalty=REPETITION_PENALTY):
@@ -248,7 +255,7 @@ for i in range(N_CANDIDATES):
         prefill_coreml, decode_coreml, talker, config, prefill_inputs,
         tts_pad_embed, suppress_mask, actual_len, speech_tokenizer, seed=seed
     )
-    prosody = compute_prosody_score(audio, SAMPLE_RATE)
+    prosody = compute_audio_score(audio, SAMPLE_RATE)
     unique_tokens = len(set(tokens))
     candidates.append({
         'audio': audio,
