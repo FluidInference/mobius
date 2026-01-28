@@ -2,4 +2,22 @@ __pycache__
 .DS_Store
 .venv
 
+# Generated audio
 *.wav
+
+# CoreML model packages (regenerate via convert_*.py scripts)
+*.mlpackage/
+
+# Model weights and binaries
+*.safetensors
+*.npy
+*.npz
+*.onnx
+*.onnx.data
+*.pt
+*.model
+
+# Python
+*.py[cod]
+*.egg-info/
+*.egg
