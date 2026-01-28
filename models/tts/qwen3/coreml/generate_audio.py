@@ -111,7 +111,7 @@ def generate_candidate(prefill_coreml, decode_coreml, talker, config,
     all_codebooks = []
     pos = actual_len
 
-    # First token's codebooks
+    # First token's codebooks - run code_predictor ONCE, use for BOTH codebooks AND next embeddings
     token_id = torch.tensor([[first_token]], dtype=torch.long)
     with torch.no_grad():
         last_id_hidden = talker.model.codec_embedding(token_id)
@@ -124,20 +124,27 @@ def generate_candidate(prefill_coreml, decode_coreml, talker, config,
             top_k=50,
             return_dict_in_generate=True,
         )
+
+        # Store codebook values
         first_codes = [first_token]
         for i in range(config.num_code_groups - 1):
             first_codes.append(predictor_result.sequences[0, i].item())
         all_codebooks.append(first_codes)
 
-    # Decode loop
+        # Compute inputs_embeds for NEXT step from SAME predictor_result (no double call!)
+        codec_hiddens = [last_id_hidden]
+        for i in range(config.num_code_groups - 1):
+            cb_embed = talker.code_predictor.get_input_embeddings()[i](
+                predictor_result.sequences[..., i:i+1]
+            )
+            codec_hiddens.append(cb_embed)
+        codec_hiddens_cat = torch.cat(codec_hiddens, dim=1)
+        next_inputs_embeds = codec_hiddens_cat.sum(dim=1, keepdim=True) + tts_pad_embed
+
+    # Decode loop - use pre-computed inputs_embeds, NO double code_predictor calls
     for step in range(MAX_CODEC_TOKENS - 1):
-        token_id = torch.tensor([[codebook0_tokens[-1]]], dtype=torch.long)
-
-        with torch.no_grad():
-            inputs_embeds = compute_decode_inputs(talker, token_id, past_hidden, tts_pad_embed)
-
         out = decode_coreml.predict({
-            'inputs_embeds': inputs_embeds.numpy().astype(np.float32),
+            'inputs_embeds': next_inputs_embeds.numpy().astype(np.float32),
             'kv_cache': kv_cache.numpy().astype(np.float32),
             'position': np.array([pos], dtype=np.int32),
         })
@@ -160,6 +167,7 @@ def generate_candidate(prefill_coreml, decode_coreml, talker, config,
             if unique_ratio < 0.15:
                 break
 
+        # Run code_predictor ONCE - use for BOTH codebook values AND next inputs_embeds
         with torch.no_grad():
             next_token_id = torch.tensor([[next_token]], dtype=torch.long)
             last_id_hidden = talker.model.codec_embedding(next_token_id)
@@ -172,10 +180,22 @@ def generate_candidate(prefill_coreml, decode_coreml, talker, config,
                 top_k=50,
                 return_dict_in_generate=True,
             )
+
+            # Store codebook values for vocoder
             token_codes = [next_token]
             for i in range(config.num_code_groups - 1):
                 token_codes.append(predictor_result.sequences[0, i].item())
             all_codebooks.append(token_codes)
+
+            # Compute inputs_embeds for NEXT step from SAME predictor_result
+            codec_hiddens = [last_id_hidden]
+            for i in range(config.num_code_groups - 1):
+                cb_embed = talker.code_predictor.get_input_embeddings()[i](
+                    predictor_result.sequences[..., i:i+1]
+                )
+                codec_hiddens.append(cb_embed)
+            codec_hiddens_cat = torch.cat(codec_hiddens, dim=1)
+            next_inputs_embeds = codec_hiddens_cat.sum(dim=1, keepdim=True) + tts_pad_embed
 
     # Decode to audio
     codes_tensor = torch.tensor(all_codebooks, dtype=torch.int64)
