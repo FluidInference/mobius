@@ -161,12 +161,15 @@ def compute_decode_inputs(talker, token_id, past_hidden, trailing_text_embed):
     last_id_hidden = talker.model.codec_embedding(token_id)
 
     # Run code_predictor to get other codebook tokens
+    # IMPORTANT: Must use sampling (do_sample=True) or code_predictor gets stuck on repeating values
     with torch.no_grad():
         predictor_input = torch.cat([past_hidden, last_id_hidden], dim=1)
         predictor_result = talker.code_predictor.generate(
             inputs_embeds=predictor_input,
             max_new_tokens=talker.config.num_code_groups - 1,
-            do_sample=False,
+            do_sample=True,
+            temperature=0.9,
+            top_k=50,
             return_dict_in_generate=True,
         )
 
