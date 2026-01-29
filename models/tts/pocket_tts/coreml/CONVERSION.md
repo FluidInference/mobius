@@ -251,22 +251,43 @@ Note: cond_step and flowlm_step share the same transformer weights (289 MB each 
 
 ---
 
+## Environment Setup
+
+The conversion scripts require the upstream PocketTTS PyTorch package. It's installed as an editable dependency via `uv`.
+
+```bash
+cd models/tts/pocket_tts
+
+# Clone the upstream PocketTTS repo (provides the pocket_tts/ Python package)
+git clone https://github.com/kyutai-labs/pocket-tts.git pocket_tts_upstream
+cp -r pocket_tts_upstream/pocket_tts ./pocket_tts
+rm -rf pocket_tts_upstream
+
+# Install dependencies (requires uv: https://docs.astral.sh/uv/)
+uv sync --extra coreml
+
+# Verify
+.venv/bin/python -c "from pocket_tts import TTSModel; print('OK')"
+```
+
+The `.python-version` file pins Python 3.10 (required for `pocket_tts` type syntax).
+
 ## Reproducing the Conversion
 
 Requires PyTorch (one-time only):
 
 ```bash
 # 1. Export constants
-python3 export_constants.py
+.venv/bin/python coreml/convert_assets/export_constants.py
 
 # 2. Convert models (each creates an .mlpackage)
-python3 convert_cond_step.py
-python3 convert_flowlm_step.py
-python3 convert_flow_decoder_v2.py
-# mimi_decoder_v2 converted separately
+.venv/bin/python coreml/convert_models/convert/convert_cond_step.py
+.venv/bin/python coreml/convert_models/convert/convert_flowlm_step.py
+.venv/bin/python coreml/convert_models/convert/convert_flow_decoder_v2.py
+# mimi_decoder_v2 requires a custom functional wrapper (see convert_mimi_decoder.py)
 
-# 3. Run generation (no PyTorch needed)
-python3 generate_coreml_v4.py
+# 3. Run generation (no PyTorch needed after conversion)
+.venv/bin/python coreml/generate_coreml_v4.py
 ```
 
 ---
