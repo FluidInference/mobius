@@ -136,7 +136,7 @@ def generate_v4(text: str, voice: str = "alba", output_path: str = "coreml_v4.wa
     caches = {}
     positions = {}
     for i in range(6):
-        caches[f'cache{i}'] = np.zeros((2, 1, 200, 16, 64), dtype=np.float32)
+        caches[f'cache{i}'] = np.zeros((2, 1, 512, 16, 64), dtype=np.float32)
         positions[f'position{i}'] = np.array([0.0], dtype=np.float32)
 
     # 9. Prefill: process each conditioning token one at a time (no padding needed)

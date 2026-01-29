@@ -5,8 +5,12 @@ import coremltools as ct
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_CONVERT_MODELS_DIR = os.path.dirname(_SCRIPT_DIR)
+_COREML_DIR = os.path.dirname(_CONVERT_MODELS_DIR)
+_PROJECT_DIR = os.path.dirname(_COREML_DIR)
+sys.path.insert(0, _PROJECT_DIR)  # for: from pocket_tts import ...
+sys.path.insert(0, os.path.join(_CONVERT_MODELS_DIR, "traceable"))  # for: from traceable_* import ...
 
 from traceable_flowlm_step import TraceableFlowLMStep
 
@@ -18,7 +22,7 @@ def convert_flowlm_step():
     model.eval()
 
     print("Creating traceable step model...")
-    max_seq_len = 200
+    max_seq_len = 512
     step_model = TraceableFlowLMStep.from_flowlm(model.flow_lm, max_seq_len=max_seq_len)
     step_model.eval()
 

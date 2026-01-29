@@ -54,7 +54,9 @@ def test_traceable_flow_decoder():
     print("Loading model...")
     import sys
     import os
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    _script_dir = os.path.dirname(os.path.abspath(__file__))
+    _project_dir = os.path.dirname(os.path.dirname(os.path.dirname(_script_dir)))
+    sys.path.insert(0, _project_dir)
 
     from pocket_tts import TTSModel
     model = TTSModel.load_model(lsd_decode_steps=8)

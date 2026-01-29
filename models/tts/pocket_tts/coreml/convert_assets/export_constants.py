@@ -13,10 +13,13 @@ import numpy as np
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_COREML_DIR = os.path.dirname(_SCRIPT_DIR)
+_PROJECT_DIR = os.path.dirname(_COREML_DIR)
+sys.path.insert(0, _PROJECT_DIR)  # for: from pocket_tts import ...
+sys.path.insert(0, os.path.join(_COREML_DIR, "convert_models", "traceable"))  # for: from traceable_* import ...
 
-OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "constants")
+OUTPUT_DIR = os.path.join(_COREML_DIR, "constants")
 
 
 def export():
@@ -54,14 +57,18 @@ def export():
     print(f"text_embed_table: {embed_table.shape}")
     np.save(os.path.join(OUTPUT_DIR, "text_embed_table.npy"), embed_table)
 
-    # Also export the Mimi decoder init state shapes (for reference)
-    from traceable_decoder import TraceableMimiDecoder
-    decoder = TraceableMimiDecoder.from_mimi(model.mimi)
-    mimi_state = decoder.init_state(batch_size=1)
+    # Also export the Mimi decoder init state
+    from pocket_tts.modules.stateful_module import init_states
+
+    state = init_states(model.mimi.decoder, batch_size=1, sequence_length=256)
+    state.update(init_states(model.mimi.decoder_transformer, batch_size=1, sequence_length=256))
+    if hasattr(model.mimi, "upsample"):
+        state.update(init_states(model.mimi.upsample, batch_size=1, sequence_length=256))
+
     mimi_state_np = {}
-    for k, v in mimi_state.items():
-        arr = v.numpy().astype(np.float32)
-        mimi_state_np[k] = arr
+    for mod_name, mod_state in state.items():
+        for key, tensor in mod_state.items():
+            mimi_state_np[key] = tensor.numpy().astype(np.float32)
     np.savez(os.path.join(OUTPUT_DIR, "mimi_init_state.npz"), **mimi_state_np)
     print(f"mimi_init_state: {len(mimi_state_np)} tensors")
 

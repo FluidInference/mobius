@@ -12,7 +12,9 @@ import math
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(_SCRIPT_DIR)))
+sys.path.insert(0, _PROJECT_DIR)  # for: from pocket_tts import ...
 
 
 class TraceableCondStep(nn.Module):
