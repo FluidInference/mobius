@@ -69,7 +69,7 @@ def convert_flowlm_step():
     mlmodel = ct.convert(
         traced,
         inputs=inputs,
-        minimum_deployment_target=ct.target.macOS15,
+        minimum_deployment_target=ct.target.iOS17,
         compute_precision=ct.precision.FLOAT32,
     )
 

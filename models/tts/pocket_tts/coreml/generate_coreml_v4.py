@@ -33,7 +33,7 @@ COND_CACHE_KEYS = [
     "new_cache_internal_tensor_assign_2",
 ]
 COND_POS_KEYS = [
-    "var_430", "var_834", "var_1238", "var_1642", "var_2046", "var_2290",
+    "var_445", "var_864", "var_1283", "var_1702", "var_2121", "var_2365",
 ]
 
 # Generation step model output key names
@@ -46,7 +46,7 @@ STEP_CACHE_KEYS = [
     "new_cache_internal_tensor_assign_2",
 ]
 STEP_POS_KEYS = [
-    "var_443", "var_847", "var_1251", "var_1655", "var_2059", "var_2463",
+    "var_458", "var_877", "var_1296", "var_1715", "var_2134", "var_2553",
 ]
 
 
@@ -119,11 +119,11 @@ def generate_v4(text: str, voice: str = "alba", output_path: str = "coreml_v4.wa
         compute_units=ct.ComputeUnit.CPU_AND_GPU
     )
     coreml_flow = ct.models.MLModel(
-        os.path.join(SCRIPT_DIR, 'flow_decoder_v2.mlpackage'),
+        os.path.join(SCRIPT_DIR, 'flow_decoder.mlpackage'),
         compute_units=ct.ComputeUnit.CPU_AND_GPU
     )
     coreml_mimi = ct.models.MLModel(
-        os.path.join(SCRIPT_DIR, 'mimi_decoder_v2.mlpackage'),
+        os.path.join(SCRIPT_DIR, 'mimi_decoder.mlpackage'),
         compute_units=ct.ComputeUnit.CPU_AND_GPU
     )
 
@@ -192,7 +192,7 @@ def generate_v4(text: str, voice: str = "alba", output_path: str = "coreml_v4.wa
         step_out = coreml_step.predict(step_inputs)
 
         transformer_out = step_out['input']  # [1, 1, 1024]
-        eos_logit = step_out['var_2492']  # [1, 1, 1]
+        eos_logit = step_out['var_2582']  # [1, 1, 1]
 
         # Update caches/positions
         for i in range(6):

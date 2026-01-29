@@ -36,14 +36,14 @@ The pipeline is split into **4 CoreML models** plus numpy/sentencepiece for prep
 └──────────────────────┬──────────────────────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────────────────────┐
-│  flow_decoder_v2.mlpackage   (flow decoding, 8 LSD steps)  │
+│  flow_decoder.mlpackage   (flow decoding, 8 LSD steps)  │
 │  Input:  transformer_out [1, 1024] + latent [1, 32] + s, t │
 │  Output: velocity [1, 32]                                   │
 │  Called: 8 times per generation step                         │
 └──────────────────────┬──────────────────────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────────────────────┐
-│  mimi_decoder_v2.mlpackage   (audio synthesis)              │
+│  mimi_decoder.mlpackage   (audio synthesis)              │
 │  Input:  quantized latent [1, 512, 1] + streaming state     │
 │  Output: audio frame [1, 1, 1920] (80ms at 24kHz)           │
 │  Called: once per generation step                            │
@@ -114,9 +114,9 @@ The autoregressive backbone. Takes one latent frame, runs it through the transfo
 | EOS logit | `[1, 1, 1]` | EOS probability (threshold: -4.0) |
 | Updated caches/positions | | 12 tensors |
 
-### 3. Flow Decoder (`flow_decoder_v2.mlpackage`)
+### 3. Flow Decoder (`flow_decoder.mlpackage`)
 
-**Source:** `traceable_flow_decoder.py` → `convert_flow_decoder_v2.py`
+**Source:** `traceable_flow_decoder.py` → `convert_flow_decoder.py`
 
 Lagrangian Self-Distillation (LSD) flow decoder. Converts transformer output to a 32d audio latent via 8 iterative denoising steps.
 
@@ -143,7 +143,7 @@ Step 7: s=0.875, t=1.000
 
 **Output:** Velocity field `[1, 32]`. Applied as: `latent = latent + velocity * dt`
 
-### 4. Mimi Decoder (`mimi_decoder_v2.mlpackage`)
+### 4. Mimi Decoder (`mimi_decoder.mlpackage`)
 
 **Source:** Converted separately (streaming convolutional decoder).
 
@@ -209,7 +209,7 @@ Zero PyTorch dependency. Imports: `numpy`, `sentencepiece`, `safetensors`, `core
 
    b. Check EOS (logit > -4.0 → stop after frames_after_eos extra frames)
 
-   c. Flow decode (flow_decoder_v2 × 8 LSD steps):
+   c. Flow decode (flow_decoder × 8 LSD steps):
       latent = randn(1, 32) * sqrt(0.7)
       for i in 0..7:
         velocity = flow_decoder.predict(transformer_out, latent, s=i/8, t=(i+1)/8)
@@ -242,8 +242,8 @@ Reversing this order (text first) produces cosine similarity of only 0.6–0.9 i
 |-------|------|-------------|
 | flowlm_step | 289 MB | ~50 MB |
 | cond_step | 253 MB | ~45 MB |
-| flow_decoder_v2 | 37 MB | ~7 MB |
-| mimi_decoder_v2 | 20 MB | ~5 MB |
+| flow_decoder | 37 MB | ~7 MB |
+| mimi_decoder | 20 MB | ~5 MB |
 | Constants | 28 MB | ~28 MB |
 | **Total** | **627 MB** | **~135 MB** |
 
@@ -283,8 +283,8 @@ Requires PyTorch (one-time only):
 # 2. Convert models (each creates an .mlpackage)
 .venv/bin/python coreml/convert_models/convert/convert_cond_step.py
 .venv/bin/python coreml/convert_models/convert/convert_flowlm_step.py
-.venv/bin/python coreml/convert_models/convert/convert_flow_decoder_v2.py
-# mimi_decoder_v2 requires a custom functional wrapper (see convert_mimi_decoder.py)
+.venv/bin/python coreml/convert_models/convert/convert_flow_decoder.py
+# mimi_decoder requires a custom functional wrapper (see convert_mimi_decoder.py)
 
 # 3. Run generation (no PyTorch needed after conversion)
 .venv/bin/python coreml/generate_coreml_v4.py

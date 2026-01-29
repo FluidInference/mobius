@@ -4,7 +4,7 @@ NOTE: The Mimi decoder uses in-place state mutations (state[:] = ...) in its
 streaming convolution layers (StreamingConv1d, StreamingConvTranspose1d).
 coremltools cannot convert these in-place operations directly.
 
-The existing mimi_decoder_v2.mlpackage was converted using a custom traceable
+The existing mimi_decoder.mlpackage was converted using a custom traceable
 wrapper that rewrites all streaming ops as functional (returning new tensors
 instead of mutating in place). This requires rewriting the forward pass of:
   - StreamingConv1d.forward()       (conv.py)
@@ -14,7 +14,7 @@ instead of mutating in place). This requires rewriting the forward pass of:
 The model has 26 streaming state tensors (see traceable_mimi_decoder.py for
 the full list) and produces 1920 audio samples per frame at 24kHz.
 
-To regenerate mimi_decoder_v2.mlpackage:
+To regenerate mimi_decoder.mlpackage:
 1. Create a functional TraceableMimiDecoder that avoids all in-place ops
 2. Trace with sequence_length=256 for attention caches
 3. Convert with compute_precision=FLOAT32, target=macOS15
@@ -68,7 +68,7 @@ def convert():
     print(
         "\nERROR: Direct conversion not supported due to in-place state mutations."
     )
-    print("The existing mimi_decoder_v2.mlpackage uses a custom functional wrapper.")
+    print("The existing mimi_decoder.mlpackage uses a custom functional wrapper.")
     print("See this file's docstring for details on how to regenerate it.")
     return None
 
