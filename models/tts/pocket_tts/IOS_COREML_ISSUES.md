@@ -62,11 +62,7 @@ These come from `StreamingConv1d` layers with `kernel_size=1` where the padding 
 
 **Symptom**: Models may crash or produce incorrect results if run with `.all` compute units on the iOS Simulator (which has no ANE).
 
-**Fix**: `PocketTtsModelCache` loads models with per-model compute unit configuration:
-- `cond_step`, `flowlm_step`, `flow_decoder`: `.all` (ANE+CPU+GPU)
-- `mimi_decoder`: `.cpuAndGPU` (see issue #7 below)
-
-The simulator uses the CPU backend automatically when ANE is unavailable.
+**Fix**: `PocketTtsModelCache` loads all models with `.cpuAndGPU` compute units to avoid ANE float16 precision loss (see issue #7). The simulator uses the CPU backend automatically when ANE is unavailable.
 
 ---
 
@@ -112,16 +108,39 @@ The Python CoreML reference uses `compute_units=ct.ComputeUnit.CPU_AND_GPU` whic
 3. Swift CoreML output (`.all`, uses ANE): **beeping present**
 4. The beeping exists regardless of de-essing post-processing.
 
-**Fix**: `PocketTtsModelCache` loads the Mimi decoder with `.cpuAndGPU` compute units:
+**Fix**: `PocketTtsModelCache` loads all four models with `.cpuAndGPU` compute units:
 ```swift
-let mimiConfig = MLModelConfiguration()
-mimiConfig.computeUnits = .cpuAndGPU
-mimiDecoderModel = try MLModel(contentsOf: mimiDecoderURL, configuration: mimiConfig)
+let config = MLModelConfiguration()
+config.computeUnits = .cpuAndGPU
 ```
 
-Other models (`cond_step`, `flowlm_step`, `flow_decoder`) remain on `.all` since they don't have iterative state feedback with the same precision sensitivity.
+All models use the same configuration to avoid ANE float16 precision loss across the full pipeline.
 
 **Lesson**: Streaming/stateful CoreML models with many feedback tensors should avoid the ANE. The float16 precision loss is negligible for single-pass inference but compounds in iterative state feedback loops.
+
+---
+
+## 8. Voice-Dependent Duration Differences (MLX vs CoreML)
+
+**Status**: Open — model-level behavior difference
+
+**Symptom**: Some voices produce noticeably different audio durations between MLX and CoreML inference. Two voices (`azelma` and `javert`) show ~2 second differences.
+
+| Voice   | MLX Duration | CoreML Duration | Difference |
+|---------|-------------|-----------------|------------|
+| alba    | 6.24s       | 6.08s           | -0.16s     |
+| azelma  | 7.92s       | 5.92s           | -2.00s     |
+| cosette | 6.24s       | 5.60s           | -0.64s     |
+| javert  | 8.32s       | 10.24s          | +1.92s     |
+
+**Root Cause**: This is a model-level inference behavior difference between MLX and CoreML, not a Swift post-processing issue. The duration is determined by the autoregressive generation loop (flowlm_step EOS detection and flow_decoder output), where small numerical differences between backends accumulate across generation steps, causing the model to terminate earlier or later depending on the voice conditioning.
+
+**Notes**:
+- `alba` and `cosette` are within acceptable tolerance (<1s)
+- `azelma` generates shorter on CoreML (early EOS)
+- `javert` generates longer on CoreML (late EOS)
+- Audio quality is correct for all voices — only duration differs
+- Cannot be fixed in Swift post-processing code; would require investigating numerical differences in the flow decoder or EOS detection at the model conversion level
 
 ---
 
