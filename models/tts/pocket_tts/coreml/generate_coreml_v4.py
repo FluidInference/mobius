@@ -103,9 +103,7 @@ def generate_v4(text: str, voice: str = "alba", output_path: str = "coreml_v4.wa
 
     # 5. Load constants
     bos_emb = np.load(os.path.join(CONST_DIR, "bos_emb.npy"))
-    emb_mean = np.load(os.path.join(CONST_DIR, "emb_mean.npy"))
-    emb_std = np.load(os.path.join(CONST_DIR, "emb_std.npy"))
-    q_weight = np.load(os.path.join(CONST_DIR, "quantizer_weight.npy"))  # [512, 32, 1]
+    # emb_mean, emb_std, quantizer_weight are now baked into mimi_decoder
     mimi_state_npz = dict(np.load(os.path.join(CONST_DIR, "mimi_init_state.npz")))
 
     # 6. Load CoreML models
@@ -223,14 +221,8 @@ def generate_v4(text: str, voice: str = "alba", output_path: str = "coreml_v4.wa
             velocity = list(flow_out.values())[0]
             latent = latent + velocity * dt
 
-        # Denormalize + quantize
-        latent_denorm = latent * emb_std.reshape(1, -1) + emb_mean.reshape(1, -1)
-        # q_weight is [512, 32, 1] (1D conv kernel), squeeze to [512, 32]
-        w = q_weight.squeeze(-1)  # [512, 32]
-        quantized = np.dot(latent_denorm, w.T).reshape(1, 512, 1)
-
-        # Mimi decode
-        mimi_inputs = {'latent': quantized.astype(np.float32), **coreml_mimi_state}
+        # Mimi decode (denormalize + quantize baked into model)
+        mimi_inputs = {'latent': latent.astype(np.float32), **coreml_mimi_state}
         mimi_out = coreml_mimi.predict(mimi_inputs)
 
         audio_frame = mimi_out['var_1445']

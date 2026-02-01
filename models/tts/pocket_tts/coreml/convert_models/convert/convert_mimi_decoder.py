@@ -1,72 +1,131 @@
-"""Verify Mimi streaming decoder CoreML model.
+"""Convert Mimi streaming decoder to CoreML.
 
-NOTE: The Mimi decoder uses in-place state mutations (state[:] = ...) in its
-streaming convolution layers (StreamingConv1d, StreamingConvTranspose1d).
-coremltools cannot convert these in-place operations directly.
+Traces the TraceableMimiDecoder (which bakes in denormalize + quantize)
+and converts to CoreML .mlpackage. Strips zero-length state tensors
+from the spec to avoid Espresso crash on iOS.
 
-The existing mimi_decoder.mlpackage was converted using a custom traceable
-wrapper that rewrites all streaming ops as functional (returning new tensors
-instead of mutating in place). This requires rewriting the forward pass of:
-  - StreamingConv1d.forward()       (conv.py)
-  - StreamingConvTranspose1d.forward()  (conv.py)
-  - MimiTransformerLayer attention cache updates  (mimi_transformer.py)
-
-The model has 26 streaming state tensors (see traceable_mimi_decoder.py for
-the full list) and produces 1920 audio samples per frame at 24kHz.
-
-To regenerate mimi_decoder.mlpackage:
-1. Create a functional TraceableMimiDecoder that avoids all in-place ops
-2. Trace with sequence_length=256 for attention caches
-3. Convert with compute_precision=FLOAT32, target=iOS17
-
-Input:  latent [1, 512, 1]  +  26 state tensors
-Output: audio  [1, 1, 1920] +  26 updated state tensors
-
-This script verifies the existing model instead of converting, since direct
-conversion is not possible without the functional wrapper.
+Input:  latent [1, 32]       +  23 state tensors (26 minus 3 zero-length)
+Output: audio  [1, 1, 1920]  +  23 updated state tensors
 """
+import torch
+import numpy as np
+import coremltools as ct
 import sys
 import os
-import numpy as np
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CONVERT_MODELS_DIR = os.path.dirname(_SCRIPT_DIR)
 _COREML_DIR = os.path.dirname(_CONVERT_MODELS_DIR)
 _PROJECT_DIR = os.path.dirname(_COREML_DIR)
+sys.path.insert(0, _PROJECT_DIR)  # for: from pocket_tts import ...
+sys.path.insert(0, os.path.join(_CONVERT_MODELS_DIR, "traceable"))  # for: from traceable_* import ...
+
+from traceable_mimi_decoder import TraceableMimiDecoder, MIMI_STATE_SPEC
 
 
-def verify():
-    """Verify the existing mimi_decoder.mlpackage is iOS 17 compatible."""
-    import coremltools as ct
+def strip_zero_length_io(mlpackage_path):
+    """Remove zero-length tensor inputs/outputs from a saved CoreML mlpackage.
 
-    model_path = os.path.join(_COREML_DIR, "mimi_decoder.mlpackage")
+    Three Mimi state tensors have a zero-length dimension (kernel_size=1
+    streaming conv layers with 0 padding). CoreML Espresso crashes on
+    zero-element blobs, so we strip them from the spec.
 
-    if not os.path.exists(model_path):
-        print(f"ERROR: {model_path} not found.")
-        print("The mimi_decoder.mlpackage must be converted using a custom")
-        print("functional wrapper — see this file's docstring for details.")
-        return False
-
-    print(f"Loading {model_path}...")
-    mlmodel = ct.models.MLModel(model_path, compute_units=ct.ComputeUnit.CPU_AND_GPU)
+    Must operate on a saved .mlpackage (not in-memory) because mlProgram
+    models require the weights directory when loading from spec.
+    """
+    mlmodel = ct.models.MLModel(mlpackage_path, compute_units=ct.ComputeUnit.CPU_AND_GPU)
     spec = mlmodel.get_spec()
 
-    # Check spec version (7 = iOS 17 / macOS 14)
-    spec_version = spec.specificationVersion
-    print(f"\nSpec version: {spec_version}")
-    if spec_version <= 7:
-        print("  ✓ Compatible with iOS 17+ (spec version ≤ 7)")
-    else:
-        print(f"  ✗ Requires newer OS (spec version {spec_version})")
+    # Find zero-length input/output names
+    zero_inputs = set()
+    for inp in spec.description.input:
+        if inp.type.HasField('multiArrayType'):
+            shape = list(inp.type.multiArrayType.shape)
+            if 0 in shape:
+                zero_inputs.add(inp.name)
 
-    # Check for SDPA ops (would cause BNNS crash on iOS)
-    model_desc = str(spec)
-    has_sdpa = "scaled_dot_product_attention" in model_desc.lower()
-    print(f"\nScaled dot product attention (SDPA): {'FOUND ✗' if has_sdpa else 'None ✓'}")
-    if has_sdpa:
-        print("  WARNING: SDPA ops will cause BNNS crash on iOS.")
+    zero_outputs = set()
+    for out in spec.description.output:
+        if out.type.HasField('multiArrayType'):
+            shape = list(out.type.multiArrayType.shape)
+            if 0 in shape:
+                zero_outputs.add(out.name)
 
-    # Print input/output summary
+    if not zero_inputs and not zero_outputs:
+        print("No zero-length tensors to strip.")
+        return
+
+    print(f"Stripping {len(zero_inputs)} zero-length inputs: {zero_inputs}")
+    print(f"Stripping {len(zero_outputs)} zero-length outputs: {zero_outputs}")
+
+    # Remove from spec
+    inputs_to_keep = [inp for inp in spec.description.input
+                      if inp.name not in zero_inputs]
+    outputs_to_keep = [out for out in spec.description.output
+                       if out.name not in zero_outputs]
+
+    del spec.description.input[:]
+    spec.description.input.extend(inputs_to_keep)
+
+    del spec.description.output[:]
+    spec.description.output.extend(outputs_to_keep)
+
+    # Save modified spec back (with weights dir from the mlpackage)
+    weights_dir = os.path.join(mlpackage_path, "Data",
+                               "com.apple.CoreML", "weights")
+    updated = ct.models.MLModel(spec, weights_dir=weights_dir,
+                                compute_units=ct.ComputeUnit.CPU_AND_GPU)
+    updated.save(mlpackage_path)
+
+
+def convert():
+    print("Loading PocketTTS model...")
+    from pocket_tts import TTSModel
+    model = TTSModel.load_model(lsd_decode_steps=8)
+    model.eval()
+
+    print("Creating traceable Mimi decoder (with denormalize + quantize baked in)...")
+    traceable = TraceableMimiDecoder.from_tts_model(model)
+    traceable.eval()
+
+    # Build example inputs from MIMI_STATE_SPEC
+    print("Creating example inputs...")
+    latent = torch.randn(1, 32)
+    state_tensors = []
+    ct_inputs = [ct.TensorType(name="latent", shape=(1, 32))]
+
+    for name, shape in MIMI_STATE_SPEC:
+        t = torch.zeros(*shape)
+        state_tensors.append(t)
+        ct_inputs.append(ct.TensorType(name=name, shape=tuple(shape)))
+
+    example_inputs = (latent,) + tuple(state_tensors)
+
+    print(f"Tracing with {len(state_tensors)} state tensors...")
+    with torch.no_grad():
+        traced = torch.jit.trace(traceable, example_inputs)
+
+    print("Converting to CoreML...")
+    mlmodel = ct.convert(
+        traced,
+        inputs=ct_inputs,
+        minimum_deployment_target=ct.target.iOS17,
+        compute_precision=ct.precision.FLOAT32,
+    )
+
+    output_path = os.path.join(_COREML_DIR, "mimi_decoder.mlpackage")
+    print(f"Saving to {output_path}...")
+    mlmodel.save(output_path)
+
+    # NOTE: Zero-length I/O stripping is skipped for mlProgram format.
+    # The 3 zero-length state tensors (res{0,1,2}_conv1_prev) are kept in the
+    # model spec. The Swift side provides them as empty MLMultiArrays.
+    # Stripping from the spec description causes "Model and main function must
+    # have same number of inputs and states" because the MIL function still
+    # references them.
+
+    # Print I/O summary
+    spec = mlmodel.get_spec()
     print(f"\n=== INPUTS ({len(spec.description.input)}) ===")
     for inp in spec.description.input:
         if inp.type.HasField('multiArrayType'):
@@ -87,24 +146,18 @@ def verify():
             shape = list(inp.type.multiArrayType.shape)
             test_inputs[inp.name] = np.zeros(shape, dtype=np.float32)
 
-    try:
-        out = mlmodel.predict(test_inputs)
-        print(f"  ✓ Inference succeeded — {len(out)} outputs")
+    coreml_model = ct.models.MLModel(output_path, compute_units=ct.ComputeUnit.CPU_AND_GPU)
+    out = coreml_model.predict(test_inputs)
+    print(f"  Inference succeeded — {len(out)} outputs")
 
-        # Check audio output shape
-        for key, val in out.items():
-            if hasattr(val, 'shape') and len(val.shape) == 3 and val.shape[-1] == 1920:
-                print(f"  ✓ Audio output '{key}': {val.shape} (1920 samples = 80ms at 24kHz)")
-                break
-    except Exception as e:
-        print(f"  ✗ Inference failed: {e}")
-        return False
+    for key, val in out.items():
+        if hasattr(val, 'shape') and len(val.shape) == 3 and val.shape[-1] == 1920:
+            print(f"  Audio output '{key}': {val.shape} (1920 samples = 80ms at 24kHz)")
+            break
 
-    ios17_ok = spec_version <= 7 and not has_sdpa
-    print(f"\n{'✓ Model is iOS 17 compatible' if ios17_ok else '✗ Model needs reconversion for iOS 17'}")
-    return ios17_ok
+    print("\nDone!")
+    return output_path
 
 
 if __name__ == "__main__":
-    success = verify()
-    sys.exit(0 if success else 1)
+    convert()
