@@ -1,0 +1,2 @@
+models/stt/qwen3-asr-0.6b/**/*.bin filter=lfs diff=lfs merge=lfs -text
+models/stt/qwen3-asr-0.6b/**/*.mlmodel filter=lfs diff=lfs merge=lfs -text
