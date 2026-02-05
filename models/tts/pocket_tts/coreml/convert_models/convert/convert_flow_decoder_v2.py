@@ -44,11 +44,11 @@ def convert_flow_decoder():
             ct.TensorType(name="s", shape=(1, 1)),
             ct.TensorType(name="t", shape=(1, 1)),
         ],
-        minimum_deployment_target=ct.target.macOS15,
+        minimum_deployment_target=ct.target.iOS17,
         compute_precision=ct.precision.FLOAT32,
     )
 
-    output_path = "flow_decoder_v2.mlpackage"
+    output_path = "flow_decoder.mlpackage"
     print(f"Saving to {output_path}...")
     mlmodel.save(output_path)
 

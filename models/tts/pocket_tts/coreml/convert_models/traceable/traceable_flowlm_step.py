@@ -197,8 +197,12 @@ class TraceableFlowLMStep(nn.Module):
         attn_mask = valid_mask & causal_mask
         attn_mask = attn_mask.unsqueeze(1)
 
-        # Attention
-        attn_output = F.scaled_dot_product_attention(q, keys, values, attn_mask=attn_mask, dropout_p=0.0)
+        # Manual attention (avoids scaled_dot_product_attention op for iOS 17 compat)
+        scale = 1.0 / (q.shape[-1] ** 0.5)
+        attn_weights = torch.matmul(q, keys.transpose(-2, -1)) * scale
+        attn_weights = attn_weights.masked_fill(~attn_mask, float("-inf"))
+        attn_weights = torch.softmax(attn_weights, dim=-1)
+        attn_output = torch.matmul(attn_weights, values)
 
         attn_output = attn_output.permute(0, 2, 1, 3).reshape(B, T, self.embed_dim)
         output = out_proj(attn_output)

@@ -106,7 +106,11 @@ class SortformerHeadWrapper(nn.Module):
         spkcache_fifo_chunk_preds = self.model.forward_infer(
             spkcache_fifo_chunk_fc_encoder_embs, spkcache_fifo_chunk_fc_encoder_lengths
         )
-        return spkcache_fifo_chunk_preds, chunk_pre_encoder_embs, chunk_pre_encoder_lengths
+        # Explicit identity ops to create distinct output tensors (required for macOS 26+)
+        # macOS 26 BNNS compiler rejects models where input and output tensors share the same name
+        chunk_pre_encoder_embs_out = chunk_pre_encoder_embs + 0.0  # identity via add
+        chunk_pre_encoder_lengths_out = chunk_pre_encoder_lengths + 0  # identity via add
+        return spkcache_fifo_chunk_preds, chunk_pre_encoder_embs_out, chunk_pre_encoder_lengths_out
 
 
 class SortformerCoreMLWrapper(nn.Module):

@@ -25,6 +25,7 @@ dependencies = [
 
 [project.optional-dependencies]
 audio = ["soundfile>=0.12.0"]
+coreml = ["coremltools>=8.0"]
 
 
 [dependency-groups]
@@ -51,7 +52,7 @@ line-length = 100
 
 [tool.ruff.format]
 line-ending = "lf"
-# avoid having a trailing comma changing 
+# avoid having a trailing comma changing
 # the behavior of the formatter
 skip-magic-trailing-comma = true
 

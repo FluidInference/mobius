@@ -76,8 +76,8 @@ def convert_head(
         ],
         outputs=[
             ct.TensorType(name="speaker_preds", dtype=np.float32),
-            ct.TensorType(name="chunk_pre_encoder_embs"),
-            ct.TensorType(name="chunk_pre_encoder_lengths")
+            ct.TensorType(name="chunk_pre_encoder_embs_out"),  # Renamed: macOS 26 requires distinct input/output names
+            ct.TensorType(name="chunk_pre_encoder_lengths_out")  # Renamed: macOS 26 requires distinct input/output names
         ],
         minimum_deployment_target=ct.target.iOS16,
         compute_precision=precision,
@@ -331,8 +331,8 @@ def export_pipeline(
 
             pipeline_model.output_description['speaker_preds'] = ("Combined speaker probabilities for the speaker "
                                                                   " cache, FIFO queue, and chunk")
-            pipeline_model.output_description['chunk_pre_encoder_embs'] = "Speaker embeddings for the new chunk"
-            pipeline_model.output_description['chunk_pre_encoder_lengths'] = "Number of frames for the new chunk"
+            pipeline_model.output_description['chunk_pre_encoder_embs_out'] = "Speaker embeddings for the new chunk"
+            pipeline_model.output_description['chunk_pre_encoder_lengths_out'] = "Number of frames for the new chunk"
             pipeline_model.save(os.path.join(output_dir, "SortformerPipeline.mlpackage"))
             print("  Saved SortformerPipeline.mlpackage (PreEncoder + Conformer + Transformer)")
         except Exception as e:
