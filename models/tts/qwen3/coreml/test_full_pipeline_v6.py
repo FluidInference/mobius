@@ -49,7 +49,7 @@ def test_full_pipeline():
     print(f"   TTS PAD embed shape: {tts_pad_embed.shape}")
 
     # Load speaker embedding
-    speaker_embed = np.load("speaker_embedding.npy").reshape(1, 1024).astype(np.float32)
+    speaker_embed = np.load("speaker_embedding_official.npy").reshape(1, 1024).astype(np.float32)
     print(f"   Speaker embedding: {speaker_embed.shape}")
 
     text = "Hello world, this is a test of the text to speech system."

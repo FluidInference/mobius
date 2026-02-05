@@ -1,5 +1,5 @@
-# Full TTS Pipeline Test V8
-# Uses V7 non-streaming prefill + V2 decode with proper KV truncation
+# Full TTS Pipeline Test V9
+# Uses V9 CoreML prefill + V3 PyTorch decode (with code_predictor)
 import numpy as np
 import coremltools as ct
 import torch
@@ -19,38 +19,49 @@ ROLE_PREFIX = [151644, 77091, 198]
 
 def test_full_pipeline():
     print("=" * 60)
-    print("Full TTS Pipeline Test V8 (V7 Prefill + Truncated KV)")
+    print("Full TTS Pipeline Test V9 (V9 Prefill + V3 Decode)")
     print("=" * 60)
 
     # Load models
     print("\n1. Loading models...")
     from qwen_tts import Qwen3TTSModel
+    from convert_lm_decode_v3 import TracableDecodeV3
 
     t0 = time.time()
     tts_model = Qwen3TTSModel.from_pretrained("./model_0.6b", device_map="cpu", torch_dtype=torch.float32)
     processor = tts_model.processor
     talker = tts_model.model.talker
     config = talker.config
-    print(f"   PyTorch (tokenizer): {time.time() - t0:.1f}s")
+    print(f"   PyTorch model: {time.time() - t0:.1f}s")
 
     t0 = time.time()
-    lm_prefill = ct.models.MLModel("qwen3_tts_lm_prefill_v7.mlpackage", compute_units=ct.ComputeUnit.CPU_ONLY)
-    lm_decode = ct.models.MLModel("qwen3_tts_lm_decode_v2.mlpackage", compute_units=ct.ComputeUnit.CPU_ONLY)
+    lm_prefill = ct.models.MLModel("qwen3_tts_lm_prefill_v9.mlpackage", compute_units=ct.ComputeUnit.CPU_ONLY)
     code_predictor = ct.models.MLModel("qwen3_tts_code_predictor_v3.mlpackage", compute_units=ct.ComputeUnit.CPU_ONLY)
     decoder = ct.models.MLModel("qwen3_tts_decoder_10s.mlpackage", compute_units=ct.ComputeUnit.CPU_ONLY)
     print(f"   CoreML models: {time.time() - t0:.1f}s")
+
+    # Create V3 decode wrapper (PyTorch)
+    decode_wrapper = TracableDecodeV3(talker)
+    decode_wrapper.eval()
+    print("   V3 decode wrapper: ready")
 
     # Pre-compute TTS embeddings
     print("\n   Pre-computing TTS embeddings...")
     with torch.no_grad():
         tts_ids = torch.tensor([[TTS_BOS_TOKEN_ID, TTS_PAD_TOKEN_ID, TTS_EOS_TOKEN_ID]])
         tts_embed = talker.text_projection(talker.model.text_embedding(tts_ids))
-        tts_bos_embed = tts_embed[:, 0:1, :].numpy().astype(np.float32)
-        tts_pad_embed = tts_embed[:, 1:2, :].numpy().astype(np.float32)
-        tts_eos_embed = tts_embed[:, 2:3, :].numpy().astype(np.float32)
+        tts_bos_embed = tts_embed[:, 0:1, :]
+        tts_pad_embed = tts_embed[:, 1:2, :]
+        tts_eos_embed = tts_embed[:, 2:3, :]
+
+        # NumPy versions for CoreML
+        tts_bos_embed_np = tts_bos_embed.numpy().astype(np.float32)
+        tts_pad_embed_np = tts_pad_embed.numpy().astype(np.float32)
+        tts_eos_embed_np = tts_eos_embed.numpy().astype(np.float32)
 
     # Load speaker embedding
-    speaker_embed = np.load("speaker_embedding_official.npy").reshape(1, 1024).astype(np.float32)
+    speaker_embed_np = np.load("speaker_embedding_official.npy").reshape(1, 1024).astype(np.float32)
+    speaker_embed = torch.from_numpy(speaker_embed_np)
 
     text = "Hello world, this is a test of the text to speech system."
     print(f"\n2. Input text: '{text}'")
@@ -65,31 +76,33 @@ def test_full_pipeline():
     text_ids[0, :text_len] = text_ids_list
     text_length = np.array([text_len], dtype=np.int32)
 
-    # Actual sequence length = text_len + 11
     actual_len = text_len + 11
     print(f"   Text tokens: {text_len}")
     print(f"   Actual prefill length: {actual_len}")
 
     # === LM Generation ===
-    print("\n3. LM Generation (CoreML V7+V2)...")
+    print("\n3. LM Generation (V9 Prefill + V3 Decode)...")
 
+    # Prefill with CoreML V9
     t0 = time.time()
     prefill_result = lm_prefill.predict({
         "role_ids": role_ids,
         "text_ids": text_ids,
         "text_length": text_length,
-        "tts_bos_embed": tts_bos_embed,
-        "tts_pad_embed": tts_pad_embed,
-        "tts_eos_embed": tts_eos_embed,
-        "speaker_embed": speaker_embed,
+        "tts_bos_embed": tts_bos_embed_np,
+        "tts_pad_embed": tts_pad_embed_np,
+        "tts_eos_embed": tts_eos_embed_np,
+        "speaker_embed": speaker_embed_np,
     })
     logits = prefill_result["logits"]
     kv_cache_full = prefill_result["kv_cache"]
+    past_hidden = prefill_result["past_hidden"]  # V9 outputs this!
     prefill_time = time.time() - t0
     print(f"   Prefill: {prefill_time * 1000:.1f}ms")
     print(f"   Full KV cache shape: {kv_cache_full.shape}")
+    print(f"   Past hidden shape: {past_hidden.shape}")
 
-    # Truncate KV cache to actual length (remove padding positions)
+    # Truncate KV cache to actual length
     kv_cache = kv_cache_full[:, :, :, :actual_len, :]
     print(f"   Truncated KV cache shape: {kv_cache.shape}")
 
@@ -107,24 +120,28 @@ def test_full_pipeline():
         return int(np.argmax(logits_np, axis=-1)[0])
 
     generated_tokens = []
-    current_kv = kv_cache
-    position = actual_len  # Start from truncated length
+    position = actual_len
 
     first_token = sample_with_suppress(logits)
     generated_tokens.append(first_token)
     print(f"   First token: {first_token}")
 
+    # Convert to PyTorch for V3 decode
+    kv_cache_torch = torch.from_numpy(kv_cache).float()
+    past_hidden_torch = torch.from_numpy(past_hidden).float()
+
     t0 = time.time()
     while len(generated_tokens) < MAX_CODEC_TOKENS:
-        result = lm_decode.predict({
-            "token_id": np.array([[generated_tokens[-1]]], dtype=np.int32),
-            "trailing_text_embed": tts_pad_embed,
-            "kv_cache": current_kv,
-            "position": np.array([position], dtype=np.int32),
-        })
-        next_token = sample_with_suppress(result["logits"])
+        token_id = torch.tensor([[generated_tokens[-1]]], dtype=torch.long)
+        position_tensor = torch.tensor([position], dtype=torch.long)
+
+        with torch.no_grad():
+            logits_torch, kv_cache_torch, past_hidden_torch = decode_wrapper(
+                token_id, past_hidden_torch, tts_pad_embed, kv_cache_torch, position_tensor
+            )
+
+        next_token = sample_with_suppress(logits_torch.numpy())
         generated_tokens.append(next_token)
-        current_kv = result["new_kv_cache"]
         position += 1
 
         if next_token == EOS_TOKEN:
@@ -170,7 +187,7 @@ def test_full_pipeline():
     audio_trimmed = audio[0, 0, :actual_samples]
     duration = len(audio_trimmed) / SAMPLE_RATE
 
-    output_file = "test_full_pipeline_v8_output.wav"
+    output_file = "test_full_pipeline_v9_output.wav"
     sf.write(output_file, audio_trimmed, SAMPLE_RATE)
     print(f"   Saved: {output_file} ({duration:.2f}s)")
 
