@@ -14,6 +14,11 @@ Qwen3-ForcedAligner is a **non-autoregressive (NAR)** forced alignment model tha
 
 ## Architecture
 
+Two audio encoder approaches are available. The inference script auto-detects which
+to use based on which `.mlpackage` files are present.
+
+### Split Encoder (higher accuracy)
+
 ```
 Qwen3ASRForConditionalGeneration
   └── thinker
@@ -26,8 +31,42 @@ Qwen3ASRForConditionalGeneration
 ```
 
 The audio encoder is split into two CoreML models to preserve cross-chunk attention.
-The native PyTorch encoder processes conv outputs from multiple mel chunks through
-the transformer together (bidirectional attention), which is critical for accuracy.
+Conv runs per-chunk, then all conv outputs are concatenated and passed through the
+transformer in a single call with full bidirectional attention across all frames.
+This matches the native PyTorch behavior and gives the best accuracy (4.4ms AAS).
+
+### Monolithic Encoder (faster, simpler)
+
+```
+Qwen3ASRForConditionalGeneration
+  └── thinker
+        ├── audio_tower (24-layer Transformer, 1024 dim)   → forced_aligner_audio_encoder.mlpackage
+        ├── model (28-layer Qwen3 decoder, 1024 dim)       → forced_aligner_decoder_prefill.mlpackage
+        │   └── embed_tokens                                → forced_aligner_embedding.mlpackage
+        └── lm_head (1024 → 5000)                          → forced_aligner_lm_head.mlpackage
+```
+
+The entire audio encoder (conv + transformer + projection) is a single CoreML model
+that processes each 100-frame mel chunk independently. This is faster (one model call
+per chunk, no concatenation step) but each chunk's 13 output frames only see their own
+context — no cross-chunk attention. This reduces accuracy (20.7ms AAS) but may be
+acceptable depending on the use case.
+
+### Which to use?
+
+| | Split Encoder | Monolithic Encoder |
+|---|---|---|
+| Models | `audio_conv` + `audio_transformer` | `audio_encoder` |
+| Size | ~1.1GB combined | ~604MB |
+| AAS (mean boundary error) | **4.4 ms** | 20.7 ms |
+| % within 20ms | **95.4%** | 90.7% |
+| Cross-chunk attention | Yes | No |
+| Model calls (audio) | N conv + 1 transformer | N encoder |
+| Best for | Accuracy-critical alignment | Latency-sensitive / real-time |
+
+The inference script (`run_coreml_inference.py`) checks for `audio_conv` + `audio_transformer`
+first. If found, it uses the split approach. Otherwise it falls back to the monolithic
+`audio_encoder` if present.
 
 ### Key Differences from Qwen3-ASR-0.6B
 
@@ -43,16 +82,26 @@ the transformer together (bidirectional attention), which is critical for accura
 
 ## Input/Output Shapes
 
-### Audio Conv (per-chunk)
+### Split Encoder
+
+#### Audio Conv (per-chunk)
 ```
 Input:  mel_input     [1, 128, 100]       float32   (128 mel bins, 100 frames = 1 window)
 Output: conv_features [1, 13, 1024]       float32   (13 frames after 8x conv downsampling)
 ```
 
-### Audio Transformer (all chunks concatenated)
+#### Audio Transformer (all chunks concatenated)
 ```
 Input:  features      [1, 256, 1024]      float32   (padded concatenated conv features)
 Output: audio_embeddings [1, 256, 1024]   float32   (trim to actual frame count)
+```
+
+### Monolithic Encoder
+
+#### Audio Encoder (per-chunk)
+```
+Input:  mel_input     [1, 128, 100]       float32   (128 mel bins, 100 frames = 1 window)
+Output: audio_embeddings [1, 13, 1024]    float32   (13 frames, trim for short last chunk)
 ```
 
 ### Token Embedding
@@ -81,10 +130,24 @@ Output: logits        [1, seq_len, 5000]  float32   (raw timestamp values, NOT v
 
 ## Inference Pipeline
 
+Steps 1-3 differ depending on encoder approach. Steps 4-11 are shared.
+
+### Split Encoder (steps 1-3)
 ```
 1. Audio → Whisper mel spectrogram → [1, 128, T]
 2. Chunk mel into 100-frame windows → Audio Conv (per-chunk) → conv features
 3. Concatenate all conv features → pad to 256 → Audio Transformer → audio embeddings
+```
+
+### Monolithic Encoder (steps 1-3)
+```
+1. Audio → Whisper mel spectrogram → [1, 128, T]
+2. Chunk mel into 100-frame windows → Audio Encoder (per-chunk) → embeddings
+3. Concatenate per-chunk embeddings (trim last chunk to actual frames)
+```
+
+### Shared (steps 4-11)
+```
 4. Tokenize text with <timestamp> delimiters between words
 5. Build input_ids: <audio_start> <audio_pad>... <audio_end> word1 <ts><ts> word2 <ts><ts> ...
 6. Embed: audio embeddings + text token embeddings → concatenated sequence
@@ -104,11 +167,14 @@ uv pip install torch coremltools transformers typer soundfile
 # Clone Qwen3-ASR source (required for model classes)
 git clone https://github.com/QwenLM/Qwen3-ASR.git /path/to/qwen3-asr
 
-# Run conversion
+# Convert split encoder (default — higher accuracy)
 uv run python convert-coreml.py
 
-# Convert specific component
-uv run python convert-coreml.py --components audio_encoder
+# Convert monolithic encoder (faster)
+uv run python convert-coreml.py --components audio_encoder embedding decoder_prefill lm_head
+
+# Convert all components (both encoder approaches)
+uv run python convert-coreml.py --components audio_conv audio_transformer audio_encoder embedding decoder_prefill lm_head
 ```
 
 ## Benchmarking
@@ -123,6 +189,8 @@ uv run python compare-models.py --audio-file audio.wav --text "hello world" --la
 
 ### Parity Metrics (3 LibriSpeech test-clean samples, 54 word boundaries)
 
+#### Split Encoder
+
 | Metric | Value | Notes |
 |--------|-------|-------|
 | AAS (mean boundary error) | 4.4 ms | lower is better |
@@ -133,10 +201,22 @@ uv run python compare-models.py --audio-file audio.wav --text "hello world" --la
 | PyTorch latency (avg) | ~4736 ms | CPU, includes first-run warmup |
 | CoreML latency (avg) | ~2781 ms | ALL compute units |
 
-**Per-sample results:**
+Per-sample results:
 - Long (28 words): 1.4ms AAS, 98.2% within 20ms
 - Short (8 words): 10.0ms AAS, 87.5% within 20ms
 - Medium (18 words): 6.7ms AAS, 94.4% within 20ms
+
+#### Monolithic Encoder
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| AAS (mean boundary error) | 20.7 ms | ~5x worse than split |
+| % within 20ms | 90.7% | |
+| % within 80ms (1 segment) | 92.6% | |
+| % within 160ms (2 segments) | 96.3% | |
+
+The accuracy gap is caused by each chunk's 13 frames only attending to themselves
+in the transformer, missing cross-chunk context that the native PyTorch encoder provides.
 
 ## Special Tokens
 
