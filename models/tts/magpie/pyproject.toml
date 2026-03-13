@@ -1,0 +1,41 @@
+[project]
+name = "magpie-tts-coreml"
+requires-python = ">= 3.10,<3.13"
+description = "NVIDIA Magpie TTS 357M CoreML conversion"
+version = "0.1.0"
+dependencies = [
+    "numpy>=1.24",
+    "torch>=2.5.0",
+    "coremltools>=8.0",
+    "soundfile>=0.12.0",
+    "scipy>=1.5.0",
+    "huggingface_hub>=0.10",
+]
+
+[project.optional-dependencies]
+nemo = [
+    "nemo_toolkit[tts]",
+    "hydra-core>=1.3",
+    "omegaconf>=2.3",
+    "lightning>=2.0",
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+python-preference = "only-managed"
