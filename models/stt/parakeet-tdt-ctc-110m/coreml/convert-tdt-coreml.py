@@ -54,10 +54,7 @@ def _tensor_shape(tensor: torch.Tensor) -> Tuple[int, ...]:
 def _save_mlpackage(
     model: ct.models.MLModel, path: Path, description: str
 ) -> None:
-    try:
-        model.minimum_deployment_target = ct.target.iOS17
-    except Exception:
-        pass
+    model.minimum_deployment_target = ct.target.iOS18
     model.short_description = description
     model.author = AUTHOR
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -224,9 +221,9 @@ def convert(
     typer.echo(f"  decoder: hidden={decoder_hidden}, layers={decoder_layers}, blank_idx={blank_idx}")
 
     if num_extra == 0:
-        typer.echo(
-            "WARNING: joint.num_extra_outputs=0 -- this model has no TDT duration head. "
-            "It may be a plain RNNT, not TDT."
+        raise typer.BadParameter(
+            "joint.num_extra_outputs=0 -- this model has no TDT duration head. "
+            "It appears to be a plain RNNT, not TDT. Use the standard RNNT export instead."
         )
 
     # -- Trace audio --------------------------------------------------------

@@ -143,7 +143,7 @@ class JointDecisionWrapper(torch.nn.Module):
     ):
         logits = self.joint(encoder_outputs, decoder_outputs)
         token_logits = logits[..., : self.vocab_with_blank]
-        duration_logits = logits[..., -self.num_extra :]
+        duration_logits = logits[..., self.vocab_with_blank :]
 
         token_ids = torch.argmax(token_logits, dim=-1).to(dtype=torch.int32)
         token_probs_all = torch.softmax(token_logits, dim=-1)
@@ -151,7 +151,10 @@ class JointDecisionWrapper(torch.nn.Module):
             token_probs_all, dim=-1, index=token_ids.long().unsqueeze(-1)
         ).squeeze(-1)
 
-        duration = torch.argmax(duration_logits, dim=-1).to(dtype=torch.int32)
+        if self.num_extra > 0:
+            duration = torch.argmax(duration_logits, dim=-1).to(dtype=torch.int32)
+        else:
+            duration = torch.zeros_like(token_ids)
         return token_ids, token_prob, duration
 
 
@@ -176,7 +179,7 @@ class JointDecisionSingleStep(torch.nn.Module):
     ):
         logits = self.joint(encoder_step, decoder_step)  # [1, 1, 1, V+extra]
         token_logits = logits[..., : self.vocab_with_blank]
-        duration_logits = logits[..., -self.num_extra :]
+        duration_logits = logits[..., self.vocab_with_blank :]
 
         token_ids = torch.argmax(token_logits, dim=-1, keepdim=False).to(
             dtype=torch.int32
@@ -185,9 +188,12 @@ class JointDecisionSingleStep(torch.nn.Module):
         token_prob = torch.gather(
             token_probs_all, dim=-1, index=token_ids.long().unsqueeze(-1)
         ).squeeze(-1)
-        duration = torch.argmax(duration_logits, dim=-1, keepdim=False).to(
-            dtype=torch.int32
-        )
+        if self.num_extra > 0:
+            duration = torch.argmax(duration_logits, dim=-1, keepdim=False).to(
+                dtype=torch.int32
+            )
+        else:
+            duration = torch.zeros_like(token_ids)
 
         topk_logits, topk_ids_long = torch.topk(
             token_logits,
