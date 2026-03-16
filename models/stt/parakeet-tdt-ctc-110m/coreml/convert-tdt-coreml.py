@@ -54,7 +54,7 @@ def _tensor_shape(tensor: torch.Tensor) -> Tuple[int, ...]:
 def _save_mlpackage(
     model: ct.models.MLModel, path: Path, description: str
 ) -> None:
-    model.minimum_deployment_target = ct.target.iOS18
+    model.minimum_deployment_target = ct.target.iOS17
     model.short_description = description
     model.author = AUTHOR
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -182,7 +182,7 @@ def convert(
     export_settings = ExportSettings(
         output_dir=output_dir,
         compute_units=ct.ComputeUnit.CPU_ONLY,
-        deployment_target=ct.target.iOS18,
+        deployment_target=ct.target.iOS17,
         compute_precision=_parse_compute_precision(compute_precision),
         max_audio_seconds=max_audio_seconds,
         max_symbol_steps=1,
