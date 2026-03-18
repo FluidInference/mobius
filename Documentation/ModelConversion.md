@@ -53,7 +53,10 @@ models/
         pyproject.toml           # Python deps (uv-managed)
         uv.lock                  # Pinned dependencies
         README.md                # Conversion notes, source links, known issues
+        TRIALS.md                # What was tried, what failed, what worked (optional)
         audio/                   # Sample audio for tracing/testing (optional)
+        context/                 # Architecture docs, conversion plans (optional)
+        doc/                     # Deep dives, problems encountered (optional)
 ```
 
 **Classes:** `stt`, `vad`, `speaker-diarization`, `tts`, `emb`, `segment-text`
@@ -203,18 +206,74 @@ Check that quantized output quality is acceptable relative to the FP32 baseline 
 
 ---
 
-## Step 7: Write the README
+## Step 7: Document trials, errors, and architecture
+
+This is one of the most valuable parts of a conversion. The next person converting a similar model — or debugging a regression — will rely on what you wrote down. Document as you go, not after the fact.
+
+### What to document
+
+**Trials and errors** — what you tried, what failed, and why. This prevents others from repeating dead ends.
+
+- Failed tracing attempts (monolithic vs split components)
+- Ops that didn't convert and what replaced them
+- Bugs found during validation (wrong output shapes, silent numerical drift, garbage output)
+- Workarounds for CoreML/ANE limitations
+- Quantization experiments that degraded quality
+
+**Architecture context** — how the source model works, links to papers and upstream repos.
+
+- Link to the original model (HuggingFace, GitHub, paper)
+- Model topology: what each component does, how they connect
+- Input/output shapes and data flow
+- Key design decisions in the source model that affect conversion
+- Relevant research papers (architecture, training, evaluation)
+
+**Platform-specific issues** — things that behave differently across devices or OS versions.
+
+- ANE vs GPU vs CPU behavior differences
+- iPhone vs Mac ANE dimension limits
+- iOS Simulator limitations
+- Float16 precision issues on ANE
+- Model compilation time differences across devices
+
+**What worked** — so future conversions can reuse successful patterns.
+
+- Which tracing strategy worked (and why others didn't)
+- Compute unit recommendations per component
+- Successful fusing strategies
+- Quantization variants that maintained quality
+
+### Where to put it
+
+Use whatever format fits the complexity. Existing conversions use several patterns:
+
+| Format | When to use | Example |
+|--------|-------------|---------|
+| **`TRIALS.md`** | Chronological log of attempts | `models/tts/pocket_tts/coreml/TRIALS.md` |
+| **`doc/problems_encountered.md`** | Categorized issue tracker | `models/tts/kokoro/coreml/doc/problems_encountered.md` |
+| **`context/` directory** | Architecture docs, conversion plans | `models/stt/parakeet-tdt-v3-0.6b/coreml/context/` |
+| **`IOS_COREML_ISSUES.md`** | Platform-specific bugs | `models/tts/pocket_tts/coreml/IOS_COREML_ISSUES.md` |
+| **Integration report** | Debugging methodology write-up | `models/stt/canary-1b-v2/coreml/coreml_integration_report.md` |
+| **Model analysis** | Deep dive on why something does/doesn't work | `models/vad/silero-vad/coreml/silero_vad_model_analysis.md` |
+| **README section** | Brief notes (for simple conversions) | `models/stt/qwen3-asr-0.6b/coreml/README.md` |
+
+For simple conversions, a "Known Issues" section in the README is enough. For complex ones, use dedicated files — Kokoro has 3 docs totaling 1,200+ lines, and that context has been referenced many times since.
+
+---
+
+## Step 8: Write the README
 
 Every conversion directory needs a README documenting:
 
 1. **What the model does** — one-line description
-2. **Source model** — link to the original (HuggingFace, NeMo, GitHub)
+2. **Source model** — link to the original (HuggingFace, NeMo, GitHub, paper)
 3. **Layout** — directory structure and what each file does
 4. **Environment setup** — `uv sync` instructions
 5. **Conversion commands** — how to run the export
 6. **Validation results** — parity checks, inference smoke test
-7. **Known issues** — what didn't work, ANE quirks, accuracy caveats
+7. **Known issues** — what didn't work, ANE quirks, accuracy caveats (or link to dedicated docs)
 8. **Usage with FluidAudio** — how the exported models integrate (if applicable)
+9. **Acknowledgements** — credit upstream authors, contributors, and relevant papers
 
 See existing READMEs for reference:
 - Detailed: `models/stt/parakeet-tdt-v3-0.6b/coreml/README.md`
@@ -224,7 +283,7 @@ See existing READMEs for reference:
 
 ---
 
-## Step 8: Upload to HuggingFace
+## Step 9: Upload to HuggingFace
 
 Upload the converted models to the [`FluidInference`](https://huggingface.co/FluidInference) organization.
 
@@ -251,7 +310,7 @@ Naming convention: `{model-name}-coreml` (e.g., `FluidInference/parakeet-tdt-0.6
 
 ---
 
-## Step 9: Open the mobius PR
+## Step 10: Open the mobius PR
 
 The PR should include:
 
@@ -292,6 +351,9 @@ The PR should include:
 
 - [ ] README with source model link, conversion steps, validation results, known issues
 - [ ] Directory layout documented
+- [ ] Link to source model paper / architecture docs
+- [ ] Trials and errors documented (what failed, why, and what worked)
+- [ ] Platform-specific issues noted (ANE quirks, device differences, iOS vs macOS)
 
 ### HuggingFace
 
@@ -326,9 +388,53 @@ The PR should include:
 | emb | CAM++ | `models/emb/cam++/coreml/` | — | Shipped |
 | segment-text | SaT | `models/segment-text/coreml/` | — | Shipped |
 
+## Reference: Documentation Examples
+
+The best way to understand what good conversion documentation looks like is to read the existing ones. Here are the standouts, organized by what they do well:
+
+### Trials and error tracking
+
+| File | What it covers |
+|------|---------------|
+| `models/tts/pocket_tts/coreml/TRIALS.md` | Chronological log: failed monolithic tracing → split architecture → 5 bugs found with symptoms and fixes |
+| `models/tts/kokoro/coreml/doc/problems_encountered.md` | 15 categorized problem areas with root causes and solutions (audio artifacts, text processing, quantization regressions, compute unit tradeoffs) |
+| `models/stt/canary-1b-v2/coreml/coreml_integration_report.md` | Debugging methodology: monkeypatch ground-truth capture to find missing projection layer, wrong EOS token, prompt format bugs |
+
+### Architecture and model context
+
+| File | What it covers |
+|------|---------------|
+| `models/tts/kokoro/coreml/doc/v21_conversion_script_outline.md` | 900+ line deep dive: complete class hierarchy, forward pass walkthrough, data flow, CoreML compatibility patterns |
+| `models/stt/parakeet-tdt-v3-0.6b/coreml/context/parakeet_tdt_v3_architecture.md` | Model topology, encoder/decoder/joint specs, fixed 15s window contract |
+| `models/stt/parakeet-tdt-v3-0.6b/coreml/context/coreml_conversion_plan.md` | Export strategy, validation methodology, known caveats |
+| `models/tts/pocket_tts/coreml/CONVERSION.md` | 4-model pipeline architecture, constants export, generation pipeline, Swift porting guidance |
+
+### Platform-specific issues
+
+| File | What it covers |
+|------|---------------|
+| `models/tts/pocket_tts/coreml/IOS_COREML_ISSUES.md` | 7 iOS-specific bugs: zero-length tensor crash, ANE float16 beeping, simulator silent audio, compilation time |
+| `models/stt/parakeet-tdt-v3-0.6b/coreml/context/mel_encoder_ane_behavior.md` | iPhone 13 ANE compilation failure due to W=240000 exceeding ANE's 16384 dimension cap |
+| `models/vad/silero-vad/coreml/silero_vad_model_analysis.md` | Why ANE doesn't speed up lightweight models, layer-by-layer operation breakdown, CPU vs ANE vs GPU comparison |
+
+### Conversion step-by-step
+
+| File | What it covers |
+|------|---------------|
+| `models/tts/pocket_tts/coreml/CONVERSION.md` | Complete guide: architecture overview, per-component specs, constants export, zero-PyTorch generation pipeline |
+| `models/speaker-diarization/pyannote-community-1/coreml/README.md` | 3-script pipeline (convert → compare → quantize), agent-oriented and manual workflows, Python wrapper usage |
+
 ## Reference: Knowledge Base
 
-The `knowledge/` directory contains curated research papers and platform documentation useful during conversions:
+The `knowledge/` directory contains curated research papers and platform documentation useful during conversions. Consult these when working on a new model in the same family or hitting ANE/CoreML issues.
 
-- **`knowledge/audio/`** — Speech model architecture papers (Fast Conformer, TDT, CoVoST, Canary/Parakeet)
-- **`knowledge/coreml/`** — CoreML optimization guides, coremltools docs, Neural Engine architecture notes
+**`knowledge/audio/`** — Speech model architecture papers:
+- Fast Conformer (v1 & v6) — encoder architecture used by Parakeet, Canary, Nemotron
+- Token-Duration Transducer (TDT) — decoding strategy used by Parakeet TDT models
+- CoVoST 2 — multilingual speech translation benchmark
+- Canary/Parakeet model cards — production ASR architecture details
+
+**`knowledge/coreml/`** — Apple platform optimization:
+- Core ML on-device Llama — optimization patterns for transformer models on ANE (~33 tok/s on M1 Max)
+- coremltools 9.0 docs — conversion workflows, quantization, pruning, palettization APIs
+- Neural Engine architecture — Apple Silicon accelerator capabilities, dimension limits, supported ops
