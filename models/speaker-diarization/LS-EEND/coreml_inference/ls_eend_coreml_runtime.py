@@ -98,6 +98,7 @@ class CoreMLStreamingSession:
         tail = self._flush_tail(self.state, pending) if pending > 0 else np.zeros((0, self.engine.decode_max_nspks), dtype=np.float32)
         merged = committed if tail.size == 0 else np.concatenate([committed, tail], axis=0)
         self.finalized = True
+        self.emitted_frames += tail.shape[0]
         return self._build_update(merged, include_preview=False)
 
     def snapshot(self) -> InferenceResult:

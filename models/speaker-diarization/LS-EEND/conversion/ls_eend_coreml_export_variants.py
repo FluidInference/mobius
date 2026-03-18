@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-EXPORTER = ROOT / "ls_eend_coreml_export.py"
+EXPORTER = ROOT / "conversion" / "ls_eend_coreml_export.py"
 ARTIFACTS = ROOT / "artifacts" / "coreml"
 
 
@@ -28,25 +28,25 @@ class VariantSpec:
 VARIANTS = (
     VariantSpec(
         name="ami",
-        checkpoint=ROOT / "ls_eend_ami_allspk_model.ckpt",
+        checkpoint=ROOT / "model_checkpoints" / "ls_eend_ami_allspk_model.ckpt",
         config=ROOT / "conf" / "spk_onl_conformer_retention_enc_dec_nonautoreg_ami_infer.yaml",
         output_stem="ls_eend_ami_step",
     ),
     VariantSpec(
         name="callhome",
-        checkpoint=ROOT / "ls_eend_ch_allspk_model.ckpt",
+        checkpoint=ROOT / "model_checkpoints" / "ls_eend_ch_allspk_model.ckpt",
         config=ROOT / "conf" / "spk_onl_conformer_retention_enc_dec_nonautoreg_callhome_infer.yaml",
         output_stem="ls_eend_callhome_step",
     ),
     VariantSpec(
         name="dihard2",
-        checkpoint=ROOT / "ls_eend_dih2_allspk_model.ckpt",
+        checkpoint=ROOT / "model_checkpoints" / "ls_eend_dih2_allspk_model.ckpt",
         config=ROOT / "conf" / "spk_onl_conformer_retention_enc_dec_nonautoreg_dihard2_infer.yaml",
         output_stem="ls_eend_dih2_step",
     ),
     VariantSpec(
         name="dihard3",
-        checkpoint=ROOT / "ls_eend_dih3_allspk_model.ckpt",
+        checkpoint=ROOT / "model_checkpoints" / "ls_eend_dih3_allspk_model.ckpt",
         config=ROOT / "conf" / "spk_onl_conformer_retention_enc_dec_nonautoreg_dihard3_infer.yaml",
         output_stem="ls_eend_dih3_step",
     ),
