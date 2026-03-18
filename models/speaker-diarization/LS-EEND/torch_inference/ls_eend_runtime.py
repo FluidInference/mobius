@@ -248,6 +248,8 @@ class LSEENDInferenceEngine:
         if "weights_only" in torch.load.__code__.co_varnames:
             load_kwargs["weights_only"] = False
         state_dict = torch.load(self.checkpoint_path, **load_kwargs)
+        if isinstance(state_dict, dict) and "state_dict" in state_dict:
+            state_dict = state_dict["state_dict"]
         cleaned = {
             key[len("model.") :] if key.startswith("model.") else key: value
             for key, value in state_dict.items()

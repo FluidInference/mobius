@@ -131,7 +131,7 @@ class KaldiDiarizationDataset(torch.utils.data.Dataset):
         return Y_ss, T_ss, rec
     
     def __getfulllabel__(self, i):
-        rec, st, ed = self.chunk_indices[i]
+        rec, _data_len, st, ed = self.chunk_indices[i]
         Y, T = get_labeledSTFT(
             self.data,
             rec,
@@ -151,7 +151,7 @@ class KaldiDiarizationDataset(torch.utils.data.Dataset):
         return T, rec
     
     def __get_len__(self, i):
-        rec, st, ed = self.chunk_indices[i]
+        rec, _data_len, st, ed = self.chunk_indices[i]
         Y, T = get_labeledSTFT(
             self.data,
             rec,
