@@ -6,9 +6,9 @@ Step-by-step guide for converting a new model to CoreML and shipping it in mobiu
 
 Each new model conversion in mobius is one stage of a three-stage pipeline:
 
-1. **mobius** (this repo) — Convert the source model (PyTorch/ONNX) to CoreML
+1. **mobius** (this repo) — Convert the source model (PyTorch/ONNX) to CoreML, validate numerical parity, smoke-test inference
 2. **[HuggingFace](https://huggingface.co/FluidInference)** — Upload and host the converted model artifacts
-3. **[FluidAudio](https://github.com/FluidInference/FluidAudio)** — Register the model, write inference code, add CLI command, write tests
+3. **[FluidAudio](https://github.com/FluidInference/FluidAudio)** — Register the model, write Swift inference code, add CLI command, write tests, run benchmarks
 
 Every new model should reference all three:
 
@@ -166,23 +166,21 @@ See `models/stt/parakeet-tdt-v3-0.6b/coreml/` for a thorough example with per-co
 
 ---
 
-## Step 5: Measure performance
+## Step 5: Smoke-test inference
 
-Run latency benchmarks on Apple Silicon hardware. Report:
+Run a basic inference pass to confirm the converted model loads and produces reasonable output. This is a sanity check, not a formal benchmark — full benchmarks (WER, DER, RTFx on standard datasets, etc.) happen in [FluidAudio](https://github.com/FluidInference/FluidAudio/blob/main/Documentation/ModelConversion.md#36-run-benchmarks).
 
-- **Device** — exact chip and RAM (e.g., "M4 Pro, 48GB, macOS 15")
-- **Compute units** — CPU-only, CPU+GPU, CPU+ANE, ALL
-- **Latency** — per-component and end-to-end, in milliseconds
-- **RTFx** — real-time factor (audio_duration / processing_time). Must be >1.0x for real-time use.
-- **Speedup vs PyTorch** — CoreML latency vs PyTorch CPU baseline
+```bash
+uv run python test.py audio/sample.wav
+```
 
-Example from Parakeet TDT v3:
+**What to verify:**
 
-| Component | PyTorch CPU | CoreML (CPU+NE) | Speedup |
-|-----------|-------------|-----------------|---------|
-| Encoder | 1030 ms | 25 ms | 40.5x |
-| Preprocessor | 2.0 ms | 1.2 ms | 1.7x |
-| Decoder | 7.5 ms | 4.3 ms | 1.7x |
+- Model loads without errors on CPU and ANE
+- Output is non-garbage (transcription makes sense, audio sounds right, diarization labels are plausible)
+- Latency is in the right ballpark (not 10x slower than expected)
+
+If the conversion has a comparison script, the PyTorch-vs-CoreML latency numbers from Step 4 already cover this.
 
 ---
 
@@ -201,7 +199,7 @@ uv run python quantize_coreml.py \
   --compute-units ALL --runs 10
 ```
 
-Report quality (1 - normalized L2 error), latency, and size for each variant.
+Check that quantized output quality is acceptable relative to the FP32 baseline (1 - normalized L2 error). Note size reductions.
 
 ---
 
@@ -214,7 +212,7 @@ Every conversion directory needs a README documenting:
 3. **Layout** — directory structure and what each file does
 4. **Environment setup** — `uv sync` instructions
 5. **Conversion commands** — how to run the export
-6. **Validation results** — parity checks, latency, RTFx
+6. **Validation results** — parity checks, inference smoke test
 7. **Known issues** — what didn't work, ANE quirks, accuracy caveats
 8. **Usage with FluidAudio** — how the exported models integrate (if applicable)
 
@@ -266,7 +264,7 @@ The PR should include:
 
 - Model name and source
 - What the conversion does (components exported, target shapes)
-- Validation evidence (parity results, latency numbers)
+- Validation evidence (parity results, inference smoke test)
 - Known limitations or follow-up work
 - Link to the FluidAudio PR (if integration work has started)
 
@@ -288,8 +286,7 @@ The PR should include:
 
 - [ ] Numerical parity checked against PyTorch baseline
 - [ ] End-to-end output verified (transcription, diarization, audio, etc.)
-- [ ] Latency benchmarked on Apple Silicon with device noted
-- [ ] RTFx > 1.0x for real-time models
+- [ ] Inference smoke test passes on Apple Silicon
 
 ### Documentation
 
@@ -305,7 +302,7 @@ The PR should include:
 
 ### PR
 
-- [ ] PR opened with model description, validation evidence, and HuggingFace link
+- [ ] PR opened with model description, parity validation, and HuggingFace link
 - [ ] Link to FluidAudio PR (if integration started)
 
 ---
