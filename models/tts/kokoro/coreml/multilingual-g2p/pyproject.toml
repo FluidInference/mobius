@@ -6,6 +6,7 @@ requires-python = ">=3.10"
 dependencies = [
     "coremltools>=7.0,<8.0",
     "numpy>=1.24",
+    "onnx>=1.14.0",
     "torch>=2.0.0",
     "transformers>=4.30.0,<4.50",
 ]
