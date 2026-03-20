@@ -193,7 +193,8 @@ def main():
         inputs=ct_inputs,
         outputs=ct_outputs,
         minimum_deployment_target=ct.target.macOS14,
-        compute_units=ct.ComputeUnit.CPU_ONLY,
+        compute_units=ct.ComputeUnit.CPU_AND_GPU,
+        compute_precision=ct.precision.FLOAT16,
     )
     print(f"  Conversion took {time.time() - t0:.1f}s")
 

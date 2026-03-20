@@ -139,6 +139,30 @@ Chronological record of all attempts, failures, and fixes to port VoxCPM 1.5 fro
 
 **Result:** PASS. Chinese generation works for both conditioned and unconditioned modes.
 
+## Phase 4: Float16 Quantization
+
+### Trial 18 — Float16 conversion
+**Approach:** Added `compute_precision=ct.precision.FLOAT16` and `compute_units=ct.ComputeUnit.CPU_AND_GPU` to all `ct.convert()` calls. This stores weights as Float16 and runs inference in half precision.
+
+**Per-component validation (Float16 vs Float32 PyTorch):**
+
+| Model | Correlation | Max diff | Notes |
+|-------|------------|----------|-------|
+| audio_vae_encoder | — | 6.63e-01 | Acceptable on [-60, +61] range |
+| audio_vae_decoder | 0.999999 | 9.31e-04 | |
+| feat_encoder | 1.000000 | 1.15e-03 | |
+| base_lm_step (lm_hidden) | 0.999998 | 3.16e-02 | |
+| base_lm_step (fsq) | 0.999677 | 1.55e-02 | |
+| base_lm_step (stop) | 1.000000 | 1.06e-02 | |
+| residual_lm_step | 1.000000 | 5.04e-03 | |
+| locdit_step | 0.999999 | 5.42e-03 | |
+
+**End-to-end verification:**
+- English: "Hello, this is a test of the voice cloning system." → ASR: "Hello, this is a test of the voice cloning system." (exact match)
+- Chinese: "你好，这是一个语音克隆系统的测试。" → Whisper: "你好这是一个语音克隆系统的测试" (match)
+
+**Result:** PASS. Float16 produces identical intelligible output to Float32. No quality degradation detected.
+
 ---
 
 ## Summary of Key Bugs

@@ -43,14 +43,16 @@ Constants exported to `constants/` (~299 MB):
 
 ## Conversion Validation
 
-| Model | Correlation | Notes |
-|-------|------------|-------|
+All models use **Float16** precision (`compute_precision=ct.precision.FLOAT16`, `compute_units=CPU_AND_GPU`).
+
+| Model | Correlation (F16) | Notes |
+|-------|-------------------|-------|
 | audio_vae_encoder | 0.999989 | Fixed 5s input, Snake activations patched |
-| audio_vae_decoder | 0.999901 | Flexible latent length via RangeDim |
-| feat_encoder | 0.999997 | 8-layer non-causal transformer |
-| base_lm_step | 0.999999 | 24 layers, GQA patched, scatter-based KV cache |
-| residual_lm_step | 0.999983 | 8 layers, same GQA/cache pattern |
-| locdit_step | 0.999922 | Flow matching estimator, cond_len=4 |
+| audio_vae_decoder | 0.999999 | Flexible latent length via RangeDim |
+| feat_encoder | 1.000000 | 8-layer non-causal transformer |
+| base_lm_step | 0.999998 | 24 layers, GQA patched, scatter-based KV cache |
+| residual_lm_step | 1.000000 | 8 layers, same GQA/cache pattern |
+| locdit_step | 0.999999 | Flow matching estimator, cond_len=4 |
 
 ## Generation Pipeline
 
