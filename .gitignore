@@ -7,3 +7,6 @@ __pycache__
 # CoreML models (large binaries - download from HuggingFace)
 *.mlpackage
 *.mlmodelc
+
+# Large numpy arrays (exported constants - regenerate via export_constants.py)
+*.npy

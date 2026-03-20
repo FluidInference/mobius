@@ -1,0 +1,19 @@
+{
+  "hidden_size": 1024,
+  "vocab_size": 73448,
+  "scale_emb": 12.0,
+  "patch_size": 4,
+  "feat_dim": 64,
+  "sample_rate": 44100,
+  "hop_length": 1764,
+  "token_rate_hz": 6.25,
+  "max_seq_len": 512,
+  "base_lm_layers": 24,
+  "residual_lm_layers": 8,
+  "num_kv_heads": 2,
+  "head_dim": 64,
+  "dit_hidden_dim": 1024,
+  "default_inference_timesteps": 10,
+  "default_cfg_value": 2.0,
+  "tokenizer_name": "openbmb/MiniCPM-1B-sft-bf16"
+}
