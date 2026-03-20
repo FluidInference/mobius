@@ -165,6 +165,62 @@ Chronological record of all attempts, failures, and fixes to port VoxCPM 1.5 fro
 
 ---
 
+## Phase 5: INT8 Quantization & Stop Head Fix
+
+### Trial 19 — Batch prefill models (INT8) + step models (FP16)
+**Approach:** Created separate `base_lm_prefill` and `residual_lm_prefill` CoreML models that process all tokens at once (matching PyTorch's batch forward with causal mask). These were INT8-quantized via `linear_quantize_weights`. The idea was to use batch prefill for speed, then switch to the existing FP16 step models for autoregressive generation.
+
+**Result:** FAIL. The step model's stop head fires "stop" from step 1 after batch prefill.
+- Stop logit at prefill's last position: `[9.89, -9.88]` (correct: don't stop)
+- Stop logit at step 1 from step model: `[-7.13, 7.13]` (STOP immediately)
+
+**Root cause:** INT8-quantized prefill models produce KV caches that are numerically incompatible with the FP16 step model. The quantization noise in the cached keys/values propagates through 24 transformer layers, causing the step model's hidden states to diverge enough that the stop head classifier flips.
+
+### Trial 20 — Revert to sequential prefill
+**Approach:** Removed all batch prefill infrastructure. Reverted to sequential prefill (processing tokens one at a time through `base_lm_step`), matching exactly what `generate_coreml.py` does. This ensures the same model produces both the KV caches and the generation outputs — no quantization mismatch.
+
+**Result:** Stop head still noisy. Even with sequential prefill through the same FP16 model, the stop head fires "stop" from step 1 in unconditioned mode (no prompt audio). Running with `--no-stop --max-len 30` revealed the pattern:
+- Steps 1-13: mostly predicts STOP (noisy)
+- Steps 14-23: transitions to "continue" (meaningful speech being generated)
+- Steps 24+: oscillates between stop/continue
+
+The FP16 stop head is inherently noisy in unconditioned mode. This wasn't visible in the Python pipeline because `generate_coreml.py` used `min_len=5` with a different token count.
+
+### Trial 21 — Text-length-proportional minimum steps
+**Approach:** Instead of a fixed `minLen`, use `minLen = max(15, textLen * 2)`. Each text token produces roughly 2 audio patches on average, so this ensures the model generates at least enough audio to cover the input text before the stop head gets a vote.
+
+**Result:** PASS. The stop head fires at appropriate points after the minimum:
+
+| Input | Text tokens | minLen | Steps | Audio | ASR confidence |
+|-------|------------|--------|-------|-------|----------------|
+| "Hello world." | 4 | 15 | 16 | 2.56s | — |
+| "Hello, this is a test of the voice synthesis system." | 13 | 26 | 27 | 4.32s | 0.967 |
+| "The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet." | 20 | 40 | 41 | 6.56s | 0.997 |
+
+### Trial 22 — Full INT8 quantization of step models
+**Approach:** Applied `linear_quantize_weights` (INT8 linear-symmetric) to all step models: `base_lm_step`, `residual_lm_step`, `locdit_step`, `feat_encoder`. Since sequential prefill uses the same model for both prefill and generation, there's no quantization mismatch — INT8 KV caches feed back into the same INT8 model.
+
+**Result:** PASS. Audio quality indistinguishable from FP16:
+
+| Input | FP16 duration | INT8 duration |
+|-------|--------------|---------------|
+| "Hello world." | 2.56s | 2.88s |
+| "Hello, this is a test..." | 4.32s | 4.32s |
+| "The quick brown fox..." | 6.56s | 6.72s |
+
+Stop head fires at similar points. Compiled `.mlmodelc` sizes unchanged (CoreML unpacks weights at compile time), but INT8 weights are stored more compactly in the `.mlpackage`.
+
+### Trial 23 — Mixed precision: INT8 bulk + FP16 stop head
+**Approach:** Attempted to keep the stop head layers in FP16 while INT8-quantizing the transformer bulk. Used `op_name_configs` to exclude the last transformer layer (ops 161-167) and head projections (ops 168-171) from quantization.
+
+**Result:** FAIL. MiniCPM architecture shares bias parameters across transformer layers — `linear_0_bias_0_to_fp16` is reused by both layer 0 (INT8) and layer 23 (FP16). CoreML's quantizer raises `ValueError: compression config conflict detected` when two ops sharing a const have different quantization configs.
+
+**Workaround:** Narrowed FP16 exceptions to only the 4 head projections (ops 168-171: lm_hidden, fsq, stop_proj, stop_head) which don't share params with transformer layers. This compiled successfully.
+
+**Outcome:** Mixed precision works but unnecessary — full INT8 (Trial 22) produces equivalent quality since the stop head's noise is handled by the text-length-proportional minLen heuristic. Abandoned in favor of simpler full INT8.
+
+---
+
 ## Summary of Key Bugs
 
 | Bug | Symptom | Fix |
@@ -180,3 +236,6 @@ Chronological record of all attempts, failures, and fixes to port VoxCPM 1.5 fro
 | dit_hidden used raw lm_hidden | Unintelligible output | Use `lm_hidden_fsq` (FSQ'd) |
 | Euler solver forward (0→1) | Wrong diffusion trajectory | Backward (1→0): `x = x - dt * v` |
 | Chinese tokenizer missing char splitting | Garbage Chinese output | `mask_multichar_chinese_tokens` wrapper |
+| INT8 prefill + FP16 step KV cache mismatch | Stop head fires from step 1 | Use same model for prefill and generation |
+| FP16 stop head noisy in unconditioned mode | Audio cut short (steps 1-13 predict STOP) | Text-proportional minLen: `max(15, textLen * 2)` |
+| MiniCPM shared biases block mixed quantization | `ValueError: compression config conflict` | Either full INT8 or FP16-only head projections |
