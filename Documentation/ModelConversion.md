@@ -185,6 +185,40 @@ uv run python test.py audio/sample.wav
 
 If the conversion has a comparison script, the PyTorch-vs-CoreML latency numbers from Step 4 already cover this.
 
+### TTS models: ASR verification required
+
+**For TTS (Text-to-Speech) conversions only**: You must verify the converted model using automatic speech recognition (ASR) to ensure semantic accuracy. Traditional verification methods (spectral similarity, mel-spectrogram comparison) can pass even when generated audio contains incorrect words, missing phonemes, or garbled speech that "looks" spectrally similar but is unintelligible.
+
+**Requirements:**
+1. Generate audio samples using both PyTorch (reference) and CoreML (converted) models
+2. Transcribe all generated audio using an ASR model (Whisper, FluidAudio Parakeet, or equivalent)
+3. Calculate Word Error Rate (WER) for both outputs compared to input text
+4. Verify WER < 10% and PyTorch vs CoreML transcription difference < 2%
+5. Document results with sample transcriptions in README
+
+**Example verification:**
+```python
+import whisper
+from jiwer import wer
+
+test_texts = ["Your test sentences here...", "At least 20-30 diverse samples..."]
+asr_model = whisper.load_model("base")
+
+for text in test_texts:
+    # Generate audio with PyTorch and CoreML
+    pt_audio = generate_pytorch(text)
+    cm_audio = generate_coreml(text)
+
+    # Transcribe and compare
+    pt_transcription = asr_model.transcribe(pt_audio)["text"]
+    cm_transcription = asr_model.transcribe(cm_audio)["text"]
+
+    print(f"PyTorch WER: {wer(text, pt_transcription):.2%}")
+    print(f"CoreML WER:  {wer(text, cm_transcription):.2%}")
+```
+
+Use diverse test samples covering different lengths, phonetic variety, and edge cases (numbers, punctuation, proper nouns). Report aggregate WER in your README.
+
 ---
 
 ## Step 6: Explore quantization (optional)
