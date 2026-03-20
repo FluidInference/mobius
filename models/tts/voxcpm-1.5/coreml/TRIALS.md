@@ -218,6 +218,7 @@ Stop head fires at similar points. Compiled `.mlmodelc` sizes unchanged (CoreML 
 **Workaround:** Narrowed FP16 exceptions to only the 4 head projections (ops 168-171: lm_hidden, fsq, stop_proj, stop_head) which don't share params with transformer layers. This compiled successfully.
 
 **Outcome:** Mixed precision works but unnecessary — full INT8 (Trial 22) produces equivalent quality since the stop head's noise is handled by the text-length-proportional minLen heuristic. Abandoned in favor of simpler full INT8.
+
 ---
 
 ## Summary of Key Bugs
