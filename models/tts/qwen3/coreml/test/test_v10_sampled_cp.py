@@ -27,7 +27,7 @@ def sample_top_k(logits_np, temperature=0.9, top_k=50):
     return int(np.random.choice(len(probs), p=probs))
 
 
-def sample_cb0(logits_np, temperature=0.9, top_k=50, eos_token=151670):
+def sample_cb0(logits_np, temperature=0.9, top_k=50, eos_token=2150):
     """Sample CB0 with suppression of non-codec tokens."""
     logits = logits_np.copy().flatten()
     for i in range(2048, len(logits)):
@@ -36,7 +36,7 @@ def sample_cb0(logits_np, temperature=0.9, top_k=50, eos_token=151670):
     return sample_top_k(logits, temperature=temperature, top_k=top_k)
 
 
-def greedy_cb0(logits_np, eos_token=151670):
+def greedy_cb0(logits_np, eos_token=2150):
     """Greedy CB0 with suppression."""
     logits = logits_np.copy().flatten()
     for i in range(2048, len(logits)):
@@ -105,7 +105,7 @@ def run_pipeline(name, decode_ml, cp_prefill_ml, cp_decode_ml, cp_embeds_np,
                  actual_len, sample_cb1_15=True, sample_cb0_flag=False, seed=42):
     """Run full pipeline with specified sampling config."""
     np.random.seed(seed)
-    EOS_TOKEN = 151670
+    EOS_TOKEN = 2150
 
     # First CB0
     if sample_cb0_flag:

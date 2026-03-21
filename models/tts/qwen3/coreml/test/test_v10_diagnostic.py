@@ -43,7 +43,7 @@ def run_code_predictor_coreml(cp_prefill_ml, cp_decode_ml, cp_embeds_np, past_hi
     return tokens
 
 
-def sample_top_k(logits_np, temperature=0.9, top_k=50, suppress_above=2048, eos_token=151670):
+def sample_top_k(logits_np, temperature=0.9, top_k=50, suppress_above=2048, eos_token=2150):
     """Sample from logits with temperature and top-k."""
     logits = logits_np.copy().flatten().astype(np.float64)
     # Suppress invalid tokens
@@ -63,7 +63,7 @@ def sample_top_k(logits_np, temperature=0.9, top_k=50, suppress_above=2048, eos_
     return int(np.random.choice(len(probs), p=probs))
 
 
-def greedy_sample(logits_np, suppress_above=2048, eos_token=151670):
+def greedy_sample(logits_np, suppress_above=2048, eos_token=2150):
     """Greedy argmax with suppression."""
     logits = logits_np.copy().flatten()
     for i in range(suppress_above, len(logits)):
@@ -134,7 +134,7 @@ def main():
     kv_cache = kv_cache_raw[:, :, :, :actual_len, :]
     print(f"   KV cache trimmed: {kv_cache.shape}")
 
-    EOS_TOKEN = 151670
+    EOS_TOKEN = 2150
     first_cb0 = greedy_sample(prefill_logits)
     print(f"   First CB0: {first_cb0}")
 
