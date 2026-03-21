@@ -783,9 +783,9 @@ def compare(
             hyp = coreml_alignments[i]
             typer.echo(
                 f"    {ref['text']:12s}  "
-                f"PT: {ref['start_ms']:7.1f}-{ref['end_ms']:7.1f}  "
+                f"PT: {ref['start_time_ms']:7.1f}-{ref['end_time_ms']:7.1f}  "
                 f"CM: {hyp.start_ms:7.1f}-{hyp.end_ms:7.1f}  "
-                f"Δ: {abs(ref['start_ms'] - hyp.start_ms):5.1f}/{abs(ref['end_ms'] - hyp.end_ms):5.1f}ms"
+                f"Δ: {abs(ref['start_time_ms'] - hyp.start_ms):5.1f}/{abs(ref['end_time_ms'] - hyp.end_ms):5.1f}ms"
             )
 
     # Overall summary
