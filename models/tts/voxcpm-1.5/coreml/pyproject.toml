@@ -1,0 +1,17 @@
+[project]
+name = "voxcpm-1.5-coreml"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "coremltools>=8.0",
+    "torch>=2.4",
+    "torchaudio>=2.4",
+    "numpy<2",
+    "safetensors",
+    "scipy",
+    "transformers",
+    "voxcpm",
+]
+
+[tool.uv]
+python = "3.10"

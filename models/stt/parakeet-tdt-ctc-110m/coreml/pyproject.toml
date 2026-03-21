@@ -1,7 +1,7 @@
 [project]
 name = "parakeet-tdt-ctc-coreml"
 version = "0.1.0"
-description = "CoreML export tools for nvidia/parakeet-tdt_ctc-110m (CTC branch)"
+description = "CoreML export tools for nvidia/parakeet-tdt_ctc-110m (TDT + CTC branches)"
 readme = "README.md"
 requires-python = "==3.10.12"
 dependencies = [
@@ -22,13 +22,17 @@ dependencies = [
     "jiwer==3.1.0",
     "librosa==0.10.1",
     "pyannote.core==5.0.0",
+    "pyannote.metrics==3.2.1",
+    "ipython>=8.0",
     "webdataset==0.2.86",
-    "datasets==3.1.0",
-    "fsspec==2024.9.0",
+    "datasets==3.3.2",
+    "editdistance==0.8.1",
+    "fsspec==2024.12.0",
 ]
 
 [project.scripts]
 parakeet-tdt-ctc-coreml = "convert-coreml:app"
+parakeet-tdt-coreml = "convert-tdt-coreml:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -37,6 +41,8 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 include = [
     "convert-coreml.py",
+    "convert-tdt-coreml.py",
+    "individual_components.py",
     "README.md",
     "audio/**",
 ]

@@ -1,0 +1,25 @@
+[project]
+name = "qwen3-asr-coreml"
+version = "0.1.0"
+description = "Qwen3-ASR-0.6B CoreML conversion"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "coremltools>=8.1",
+    "torch>=2.4.0",
+    "transformers>=4.57.6,<5.0.0",
+    "numpy>=1.26.4",
+    "soundfile>=0.13.1",
+    "datasets>=2.21,<3.0",
+    "librosa>=0.10.0",
+    "huggingface-hub>=0.33.1",
+    "typer>=0.16.0",
+    "safetensors>=0.5.3",
+]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["convert-qwen3-asr.py", "individual_components.py"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

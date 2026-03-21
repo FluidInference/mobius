@@ -1,0 +1,15 @@
+pytorch-lightning==1.8.2
+torch==1.13.0
+pyyaml
+hyperpyyaml
+librosa
+matplotlib
+soundfile
+sounddevice
+scipy
+coremltools
+torchaudio
+torchmetrics
+h5py
+pyannote.metrics
+pyannote.core

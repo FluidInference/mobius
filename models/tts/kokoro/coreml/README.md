@@ -237,6 +237,28 @@ Details: [Model Architecture Doc](doc/v21_conversion_script_outline.md)
 
 ---
 
+## G2P (Grapheme-to-Phoneme)
+
+The `g2p/` directory contains a standalone CoreML conversion for a transformer-based grapheme-to-phoneme model. This is an English-only neural replacement for eSpeak, converting raw text into phoneme sequences that feed into the Kokoro TTS pipeline.
+
+The model is a fine-tuned BART encoder-decoder ([PeterReid/graphemes_to_phonemes_en_us](https://huggingface.co/PeterReid/graphemes_to_phonemes_en_us)) with a manual decoder implementation.
+
+**Outputs**:
+- `G2PEncoder.mlpackage` - Encoder (input characters -> hidden states)
+- `G2PDecoder.mlpackage` - Autoregressive decoder (hidden states -> phoneme tokens)
+- `g2p_vocab.json` - Character/phoneme vocabulary mappings
+
+**Usage**:
+
+```bash
+cd g2p
+python convert-to-coreml.py
+```
+
+The script downloads the model, verifies the manual decoder matches HuggingFace output, converts both encoder and decoder to CoreML, and runs end-to-end verification.
+
+---
+
 ## Troubleshooting
 
 **Robotic audio?**
@@ -265,14 +287,16 @@ See [Problems Encountered](doc/problems_encountered.md) for detailed solutions.
 ## Project Structure
 
 ```
-tts/
+coreml/
 ├── v21.py                    # Main conversion script (notebook-compatible)
-├── doc/
-│   ├── v21_conversion_script_outline.md
-│   └── problems_encountered.md
+├── pyproject.toml            # Project dependencies (use uv sync)
 ├── kokoro_coreml_fix.patch   # Required Kokoro patches
-├── requirements.txt
-└── pyproject.toml
+├── G2P/
+│   ├── convert_to_coreml.py  # G2P BART model -> CoreML conversion
+│   └── compile_modelc.py     # Compile .mlpackage -> .mlmodelc via xcrun
+└── doc/
+    ├── v21_conversion_script_outline.md
+    └── problems_encountered.md
 ```
 
 **v21.py** uses `# %%` cell markers - open in VS Code/Jupyter as notebook.

@@ -1,0 +1,19 @@
+[project]
+name = "charsiu-g2p-byt5-coreml"
+version = "0.1.0"
+description = "CharsiuG2P ByT5 multilingual G2P — CoreML conversion"
+requires-python = ">=3.10"
+dependencies = [
+    "coremltools>=7.0,<8.0",
+    "numpy>=1.24",
+    "onnx>=1.14.0",
+    "torch>=2.0.0",
+    "transformers>=4.30.0,<4.50",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["convert-to-coreml.py", "compile-modelc.py"]

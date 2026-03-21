@@ -1,0 +1,20 @@
+[project]
+name = "kokoro-coreml"
+version = "0.1.0"
+description = "Kokoro TTS CoreML conversion and inference"
+requires-python = ">=3.10"
+dependencies = [
+    "coremltools>=8.0",
+    "kokoro>=0.9",
+    "misaki>=0.9",
+    "numpy>=1.24",
+    "soundfile>=0.12",
+    "torch>=2.7,<2.8",
+    "transformers>=4.30,<4.48",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipython",
+    "jupyter",
+]
