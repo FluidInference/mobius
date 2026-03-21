@@ -89,9 +89,6 @@ def convert_decoder_step(nemo_path=None, max_seq_len=512, max_text_len=256,
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     mlmodel.save(output_path)
-
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    mlmodel.save(output_path)
     print(f"Saved to {output_path}")
 
     # Print output spec
