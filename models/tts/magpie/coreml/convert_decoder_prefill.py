@@ -15,7 +15,7 @@ import torch
 import numpy as np
 import coremltools as ct
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from traceable.traceable_decoder_prefill import TraceableDecoderPrefill
 
 
