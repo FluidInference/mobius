@@ -38,7 +38,7 @@ def convert_decoder_prefill(nemo_path=None, max_seq_len=512, max_text_len=256,
     d_head = d_model // sa_n_heads
 
     # Read T_ctx from speaker_info if not specified
-    constants_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "constants")
+    constants_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "constants")
     si_path = os.path.join(constants_dir, "speaker_info.json")
     if os.path.exists(si_path):
         with open(si_path) as f:
