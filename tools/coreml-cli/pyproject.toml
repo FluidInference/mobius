@@ -1,0 +1,24 @@
+[project]
+name = "coreml-cli"
+version = "0.1.0"
+description = "CLI tool to profile CoreML model compute device assignments (CPU/GPU/ANE)"
+readme = "README.md"
+authors = [
+    { name = "Brandon Weng", email = "wengbrandon@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "typer",
+    "pyobjc-core",
+    "pyobjc-framework-CoreML",
+    "pyobjc-framework-Cocoa",
+    "coremltools",
+    "huggingface-hub[cli]>=1.7.2",
+]
+
+[project.scripts]
+coreml-cli = "coreml_cli.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.10.12,<0.11.0"]
+build-backend = "uv_build"

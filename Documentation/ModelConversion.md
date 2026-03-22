@@ -295,7 +295,27 @@ For simple conversions, a "Known Issues" section in the README is enough. For co
 
 ---
 
-## Step 8: Write the README
+## Step 8: Profile with coreml-cli
+
+After validating numerical parity, profile the converted model to understand compute device assignment and latency:
+
+```bash
+cd tools/coreml-cli && uv sync   # one-time setup
+uv run coreml-cli path/to/build/model.mlmodelc
+```
+
+This shows, for each compute-unit configuration (`all`, `cpu_only`, `cpu_and_gpu`, `cpu_and_neural_engine`):
+- **Device assignment** — % of operations on CPU, GPU, and ANE
+- **Compile time** — time to load/compile the model
+- **Predict latency** — median inference time
+
+Use `--ops` to see which specific operations fall back to CPU (common with unsupported ANE ops). Use `--detailed` for private API data including backend support per op and why certain backends were rejected.
+
+Include the profiling results in your README and PR description — reviewers want to know ANE utilization and latency.
+
+---
+
+## Step 9: Write the README
 
 Every conversion directory needs a README documenting:
 
@@ -317,7 +337,7 @@ See existing READMEs for reference:
 
 ---
 
-## Step 9: Upload to HuggingFace
+## Step 10: Upload to HuggingFace
 
 Upload the converted models to the [`FluidInference`](https://huggingface.co/FluidInference) organization.
 
@@ -344,7 +364,7 @@ Naming convention: `{model-name}-coreml` (e.g., `FluidInference/parakeet-tdt-0.6
 
 ---
 
-## Step 10: Open the mobius PR
+## Step 11: Open the mobius PR
 
 The PR should include:
 
@@ -380,6 +400,7 @@ The PR should include:
 - [ ] Numerical parity checked against PyTorch baseline
 - [ ] End-to-end output verified (transcription, diarization, audio, etc.)
 - [ ] Inference smoke test passes on Apple Silicon
+- [ ] Profiled with `coreml-cli` — ANE utilization and latency documented
 
 ### Documentation
 
