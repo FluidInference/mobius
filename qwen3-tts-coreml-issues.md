@@ -199,14 +199,105 @@ Updated Swift to use the exact Python tokenizer output. This gave 25 prefill emb
 - Chinese: "你好,世界,這是一個文字轉語音系統的測試" ✓
 
 ### Performance (M2, debug build)
+
+**Before KV cache optimization:**
 | Metric | English | Chinese |
 |--------|---------|---------|
 | Model load | 2.8s | 1.8s |
 | Prefill | 3.5s (25 pos) | 1.5s (21 pos) |
 | Decode | 95.9s (99 frames) | 37.0s (55 frames) |
 | Frames/s | 1.0 | 1.5 |
+| RTFx | 0.04x | 0.10x |
 | Audio duration | 4.2s | 4.4s |
 | Peak memory | 1.46 GB | 1.42 GB |
+
+**After KV cache optimization (Issue 8):**
+| Metric | Value |
+|--------|-------|
+| Decode | 40.1s (67 frames) |
+| Frames/s | 1.7 |
+| RTFx | 0.10x |
+| Audio duration | 4.23s |
+| Peak memory | 1.48 GB |
+
+**Speedup**: 1.7x frames/s, 2.5x RTFx improvement
+
+## Issue 8: MCD KV Cache Warmup Running Every Frame
+
+### Symptoms
+- Decode performance was 1.0 frames/s, RTFx 0.04x
+- Each decode step took ~1s on M2
+
+### Root Cause
+The `getModelStridedKVCaches()` warmup prediction was called inside `runMultiCodeDecoder()`, which is invoked **every frame** (up to 125 times). This added a full MCD prediction per frame just to get properly-strided KV cache templates.
+
+Analysis showed 34 CoreML predictions per frame:
+- 1 warmup (getModelStridedKVCaches)
+- 16 MCD loop positions
+- 1 CodeEmbedder + 15 MultiCodeEmbedder
+- 1 CodeDecoder
+
+### Fix
+Moved the warmup to run once for the first frame, then reused the model's OUTPUT KV caches (which have proper non-contiguous strides) as templates for subsequent frames. Zero them in-place before each use.
+
+```swift
+// Before: warmup every frame (inside runMultiCodeDecoder)
+var (mcdKey, mcdVal) = try await getModelStridedKVCaches(model: model, kvLen: kvLen)
+
+// After: warmup once, reuse model outputs
+if let keyTemplate = kvKeyTemplate, let valTemplate = kvValTemplate {
+    mcdKey = keyTemplate  // From previous frame's final position output
+    mcdVal = valTemplate
+    // Zero in-place (preserves stride layout)
+    for i in 0..<mcdKey.count { mcdKey[i] = NSNumber(value: Float(0.0)) }
+} else {
+    // First frame only: run warmup
+    (mcdKey, mcdVal) = try await getModelStridedKVCaches(model: model, kvLen: kvLen)
+}
+```
+
+### Results
+- Decode time: 95.9s → 40.1s for similar frame counts
+- Frames/s: 1.0 → 1.7 (1.7x speedup)
+- RTFx: 0.04x → 0.10x (2.5x improvement)
+
+Eliminated 124 warmup predictions (1 per frame except first).
+
+## Issue 9: MCD Model Float32 Outputs Blocking ANE (Performance Bottleneck)
+
+### Symptoms
+- RTFx still at 0.10x after KV cache optimization (need 10x more to reach real-time)
+- MCD decode step is the slowest operation per frame
+
+### Root Cause
+CoreML profiler (`coreml-cli --fallback`) revealed:
+
+**MultiCodeDecoder:**
+- **0% ANE usage** (0/602 ops on ANE, all 602 on CPU)
+- Main blocker: "Invalid output tensor format: fp32"
+- 546 ops cannot run on ANE due to float32 outputs
+- Est. CPU cost: 3.6ms per prediction (×17 predictions per frame = 61ms baseline)
+
+**CodeDecoder (for comparison):**
+- **93% ANE usage** (2716/2921 ops on ANE)
+- Only 205 ops on CPU
+- Runs efficiently on `.cpuAndGPU` compute units
+
+### Fix Required
+Reconvert the MCD model in mobius with **float16 outputs** instead of float32. This is the conversion script's responsibility, not fixable in Swift.
+
+The model was likely converted with `--output-dtypes float32` or without specifying float16 precision for outputs. CoreML's ANE requires float16 for most operations.
+
+### Expected Impact
+If MCD achieves 93% ANE usage like CodeDecoder:
+- 3.6ms CPU → ~0.4ms ANE+CPU per prediction
+- 61ms → 6.8ms per frame (9x faster)
+- RTFx: 0.10x → ~0.9x (close to real-time on M2)
+
+Further optimizations needed to exceed 1.0x RTFx:
+- Batch the 15 MultiCodeEmbedder calls (if model supports batching)
+- Use vDSP/SIMD for element-wise embedding summation
+- Release build instead of debug
 
 ---
 
