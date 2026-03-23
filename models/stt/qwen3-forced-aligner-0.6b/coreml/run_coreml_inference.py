@@ -736,7 +736,7 @@ def compare(
             flac_map[f.name] = str(f)
 
     all_errors = []
-    for sample in ref_data[:num_files]:
+    for sample in ref_data["samples"][:num_files]:
         audio_path = sample["audio"]
         # Resolve relative/short paths
         if not Path(audio_path).exists():
@@ -746,7 +746,7 @@ def compare(
             else:
                 typer.echo(f"  WARNING: Cannot find {audio_path}, skipping")
                 continue
-        text = sample["text"]
+        text = sample["transcript"]
 
         typer.echo(f"\n=== {Path(audio_path).name} ===")
 
@@ -763,8 +763,8 @@ def compare(
         for i in range(n):
             ref = ref_alignments[i]
             hyp = coreml_alignments[i]
-            start_err = abs(ref["start_ms"] - hyp.start_ms)
-            end_err = abs(ref["end_ms"] - hyp.end_ms)
+            start_err = abs(ref["start_time_ms"] - hyp.start_ms)
+            end_err = abs(ref["end_time_ms"] - hyp.end_ms)
             sample_errors.extend([start_err, end_err])
             all_errors.extend([start_err, end_err])
 
@@ -783,9 +783,9 @@ def compare(
             hyp = coreml_alignments[i]
             typer.echo(
                 f"    {ref['text']:12s}  "
-                f"PT: {ref['start_ms']:7.1f}-{ref['end_ms']:7.1f}  "
+                f"PT: {ref['start_time_ms']:7.1f}-{ref['end_time_ms']:7.1f}  "
                 f"CM: {hyp.start_ms:7.1f}-{hyp.end_ms:7.1f}  "
-                f"Δ: {abs(ref['start_ms'] - hyp.start_ms):5.1f}/{abs(ref['end_ms'] - hyp.end_ms):5.1f}ms"
+                f"Δ: {abs(ref['start_time_ms'] - hyp.start_ms):5.1f}/{abs(ref['end_time_ms'] - hyp.end_ms):5.1f}ms"
             )
 
     # Overall summary

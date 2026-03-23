@@ -40,6 +40,18 @@ Things to keep in mind:
 - Target iOS17+ (most users are on iOS17/macOS 14 right now)
 - Use `uv` to manage dependencies
 
+## Tools
+
+### [`coreml-cli`](tools/coreml-cli/)
+
+Profile CoreML models from the command line — see per-operation compute device assignments (CPU/GPU/ANE), compilation time, and prediction latency across all `MLComputeUnits` configurations. Useful after converting a model to verify ANE compatibility and measure performance.
+
+```bash
+uvx --from "coreml-cli @ git+https://github.com/FluidInference/mobius.git#subdirectory=tools/coreml-cli" coreml-cli path/to/model.mlmodelc
+```
+
+See [`tools/coreml-cli/README.md`](tools/coreml-cli/README.md) for full usage.
+
 ## Citations
 
 ```code

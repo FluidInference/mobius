@@ -190,7 +190,7 @@ def _save_mlpackage(model: ct.models.MLModel, path: Path, description: str) -> N
 # Audio Encoder Conversion
 # ---------------------------------------------------------------------------
 
-def convert_audio_encoder(model, settings: ExportSettings) -> Path:
+def convert_audio_encoder(model, settings: ExportSettings, *, no_optimize: bool = False) -> Path:
     """Convert the audio encoder (24-layer, 1024 dim) to CoreML."""
     typer.echo("\n=== Converting Audio Encoder ===")
 
@@ -232,6 +232,7 @@ def convert_audio_encoder(model, settings: ExportSettings) -> Path:
         traced, inputs, outputs, settings,
         compute_units_override=settings.compute_units,
         compute_precision_override=None,  # default FP16
+        no_optimize=no_optimize,
     )
 
     path = settings.output_dir / "forced_aligner_audio_encoder.mlpackage"
@@ -244,7 +245,7 @@ def convert_audio_encoder(model, settings: ExportSettings) -> Path:
 # Audio Conv Conversion (split encoder: conv frontend only)
 # ---------------------------------------------------------------------------
 
-def convert_audio_conv(model, settings: ExportSettings) -> Path:
+def convert_audio_conv(model, settings: ExportSettings, *, no_optimize: bool = False) -> Path:
     """Convert the audio encoder conv frontend (no transformer) to CoreML."""
     typer.echo("\n=== Converting Audio Conv (split encoder) ===")
 
@@ -285,6 +286,7 @@ def convert_audio_conv(model, settings: ExportSettings) -> Path:
         traced, inputs, outputs, settings,
         compute_units_override=settings.compute_units,
         compute_precision_override=None,  # default FP16
+        no_optimize=no_optimize,
     )
 
     path = settings.output_dir / "forced_aligner_audio_conv.mlpackage"
@@ -297,7 +299,7 @@ def convert_audio_conv(model, settings: ExportSettings) -> Path:
 # Audio Transformer Conversion (split encoder: transformer + projection)
 # ---------------------------------------------------------------------------
 
-def convert_audio_transformer(model, settings: ExportSettings) -> Path:
+def convert_audio_transformer(model, settings: ExportSettings, *, no_optimize: bool = False) -> Path:
     """Convert the audio encoder transformer + projection to CoreML.
 
     This takes concatenated conv features from multiple chunks and runs
@@ -345,6 +347,7 @@ def convert_audio_transformer(model, settings: ExportSettings) -> Path:
         traced, inputs, outputs, settings,
         compute_units_override=settings.compute_units,
         compute_precision_override=ct.precision.FLOAT32,
+        no_optimize=no_optimize,
     )
 
     path = settings.output_dir / "forced_aligner_audio_transformer.mlpackage"
@@ -360,7 +363,7 @@ def convert_audio_transformer(model, settings: ExportSettings) -> Path:
 # Text Embedding Conversion
 # ---------------------------------------------------------------------------
 
-def convert_embedding(model, settings: ExportSettings) -> Path:
+def convert_embedding(model, settings: ExportSettings, *, no_optimize: bool = False) -> Path:
     """Convert the token embedding layer to CoreML."""
     typer.echo("\n=== Converting Token Embedding ===")
 
@@ -396,6 +399,7 @@ def convert_embedding(model, settings: ExportSettings) -> Path:
     coreml_model = _coreml_convert(
         traced, inputs, outputs, settings,
         compute_units_override=settings.compute_units,
+        no_optimize=no_optimize,
     )
 
     path = settings.output_dir / "forced_aligner_embedding.mlpackage"
@@ -408,7 +412,7 @@ def convert_embedding(model, settings: ExportSettings) -> Path:
 # LM Head Conversion
 # ---------------------------------------------------------------------------
 
-def convert_lm_head(model, settings: ExportSettings) -> Path:
+def convert_lm_head(model, settings: ExportSettings, *, no_optimize: bool = False) -> Path:
     """Convert the LM head (norm + linear) to CoreML.
 
     For ForcedAligner, the LM head processes the FULL sequence at once
@@ -454,6 +458,7 @@ def convert_lm_head(model, settings: ExportSettings) -> Path:
         traced, inputs, outputs, settings,
         compute_units_override=settings.compute_units,
         compute_precision_override=ct.precision.FLOAT32,
+        no_optimize=no_optimize,
     )
 
     path = settings.output_dir / "forced_aligner_lm_head.mlpackage"
@@ -466,7 +471,7 @@ def convert_lm_head(model, settings: ExportSettings) -> Path:
 # Prefill Decoder Conversion (NAR — single pass)
 # ---------------------------------------------------------------------------
 
-def convert_decoder_prefill(model, settings: ExportSettings) -> Path:
+def convert_decoder_prefill(model, settings: ExportSettings, *, no_optimize: bool = False) -> Path:
     """Convert the full decoder stack for NAR prefill.
 
     Unlike Qwen3-ASR which needs autoregressive decode with KV cache,
@@ -534,6 +539,7 @@ def convert_decoder_prefill(model, settings: ExportSettings) -> Path:
         traced, inputs, outputs, settings,
         compute_units_override=settings.compute_units,
         compute_precision_override=ct.precision.FLOAT32,
+        no_optimize=no_optimize,
     )
 
     path = settings.output_dir / "forced_aligner_decoder_prefill.mlpackage"
@@ -672,27 +678,27 @@ def convert(
     component_paths: Dict[str, object] = {}
 
     if "audio_encoder" in convert_list:
-        path = convert_audio_encoder(model, settings)
+        path = convert_audio_encoder(model, settings, no_optimize=no_optimize)
         component_paths["audio_encoder"] = {"path": path.name}
 
     if "audio_conv" in convert_list:
-        path = convert_audio_conv(model, settings)
+        path = convert_audio_conv(model, settings, no_optimize=no_optimize)
         component_paths["audio_conv"] = {"path": path.name}
 
     if "audio_transformer" in convert_list:
-        path = convert_audio_transformer(model, settings)
+        path = convert_audio_transformer(model, settings, no_optimize=no_optimize)
         component_paths["audio_transformer"] = {"path": path.name}
 
     if "embedding" in convert_list:
-        path = convert_embedding(model, settings)
+        path = convert_embedding(model, settings, no_optimize=no_optimize)
         component_paths["embedding"] = {"path": path.name}
 
     if "lm_head" in convert_list:
-        path = convert_lm_head(model, settings)
+        path = convert_lm_head(model, settings, no_optimize=no_optimize)
         component_paths["lm_head"] = {"path": path.name}
 
     if "decoder_prefill" in convert_list:
-        path = convert_decoder_prefill(model, settings)
+        path = convert_decoder_prefill(model, settings, no_optimize=no_optimize)
         component_paths["decoder_prefill"] = {"path": path.name, "num_layers": 28}
 
     write_metadata(settings, component_paths, model_id)

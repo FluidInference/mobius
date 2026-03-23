@@ -10,6 +10,24 @@ Code lives under `models/{class}/{model}/{target}`; follow the existing `vad/sil
 - `uv run python test.py` — execute the model-specific smoke test (e.g., diarization pipeline in `pyannote-community-1`).
 Run these from the target directory so relative paths resolve.
 
+## Profiling Converted Models
+After conversion, use `coreml-cli` to verify ANE compatibility and measure performance.
+
+**Setup** (one-time): `cd tools/coreml-cli && uv sync`
+
+**Benchmarking** — latency, compile time, and device assignment across compute units:
+- `uv run coreml-cli path/to/model.mlmodelc` — profile a single model across all compute-unit configs.
+- `uv run coreml-cli path/to/models/` — profile all `.mlmodelc` models in a directory.
+- `uv run coreml-cli model.mlmodelc --json` — JSON output for programmatic use.
+- `uv run coreml-cli model.mlmodelc --ops` — include per-operation device breakdown.
+- `uv run coreml-cli model.mlmodelc --detailed` — add private API data (backend support, estimated runtimes per backend).
+
+**ANE fallback analysis** — identify why ops fall back to CPU and what to fix:
+- `uv run coreml-cli model.mlmodelc --fallback` — show CPU ops grouped by ANE rejection reason.
+- `uv run coreml-cli model.mlmodelc --fallback --json` — structured JSON for agent parsing.
+
+Use `--fallback` in the optimization loop: change conversion → reconvert → `--fallback` → fix blockers → repeat. Common fixes: cast int32 to float16, decompose unsupported ops (LSTM, logical_and), fix cascading dependencies.
+
 ## Deployment Targets & Runtime Tips
 Things to keep in mind:
 - Trace with `.CpuOnly`.
