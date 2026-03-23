@@ -2,7 +2,11 @@
 
 This document captures the issues encountered during the CoreML port of Qwen3-TTS and their solutions.
 
-## Issue 1: CB0 Token Repetition (Stuck LM)
+---
+
+> **Note:** Issues 1-3 below are from the original 5-model + numpy architecture and have been **superseded** by the 6-model Argmax-style pipeline rewrite. Kept for historical reference only.
+
+## Issue 1: CB0 Token Repetition (Stuck LM) *(superseded)*
 
 ### Symptoms
 - Chinese audio was silent or unintelligible
@@ -35,7 +39,7 @@ for token in recentTokens {
 - Chinese: 64/65 unique CB0 (98%), natural EOS at frame 65
 - Both transcribe correctly with Whisper
 
-## Issue 2: Temperature/TopK Tuning
+## Issue 2: Temperature/TopK Tuning *(superseded)*
 
 ### Original Values (from PyTorch defaults)
 - Temperature: 0.9
@@ -47,7 +51,7 @@ for token in recentTokens {
 
 Lower temperature produces more deterministic, cleaner audio with less noise artifacts.
 
-## Issue 3: Audio Post-Processing
+## Issue 3: Audio Post-Processing *(superseded)*
 
 ### Symptoms
 - Raw audio had sibilance (harsh "s" sounds)
@@ -58,7 +62,7 @@ Added `AudioPostProcessor.applyTtsPostProcessing()` with:
 - De-essing: -4.0 dB reduction
 - Smoothing: enabled
 
-## Verification
+## Verification *(superseded)*
 
 ### Spectral Comparison (English)
 - Mel spectrogram cosine similarity: 93.7%
