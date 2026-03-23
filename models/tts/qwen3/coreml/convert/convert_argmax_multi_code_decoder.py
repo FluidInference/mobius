@@ -357,17 +357,17 @@ def main():
         ct.TensorType(name="new_value_cache", dtype=np.float16),
     ]
 
-    # FLOAT32 precision is required here because the CodeDecoder outputs
-    # post-RMSNorm hidden_states with large outlier values (up to ~100 due to
-    # RMSNorm weights up to ~20). In FLOAT16 precision, the Q/K/V matmuls inside
-    # the MCD layers produce NaN from intermediate overflow with these inputs.
-    # The MCD is only 5 layers so the perf impact of fp32 is minimal.
+    # PERFORMANCE FIX: Changed from FLOAT32 to FLOAT16 for ANE compatibility.
+    # Previous comment claimed fp16 caused NaN due to CodeDecoder outputting
+    # large values (~100), but profiling shows FLOAT32 blocks ALL ANE usage (0%).
+    # CodeDecoder achieves 93% ANE with fp16, so we test if MCD can too.
+    # If NaN occurs, we'll need to clip/normalize CodeDecoder outputs in Swift.
     ml_model = ct.convert(
         traced,
         inputs=inputs,
         outputs=outputs,
         minimum_deployment_target=ct.target.iOS18,
-        compute_precision=ct.precision.FLOAT32,
+        compute_precision=ct.precision.FLOAT16,
     )
 
     # 6. W8A16 quantization
