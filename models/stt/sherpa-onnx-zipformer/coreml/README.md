@@ -8,20 +8,19 @@ Standard RNN-T (transducer) with three components:
 
 | Component | Input | Output |
 |-----------|-------|--------|
-| **Encoder** | `x` (1, T, 80) mel frames + `x_lens` (1,) | `encoder_out` (1, T', joiner_dim) + `encoder_out_lens` (1,) |
+| **Preprocessor** (fused) | `audio_signal` (1, 239120) + `audio_length` (1,) | `encoder_out` (1, T', joiner_dim) + `encoder_out_lens` (1,) |
 | **Decoder** | `y` (1, context_size) token IDs | `decoder_out` (1, joiner_dim) |
 | **Joiner** | `encoder_out` (1, joiner_dim) + `decoder_out` (1, joiner_dim) | `logit` (1, vocab_size) |
 
 Key differences from Parakeet TDT models:
-- **Encoder takes mel frames** (80-dim), not raw audio — mel extraction is external
+- **Fused preprocessor** — kaldi fbank mel extraction + Zipformer2 encoder in one model, same `audio_signal` interface as Parakeet
 - **Stateless decoder** — embedding + Conv1d over a context window of token IDs (no LSTM)
 - **Standard RNNT joiner** — `tanh(enc + dec) → logits`, no duration prediction
+- **blank_id = 0** (not 1024/8192)
 
 ## Supported checkpoints
 
-| Model | Checkpoint | Vocab | Causal |
-|-------|-----------|-------|--------|
-| vosk-model-en-0.62-atc | `epoch-56-avg-4.pt` | 500 BPE | No |
+Any icefall Zipformer2 transducer checkpoint (`.pt` with `model_avg` or `model` state dict). The model config (encoder_dim, num_layers, etc.) is read from the checkpoint metadata.
 
 ## Usage
 
@@ -30,27 +29,30 @@ cd models/stt/sherpa-onnx-zipformer/coreml
 uv sync
 ```
 
-### Convert
+### Convert (fused, recommended)
 
 ```bash
 uv run python convert-coreml.py \
-    --checkpoint /Volumes/hdd/models/vosk/vosk-model-en-0.62-atc/am/epoch-56-avg-4.pt \
-    --tokens /Volumes/hdd/models/vosk/vosk-model-en-0.62-atc/lang/tokens.txt \
-    --output-dir ./build/vosk-0.62-atc
+    --checkpoint /path/to/epoch-N-avg-M.pt \
+    --tokens /path/to/tokens.txt \
+    --output-dir ./build/my-model
 ```
 
+This produces a `Preprocessor.mlpackage` that takes raw 16kHz audio — compatible with FluidAudio's `AsrModels.loadZipformer2(from:)`.
+
 Options:
-- `--float16` — export with FP16 precision
+- `--float16` — export with FP16 precision (halves model size)
 - `--compute-units CPU_AND_GPU` — target GPU acceleration
-- `--mel-frames 1495` — fixed encoder input size (default: ~15s of audio)
+- `--no-fuse-mel` — export standalone encoder taking mel frames (for debugging)
+- `--mel-frames 1495` — fixed encoder input size for `--no-fuse-mel` mode
 
 ### Validate
 
 ```bash
 uv run python compare-models.py \
-    --checkpoint /Volumes/hdd/models/vosk/vosk-model-en-0.62-atc/am/epoch-56-avg-4.pt \
-    --tokens /Volumes/hdd/models/vosk/vosk-model-en-0.62-atc/lang/tokens.txt \
-    --coreml-dir ./build/vosk-0.62-atc \
+    --checkpoint /path/to/epoch-N-avg-M.pt \
+    --tokens /path/to/tokens.txt \
+    --coreml-dir ./build/my-model \
     --audio-file sample_16khz.wav \
     --reference "expected transcription text"
 ```
@@ -61,31 +63,38 @@ Reports cosine similarity, max/mean absolute error for encoder outputs, and comp
 
 ```bash
 uv run python quantize-coreml.py \
-    --input-dir ./build/vosk-0.62-atc \
-    --output-dir ./build/vosk-0.62-atc-int8
+    --input-dir ./build/my-model \
+    --output-dir ./build/my-model-int8
 ```
 
-Applies int8 per-channel symmetric quantization to all components.
+Applies int8 per-channel symmetric quantization to all components (~3.4x compression).
+
+### Debug mel spectrogram
+
+```bash
+uv run python debug-fbank.py --samples 240000
+```
+
+Step-by-step comparison of `fused_fbank.py` vs `torchaudio.compliance.kaldi.fbank` at every processing stage. Verifies full kaldi parity (cosine=1.000000 at each step).
 
 ## Output structure
 
 ```
-build/vosk-0.62-atc/
-  encoder.mlpackage      # Zipformer2 encoder (mel → features)
-  decoder.mlpackage      # Stateless prediction network
-  joiner.mlpackage       # Joint network (enc + dec → logits)
-  vocab.json             # BPE vocabulary (index = token ID)
-  metadata.json          # Model configuration
+build/my-model/
+  Preprocessor.mlpackage   # Fused mel + encoder (audio → features)
+  decoder.mlpackage        # Stateless prediction network
+  joiner.mlpackage         # Joint network (enc + dec → logits)
+  vocab.json               # BPE vocabulary (index = token ID)
+  metadata.json            # Model configuration
 ```
 
-## Mel spectrogram
+## Mel spectrogram (fused)
 
-The encoder expects 80-dim log-mel filterbank features (kaldi-compatible):
-- Sample rate: 16 kHz
-- Window: 25 ms (400 samples), hop: 10 ms (160 samples)
-- Povey window, no dithering
-
-See `mel.py` for a reference implementation using `torchaudio.compliance.kaldi.fbank`.
+The fused preprocessor includes a kaldi-compatible fbank extractor (verified at cosine=1.000000 against torchaudio reference):
+- 80-dim log-mel filterbank
+- Sample rate: 16 kHz, window: 25 ms, hop: 10 ms
+- Povey window, preemphasis 0.97, DC offset removal
+- HTK mel scale, low=20 Hz, high=Nyquist
 
 ## Decoding
 
