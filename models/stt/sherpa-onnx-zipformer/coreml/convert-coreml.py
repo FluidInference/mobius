@@ -244,7 +244,10 @@ def _patch_single_conv2d_sub(m) -> None:
 # ---------------------------------------------------------------------------
 
 class EncoderForExport(nn.Module):
-    """Fuses encoder_embed + zipformer encoder + joiner encoder_proj."""
+    """Fuses encoder_embed + zipformer encoder + joiner encoder_proj.
+
+    Takes mel frames (T, 80) as input.
+    """
 
     def __init__(self, encoder_embed: nn.Module, encoder: nn.Module, encoder_proj: nn.Module):
         super().__init__()
@@ -253,6 +256,40 @@ class EncoderForExport(nn.Module):
         self.encoder_proj = encoder_proj
 
     def forward(self, x: torch.Tensor, x_lens: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        x, x_lens = self.encoder_embed(x, x_lens)
+        src_key_padding_mask = make_pad_mask(x_lens, x.shape[1])
+        x = x.permute(1, 0, 2)
+        encoder_out, encoder_out_lens = self.encoder(x, x_lens, src_key_padding_mask)
+        encoder_out = encoder_out.permute(1, 0, 2)
+        encoder_out = self.encoder_proj(encoder_out)
+        return encoder_out, encoder_out_lens
+
+
+class FusedPreprocessorForExport(nn.Module):
+    """Fuses mel extraction + encoder_embed + zipformer encoder + joiner encoder_proj.
+
+    Takes raw audio waveform (1, num_samples) as input, like Parakeet's preprocessor.
+    Produces encoder features (1, T', joiner_dim) and output lengths.
+    """
+
+    def __init__(
+        self,
+        fbank: nn.Module,
+        encoder_embed: nn.Module,
+        encoder: nn.Module,
+        encoder_proj: nn.Module,
+    ):
+        super().__init__()
+        self.fbank = fbank
+        self.encoder_embed = encoder_embed
+        self.encoder = encoder
+        self.encoder_proj = encoder_proj
+
+    def forward(self, audio_signal: torch.Tensor, audio_length: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        # audio_signal: (1, num_samples), audio_length: (1,) actual sample count
+        x = self.fbank(audio_signal)  # (T, 80)
+        x = x.unsqueeze(0)  # (1, T, 80)
+        x_lens = torch.tensor([x.shape[1]], dtype=torch.int64)
         x, x_lens = self.encoder_embed(x, x_lens)
         src_key_padding_mask = make_pad_mask(x_lens, x.shape[1])
         x = x.permute(1, 0, 2)
@@ -394,6 +431,18 @@ def convert(
         "--float16",
         help="Export with FLOAT16 precision (halves model size, faster serialization).",
     ),
+    fuse_mel: bool = typer.Option(
+        False,
+        "--fuse-mel",
+        help="Fuse kaldi fbank mel extraction into the encoder. The resulting "
+             "Preprocessor.mlpackage takes raw audio (1, num_samples) like Parakeet.",
+    ),
+    max_audio_samples: int = typer.Option(
+        239120,
+        "--max-audio-samples",
+        help="Maximum audio samples for fused mel mode (default: 239120 ≈ 14.95s at 16kHz, "
+             "produces 1495 mel frames for encoder compatibility).",
+    ),
 ) -> None:
     """Export Sherpa-ONNX Zipformer2 transducer to CoreML."""
     cu = _parse_compute_units(compute_units)
@@ -413,52 +462,100 @@ def convert(
     _patch_conv2d_subsampling(encoder_embed)
 
     # ---------------------------------------------------------------
-    # Encoder
+    # Encoder (or Fused Preprocessor)
     # ---------------------------------------------------------------
-    typer.echo(f"Tracing encoder (mel_frames={mel_frames})...")
-    enc = EncoderForExport(encoder_embed, encoder, joiner.encoder_proj).eval()
-    T = mel_frames
-    x = torch.randn(1, T, 80)
-    x_lens = torch.tensor([T], dtype=torch.int64)
-
-    # Capture pos-encoding outputs during reference pass, then freeze them
-    # to avoid aten::Int ops from pe.size() indexing during tracing.
-    captured, hooks = _freeze_rel_pos_encoding(encoder)
-
-    with torch.no_grad():
-        ref_enc_out, ref_enc_lens = enc(x, x_lens)
-
-    _apply_frozen_pos_encoding(encoder, captured, hooks)
-
-    with torch.no_grad():
-        traced_enc = torch.jit.trace(enc, (x, x_lens), strict=False)
-
-    typer.echo("Converting encoder to CoreML...")
-    enc_ml = ct.convert(
-        traced_enc,
-        inputs=[
-            ct.TensorType(name="x", shape=(1, T, 80), dtype=np.float32),
-            ct.TensorType(name="x_lens", shape=(1,), dtype=np.int32),
-        ],
-        outputs=[
-            ct.TensorType(name="encoder_out", dtype=np.float32),
-            ct.TensorType(name="encoder_out_lens", dtype=np.int32),
-        ],
-        convert_to="mlprogram",
-        minimum_deployment_target=ct.target.iOS18,
-        compute_units=cu,
-        compute_precision=precision,
-        skip_model_load=True,
-    )
-    typer.echo("CoreML conversion done. Saving encoder...")
-    enc_path = output_dir / "encoder.mlpackage"
-    enc_ml.short_description = f"Zipformer2 Encoder ({T} mel frames)"
-    enc_ml.author = AUTHOR
     import shutil
-    if enc_path.exists():
-        shutil.rmtree(enc_path)
-    enc_ml.save(str(enc_path))
-    typer.echo(f"  -> {enc_path}")
+
+    if fuse_mel:
+        # Fused mode: mel extraction + encoder in one model (like Parakeet's Preprocessor)
+        from fused_fbank import KaldiFbank
+
+        typer.echo(f"Tracing fused preprocessor (max_audio_samples={max_audio_samples})...")
+        fbank = KaldiFbank().eval()
+        fused = FusedPreprocessorForExport(
+            fbank, encoder_embed, encoder, joiner.encoder_proj
+        ).eval()
+
+        audio_in = torch.randn(1, max_audio_samples)
+        audio_len = torch.tensor([max_audio_samples], dtype=torch.int64)
+
+        # Capture pos-encoding outputs during reference pass, then freeze them
+        captured, hooks = _freeze_rel_pos_encoding(encoder)
+        with torch.no_grad():
+            ref_enc_out, ref_enc_lens = fused(audio_in, audio_len)
+        _apply_frozen_pos_encoding(encoder, captured, hooks)
+
+        with torch.no_grad():
+            traced_enc = torch.jit.trace(fused, (audio_in, audio_len), strict=False)
+
+        typer.echo("Converting fused preprocessor to CoreML...")
+        enc_ml = ct.convert(
+            traced_enc,
+            inputs=[
+                ct.TensorType(name="audio_signal", shape=(1, max_audio_samples), dtype=np.float32),
+                ct.TensorType(name="audio_length", shape=(1,), dtype=np.int32),
+            ],
+            outputs=[
+                ct.TensorType(name="encoder_out", dtype=np.float32),
+                ct.TensorType(name="encoder_out_lens", dtype=np.int32),
+            ],
+            convert_to="mlprogram",
+            minimum_deployment_target=ct.target.iOS18,
+            compute_units=cu,
+            compute_precision=precision,
+            skip_model_load=True,
+        )
+        typer.echo("CoreML conversion done. Saving preprocessor...")
+        enc_path = output_dir / "Preprocessor.mlpackage"
+        enc_ml.short_description = f"Zipformer2 Fused Preprocessor ({max_audio_samples} samples)"
+        enc_ml.author = AUTHOR
+        if enc_path.exists():
+            shutil.rmtree(enc_path)
+        enc_ml.save(str(enc_path))
+        typer.echo(f"  -> {enc_path}")
+
+    else:
+        # Mel-frames mode: encoder takes mel spectrogram (1, T, 80)
+        typer.echo(f"Tracing encoder (mel_frames={mel_frames})...")
+        enc = EncoderForExport(encoder_embed, encoder, joiner.encoder_proj).eval()
+        T = mel_frames
+        x = torch.randn(1, T, 80)
+        x_lens = torch.tensor([T], dtype=torch.int64)
+
+        # Capture pos-encoding outputs during reference pass, then freeze them
+        captured, hooks = _freeze_rel_pos_encoding(encoder)
+        with torch.no_grad():
+            ref_enc_out, ref_enc_lens = enc(x, x_lens)
+        _apply_frozen_pos_encoding(encoder, captured, hooks)
+
+        with torch.no_grad():
+            traced_enc = torch.jit.trace(enc, (x, x_lens), strict=False)
+
+        typer.echo("Converting encoder to CoreML...")
+        enc_ml = ct.convert(
+            traced_enc,
+            inputs=[
+                ct.TensorType(name="x", shape=(1, T, 80), dtype=np.float32),
+                ct.TensorType(name="x_lens", shape=(1,), dtype=np.int32),
+            ],
+            outputs=[
+                ct.TensorType(name="encoder_out", dtype=np.float32),
+                ct.TensorType(name="encoder_out_lens", dtype=np.int32),
+            ],
+            convert_to="mlprogram",
+            minimum_deployment_target=ct.target.iOS18,
+            compute_units=cu,
+            compute_precision=precision,
+            skip_model_load=True,
+        )
+        typer.echo("CoreML conversion done. Saving encoder...")
+        enc_path = output_dir / "encoder.mlpackage"
+        enc_ml.short_description = f"Zipformer2 Encoder ({T} mel frames)"
+        enc_ml.author = AUTHOR
+        if enc_path.exists():
+            shutil.rmtree(enc_path)
+        enc_ml.save(str(enc_path))
+        typer.echo(f"  -> {enc_path}")
 
     # ---------------------------------------------------------------
     # Decoder
@@ -532,13 +629,38 @@ def convert(
     # ---------------------------------------------------------------
     # Metadata
     # ---------------------------------------------------------------
+    # Build encoder/preprocessor component metadata
+    if fuse_mel:
+        encoder_component = {
+            "path": enc_path.name,
+            "inputs": {
+                "audio_signal": [1, max_audio_samples],
+                "audio_length": [1],
+            },
+            "outputs": {
+                "encoder_out": list(ref_enc_out.shape),
+                "encoder_out_lens": list(ref_enc_lens.shape),
+            },
+        }
+    else:
+        encoder_component = {
+            "path": enc_path.name,
+            "inputs": {"x": [1, mel_frames, 80], "x_lens": [1]},
+            "outputs": {
+                "encoder_out": list(ref_enc_out.shape),
+                "encoder_out_lens": list(ref_enc_lens.shape),
+            },
+        }
+
     metadata = {
         "model_type": "zipformer2_transducer",
+        "fused_mel": fuse_mel,
         "source": "sherpa-onnx / icefall",
         "checkpoint": str(checkpoint.name),
         "sample_rate": 16000,
         "feature_dim": int(ckpt.get("feature_dim", 80)),
-        "mel_frames": T,
+        "max_audio_samples": max_audio_samples if fuse_mel else None,
+        "mel_frames": None if fuse_mel else mel_frames,
         "subsampling_factor": int(ckpt.get("subsampling_factor", 4)),
         "vocab_size": vocab_size,
         "blank_id": blank_id,
@@ -551,14 +673,7 @@ def convert(
             "deployment_target": "iOS18",
         },
         "components": {
-            "encoder": {
-                "path": enc_path.name,
-                "inputs": {"x": [1, T, 80], "x_lens": [1]},
-                "outputs": {
-                    "encoder_out": list(ref_enc_out.shape),
-                    "encoder_out_lens": list(ref_enc_lens.shape),
-                },
-            },
+            "preprocessor" if fuse_mel else "encoder": encoder_component,
             "decoder": {
                 "path": dec_path.name,
                 "inputs": {"y": [1, context_size]},
