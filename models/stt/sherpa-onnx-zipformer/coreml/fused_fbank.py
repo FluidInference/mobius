@@ -49,7 +49,9 @@ class KaldiFbank(nn.Module):
         self.hop_length = hop_length
         self.win_length = win_length
         self.preemph = preemph
-        self.energy_floor = 1.0
+        # Kaldi fbank uses machine epsilon as the log floor (not energy_floor=1.0,
+        # which is only for raw signal energy). This preserves low-energy mel bins.
+        self.log_floor = torch.finfo(torch.float32).eps
 
         # Povey window = hann^0.85 (win_length samples, NOT zero-padded to n_fft)
         hann = torch.hann_window(win_length, periodic=False)
@@ -61,7 +63,7 @@ class KaldiFbank(nn.Module):
 
         kaldi_fb, _ = kaldi_mod.get_mel_banks(
             n_mels, n_fft, sample_rate,
-            low_freq=20.0, high_freq=sample_rate / 2.0 - 400.0,
+            low_freq=20.0, high_freq=0.0,  # 0.0 = Nyquist (fbank() default)
             vtln_low=100.0, vtln_high=-500.0, vtln_warp_factor=1.0,
         )
         # kaldi_fb is (n_mels, n_fft//2) — pad with zero column for Nyquist bin
@@ -113,6 +115,10 @@ class KaldiFbank(nn.Module):
     def forward(self, waveform: torch.Tensor) -> torch.Tensor:
         """Compute log-mel fbank features.
 
+        Matches torchaudio.compliance.kaldi.fbank exactly by following kaldi's
+        processing order: reflection pad → frame → DC offset → preemph per-frame
+        → povey window → zero-pad → FFT → power → mel → log.
+
         Args:
             waveform: (1, num_samples) raw audio at 16kHz.
 
@@ -121,46 +127,49 @@ class KaldiFbank(nn.Module):
         """
         # Remove batch dim for processing
         x = waveform[0]  # (num_samples,)
-
-        # Apply preemphasis: y[n] = x[n] - preemph * x[n-1]
-        if self.preemph > 0:
-            x = torch.cat([x[:1], x[1:] - self.preemph * x[:-1]])
-
-        # Kaldi snip_edges=False: frame i is centered at i * hop_length,
-        # so frame 0 needs win_length//2 samples of left context.
-        left_pad = self.win_length // 2
         num_samples = x.shape[0]
-        num_frames = (num_samples + self.hop_length // 2) // self.hop_length
-        total_needed = (num_frames - 1) * self.hop_length + self.win_length
-        right_pad = max(0, total_needed - num_samples - left_pad)
-        x = F.pad(x, (left_pad, right_pad))
 
-        # Frame the signal using reshape instead of unfold (coremltools compatible).
-        # With fixed input size, num_frames is a constant baked into the trace.
-        # Use index_select with pre-computed frame indices.
+        # --- Step 1: Reflection padding (matches kaldi snip_edges=False) ---
+        # kaldi: pad = window_size//2 - window_shift//2
+        left_pad = self.win_length // 2 - self.hop_length // 2  # 200 - 80 = 120
+        num_frames = (num_samples + self.hop_length // 2) // self.hop_length
+
+        # Kaldi uses reflection: cat(reversed[-pad:], signal, reversed_full)
+        x_reversed = x.flip(0)
+        if left_pad > 0:
+            pad_left = x_reversed[-left_pad:]
+        else:
+            pad_left = x[:0]  # empty tensor if no left pad needed
+        x_padded = torch.cat([pad_left, x, x_reversed])
+
+        # --- Step 2: Frame extraction via index gather (coremltools compatible) ---
         frame_starts = torch.arange(num_frames) * self.hop_length
         sample_offsets = torch.arange(self.win_length)
-        # (num_frames, 1) + (1, win_length) -> (num_frames, win_length)
         indices = frame_starts.unsqueeze(1) + sample_offsets.unsqueeze(0)
-        frames = x[indices]  # (num_frames, win_length)
+        frames = x_padded[indices]  # (num_frames, win_length)
 
-        # Remove DC offset per frame (kaldi default)
+        # --- Step 3: Remove DC offset per frame (kaldi default) ---
         frames = frames - frames.mean(dim=1, keepdim=True)
 
-        # Apply povey window
+        # --- Step 4: Preemphasis PER-FRAME (kaldi applies after framing) ---
+        # kaldi: pad first sample with replicate, then frame[j] -= coeff * frame[j-1]
+        if self.preemph > 0:
+            first_col = frames[:, :1]  # replicate first sample
+            shifted = torch.cat([first_col, frames[:, :-1]], dim=1)
+            frames = frames - self.preemph * shifted
+
+        # --- Step 5: Apply povey window ---
         frames = frames * self.window  # (num_frames, win_length)
 
-        # Zero-pad to n_fft for FFT
-        frames = F.pad(frames, (0, self.n_fft - self.win_length))  # (num_frames, n_fft)
+        # --- Step 6: Zero-pad to n_fft for FFT ---
+        frames = F.pad(frames, (0, self.n_fft - self.win_length))
 
-        # FFT -> power spectrum
-        spectrum = torch.fft.rfft(frames, n=self.n_fft)  # (T, n_fft//2+1)
-        power = spectrum.real.pow(2) + spectrum.imag.pow(2)  # (T, n_fft//2+1)
+        # --- Step 7: FFT → power spectrum ---
+        spectrum = torch.fft.rfft(frames, n=self.n_fft)
+        power = spectrum.abs().pow(2)  # matches torchaudio: .abs().pow(2.0)
 
-        # Apply mel filterbank: (T, n_fft//2+1) @ (n_fft//2+1, n_mels) -> (T, n_mels)
-        mel = torch.matmul(power, self.mel_filterbank.t())  # (T, n_mels)
-
-        # Log with energy floor
-        mel = torch.clamp(mel, min=self.energy_floor).log()
+        # --- Step 8: Mel filterbank → log ---
+        mel = torch.matmul(power, self.mel_filterbank.t())
+        mel = torch.max(mel, torch.tensor(self.log_floor)).log()
 
         return mel  # (T, n_mels)
