@@ -1,0 +1,41 @@
+[project]
+name = "sherpa-onnx-zipformer-coreml"
+version = "0.1.0"
+description = "CoreML export tools for Sherpa-ONNX Zipformer2 transducer models (icefall checkpoints)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "coremltools>=8.1,<9.1",
+    "numpy>=1.26",
+    "torch==2.7.0",
+    "torchaudio==2.7.0",
+    "soundfile>=0.12",
+    "typer>=0.12",
+    "jiwer>=3.0",
+]
+
+[project.scripts]
+sherpa-onnx-zipformer-coreml = "convert-coreml:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = [
+    "convert-coreml.py",
+    "compare-models.py",
+    "quantize-coreml.py",
+    "mel.py",
+    "rnnt_decode.py",
+    "scaling.py",
+    "zipformer.py",
+    "subsampling.py",
+    "decoder.py",
+    "joiner.py",
+    "encoder_interface.py",
+    "scaling_converter.py",
+    "icefall/",
+    "k2/",
+    "README.md",
+]
