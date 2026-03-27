@@ -432,10 +432,11 @@ def convert(
         help="Export with FLOAT16 precision (halves model size, faster serialization).",
     ),
     fuse_mel: bool = typer.Option(
-        False,
-        "--fuse-mel",
-        help="Fuse kaldi fbank mel extraction into the encoder. The resulting "
-             "Preprocessor.mlpackage takes raw audio (1, num_samples) like Parakeet.",
+        True,
+        "--fuse-mel/--no-fuse-mel",
+        help="Fuse kaldi fbank mel extraction into the encoder (default: on). "
+             "The resulting Preprocessor.mlpackage takes raw audio (1, num_samples) "
+             "like Parakeet. Use --no-fuse-mel for standalone encoder with mel input.",
     ),
     max_audio_samples: int = typer.Option(
         239120,
