@@ -105,6 +105,17 @@ class JointWrapper(torch.nn.Module):
         return out
 
 
+class CTCDecoderWrapper(torch.nn.Module):
+    """CTC decoder head: encoder -> log-probabilities."""
+
+    def __init__(self, module: torch.nn.Module) -> None:
+        super().__init__()
+        self.module = module
+
+    def forward(self, encoder_output: torch.Tensor) -> torch.Tensor:
+        return self.module(encoder_output=encoder_output)
+
+
 class MelEncoderWrapper(torch.nn.Module):
     """Fused waveform -> mel -> encoder."""
 
@@ -121,6 +132,33 @@ class MelEncoderWrapper(torch.nn.Module):
         mel, mel_length = self.preprocessor(audio_signal, audio_length)
         encoded, enc_len = self.encoder(mel, mel_length.to(dtype=torch.int32))
         return encoded, enc_len
+
+
+class MelEncoderCtcWrapper(torch.nn.Module):
+    """Fused waveform -> mel -> encoder + CTC logits.
+
+    Outputs both TDT encoder features and CTC logits for unified custom vocabulary.
+    This eliminates the need for a separate CTC encoder model.
+    """
+
+    def __init__(
+        self,
+        preprocessor: PreprocessorWrapper,
+        encoder: EncoderWrapper,
+        ctc_decoder: torch.nn.Module,
+    ) -> None:
+        super().__init__()
+        self.preprocessor = preprocessor
+        self.encoder = encoder
+        self.ctc_decoder = ctc_decoder
+
+    def forward(
+        self, audio_signal: torch.Tensor, audio_length: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        mel, mel_length = self.preprocessor(audio_signal, audio_length)
+        encoded, enc_len = self.encoder(mel, mel_length.to(dtype=torch.int32))
+        ctc_logits = self.ctc_decoder(encoder_output=encoded)
+        return encoded, enc_len, ctc_logits
 
 
 class JointDecisionWrapper(torch.nn.Module):
