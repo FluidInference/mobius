@@ -330,7 +330,9 @@ class JoinerForExport(nn.Module):
 def load_model(ckpt_path: Path):
     """Load checkpoint and build encoder_embed, encoder, decoder, joiner."""
     ckpt = torch.load(str(ckpt_path), map_location="cpu", weights_only=False)
-    state_dict = ckpt.get("model_avg", ckpt["model"])
+    # Use "model" (not "model_avg") to match sherpa-onnx ONNX export weights.
+    # model_avg has different weights that produce substantially worse WER.
+    state_dict = ckpt["model"]
 
     encoder_embed = Conv2dSubsampling(
         in_channels=int(ckpt.get("feature_dim", 80)),
