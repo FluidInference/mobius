@@ -1,0 +1,21 @@
+{
+  "model_id": "CohereLabs/cohere-transcribe-03-2026",
+  "samples_per_language": 100,
+  "languages": [
+    "cmn_hans_cn"
+  ],
+  "results": {
+    "cmn_hans_cn": {
+      "pytorch": {
+        "language": "cmn_hans_cn",
+        "samples_processed": 100,
+        "wer": 98.62765088235966,
+        "cer": 50.751205762651544,
+        "rtfx": 0.9355245358412999,
+        "total_duration": 1104.8400000000004,
+        "processing_time": 1180.9845254421234,
+        "avg_latency": 11.809845254421234
+      }
+    }
+  }
+}

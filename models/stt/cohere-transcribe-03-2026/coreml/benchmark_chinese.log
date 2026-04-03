@@ -1,0 +1,46 @@
+================================================================================
+Cohere Transcribe FLEURS Benchmark
+================================================================================
+
+Languages: cmn_hans_cn
+Samples per language: 100
+Model: CohereLabs/cohere-transcribe-03-2026
+
+Loading PyTorch model: CohereLabs/cohere-transcribe-03-2026
+`torch_dtype` is deprecated! Use `dtype` instead!
+  ✓ PyTorch model loaded
+
+================================================================================
+Language: CMN_HANS_CN (zh)
+================================================================================
+Loading FLEURS dataset for cmn_hans_cn...
+  ✓ Loaded 945 test samples
+
+[PyTorch] Benchmarking cmn_hans_cn...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 98.63%
+    CER: 50.75%
+    RTFx: 0.94x
+    Avg Latency: 11.810s
+
+================================================================================
+Summary
+================================================================================
+
+Results saved to: fleurs_chinese_fixed.json
+
+Language Results:
+Language     WER (PyTorch)   WER (CoreML)    Samples   
+------------------------------------------------------------
+cmn_hans_cn  98.63%          N/A             100       
