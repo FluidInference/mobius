@@ -335,7 +335,7 @@ Output: `.mlmodelc` files for instant loading (skip compilation on device)
 uv run python benchmark-full-pipeline.py \
   --build-dir build-full \
   --num-samples 100 \
-  --output-file benchmark_results_int8_100.json
+  --output-file results.json
 ```
 
 Results:

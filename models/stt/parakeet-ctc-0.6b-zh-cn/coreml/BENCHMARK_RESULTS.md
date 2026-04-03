@@ -18,12 +18,10 @@
   - <5%: 32 samples (32.0%)
   - <10%: 69 samples (69.0%)
   - <20%: 92 samples (92.0%)
-- **Results file:** `benchmark_results_int8_100.json`
 
 #### FP16 Encoder (1.1 GB)
 - **Mean CER:** ~8.3% (similar performance to INT8)
 - **Mean Latency:** ~1,250 ms
-- **Results file:** `benchmark_results_fp16_100.json`
 
 ### Comparison with FLEURS
 
