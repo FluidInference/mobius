@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
-"""Export standalone CTC decoder head from hybrid TDT-CTC model to CoreML.
+"""Export standalone CTC decoder head from parakeet-ctc-0.6b-zh-cn (hybrid model) to CoreML.
 
-The CTC head is a single linear projection (encoder_dim -> vocab_size + 1)
-that maps encoder features to CTC log-probabilities. This tiny model (~0.5MB)
-enables custom vocabulary support without a separate CTC encoder.
-
-Architecture:
-    TDT Preprocessor -> encoder [1, D, T]
-                              |
-                        CtcHead model -> ctc_logits [1, T, V+1]
-                              |
-                  keyword spotting / vocabulary rescoring
+The CTC head is a single linear projection (1024 -> vocab_size+1) that maps encoder
+features to CTC log-probabilities for Mandarin Chinese (Simplified) transcription.
+This model is a hybrid RNNT+CTC model; we extract only the CTC decoder component.
 
 Usage:
-    uv run python export-ctc-head.py --output-dir ./ctc-head-build
-    uv run python export-ctc-head.py --nemo-path ./model.nemo --output-dir ./ctc-head-build
+    uv run python export-ctc-zh-cn.py --nemo-path ../parakeet-ctc-riva-0-6b-unified-zh-cn_vtrainable_v3.0/*.nemo --output-dir ./build
 """
 from __future__ import annotations
 
@@ -31,7 +23,6 @@ import nemo.collections.asr as nemo_asr
 
 from individual_components import CTCDecoderWrapper
 
-DEFAULT_MODEL_ID = "nvidia/parakeet-tdt_ctc-110m"
 AUTHOR = "Fluid Inference"
 
 app = typer.Typer(add_completion=False, pretty_exceptions_show_locals=False)
@@ -43,21 +34,16 @@ def _tensor_shape(tensor: torch.Tensor) -> Tuple[int, ...]:
 
 @app.command()
 def export(
-    nemo_path: Optional[Path] = typer.Option(
-        None,
+    nemo_path: Path = typer.Option(
+        ...,
         "--nemo-path",
         exists=True,
         resolve_path=True,
-        help="Path to hybrid TDT-CTC .nemo checkpoint",
-    ),
-    model_id: str = typer.Option(
-        DEFAULT_MODEL_ID,
-        "--model-id",
-        help="Model identifier when --nemo-path is omitted",
+        help="Path to zh-CN pure CTC .nemo checkpoint",
     ),
     output_dir: Path = typer.Option(
-        Path("ctc-head-build"),
-        help="Output directory for CtcHead.mlpackage",
+        Path("build"),
+        help="Output directory for CtcHeadZhCn.mlpackage",
     ),
     max_audio_seconds: float = typer.Option(
         15.0, "--max-audio-seconds", help="Fixed waveform window (seconds)"
@@ -68,7 +54,7 @@ def export(
         help="Compute units: ALL, CPU_ONLY, CPU_AND_NE",
     ),
 ) -> None:
-    """Export CTC decoder head as standalone CoreML model."""
+    """Export CTC decoder head from zh-CN pure CTC 0.6B model as standalone CoreML model."""
 
     cu_mapping = {
         "ALL": ct.ComputeUnit.ALL,
@@ -82,16 +68,11 @@ def export(
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load hybrid model
-    typer.echo(f"Loading hybrid TDT-CTC model ({'file' if nemo_path else 'pretrained'})...")
-    if nemo_path is not None:
-        asr_model = nemo_asr.models.EncDecHybridRNNTCTCBPEModel.restore_from(
-            str(nemo_path), map_location="cpu"
-        )
-    else:
-        asr_model = nemo_asr.models.EncDecHybridRNNTCTCBPEModel.from_pretrained(
-            model_id, map_location="cpu"
-        )
+    # Load hybrid model (has both RNNT and CTC decoders)
+    typer.echo(f"Loading zh-CN hybrid model from {nemo_path}...")
+    asr_model = nemo_asr.models.EncDecHybridRNNTCTCBPEModel.restore_from(
+        str(nemo_path), map_location="cpu"
+    )
     asr_model.eval()
 
     # Probe dimensions
@@ -117,7 +98,7 @@ def export(
     typer.echo(f"  encoder output: [{encoded.shape[0]}, {encoder_dim}, {time_steps}]")
     typer.echo(f"  vocab_size: {vocab_size}, ctc_classes: {vocab_size + 1}")
 
-    # Wrap CTC decoder head
+    # Wrap CTC decoder head (hybrid model uses .ctc_decoder)
     ctc_decoder = CTCDecoderWrapper(asr_model.ctc_decoder.eval())
 
     # Reference CTC output
@@ -158,9 +139,9 @@ def export(
     )
 
     # Save
-    mlpackage_path = output_dir / "CtcHead.mlpackage"
+    mlpackage_path = output_dir / "CtcHeadZhCn.mlpackage"
     mlmodel.short_description = (
-        f"CTC decoder head for parakeet-tdt-ctc-110m "
+        f"CTC decoder head from parakeet-ctc-0.6b-zh-cn "
         f"(encoder_dim={encoder_dim}, vocab={vocab_size}+1 blank)"
     )
     mlmodel.author = AUTHOR
@@ -176,24 +157,25 @@ def export(
 
     # Save metadata
     metadata = {
-        "model": "parakeet-tdt-ctc-110m-ctc-head",
-        "source": model_id if nemo_path is None else str(nemo_path),
+        "model": "parakeet-ctc-0.6b-zh-cn-ctc-head",
+        "language": "zh-CN (Mandarin Chinese Simplified)",
+        "source": str(nemo_path),
         "encoder_dim": encoder_dim,
         "time_steps": time_steps,
         "vocab_size": vocab_size,
         "ctc_classes": vocab_size + 1,
         "blank_id": vocab_size,
         "max_audio_seconds": max_audio_seconds,
+        "sample_rate": sample_rate,
         "input": {"encoder_output": [1, encoder_dim, time_steps]},
         "output": {"ctc_logits": list(_tensor_shape(ctc_ref))},
     }
     meta_path = output_dir / "ctc_head_metadata.json"
-    meta_path.write_text(json.dumps(metadata, indent=2))
+    meta_path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
     typer.echo(f"Saved metadata: {meta_path}")
 
-    typer.echo(f"\nDone! To compile and install:")
+    typer.echo(f"\nDone! To compile:")
     typer.echo(f"  xcrun coremlcompiler compile {mlpackage_path} {output_dir}/")
-    typer.echo(f"  cp -R {output_dir}/CtcHead.mlmodelc ~/Library/Application\\ Support/FluidAudio/Models/parakeet-tdt-ctc-110m/")
 
 
 if __name__ == "__main__":

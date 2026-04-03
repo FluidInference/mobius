@@ -1,0 +1,44 @@
+[project]
+name = "parakeet-ctc-06b-zh-cn-coreml"
+version = "0.1.0"
+description = "Export CTC decoder head from nvidia/riva/parakeet-ctc-riva-0-6b-unified-zh-cn to CoreML"
+requires-python = "==3.10.12"
+dependencies = [
+    "coremltools==9.0b1",
+    "numpy==1.26.4",
+    "soundfile==0.13.1",
+    "torch==2.7.0",
+    "typer==0.16.0",
+    "nemo-toolkit==2.3.1",
+    "huggingface-hub==0.25.2",
+    "hydra-core==1.3.2",
+    "lightning==2.1.3",
+    "lhotse==1.29.0",
+    "einops==0.7.0",
+    "transformers==4.38.2",
+    "sentencepiece==0.1.99",
+    "pandas==2.2.3",
+    "jiwer==3.1.0",
+    "librosa==0.10.1",
+    "pyannote.core==5.0.0",
+    "pyannote.metrics==3.2.1",
+    "ipython>=8.0",
+    "webdataset==0.2.86",
+    "datasets==3.3.2",
+    "editdistance==0.8.1",
+    "fsspec==2024.12.0",
+    "setuptools>=69.0,<81",
+    "rich>=13.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "export-ctc-zh-cn.py",
+    "validate-ctc-zh-cn.py",
+    "download-test-audio.py",
+    "individual_components.py",
+]
