@@ -1,0 +1,51 @@
+{
+  "model": "parakeet-tdt_ctc-0.6b-ja",
+  "language": "ja (Japanese)",
+  "source": "nvidia/parakeet-tdt_ctc-0.6b-ja",
+  "sample_rate": 16000,
+  "max_audio_seconds": 15.0,
+  "max_samples": 240000,
+  "vocab_size": 3072,
+  "blank_id": 3072,
+  "mel_features": 80,
+  "mel_frames": 1501,
+  "encoder_dim": 1024,
+  "time_steps": 188,
+  "components": {
+    "preprocessor": {
+      "input": [
+        1,
+        240000
+      ],
+      "output": [
+        1,
+        80,
+        1501
+      ]
+    },
+    "encoder": {
+      "input": [
+        1,
+        80,
+        1501
+      ],
+      "output": [
+        1,
+        1024,
+        188
+      ]
+    },
+    "ctc_decoder": {
+      "input": [
+        1,
+        1024,
+        188
+      ],
+      "output": [
+        1,
+        188,
+        3073
+      ]
+    }
+  }
+}
