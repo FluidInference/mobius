@@ -1,0 +1,381 @@
+Uninstalled 1 package in 0.90ms
+Installed 1 package in 1ms
+================================================================================
+Cohere Transcribe FLEURS Benchmark
+================================================================================
+
+Languages: en_us, fr_fr, de_de, es_419, it_it, pt_br, nl_nl, pl_pl, el_gr, ar_eg, ja_jp, zh_cn, vi_vn, ko_kr
+Samples per language: 100
+Model: CohereLabs/cohere-transcribe-03-2026
+
+Loading PyTorch model: CohereLabs/cohere-transcribe-03-2026
+`torch_dtype` is deprecated! Use `dtype` instead!
+  ✓ PyTorch model loaded
+
+================================================================================
+Language: EN_US (en)
+================================================================================
+Loading FLEURS dataset for en_us...
+  ✓ Loaded 647 test samples
+
+[PyTorch] Benchmarking en_us...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 5.44%
+    CER: 2.74%
+    RTFx: 2.59x
+    Avg Latency: 3.681s
+
+================================================================================
+Language: FR_FR (fr)
+================================================================================
+Loading FLEURS dataset for fr_fr...
+  ✓ Loaded 676 test samples
+
+[PyTorch] Benchmarking fr_fr...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 5.80%
+    CER: 2.38%
+    RTFx: 3.24x
+    Avg Latency: 3.311s
+
+================================================================================
+Language: DE_DE (de)
+================================================================================
+Loading FLEURS dataset for de_de...
+  ✓ Loaded 862 test samples
+
+[PyTorch] Benchmarking de_de...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 4.57%
+    CER: 1.92%
+    RTFx: 3.98x
+    Avg Latency: 3.758s
+
+================================================================================
+Language: ES_419 (es)
+================================================================================
+Loading FLEURS dataset for es_419...
+  ✓ Loaded 908 test samples
+
+[PyTorch] Benchmarking es_419...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 3.80%
+    CER: 1.77%
+    RTFx: 3.01x
+    Avg Latency: 3.996s
+
+================================================================================
+Language: IT_IT (it)
+================================================================================
+Loading FLEURS dataset for it_it...
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 1 examples [00:00,  4.58 examples/s]Generating train split: 43 examples [00:00, 167.66 examples/s]Generating train split: 88 examples [00:00, 268.50 examples/s]Generating train split: 136 examples [00:00, 338.64 examples/s]Generating train split: 179 examples [00:00, 365.78 examples/s]Generating train split: 221 examples [00:00, 380.86 examples/s]Generating train split: 264 examples [00:00, 393.63 examples/s]Generating train split: 309 examples [00:00, 405.08 examples/s]Generating train split: 358 examples [00:01, 428.82 examples/s]Generating train split: 409 examples [00:01, 451.40 examples/s]Generating train split: 461 examples [00:01, 466.51 examples/s]Generating train split: 523 examples [00:01, 442.81 examples/s]Generating train split: 570 examples [00:01, 446.05 examples/s]Generating train split: 640 examples [00:01, 448.49 examples/s]Generating train split: 701 examples [00:01, 432.06 examples/s]Generating train split: 746 examples [00:01, 430.32 examples/s]Generating train split: 794 examples [00:02, 439.66 examples/s]Generating train split: 862 examples [00:02, 442.55 examples/s]Generating train split: 909 examples [00:02, 447.88 examples/s]Generating train split: 962 examples [00:02, 463.73 examples/s]Generating train split: 1018 examples [00:05, 57.49 examples/s]Generating train split: 1067 examples [00:05, 76.17 examples/s]Generating train split: 1120 examples [00:05, 102.44 examples/s]Generating train split: 1173 examples [00:05, 135.09 examples/s]Generating train split: 1230 examples [00:05, 177.62 examples/s]Generating train split: 1280 examples [00:05, 216.78 examples/s]Generating train split: 1336 examples [00:05, 267.62 examples/s]Generating train split: 1387 examples [00:05, 309.44 examples/s]Generating train split: 1438 examples [00:06, 348.40 examples/s]Generating train split: 1517 examples [00:06, 399.30 examples/s]Generating train split: 1569 examples [00:06, 420.81 examples/s]Generating train split: 1621 examples [00:06, 442.23 examples/s]Generating train split: 1695 examples [00:06, 454.76 examples/s]Generating train split: 1747 examples [00:06, 468.85 examples/s]Generating train split: 1821 examples [00:06, 473.61 examples/s]Generating train split: 1871 examples [00:06, 479.56 examples/s]Generating train split: 1926 examples [00:07, 493.32 examples/s]Generating train split: 1978 examples [00:07, 495.04 examples/s]Generating train split: 2043 examples [00:09, 82.48 examples/s] Generating train split: 2093 examples [00:09, 106.00 examples/s]Generating train split: 2140 examples [00:09, 132.92 examples/s]Generating train split: 2194 examples [00:09, 171.77 examples/s]Generating train split: 2240 examples [00:09, 206.30 examples/s]Generating train split: 2289 examples [00:09, 246.79 examples/s]Generating train split: 2337 examples [00:09, 286.28 examples/s]Generating train split: 2391 examples [00:09, 335.56 examples/s]Generating train split: 2441 examples [00:10, 371.48 examples/s]Generating train split: 2493 examples [00:10, 404.92 examples/s]Generating train split: 2545 examples [00:10, 431.88 examples/s]Generating train split: 2595 examples [00:10, 446.29 examples/s]Generating train split: 2649 examples [00:10, 468.79 examples/s]Generating train split: 2701 examples [00:10, 480.77 examples/s]Generating train split: 2753 examples [00:10, 489.38 examples/s]Generating train split: 2822 examples [00:10, 474.67 examples/s]Generating train split: 2895 examples [00:10, 478.03 examples/s]Generating train split: 2961 examples [00:11, 460.88 examples/s]Generating train split: 3024 examples [00:15, 49.37 examples/s] Generating train split: 3030 examples [00:15, 200.23 examples/s]
+Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 31 examples [00:00, 306.97 examples/s]Generating validation split: 72 examples [00:00, 325.37 examples/s]Generating validation split: 107 examples [00:00, 329.69 examples/s]Generating validation split: 146 examples [00:00, 348.33 examples/s]Generating validation split: 188 examples [00:00, 366.97 examples/s]Generating validation split: 226 examples [00:00, 366.81 examples/s]Generating validation split: 264 examples [00:00, 366.38 examples/s]Generating validation split: 317 examples [00:00, 359.81 examples/s]Generating validation split: 369 examples [00:01, 349.07 examples/s]Generating validation split: 391 examples [00:05, 72.42 examples/s] 
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 30 examples [00:00, 284.96 examples/s]Generating test split: 63 examples [00:00, 307.17 examples/s]Generating test split: 94 examples [00:00, 302.75 examples/s]Generating test split: 130 examples [00:00, 322.37 examples/s]Generating test split: 168 examples [00:00, 336.68 examples/s]Generating test split: 209 examples [00:00, 360.24 examples/s]Generating test split: 249 examples [00:00, 363.11 examples/s]Generating test split: 290 examples [00:00, 376.75 examples/s]Generating test split: 331 examples [00:00, 383.86 examples/s]Generating test split: 370 examples [00:01, 381.80 examples/s]Generating test split: 421 examples [00:01, 355.22 examples/s]Generating test split: 477 examples [00:01, 357.62 examples/s]Generating test split: 531 examples [00:01, 353.37 examples/s]Generating test split: 572 examples [00:01, 361.21 examples/s]Generating test split: 626 examples [00:01, 356.88 examples/s]Generating test split: 679 examples [00:01, 353.86 examples/s]Generating test split: 715 examples [00:02, 352.94 examples/s]Generating test split: 765 examples [00:02, 340.55 examples/s]Generating test split: 801 examples [00:02, 343.64 examples/s]Generating test split: 853 examples [00:02, 343.34 examples/s]Generating test split: 865 examples [00:04, 210.05 examples/s]
+  ✓ Loaded 865 test samples
+
+[PyTorch] Benchmarking it_it...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 3.80%
+    CER: 1.63%
+    RTFx: 2.85x
+    Avg Latency: 5.329s
+
+================================================================================
+Language: PT_BR (pt)
+================================================================================
+Loading FLEURS dataset for pt_br...
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 18 examples [00:00, 170.87 examples/s]Generating train split: 61 examples [00:00, 314.33 examples/s]Generating train split: 102 examples [00:00, 352.75 examples/s]Generating train split: 138 examples [00:00, 348.84 examples/s]Generating train split: 182 examples [00:00, 376.83 examples/s]Generating train split: 221 examples [00:00, 377.70 examples/s]Generating train split: 277 examples [00:00, 372.72 examples/s]Generating train split: 333 examples [00:00, 367.70 examples/s]Generating train split: 371 examples [00:01, 368.34 examples/s]Generating train split: 410 examples [00:01, 369.12 examples/s]Generating train split: 453 examples [00:01, 382.07 examples/s]Generating train split: 492 examples [00:01, 380.56 examples/s]Generating train split: 555 examples [00:01, 392.06 examples/s]Generating train split: 614 examples [00:01, 390.44 examples/s]Generating train split: 653 examples [00:01, 385.03 examples/s]Generating train split: 695 examples [00:01, 389.47 examples/s]Generating train split: 739 examples [00:01, 399.85 examples/s]Generating train split: 784 examples [00:02, 408.76 examples/s]Generating train split: 827 examples [00:02, 411.36 examples/s]Generating train split: 883 examples [00:02, 393.63 examples/s]Generating train split: 930 examples [00:02, 410.32 examples/s]Generating train split: 988 examples [00:02, 400.32 examples/s]Generating train split: 1033 examples [00:06, 40.14 examples/s]Generating train split: 1074 examples [00:06, 52.62 examples/s]Generating train split: 1122 examples [00:06, 70.47 examples/s]Generating train split: 1156 examples [00:06, 86.48 examples/s]Generating train split: 1194 examples [00:06, 109.55 examples/s]Generating train split: 1232 examples [00:06, 136.30 examples/s]Generating train split: 1273 examples [00:07, 170.18 examples/s]Generating train split: 1313 examples [00:07, 203.09 examples/s]Generating train split: 1352 examples [00:07, 234.75 examples/s]Generating train split: 1391 examples [00:07, 264.01 examples/s]Generating train split: 1432 examples [00:07, 292.61 examples/s]Generating train split: 1471 examples [00:07, 314.28 examples/s]Generating train split: 1525 examples [00:07, 324.21 examples/s]Generating train split: 1565 examples [00:07, 299.88 examples/s]Generating train split: 1603 examples [00:08, 281.53 examples/s]Generating train split: 1650 examples [00:08, 288.20 examples/s]Generating train split: 1698 examples [00:08, 293.32 examples/s]Generating train split: 1732 examples [00:08, 301.31 examples/s]Generating train split: 1767 examples [00:08, 308.57 examples/s]Generating train split: 1799 examples [00:08, 310.44 examples/s]Generating train split: 1834 examples [00:08, 318.71 examples/s]Generating train split: 1872 examples [00:08, 334.86 examples/s]Generating train split: 1911 examples [00:08, 349.02 examples/s]Generating train split: 1957 examples [00:09, 328.80 examples/s]Generating train split: 2000 examples [00:13, 27.04 examples/s] Generating train split: 2035 examples [00:13, 35.89 examples/s]Generating train split: 2079 examples [00:14, 51.10 examples/s]Generating train split: 2121 examples [00:14, 69.82 examples/s]Generating train split: 2159 examples [00:14, 90.74 examples/s]Generating train split: 2202 examples [00:14, 120.49 examples/s]Generating train split: 2241 examples [00:14, 150.08 examples/s]Generating train split: 2282 examples [00:14, 185.49 examples/s]Generating train split: 2322 examples [00:14, 220.24 examples/s]Generating train split: 2362 examples [00:14, 252.74 examples/s]Generating train split: 2401 examples [00:14, 280.25 examples/s]Generating train split: 2447 examples [00:15, 287.34 examples/s]Generating train split: 2500 examples [00:15, 303.59 examples/s]Generating train split: 2540 examples [00:15, 323.32 examples/s]Generating train split: 2578 examples [00:15, 332.61 examples/s]Generating train split: 2618 examples [00:15, 347.30 examples/s]Generating train split: 2664 examples [00:15, 332.34 examples/s]Generating train split: 2705 examples [00:15, 350.40 examples/s]Generating train split: 2759 examples [00:15, 351.89 examples/s]Generating train split: 2793 examples [00:19, 145.84 examples/s]
+Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 34 examples [00:00, 327.58 examples/s]Generating validation split: 81 examples [00:00, 405.08 examples/s]Generating validation split: 129 examples [00:00, 431.03 examples/s]Generating validation split: 178 examples [00:00, 452.12 examples/s]Generating validation split: 225 examples [00:00, 454.78 examples/s]Generating validation split: 292 examples [00:00, 447.31 examples/s]Generating validation split: 339 examples [00:00, 447.68 examples/s]Generating validation split: 386 examples [00:00, 447.26 examples/s]Generating validation split: 386 examples [00:04, 86.25 examples/s] 
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 27 examples [00:00, 264.18 examples/s]Generating test split: 70 examples [00:00, 351.46 examples/s]Generating test split: 108 examples [00:00, 362.48 examples/s]Generating test split: 148 examples [00:00, 373.26 examples/s]Generating test split: 194 examples [00:00, 398.24 examples/s]Generating test split: 238 examples [00:00, 406.40 examples/s]Generating test split: 285 examples [00:00, 424.03 examples/s]Generating test split: 332 examples [00:00, 432.90 examples/s]Generating test split: 393 examples [00:00, 415.81 examples/s]Generating test split: 449 examples [00:01, 382.63 examples/s]Generating test split: 494 examples [00:01, 396.61 examples/s]Generating test split: 537 examples [00:01, 403.45 examples/s]Generating test split: 583 examples [00:01, 417.54 examples/s]Generating test split: 644 examples [00:01, 409.60 examples/s]Generating test split: 687 examples [00:01, 411.20 examples/s]Generating test split: 748 examples [00:01, 406.62 examples/s]Generating test split: 797 examples [00:01, 404.88 examples/s]Generating test split: 839 examples [00:02, 404.80 examples/s]Generating test split: 881 examples [00:02, 406.51 examples/s]Generating test split: 919 examples [00:04, 206.58 examples/s]
+  ✓ Loaded 919 test samples
+
+[PyTorch] Benchmarking pt_br...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 5.03%
+    CER: 2.38%
+    RTFx: 3.13x
+    Avg Latency: 4.369s
+
+================================================================================
+Language: NL_NL (nl)
+================================================================================
+Loading FLEURS dataset for nl_nl...
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 28 examples [00:00, 262.09 examples/s]Generating train split: 81 examples [00:00, 411.58 examples/s]Generating train split: 133 examples [00:00, 456.56 examples/s]Generating train split: 186 examples [00:00, 481.04 examples/s]Generating train split: 238 examples [00:00, 488.87 examples/s]Generating train split: 289 examples [00:00, 491.62 examples/s]Generating train split: 341 examples [00:00, 498.97 examples/s]Generating train split: 397 examples [00:00, 515.75 examples/s]Generating train split: 453 examples [00:00, 524.69 examples/s]Generating train split: 508 examples [00:01, 527.66 examples/s]Generating train split: 567 examples [00:01, 544.29 examples/s]Generating train split: 629 examples [00:01, 564.41 examples/s]Generating train split: 711 examples [00:01, 550.81 examples/s]Generating train split: 768 examples [00:01, 551.90 examples/s]Generating train split: 825 examples [00:01, 554.47 examples/s]Generating train split: 907 examples [00:01, 549.12 examples/s]Generating train split: 987 examples [00:01, 540.28 examples/s]Generating train split: 1051 examples [00:02, 176.47 examples/s]Generating train split: 1111 examples [00:02, 218.09 examples/s]Generating train split: 1169 examples [00:03, 262.47 examples/s]Generating train split: 1226 examples [00:03, 307.08 examples/s]Generating train split: 1284 examples [00:03, 354.43 examples/s]Generating train split: 1338 examples [00:03, 390.11 examples/s]Generating train split: 1397 examples [00:03, 432.98 examples/s]Generating train split: 1456 examples [00:03, 468.80 examples/s]Generating train split: 1518 examples [00:03, 504.84 examples/s]Generating train split: 1579 examples [00:03, 532.11 examples/s]Generating train split: 1641 examples [00:03, 551.92 examples/s]Generating train split: 1702 examples [00:04, 565.96 examples/s]Generating train split: 1762 examples [00:04, 572.15 examples/s]Generating train split: 1850 examples [00:04, 572.89 examples/s]Generating train split: 1935 examples [00:04, 569.08 examples/s]Generating train split: 2000 examples [00:05, 161.16 examples/s]Generating train split: 2055 examples [00:05, 195.31 examples/s]Generating train split: 2116 examples [00:05, 241.25 examples/s]Generating train split: 2178 examples [00:05, 292.94 examples/s]Generating train split: 2238 examples [00:05, 342.44 examples/s]Generating train split: 2297 examples [00:06, 388.54 examples/s]Generating train split: 2354 examples [00:06, 425.55 examples/s]Generating train split: 2418 examples [00:06, 472.62 examples/s]Generating train split: 2479 examples [00:06, 504.50 examples/s]Generating train split: 2538 examples [00:06, 523.07 examples/s]Generating train split: 2597 examples [00:06, 539.67 examples/s]Generating train split: 2656 examples [00:06, 551.50 examples/s]Generating train split: 2715 examples [00:06, 561.94 examples/s]Generating train split: 2803 examples [00:06, 569.99 examples/s]Generating train split: 2866 examples [00:07, 583.23 examples/s]Generating train split: 2918 examples [00:07, 373.69 examples/s]
+Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 52 examples [00:00, 511.91 examples/s]Generating validation split: 111 examples [00:00, 555.56 examples/s]Generating validation split: 171 examples [00:00, 573.17 examples/s]Generating validation split: 171 examples [00:00, 453.20 examples/s]
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 52 examples [00:00, 507.25 examples/s]Generating test split: 108 examples [00:00, 529.22 examples/s]Generating test split: 172 examples [00:00, 576.66 examples/s]Generating test split: 258 examples [00:00, 568.11 examples/s]Generating test split: 349 examples [00:00, 580.55 examples/s]Generating test split: 364 examples [00:00, 413.19 examples/s]
+  ✓ Loaded 364 test samples
+
+[PyTorch] Benchmarking nl_nl...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 6.57%
+    CER: 2.28%
+    RTFx: 3.39x
+    Avg Latency: 2.982s
+
+================================================================================
+Language: PL_PL (pl)
+================================================================================
+Loading FLEURS dataset for pl_pl...
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 25 examples [00:00, 238.55 examples/s]Generating train split: 71 examples [00:00, 355.09 examples/s]Generating train split: 120 examples [00:00, 407.50 examples/s]Generating train split: 168 examples [00:00, 433.65 examples/s]Generating train split: 214 examples [00:00, 438.48 examples/s]Generating train split: 262 examples [00:00, 450.65 examples/s]Generating train split: 312 examples [00:00, 462.37 examples/s]Generating train split: 361 examples [00:00, 463.72 examples/s]Generating train split: 408 examples [00:00, 459.64 examples/s]Generating train split: 458 examples [00:01, 469.91 examples/s]Generating train split: 529 examples [00:01, 466.73 examples/s]Generating train split: 579 examples [00:01, 473.92 examples/s]Generating train split: 646 examples [00:01, 459.05 examples/s]Generating train split: 709 examples [00:01, 438.99 examples/s]Generating train split: 757 examples [00:01, 445.08 examples/s]Generating train split: 803 examples [00:01, 446.85 examples/s]Generating train split: 870 examples [00:01, 442.75 examples/s]Generating train split: 917 examples [00:02, 446.58 examples/s]Generating train split: 976 examples [00:02, 425.06 examples/s]Generating train split: 1022 examples [00:04, 59.75 examples/s]Generating train split: 1066 examples [00:04, 77.36 examples/s]Generating train split: 1111 examples [00:05, 100.39 examples/s]Generating train split: 1156 examples [00:05, 128.65 examples/s]Generating train split: 1201 examples [00:05, 162.02 examples/s]Generating train split: 1248 examples [00:05, 201.08 examples/s]Generating train split: 1294 examples [00:05, 240.80 examples/s]Generating train split: 1341 examples [00:05, 280.82 examples/s]Generating train split: 1391 examples [00:05, 324.12 examples/s]Generating train split: 1443 examples [00:05, 367.54 examples/s]Generating train split: 1514 examples [00:05, 399.88 examples/s]Generating train split: 1584 examples [00:06, 415.52 examples/s]Generating train split: 1631 examples [00:06, 424.53 examples/s]Generating train split: 1702 examples [00:06, 437.12 examples/s]Generating train split: 1749 examples [00:06, 443.37 examples/s]Generating train split: 1801 examples [00:06, 458.46 examples/s]Generating train split: 1871 examples [00:06, 459.66 examples/s]Generating train split: 1934 examples [00:06, 442.81 examples/s]Generating train split: 1987 examples [00:06, 410.13 examples/s]Generating train split: 2050 examples [00:08, 101.89 examples/s]Generating train split: 2099 examples [00:08, 128.03 examples/s]Generating train split: 2148 examples [00:08, 159.90 examples/s]Generating train split: 2195 examples [00:08, 194.41 examples/s]Generating train split: 2238 examples [00:09, 225.66 examples/s]Generating train split: 2288 examples [00:09, 270.08 examples/s]Generating train split: 2338 examples [00:09, 312.42 examples/s]Generating train split: 2386 examples [00:09, 344.78 examples/s]Generating train split: 2436 examples [00:09, 376.67 examples/s]Generating train split: 2485 examples [00:09, 404.29 examples/s]Generating train split: 2551 examples [00:09, 413.85 examples/s]Generating train split: 2597 examples [00:09, 422.84 examples/s]Generating train split: 2644 examples [00:09, 432.97 examples/s]Generating train split: 2713 examples [00:10, 439.60 examples/s]Generating train split: 2761 examples [00:10, 446.91 examples/s]Generating train split: 2829 examples [00:10, 445.50 examples/s]Generating train split: 2841 examples [00:12, 235.70 examples/s]
+Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 57 examples [00:00, 552.08 examples/s]Generating validation split: 119 examples [00:00, 578.87 examples/s]Generating validation split: 180 examples [00:00, 586.88 examples/s]Generating validation split: 246 examples [00:00, 610.62 examples/s]Generating validation split: 315 examples [00:00, 636.38 examples/s]Generating validation split: 338 examples [00:01, 172.04 examples/s]
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 51 examples [00:00, 495.41 examples/s]Generating test split: 108 examples [00:00, 533.44 examples/s]Generating test split: 165 examples [00:00, 542.65 examples/s]Generating test split: 226 examples [00:00, 562.26 examples/s]Generating test split: 287 examples [00:00, 575.30 examples/s]Generating test split: 346 examples [00:00, 574.76 examples/s]Generating test split: 424 examples [00:00, 522.73 examples/s]Generating test split: 480 examples [00:00, 530.63 examples/s]Generating test split: 541 examples [00:00, 549.31 examples/s]Generating test split: 603 examples [00:01, 566.39 examples/s]Generating test split: 662 examples [00:01, 571.78 examples/s]Generating test split: 749 examples [00:01, 573.16 examples/s]Generating test split: 758 examples [00:02, 285.29 examples/s]
+  ✓ Loaded 758 test samples
+
+[PyTorch] Benchmarking pl_pl...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 5.97%
+    CER: 2.16%
+    RTFx: 2.78x
+    Avg Latency: 3.464s
+
+================================================================================
+Language: EL_GR (el)
+================================================================================
+Loading FLEURS dataset for el_gr...
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 19 examples [00:00, 173.83 examples/s]Generating train split: 61 examples [00:00, 307.19 examples/s]Generating train split: 105 examples [00:00, 360.18 examples/s]Generating train split: 151 examples [00:00, 395.08 examples/s]Generating train split: 200 examples [00:00, 425.39 examples/s]Generating train split: 251 examples [00:00, 450.59 examples/s]Generating train split: 300 examples [00:00, 460.89 examples/s]Generating train split: 354 examples [00:00, 482.47 examples/s]Generating train split: 428 examples [00:00, 483.25 examples/s]Generating train split: 501 examples [00:01, 480.57 examples/s]Generating train split: 567 examples [00:01, 463.13 examples/s]Generating train split: 620 examples [00:01, 474.10 examples/s]Generating train split: 669 examples [00:01, 476.29 examples/s]Generating train split: 743 examples [00:01, 477.10 examples/s]Generating train split: 793 examples [00:01, 481.08 examples/s]Generating train split: 846 examples [00:01, 489.80 examples/s]Generating train split: 920 examples [00:02, 483.11 examples/s]Generating train split: 970 examples [00:02, 482.22 examples/s]Generating train split: 1028 examples [00:03, 118.54 examples/s]Generating train split: 1074 examples [00:03, 145.54 examples/s]Generating train split: 1128 examples [00:03, 185.79 examples/s]Generating train split: 1182 examples [00:03, 230.24 examples/s]Generating train split: 1233 examples [00:03, 271.76 examples/s]Generating train split: 1281 examples [00:03, 308.03 examples/s]Generating train split: 1337 examples [00:04, 358.14 examples/s]Generating train split: 1390 examples [00:04, 395.85 examples/s]Generating train split: 1465 examples [00:04, 427.45 examples/s]Generating train split: 1515 examples [00:04, 442.38 examples/s]Generating train split: 1588 examples [00:04, 454.54 examples/s]Generating train split: 1639 examples [00:04, 463.80 examples/s]Generating train split: 1713 examples [00:04, 472.96 examples/s]Generating train split: 1765 examples [00:04, 482.78 examples/s]Generating train split: 1840 examples [00:05, 485.87 examples/s]Generating train split: 1914 examples [00:05, 483.51 examples/s]Generating train split: 1987 examples [00:05, 483.13 examples/s]Generating train split: 2049 examples [00:07, 113.71 examples/s]Generating train split: 2094 examples [00:07, 136.18 examples/s]Generating train split: 2145 examples [00:07, 168.91 examples/s]Generating train split: 2192 examples [00:07, 201.85 examples/s]Generating train split: 2239 examples [00:07, 236.07 examples/s]Generating train split: 2289 examples [00:07, 277.70 examples/s]Generating train split: 2343 examples [00:07, 326.43 examples/s]Generating train split: 2391 examples [00:07, 357.35 examples/s]Generating train split: 2442 examples [00:07, 390.67 examples/s]Generating train split: 2493 examples [00:07, 419.49 examples/s]Generating train split: 2546 examples [00:08, 445.89 examples/s]Generating train split: 2596 examples [00:08, 458.95 examples/s]Generating train split: 2646 examples [00:08, 469.28 examples/s]Generating train split: 2700 examples [00:08, 486.82 examples/s]Generating train split: 2751 examples [00:08, 491.74 examples/s]Generating train split: 2802 examples [00:08, 493.87 examples/s]Generating train split: 2879 examples [00:08, 494.33 examples/s]Generating train split: 2949 examples [00:08, 481.68 examples/s]Generating train split: 2998 examples [00:08, 481.48 examples/s]Generating train split: 3065 examples [00:11, 74.01 examples/s] Generating train split: 3107 examples [00:11, 91.04 examples/s]Generating train split: 3149 examples [00:11, 111.77 examples/s]Generating train split: 3194 examples [00:11, 139.42 examples/s]Generating train split: 3215 examples [00:11, 267.96 examples/s]
+Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 21 examples [00:00, 180.53 examples/s]Generating validation split: 81 examples [00:00, 407.28 examples/s]Generating validation split: 135 examples [00:00, 463.03 examples/s]Generating validation split: 186 examples [00:00, 474.27 examples/s]Generating validation split: 261 examples [00:00, 482.02 examples/s]Generating validation split: 271 examples [00:00, 377.39 examples/s]
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 33 examples [00:00, 265.13 examples/s]Generating test split: 86 examples [00:00, 403.78 examples/s]Generating test split: 135 examples [00:00, 439.75 examples/s]Generating test split: 188 examples [00:00, 473.28 examples/s]Generating test split: 236 examples [00:00, 473.28 examples/s]Generating test split: 295 examples [00:00, 505.85 examples/s]Generating test split: 366 examples [00:00, 489.26 examples/s]Generating test split: 420 examples [00:00, 501.02 examples/s]Generating test split: 473 examples [00:00, 506.70 examples/s]Generating test split: 544 examples [00:01, 488.75 examples/s]Generating test split: 594 examples [00:01, 490.25 examples/s]Generating test split: 646 examples [00:01, 496.04 examples/s]Generating test split: 650 examples [00:01, 336.80 examples/s]
+  ✓ Loaded 650 test samples
+
+[PyTorch] Benchmarking el_gr...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 9.25%
+    CER: 3.42%
+    RTFx: 3.08x
+    Avg Latency: 3.567s
+
+================================================================================
+Language: AR_EG (ar)
+================================================================================
+Loading FLEURS dataset for ar_eg...
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 24 examples [00:00, 225.64 examples/s]Generating train split: 70 examples [00:00, 351.75 examples/s]Generating train split: 115 examples [00:00, 391.69 examples/s]Generating train split: 164 examples [00:00, 426.47 examples/s]Generating train split: 216 examples [00:00, 457.97 examples/s]Generating train split: 273 examples [00:00, 491.13 examples/s]Generating train split: 349 examples [00:00, 488.87 examples/s]Generating train split: 419 examples [00:00, 476.43 examples/s]Generating train split: 474 examples [00:01, 493.08 examples/s]Generating train split: 526 examples [00:01, 496.26 examples/s]Generating train split: 579 examples [00:01, 503.25 examples/s]Generating train split: 631 examples [00:01, 505.30 examples/s]Generating train split: 683 examples [00:01, 505.92 examples/s]Generating train split: 758 examples [00:01, 498.99 examples/s]Generating train split: 835 examples [00:01, 500.28 examples/s]Generating train split: 889 examples [00:01, 509.36 examples/s]Generating train split: 942 examples [00:01, 512.20 examples/s]Generating train split: 995 examples [00:02, 515.44 examples/s]Generating train split: 1053 examples [00:03, 128.92 examples/s]Generating train split: 1100 examples [00:03, 158.52 examples/s]Generating train split: 1155 examples [00:03, 201.62 examples/s]Generating train split: 1206 examples [00:03, 243.07 examples/s]Generating train split: 1264 examples [00:03, 297.25 examples/s]Generating train split: 1325 examples [00:03, 354.52 examples/s]Generating train split: 1378 examples [00:03, 389.41 examples/s]Generating train split: 1435 examples [00:03, 430.77 examples/s]Generating train split: 1491 examples [00:04, 459.52 examples/s]Generating train split: 1551 examples [00:04, 494.23 examples/s]Generating train split: 1611 examples [00:04, 520.53 examples/s]Generating train split: 1692 examples [00:04, 525.29 examples/s]Generating train split: 1774 examples [00:04, 529.52 examples/s]Generating train split: 1852 examples [00:04, 522.20 examples/s]Generating train split: 1907 examples [00:04, 528.34 examples/s]Generating train split: 1962 examples [00:04, 531.73 examples/s]Generating train split: 2026 examples [00:05, 161.32 examples/s]Generating train split: 2078 examples [00:06, 196.20 examples/s]Generating train split: 2104 examples [00:06, 336.86 examples/s]
+Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 48 examples [00:00, 463.11 examples/s]Generating validation split: 101 examples [00:00, 494.14 examples/s]Generating validation split: 153 examples [00:00, 500.16 examples/s]Generating validation split: 206 examples [00:00, 503.14 examples/s]Generating validation split: 262 examples [00:00, 518.41 examples/s]Generating validation split: 295 examples [00:00, 429.90 examples/s]
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 50 examples [00:00, 482.84 examples/s]Generating test split: 122 examples [00:00, 473.87 examples/s]Generating test split: 179 examples [00:00, 506.91 examples/s]Generating test split: 233 examples [00:00, 515.50 examples/s]Generating test split: 308 examples [00:00, 506.30 examples/s]Generating test split: 382 examples [00:00, 497.50 examples/s]Generating test split: 428 examples [00:01, 398.98 examples/s]
+  ✓ Loaded 428 test samples
+
+[PyTorch] Benchmarking ar_eg...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 7.31%
+    CER: 1.93%
+    RTFx: 2.90x
+    Avg Latency: 3.885s
+
+================================================================================
+Language: JA_JP (ja)
+================================================================================
+Loading FLEURS dataset for ja_jp...
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 22 examples [00:00, 204.85 examples/s]Generating train split: 63 examples [00:00, 317.56 examples/s]Generating train split: 106 examples [00:00, 364.11 examples/s]Generating train split: 148 examples [00:00, 382.66 examples/s]Generating train split: 188 examples [00:00, 386.53 examples/s]Generating train split: 227 examples [00:00, 382.79 examples/s]Generating train split: 270 examples [00:00, 395.19 examples/s]Generating train split: 315 examples [00:00, 411.42 examples/s]Generating train split: 361 examples [00:00, 423.29 examples/s]Generating train split: 405 examples [00:01, 425.41 examples/s]Generating train split: 454 examples [00:01, 437.51 examples/s]Generating train split: 518 examples [00:01, 428.60 examples/s]Generating train split: 563 examples [00:01, 430.58 examples/s]Generating train split: 628 examples [00:01, 428.64 examples/s]Generating train split: 693 examples [00:01, 424.92 examples/s]Generating train split: 759 examples [00:01, 428.03 examples/s]Generating train split: 802 examples [00:01, 423.28 examples/s]Generating train split: 845 examples [00:02, 421.32 examples/s]Generating train split: 892 examples [00:02, 432.04 examples/s]Generating train split: 957 examples [00:02, 426.71 examples/s]Generating train split: 1000 examples [00:03, 92.60 examples/s]Generating train split: 1047 examples [00:03, 119.71 examples/s]Generating train split: 1099 examples [00:04, 156.69 examples/s]Generating train split: 1148 examples [00:04, 195.32 examples/s]Generating train split: 1199 examples [00:04, 239.85 examples/s]Generating train split: 1251 examples [00:04, 285.90 examples/s]Generating train split: 1298 examples [00:04, 320.54 examples/s]Generating train split: 1353 examples [00:04, 369.01 examples/s]Generating train split: 1424 examples [00:04, 398.56 examples/s]Generating train split: 1496 examples [00:04, 420.81 examples/s]Generating train split: 1568 examples [00:05, 436.42 examples/s]Generating train split: 1618 examples [00:05, 448.68 examples/s]Generating train split: 1689 examples [00:05, 453.11 examples/s]Generating train split: 1757 examples [00:05, 448.49 examples/s]Generating train split: 1806 examples [00:05, 454.69 examples/s]Generating train split: 1875 examples [00:05, 452.06 examples/s]Generating train split: 1924 examples [00:05, 456.64 examples/s]Generating train split: 1993 examples [00:05, 454.64 examples/s]Generating train split: 2045 examples [00:07, 84.40 examples/s] Generating train split: 2094 examples [00:08, 107.67 examples/s]Generating train split: 2144 examples [00:08, 137.08 examples/s]Generating train split: 2192 examples [00:08, 170.58 examples/s]Generating train split: 2237 examples [00:08, 204.68 examples/s]Generating train split: 2285 examples [00:08, 244.92 examples/s]Generating train split: 2292 examples [00:08, 264.85 examples/s]
+Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 33 examples [00:00, 315.17 examples/s]Generating validation split: 80 examples [00:00, 398.44 examples/s]Generating validation split: 129 examples [00:00, 433.39 examples/s]Generating validation split: 177 examples [00:00, 448.70 examples/s]Generating validation split: 224 examples [00:00, 454.30 examples/s]Generating validation split: 266 examples [00:00, 337.51 examples/s]
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 42 examples [00:00, 408.12 examples/s]Generating test split: 86 examples [00:00, 421.38 examples/s]Generating test split: 132 examples [00:00, 435.92 examples/s]Generating test split: 179 examples [00:00, 444.82 examples/s]Generating test split: 228 examples [00:00, 455.19 examples/s]Generating test split: 275 examples [00:00, 458.58 examples/s]Generating test split: 342 examples [00:00, 448.80 examples/s]Generating test split: 401 examples [00:00, 424.52 examples/s]Generating test split: 447 examples [00:01, 429.90 examples/s]Generating test split: 508 examples [00:01, 417.79 examples/s]Generating test split: 572 examples [00:01, 417.68 examples/s]Generating test split: 615 examples [00:01, 418.62 examples/s]Generating test split: 650 examples [00:02, 279.53 examples/s]
+  ✓ Loaded 650 test samples
+
+[PyTorch] Benchmarking ja_jp...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 99.47%
+    CER: 7.25%
+    RTFx: 3.39x
+    Avg Latency: 3.848s
+
+================================================================================
+Language: ZH_CN (zh)
+================================================================================
+Loading FLEURS dataset for zh_cn...
+  ✗ Failed to load dataset: BuilderConfig 'zh_cn' not found. Available: ['af_za', 'am_et', 'ar_eg', 'as_in', 'ast_es', 'az_az', 'be_by', 'bg_bg', 'bn_in', 'bs_ba', 'ca_es', 'ceb_ph', 'ckb_iq', 'cmn_hans_cn', 'cs_cz', 'cy_gb', 'da_dk', 'de_de', 'el_gr', 'en_us', 'es_419', 'et_ee', 'fa_ir', 'ff_sn', 'fi_fi', 'fil_ph', 'fr_fr', 'ga_ie', 'gl_es', 'gu_in', 'ha_ng', 'he_il', 'hi_in', 'hr_hr', 'hu_hu', 'hy_am', 'id_id', 'ig_ng', 'is_is', 'it_it', 'ja_jp', 'jv_id', 'ka_ge', 'kam_ke', 'kea_cv', 'kk_kz', 'km_kh', 'kn_in', 'ko_kr', 'ky_kg', 'lb_lu', 'lg_ug', 'ln_cd', 'lo_la', 'lt_lt', 'luo_ke', 'lv_lv', 'mi_nz', 'mk_mk', 'ml_in', 'mn_mn', 'mr_in', 'ms_my', 'mt_mt', 'my_mm', 'nb_no', 'ne_np', 'nl_nl', 'nso_za', 'ny_mw', 'oc_fr', 'om_et', 'or_in', 'pa_in', 'pl_pl', 'ps_af', 'pt_br', 'ro_ro', 'ru_ru', 'sd_in', 'sk_sk', 'sl_si', 'sn_zw', 'so_so', 'sr_rs', 'sv_se', 'sw_ke', 'ta_in', 'te_in', 'tg_tj', 'th_th', 'tr_tr', 'uk_ua', 'umb_ao', 'ur_pk', 'uz_uz', 'vi_vn', 'wo_sn', 'xh_za', 'yo_ng', 'yue_hant_hk', 'zu_za', 'all']
+
+================================================================================
+Language: VI_VN (vi)
+================================================================================
+Loading FLEURS dataset for vi_vn...
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 17 examples [00:00, 146.48 examples/s]Generating train split: 62 examples [00:00, 307.01 examples/s]Generating train split: 104 examples [00:00, 351.69 examples/s]Generating train split: 144 examples [00:00, 365.50 examples/s]Generating train split: 191 examples [00:00, 397.75 examples/s]Generating train split: 241 examples [00:00, 426.83 examples/s]Generating train split: 292 examples [00:00, 448.30 examples/s]Generating train split: 342 examples [00:00, 460.77 examples/s]Generating train split: 391 examples [00:00, 465.32 examples/s]Generating train split: 458 examples [00:01, 453.77 examples/s]Generating train split: 508 examples [00:01, 462.33 examples/s]Generating train split: 576 examples [00:01, 455.74 examples/s]Generating train split: 645 examples [00:01, 455.42 examples/s]Generating train split: 692 examples [00:01, 457.33 examples/s]Generating train split: 739 examples [00:01, 459.08 examples/s]Generating train split: 787 examples [00:01, 462.64 examples/s]Generating train split: 838 examples [00:01, 473.44 examples/s]Generating train split: 889 examples [00:02, 478.96 examples/s]Generating train split: 962 examples [00:02, 477.18 examples/s]Generating train split: 1027 examples [00:03, 107.85 examples/s]Generating train split: 1080 examples [00:03, 137.84 examples/s]Generating train split: 1136 examples [00:03, 176.83 examples/s]Generating train split: 1189 examples [00:04, 217.73 examples/s]Generating train split: 1238 examples [00:04, 255.61 examples/s]Generating train split: 1292 examples [00:04, 302.09 examples/s]Generating train split: 1343 examples [00:04, 341.03 examples/s]Generating train split: 1416 examples [00:04, 381.50 examples/s]Generating train split: 1468 examples [00:04, 408.66 examples/s]Generating train split: 1518 examples [00:04, 429.34 examples/s]Generating train split: 1569 examples [00:04, 447.26 examples/s]Generating train split: 1625 examples [00:04, 474.74 examples/s]Generating train split: 1698 examples [00:05, 476.95 examples/s]Generating train split: 1751 examples [00:05, 485.98 examples/s]Generating train split: 1827 examples [00:05, 487.22 examples/s]Generating train split: 1878 examples [00:05, 490.20 examples/s]Generating train split: 1951 examples [00:05, 485.12 examples/s]Generating train split: 2014 examples [00:10, 38.56 examples/s] Generating train split: 2067 examples [00:10, 51.00 examples/s]Generating train split: 2115 examples [00:10, 65.96 examples/s]Generating train split: 2160 examples [00:11, 84.06 examples/s]Generating train split: 2209 examples [00:11, 109.79 examples/s]Generating train split: 2258 examples [00:11, 141.15 examples/s]Generating train split: 2310 examples [00:11, 180.88 examples/s]Generating train split: 2365 examples [00:11, 227.96 examples/s]Generating train split: 2417 examples [00:11, 272.66 examples/s]Generating train split: 2468 examples [00:11, 314.90 examples/s]Generating train split: 2541 examples [00:11, 361.22 examples/s]Generating train split: 2594 examples [00:11, 392.36 examples/s]Generating train split: 2645 examples [00:12, 416.43 examples/s]Generating train split: 2695 examples [00:12, 435.53 examples/s]Generating train split: 2765 examples [00:12, 443.65 examples/s]Generating train split: 2815 examples [00:12, 454.69 examples/s]Generating train split: 2866 examples [00:12, 468.84 examples/s]Generating train split: 2939 examples [00:12, 471.16 examples/s]Generating train split: 2989 examples [00:12, 474.93 examples/s]Generating train split: 2994 examples [00:17, 169.40 examples/s]
+Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 37 examples [00:00, 352.10 examples/s]Generating validation split: 84 examples [00:00, 416.39 examples/s]Generating validation split: 132 examples [00:00, 437.99 examples/s]Generating validation split: 179 examples [00:00, 446.87 examples/s]Generating validation split: 230 examples [00:00, 464.22 examples/s]Generating validation split: 301 examples [00:00, 464.60 examples/s]Generating validation split: 361 examples [00:00, 456.54 examples/s]Generating validation split: 361 examples [00:01, 246.19 examples/s]
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 36 examples [00:00, 341.45 examples/s]Generating test split: 82 examples [00:00, 403.02 examples/s]Generating test split: 125 examples [00:00, 409.36 examples/s]Generating test split: 173 examples [00:00, 433.40 examples/s]Generating test split: 240 examples [00:00, 432.77 examples/s]Generating test split: 284 examples [00:00, 430.87 examples/s]Generating test split: 348 examples [00:00, 425.44 examples/s]Generating test split: 394 examples [00:00, 433.77 examples/s]Generating test split: 457 examples [00:01, 423.53 examples/s]Generating test split: 502 examples [00:01, 426.82 examples/s]Generating test split: 545 examples [00:01, 424.88 examples/s]Generating test split: 591 examples [00:01, 429.94 examples/s]Generating test split: 640 examples [00:01, 443.33 examples/s]Generating test split: 705 examples [00:01, 436.18 examples/s]Generating test split: 752 examples [00:01, 443.83 examples/s]Generating test split: 797 examples [00:01, 442.50 examples/s]Generating test split: 844 examples [00:01, 449.10 examples/s]Generating test split: 857 examples [00:03, 266.87 examples/s]
+  ✓ Loaded 857 test samples
+
+[PyTorch] Benchmarking vi_vn...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 6.50%
+    CER: 3.43%
+    RTFx: 3.41x
+    Avg Latency: 3.751s
+
+================================================================================
+Language: KO_KR (ko)
+================================================================================
+Loading FLEURS dataset for ko_kr...
+Generating train split: 0 examples [00:00, ? examples/s]Generating train split: 14 examples [00:00, 129.23 examples/s]Generating train split: 55 examples [00:00, 287.91 examples/s]Generating train split: 96 examples [00:00, 336.42 examples/s]Generating train split: 134 examples [00:00, 348.22 examples/s]Generating train split: 178 examples [00:00, 375.32 examples/s]Generating train split: 222 examples [00:00, 393.11 examples/s]Generating train split: 270 examples [00:00, 416.88 examples/s]Generating train split: 332 examples [00:00, 408.04 examples/s]Generating train split: 376 examples [00:00, 410.77 examples/s]Generating train split: 422 examples [00:01, 420.93 examples/s]Generating train split: 467 examples [00:01, 424.71 examples/s]Generating train split: 510 examples [00:01, 421.63 examples/s]Generating train split: 573 examples [00:01, 416.34 examples/s]Generating train split: 634 examples [00:01, 408.20 examples/s]Generating train split: 694 examples [00:01, 401.28 examples/s]Generating train split: 750 examples [00:01, 389.37 examples/s]Generating train split: 790 examples [00:02, 390.41 examples/s]Generating train split: 836 examples [00:02, 406.91 examples/s]Generating train split: 895 examples [00:02, 400.04 examples/s]Generating train split: 939 examples [00:02, 409.34 examples/s]Generating train split: 999 examples [00:02, 400.59 examples/s]Generating train split: 1042 examples [00:04, 85.22 examples/s]Generating train split: 1088 examples [00:04, 110.41 examples/s]Generating train split: 1135 examples [00:04, 141.70 examples/s]Generating train split: 1180 examples [00:04, 175.56 examples/s]Generating train split: 1228 examples [00:04, 216.49 examples/s]Generating train split: 1276 examples [00:04, 257.89 examples/s]Generating train split: 1323 examples [00:04, 296.36 examples/s]Generating train split: 1387 examples [00:04, 333.13 examples/s]Generating train split: 1432 examples [00:05, 357.35 examples/s]Generating train split: 1479 examples [00:05, 381.78 examples/s]Generating train split: 1524 examples [00:05, 397.14 examples/s]Generating train split: 1569 examples [00:05, 408.02 examples/s]Generating train split: 1640 examples [00:05, 427.57 examples/s]Generating train split: 1688 examples [00:05, 438.05 examples/s]Generating train split: 1735 examples [00:05, 443.63 examples/s]Generating train split: 1799 examples [00:05, 434.37 examples/s]Generating train split: 1846 examples [00:05, 441.58 examples/s]Generating train split: 1892 examples [00:06, 441.35 examples/s]Generating train split: 1955 examples [00:06, 427.06 examples/s]Generating train split: 2000 examples [00:07, 96.54 examples/s] Generating train split: 2040 examples [00:07, 118.93 examples/s]Generating train split: 2085 examples [00:07, 150.38 examples/s]Generating train split: 2129 examples [00:08, 185.09 examples/s]Generating train split: 2172 examples [00:08, 220.33 examples/s]Generating train split: 2215 examples [00:08, 255.81 examples/s]Generating train split: 2261 examples [00:08, 295.00 examples/s]Generating train split: 2307 examples [00:08, 330.14 examples/s]Generating train split: 2307 examples [00:08, 264.85 examples/s]
+Generating validation split: 0 examples [00:00, ? examples/s]Generating validation split: 28 examples [00:00, 262.17 examples/s]Generating validation split: 77 examples [00:00, 385.87 examples/s]Generating validation split: 125 examples [00:00, 421.82 examples/s]Generating validation split: 175 examples [00:00, 449.19 examples/s]Generating validation split: 225 examples [00:00, 462.30 examples/s]Generating validation split: 226 examples [00:00, 317.84 examples/s]
+Generating test split: 0 examples [00:00, ? examples/s]Generating test split: 39 examples [00:00, 376.54 examples/s]Generating test split: 88 examples [00:00, 435.54 examples/s]Generating test split: 134 examples [00:00, 442.45 examples/s]Generating test split: 199 examples [00:00, 434.00 examples/s]Generating test split: 250 examples [00:00, 453.93 examples/s]Generating test split: 298 examples [00:00, 458.12 examples/s]Generating test split: 367 examples [00:00, 452.82 examples/s]Generating test split: 382 examples [00:01, 293.24 examples/s]
+  ✓ Loaded 382 test samples
+
+[PyTorch] Benchmarking ko_kr...
+  Processed 10/100 samples...
+  Processed 20/100 samples...
+  Processed 30/100 samples...
+  Processed 40/100 samples...
+  Processed 50/100 samples...
+  Processed 60/100 samples...
+  Processed 70/100 samples...
+  Processed 80/100 samples...
+  Processed 90/100 samples...
+  Processed 100/100 samples...
+
+  PyTorch Results:
+    WER: 14.45%
+    CER: 3.48%
+    RTFx: 3.74x
+    Avg Latency: 3.255s
+
+================================================================================
+Summary
+================================================================================
+
+Results saved to: fleurs_all_languages_100.json
+
+Language Results:
+Language     WER (PyTorch)   WER (CoreML)    Samples   
+------------------------------------------------------------
+en_us        5.44%           N/A             100       
+fr_fr        5.80%           N/A             100       
+de_de        4.57%           N/A             100       
+es_419       3.80%           N/A             100       
+it_it        3.80%           N/A             100       
+pt_br        5.03%           N/A             100       
+nl_nl        6.57%           N/A             100       
+pl_pl        5.97%           N/A             100       
+el_gr        9.25%           N/A             100       
+ar_eg        7.31%           N/A             100       
+ja_jp        99.47%          N/A             100       
+vi_vn        6.50%           N/A             100       
+ko_kr        14.45%          N/A             100       

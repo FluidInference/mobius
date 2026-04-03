@@ -38,20 +38,20 @@ SAMPLE_RATE = 16000
 
 # Map FLEURS language codes to Cohere language codes
 LANGUAGE_MAP = {
-    "en_us": "en",      # English
-    "fr_fr": "fr",      # French
-    "de_de": "de",      # German
-    "es_419": "es",     # Spanish
-    "it_it": "it",      # Italian
-    "pt_br": "pt",      # Portuguese
-    "nl_nl": "nl",      # Dutch
-    "pl_pl": "pl",      # Polish
-    "el_gr": "el",      # Greek
-    "ar_eg": "ar",      # Arabic
-    "ja_jp": "ja",      # Japanese
-    "zh_cn": "zh",      # Chinese
-    "vi_vn": "vi",      # Vietnamese
-    "ko_kr": "ko",      # Korean
+    "en_us": "en",              # English
+    "fr_fr": "fr",              # French
+    "de_de": "de",              # German
+    "es_419": "es",             # Spanish
+    "it_it": "it",              # Italian
+    "pt_br": "pt",              # Portuguese
+    "nl_nl": "nl",              # Dutch
+    "pl_pl": "pl",              # Polish
+    "el_gr": "el",              # Greek
+    "ar_eg": "ar",              # Arabic
+    "ja_jp": "ja",              # Japanese
+    "cmn_hans_cn": "zh",        # Chinese (Mandarin Simplified) - Note: FLEURS uses cmn_hans_cn
+    "vi_vn": "vi",              # Vietnamese
+    "ko_kr": "ko",              # Korean
 }
 
 
