@@ -297,7 +297,7 @@ from coremltools.optimize.coreml import linear_quantize_weights
 
 ### Step 1: Export to CoreML (fp32)
 ```bash
-uv run python export-full-pipeline.py \
+uv run python conversion/export-full-pipeline.py \
   --nemo-path ../parakeet-ctc-riva-0-6b-unified-zh-cn_vtrainable_v3.0/Parakeet-Hybrid-XL-unified-0.6b_spe7k_zh-en-CN_3.0.nemo \
   --output-dir build-full \
   --no-quantize-encoder
@@ -311,7 +311,7 @@ Output:
 
 ### Step 2: Post-Training Quantization
 ```bash
-uv run python quantize-encoder-advanced.py \
+uv run python conversion/quantize-encoder-advanced.py \
   --input build-full/Encoder.mlpackage \
   --output build-full/Encoder-int8.mlpackage
 ```
@@ -332,7 +332,7 @@ Output: `.mlmodelc` files for instant loading (skip compilation on device)
 
 ### Step 4: Benchmark
 ```bash
-uv run python benchmark-full-pipeline.py \
+uv run python benchmark/benchmark-full-pipeline.py \
   --build-dir build-full \
   --num-samples 100 \
   --output-file results.json
@@ -361,15 +361,17 @@ Results:
 
 ## Files Generated
 
-### Conversion Scripts
+### Conversion Scripts (`conversion/`)
 - `export-ctc-zh-cn.py` - Decoder-only conversion (initial approach)
 - `export-full-pipeline.py` - Full pipeline conversion (final approach)
 - `quantize-encoder-advanced.py` - Post-training int8 quantization
 - `individual_components.py` - PyTorch wrappers for tracing
 
-### Validation Scripts
+### Validation Scripts (`validation/`)
 - `validate-ctc-zh-cn.py` - Decoder-only validation
-- `benchmark-cer.py` - Decoder-only CER benchmark (with PyTorch encoder)
+- `benchmark-cer.py` - Multi-sample validation (with PyTorch encoder)
+
+### Benchmark Scripts (`benchmark/`)
 - `benchmark-full-pipeline.py` - Full pipeline CER benchmark (pure CoreML)
 - `text_normalizer.py` - Chinese text normalization utilities
 

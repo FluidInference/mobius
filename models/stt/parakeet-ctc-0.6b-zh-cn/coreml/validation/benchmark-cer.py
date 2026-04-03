@@ -5,11 +5,12 @@ Downloads AISHELL-1 test samples and measures Character Error Rate (CER) for bot
 NeMo and CoreML implementations.
 
 Usage:
-    uv run python benchmark-cer.py --num-files 100 --nemo-path ../parakeet-ctc-riva-0-6b-unified-zh-cn_vtrainable_v3.0/*.nemo
+    uv run python validation/benchmark-cer.py --num-files 100 --nemo-path ../parakeet-ctc-riva-0-6b-unified-zh-cn_vtrainable_v3.0/*.nemo
 """
 from __future__ import annotations
 
 import json
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,7 +26,10 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 import nemo.collections.asr as nemo_asr
-from text_normalizer import compute_cer_normalized
+
+# Add parent directory to path to import from benchmark/
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from benchmark.text_normalizer import compute_cer_normalized
 
 app = typer.Typer(add_completion=False, pretty_exceptions_show_locals=False)
 console = Console()

@@ -38,10 +38,24 @@ Benchmarked on Apple M2 (16GB RAM, macOS 26.5):
 - ✅ 251ms cold compile time
 - ✅ Runs entirely on Neural Engine (optimal efficiency)
 
-## Files
+## Directory Structure
 
 ```
-build/
+conversion/                   # Model conversion scripts
+├── export-ctc-zh-cn.py      # CTC head export (decoder only)
+├── export-full-pipeline.py  # Full pipeline export (preprocessor + encoder + decoder)
+├── quantize-encoder-advanced.py  # Post-training quantization
+└── individual_components.py # PyTorch wrappers for tracing
+
+validation/                   # Validation scripts
+├── validate-ctc-zh-cn.py    # Single-sample validation (NeMo vs CoreML)
+└── benchmark-cer.py         # Multi-sample validation on FLEURS
+
+benchmark/                    # Benchmark scripts
+├── benchmark-full-pipeline.py  # Full CoreML pipeline benchmark
+└── text_normalizer.py       # Chinese text normalization utilities
+
+build/                        # Output directory
 ├── CtcHeadZhCn.mlpackage    # Uncompiled CoreML model
 ├── CtcHeadZhCn.mlmodelc/    # Compiled CoreML model (ready to use)
 ├── vocab.json                # 7000-token BPE vocabulary
@@ -83,7 +97,7 @@ Test against the original NeMo model:
 uv run python download-test-audio.py --output-dir ./test_audio --num-samples 5
 
 # Validate (requires .nemo checkpoint)
-uv run python validate-ctc-zh-cn.py \
+uv run python validation/validate-ctc-zh-cn.py \
   --audio-file test_audio/aishell_test_000.wav \
   --nemo-path ../parakeet-ctc-riva-0-6b-unified-zh-cn_vtrainable_v3.0/*.nemo \
   --coreml-dir ./build
@@ -103,7 +117,7 @@ Coming soon: Full AISHELL-1 test set evaluation.
 
 ```bash
 # Export CTC head to CoreML
-uv run python export-ctc-zh-cn.py \
+uv run python conversion/export-ctc-zh-cn.py \
   --nemo-path ../parakeet-ctc-riva-0-6b-unified-zh-cn_vtrainable_v3.0/*.nemo \
   --output-dir ./build \
   --compute-units CPU_AND_NE
