@@ -1,0 +1,27 @@
+[project]
+name = "cohere-transcribe-coreml"
+version = "0.1.0"
+description = "Cohere Transcribe 03-2026 CoreML conversion"
+readme = "README.md"
+requires-python = "==3.10.12"
+dependencies = [
+    "coremltools==9.0b1",
+    "torch==2.7.0",
+    "transformers==4.57.6",
+    "numpy==1.26.4",
+    "soundfile==0.13.1",
+    "datasets==3.6.0",
+    "librosa==0.11.0",
+    "huggingface-hub>=0.34.0,<1.0",
+    "typer==0.16.0",
+    "safetensors==0.5.3",
+    "sentencepiece==0.2.0",
+    "scikit-learn==1.5.1",
+]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["convert-cohere-transcribe.py", "convert-via-onnx.py"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

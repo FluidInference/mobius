@@ -1,0 +1,60 @@
+{
+  "model_id": "CohereLabs/cohere-transcribe-03-2026",
+  "samples_per_language": 100,
+  "languages": [
+    "en_us",
+    "fr_fr",
+    "de_de",
+    "es_419"
+  ],
+  "results": {
+    "en_us": {
+      "pytorch": {
+        "language": "en_us",
+        "samples_processed": 100,
+        "wer": 5.441012608138956,
+        "cer": 2.741445310307079,
+        "rtfx": 0.22207036144872946,
+        "total_duration": 953.8799999999995,
+        "processing_time": 4295.395359277725,
+        "avg_latency": 42.95395359277725
+      }
+    },
+    "fr_fr": {
+      "pytorch": {
+        "language": "fr_fr",
+        "samples_processed": 100,
+        "wer": 5.801866276897946,
+        "cer": 2.375755995265038,
+        "rtfx": 0.9786609151767343,
+        "total_duration": 1073.7000000000003,
+        "processing_time": 1097.1113522052765,
+        "avg_latency": 10.971113522052764
+      }
+    },
+    "de_de": {
+      "pytorch": {
+        "language": "de_de",
+        "samples_processed": 100,
+        "wer": 4.565514405011076,
+        "cer": 1.9182628747933739,
+        "rtfx": 0.7621389263978858,
+        "total_duration": 1496.2199999999998,
+        "processing_time": 1963.1853828430176,
+        "avg_latency": 19.631853828430177
+      }
+    },
+    "es_419": {
+      "pytorch": {
+        "language": "es_419",
+        "samples_processed": 100,
+        "wer": 3.8008881637562544,
+        "cer": 1.7709256244755378,
+        "rtfx": 0.611567660150414,
+        "total_duration": 1200.78,
+        "processing_time": 1963.4458756446838,
+        "avg_latency": 19.63445875644684
+      }
+    }
+  }
+}

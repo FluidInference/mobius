@@ -1,0 +1,47 @@
+{
+  "model_id": "CohereLabs/cohere-transcribe-03-2026",
+  "samples_per_language": 10,
+  "languages": [
+    "en_us",
+    "fr_fr",
+    "de_de"
+  ],
+  "results": {
+    "en_us": {
+      "pytorch": {
+        "language": "en_us",
+        "samples_processed": 10,
+        "wer": 8.25048416495785,
+        "cer": 4.440137171981144,
+        "rtfx": 0.08213469884976629,
+        "total_duration": 90.97999999999999,
+        "processing_time": 1107.6926229000092,
+        "avg_latency": 110.76926229000091
+      }
+    },
+    "fr_fr": {
+      "pytorch": {
+        "language": "fr_fr",
+        "samples_processed": 10,
+        "wer": 5.72332433648223,
+        "cer": 2.1479764708608906,
+        "rtfx": 0.07817147989129439,
+        "total_duration": 110.16,
+        "processing_time": 1409.2096011638641,
+        "avg_latency": 140.92096011638642
+      }
+    },
+    "de_de": {
+      "pytorch": {
+        "language": "de_de",
+        "samples_processed": 10,
+        "wer": 2.725547399460443,
+        "cer": 0.44977850511410417,
+        "rtfx": 0.14445726979237727,
+        "total_duration": 157.56,
+        "processing_time": 1090.7031555175781,
+        "avg_latency": 109.07031555175782
+      }
+    }
+  }
+}

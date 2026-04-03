@@ -1,0 +1,22 @@
+# Build artifacts
+build/
+*.mlmodelc
+*.mlpackage
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+
+# Comparison results
+comparison_results.json
+*_results.json
+plots/
+
+# Test data
+*.wav
+*.mp3
+audio/

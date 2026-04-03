@@ -1,0 +1,21 @@
+{
+  "model_id": "CohereLabs/cohere-transcribe-03-2026",
+  "samples_per_language": 5,
+  "languages": [
+    "en_us"
+  ],
+  "results": {
+    "en_us": {
+      "pytorch": {
+        "language": "en_us",
+        "samples_processed": 5,
+        "wer": 7.989063568010938,
+        "cer": 5.690662820057528,
+        "rtfx": 0.27696155682685125,
+        "total_duration": 40.86,
+        "processing_time": 147.5295000076294,
+        "avg_latency": 29.50590000152588
+      }
+    }
+  }
+}
