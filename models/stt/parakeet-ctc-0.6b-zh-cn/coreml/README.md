@@ -55,12 +55,14 @@ benchmark/                    # Benchmark scripts
 ├── benchmark-full-pipeline.py  # Full CoreML pipeline benchmark
 └── text_normalizer.py       # Chinese text normalization utilities
 
-build/                        # Output directory
-├── CtcHeadZhCn.mlpackage    # Uncompiled CoreML model
-├── CtcHeadZhCn.mlmodelc/    # Compiled CoreML model (ready to use)
-├── vocab.json                # 7000-token BPE vocabulary
-└── ctc_head_metadata.json    # Model metadata
+build/                        # Generated output directory (not in repo)
+├── CtcHeadZhCn.mlpackage    # Uncompiled CoreML model (generated)
+├── CtcHeadZhCn.mlmodelc/    # Compiled CoreML model (generated)
+├── vocab.json                # 7000-token BPE vocabulary (generated)
+└── ctc_head_metadata.json    # Model metadata (generated)
 ```
+
+**Note:** The `build/` directory is created when you run the conversion scripts and is not included in this repository.
 
 ## Setup
 

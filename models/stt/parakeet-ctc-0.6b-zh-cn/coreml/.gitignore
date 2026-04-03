@@ -1,0 +1,28 @@
+# Build artifacts
+build/
+*.mlpackage
+*.mlmodelc
+
+# Test data
+test_audio/
+test_audio_*/
+*.wav
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Generated results
+benchmark_results*.json
+results.json
+
+# Virtual environments
+.venv/
+venv/
+.python-version
+
+# Editor files
+.DS_Store
+.vscode/
+.idea/
