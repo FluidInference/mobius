@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Export full CoreML pipeline: Preprocessor + Encoder + CTC Decoder for zh-CN.
 
-Converts the complete Parakeet CTC zh-CN model to CoreML with int8 quantization
-on the encoder for reduced memory footprint.
+Converts the complete Parakeet CTC zh-CN model to CoreML with optional fp16 precision
+on the encoder for reduced memory footprint. For int8 quantization, use quantize-encoder-advanced.py separately.
 """
 from __future__ import annotations
 
@@ -127,14 +127,14 @@ def convert(
     quantize_encoder: bool = typer.Option(
         True,
         "--quantize-encoder/--no-quantize-encoder",
-        help="Apply int8 quantization to encoder",
+        help="Apply fp16 precision to encoder (for int8, use quantize-encoder-advanced.py separately)",
     ),
 ) -> None:
     """Convert full Parakeet CTC zh-CN pipeline to CoreML.
 
     Exports three models:
     1. Preprocessor.mlpackage - Audio -> mel spectrogram (CPU-only)
-    2. Encoder.mlpackage - Mel -> encoder features [1, 1024, 188] (ANE, optionally int8)
+    2. Encoder.mlpackage - Mel -> encoder features [1, 1024, 188] (ANE, optionally fp16)
     3. CtcHeadZhCn.mlpackage - Encoder features -> CTC logits [1, 188, 7001] (ANE)
     """
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -337,7 +337,7 @@ def convert(
             },
             "ctc_head": {
                 "input": {"encoder_output": [1, 1024, 188]},
-                "output": {"ctc_logits": [1, 188, len(vocab)]},
+                "output": {"ctc_logits": [1, 188, len(vocab) + 1]},  # +1 for blank token
             },
         },
     }
@@ -351,9 +351,11 @@ def convert(
     typer.echo("✓ Full pipeline conversion complete!")
     typer.echo(f"  Output directory: {output_dir}")
     typer.echo(f"  Preprocessor: {preprocessor_path.name}")
-    typer.echo(f"  Encoder: {encoder_path.name} {'(int8 quantized)' if quantize_encoder else ''}")
+    typer.echo(f"  Encoder: {encoder_path.name} {'(fp16 precision)' if quantize_encoder else ''}")
     typer.echo(f"  CTC Head: {ctc_path.name}")
     typer.echo(f"  Vocabulary: {vocab_path.name} ({len(vocab)} tokens)")
+    if quantize_encoder:
+        typer.echo("\nNote: For int8 quantization, run: uv run python conversion/quantize-encoder-advanced.py")
 
 
 if __name__ == "__main__":

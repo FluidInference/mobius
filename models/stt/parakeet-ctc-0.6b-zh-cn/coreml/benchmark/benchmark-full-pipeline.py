@@ -273,7 +273,7 @@ def benchmark(
     median_rtfx = np.median(rtfx_values)
 
     # CER distribution
-    cer_bins = [0, 0.05, 0.10, 0.20, 0.30, 1.0]
+    cer_bins = [0, 0.05, 0.10, 0.20, 0.30, float('inf')]
     cer_counts = [
         sum(1 for c in cer_norm_values if cer_bins[i] <= c < cer_bins[i+1])
         for i in range(len(cer_bins) - 1)
