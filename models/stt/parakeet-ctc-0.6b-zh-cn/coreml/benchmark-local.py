@@ -76,6 +76,29 @@ def decode_ctc_greedy(log_probs: np.ndarray, vocab: list[str], blank_id: int) ->
     return text
 
 
+def pad_or_truncate_encoder_output(encoder_output: np.ndarray, target_time_steps: int) -> np.ndarray:
+    """Pad or truncate encoder output to match CoreML model's expected input shape.
+
+    Args:
+        encoder_output: Shape [1, encoder_dim, time_steps]
+        target_time_steps: Target time dimension (e.g., 188)
+
+    Returns:
+        Padded/truncated array of shape [1, encoder_dim, target_time_steps]
+    """
+    current_time_steps = encoder_output.shape[2]
+
+    if current_time_steps == target_time_steps:
+        return encoder_output
+    elif current_time_steps > target_time_steps:
+        # Truncate
+        return encoder_output[:, :, :target_time_steps]
+    else:
+        # Pad with zeros
+        pad_width = ((0, 0), (0, 0), (0, target_time_steps - current_time_steps))
+        return np.pad(encoder_output, pad_width, mode='constant', constant_values=0)
+
+
 @app.command()
 def benchmark(
     manifest: Path = typer.Option(
@@ -132,11 +155,17 @@ def benchmark(
 
     console.print(f"[green]✓[/green] Loaded {len(samples)} samples\n")
 
-    # Load vocabulary
+    # Load vocabulary and metadata
     vocab_path = coreml_dir / "vocab.json"
     vocab = json.loads(vocab_path.read_text())
     blank_id = len(vocab)
-    console.print(f"Vocabulary: {len(vocab)} tokens + blank\n")
+
+    metadata_path = coreml_dir / "ctc_head_metadata.json"
+    metadata = json.loads(metadata_path.read_text())
+    target_time_steps = metadata["time_steps"]
+
+    console.print(f"Vocabulary: {len(vocab)} tokens + blank")
+    console.print(f"Target time steps: {target_time_steps}\n")
 
     # Load NeMo model
     console.print("[cyan]Loading NeMo model...[/cyan]")
@@ -193,7 +222,9 @@ def benchmark(
             # CoreML inference (decoder only)
             coreml_start = time.perf_counter()
             encoder_output_np = encoded.numpy()
-            coreml_output = mlmodel.predict({"encoder_output": encoder_output_np})
+            # Pad or truncate to match CoreML model's expected shape
+            encoder_output_padded = pad_or_truncate_encoder_output(encoder_output_np, target_time_steps)
+            coreml_output = mlmodel.predict({"encoder_output": encoder_output_padded})
             ctc_logits_coreml = coreml_output["ctc_logits"]
 
             coreml_log_probs = torch.nn.functional.log_softmax(

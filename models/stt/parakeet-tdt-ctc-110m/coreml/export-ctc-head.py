@@ -167,6 +167,13 @@ def export(
     mlmodel.save(str(mlpackage_path))
     typer.echo(f"Saved: {mlpackage_path}")
 
+    # Save vocabulary
+    sp = asr_model.tokenizer.tokenizer
+    vocab_list = [sp.id_to_piece(i) for i in range(sp.get_piece_size())]
+    vocab_path = output_dir / "vocab.json"
+    vocab_path.write_text(json.dumps(vocab_list, ensure_ascii=False, indent=2))
+    typer.echo(f"Saved vocabulary ({len(vocab_list)} tokens) to {vocab_path}")
+
     # Save metadata
     metadata = {
         "model": "parakeet-tdt-ctc-110m-ctc-head",

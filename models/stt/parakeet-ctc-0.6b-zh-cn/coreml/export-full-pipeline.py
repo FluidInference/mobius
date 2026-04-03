@@ -322,8 +322,8 @@ def convert(
         "max_audio_seconds": max_audio_seconds,
         "encoder_dim": 1024,
         "time_steps": 188,
-        "vocab_size": len(vocab) - 1,  # Exclude blank
-        "blank_id": len(vocab) - 1,
+        "vocab_size": len(vocab),
+        "blank_id": len(vocab),
         "quantized_encoder": quantize_encoder,
         "components": {
             "preprocessor": {

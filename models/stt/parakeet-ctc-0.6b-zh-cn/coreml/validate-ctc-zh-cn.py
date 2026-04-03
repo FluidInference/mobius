@@ -42,6 +42,29 @@ def decode_ctc_greedy(log_probs: np.ndarray, vocab: list[str], blank_id: int) ->
     return text
 
 
+def pad_or_truncate_encoder_output(encoder_output: np.ndarray, target_time_steps: int) -> np.ndarray:
+    """Pad or truncate encoder output to match CoreML model's expected input shape.
+
+    Args:
+        encoder_output: Shape [1, encoder_dim, time_steps]
+        target_time_steps: Target time dimension (e.g., 188)
+
+    Returns:
+        Padded/truncated array of shape [1, encoder_dim, target_time_steps]
+    """
+    current_time_steps = encoder_output.shape[2]
+
+    if current_time_steps == target_time_steps:
+        return encoder_output
+    elif current_time_steps > target_time_steps:
+        # Truncate
+        return encoder_output[:, :, :target_time_steps]
+    else:
+        # Pad with zeros
+        pad_width = ((0, 0), (0, 0), (0, target_time_steps - current_time_steps))
+        return np.pad(encoder_output, pad_width, mode='constant', constant_values=0)
+
+
 @app.command()
 def validate(
     audio_file: Path = typer.Option(
@@ -65,12 +88,17 @@ def validate(
 ) -> None:
     """Validate CoreML model against NeMo reference."""
 
-    # Load vocabulary
+    # Load vocabulary and metadata
     vocab_path = coreml_dir / "vocab.json"
     vocab = json.loads(vocab_path.read_text())
     blank_id = len(vocab)
 
+    metadata_path = coreml_dir / "ctc_head_metadata.json"
+    metadata = json.loads(metadata_path.read_text())
+    target_time_steps = metadata["time_steps"]
+
     typer.echo(f"Vocabulary: {len(vocab)} tokens + blank")
+    typer.echo(f"Target time steps: {target_time_steps}")
 
     # Load NeMo model
     typer.echo(f"\nLoading NeMo model from {nemo_path}...")
@@ -139,7 +167,10 @@ def validate(
     typer.echo("\nRunning CoreML inference...")
     encoder_output_np = encoded.numpy()  # [1, 1024, T]
 
-    coreml_input = {"encoder_output": encoder_output_np}
+    # Pad or truncate to match CoreML model's expected shape
+    encoder_output_padded = pad_or_truncate_encoder_output(encoder_output_np, target_time_steps)
+
+    coreml_input = {"encoder_output": encoder_output_padded}
     coreml_output = mlmodel.predict(coreml_input)
 
     ctc_logits_coreml = coreml_output["ctc_logits"]  # [1, T, V+1]
@@ -155,9 +186,13 @@ def validate(
     # Compare outputs
     typer.echo("\n=== Validation Results ===")
 
-    # Numerical comparison
-    max_diff = np.abs(ctc_logits_nemo.numpy() - ctc_logits_coreml).max()
-    mean_diff = np.abs(ctc_logits_nemo.numpy() - ctc_logits_coreml).mean()
+    # Numerical comparison (only compare valid time steps)
+    actual_time_steps = ctc_logits_nemo.shape[1]
+    ctc_logits_nemo_np = ctc_logits_nemo.numpy()[:, :actual_time_steps, :]
+    ctc_logits_coreml_trimmed = ctc_logits_coreml[:, :actual_time_steps, :]
+
+    max_diff = np.abs(ctc_logits_nemo_np - ctc_logits_coreml_trimmed).max()
+    mean_diff = np.abs(ctc_logits_nemo_np - ctc_logits_coreml_trimmed).mean()
 
     typer.echo(f"Max logit diff:  {max_diff:.6e}")
     typer.echo(f"Mean logit diff: {mean_diff:.6e}")

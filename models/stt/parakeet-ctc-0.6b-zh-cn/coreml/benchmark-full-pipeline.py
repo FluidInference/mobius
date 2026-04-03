@@ -187,7 +187,7 @@ def benchmark(
     # Load vocabulary
     vocab_path = build_dir / "vocab.json"
     vocabulary = load_vocabulary(vocab_path)
-    blank_id = len(vocabulary) - 1
+    blank_id = len(vocabulary)
 
     console.print(f"\nVocabulary: {len(vocabulary)} tokens (blank_id={blank_id})")
 
