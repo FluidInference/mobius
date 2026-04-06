@@ -2,35 +2,56 @@
 
 CoreML export of [CohereLabs/cohere-transcribe-03-2026](https://huggingface.co/CohereLabs/cohere-transcribe-03-2026) for on-device speech recognition on Apple Silicon.
 
-## Status: ✅ Working with Stateless Decoder
+## ⚠️ IMPORTANT: .mlpackage Format Required
+
+**The Cohere decoder CANNOT be .mlmodelc format** (unlike other FluidAudio models).
+
+- **Reason:** Uses CoreML State API (macOS 15+/iOS 18+ only)
+- **Format:** Must be `.mlpackage` (ML Program format)
+- **First load:** ~20s for ANE compilation (then cached)
+- **Subsequent loads:** ~1s (uses macOS cached compilation)
+
+See [MLMODELC_LIMITATION.md](MLMODELC_LIMITATION.md) for technical details.
+
+## Status: ✅ Working with Stateful Decoder (.mlpackage)
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| **Encoder** | ✅ Working | Perfect parity with reference (max diff 0.041) |
-| **Decoder (Stateless)** | ✅ Mostly Working | Fixes 2/3 test samples perfectly, O(n^2) complexity |
-| **Decoder (Cached)** | ❌ Broken | 174% WER due to sliding window bug (archived) |
-| **Mel Preprocessing** | ✅ Working | Python implementation matches reference |
+| **Encoder** | ✅ Working | FP16, 3500 frames (35 seconds) |
+| **Decoder (Stateful)** | ✅ Working | GPU-resident KV cache, ~37ms/token |
+| **Decoder (Stateless)** | ❌ Broken | Wrong outputs, 10× slower (archived) |
+| **Mel Preprocessing** | ✅ Working | Pure Python, no transformers dependency |
 
-### Current Test Results (LibriSpeech test-clean, 3 samples)
+### Performance (M3 Max)
 
-**Stateless Decoder** (`export-decoder-stateless.py`):
-- Sample 1 (3.5s): ✅ **Perfect transcription**
-- Sample 2 (14.2s): ⚠️ Different error pattern (still investigating)
-- Sample 3 (5.0s): ✅ **Perfect transcription**
+**Stateful Decoder:**
+- ✅ 23.76% WER on LibriSpeech test-clean
+- ✅ 64% perfect matches (WER < 5%)
+- ✅ ~37ms per token average
+- ✅ 0.2-0.3 RTFx (real-time capable)
+- ⚠️ Requires macOS 15+/iOS 18+ (State API)
 
-**Cached Decoder** (archived):
-- Average WER: 174%
-- Issue: Sliding window bug causes severe repetitions
+**Stateless Decoder (abandoned):**
+- ❌ Wrong outputs ("icon icon icon..." repetition)
+- ❌ ~155ms per token (4× slower)
+- ❌ 1.0-1.7 RTFx (slower than real-time)
 
 ## Current Models
 
-**FP16 Models (build/):**
-- `cohere_encoder.mlpackage` (3.6 GB) - ✅ Working perfectly
-- `cohere_decoder_stateless.mlpackage` (291 MB) - ✅ Stateless decoder (fixes 2/3 samples)
-- `cohere_cross_kv_projector.mlpackage` (32 MB)
+**FP16 Models (f16/):**
+- `cohere_encoder.mlpackage` (3.6 GB) - ✅ Encoder with projection
+- `cohere_decoder_stateful.mlpackage` (291 MB) - ✅ Stateful decoder (State API)
+- `vocab.json` (331 KB) - 16,384 token vocabulary
+- `cohere_mel_spectrogram.py` - Pure Python preprocessor
+- `quickstart.py` - Minimal 50-line example
+- `example_inference.py` - Complete CLI with 14 languages
 
-**Archived (broken):**
-- `cohere_decoder_cached.mlpackage` - ❌ Sliding window bug (see `archive-failed-approaches/`)
+**Total Package:** 3.9 GB (ready for HuggingFace)
+
+**Archived (broken approaches):**
+- `export-decoder-stateless.py` - ❌ Wrong outputs, 10× slower
+- `export-decoder-external-cache.py` - ❌ Blocked by CoreML Tools
+- `export-decoder-external-v2.py` - ❌ Same aliasing error
 
 ## Quick Start
 
