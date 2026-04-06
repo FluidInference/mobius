@@ -1,15 +1,15 @@
-# Why Cohere Decoder Cannot Be .mlmodelc
+# Why Cohere Models Cannot Be .mlmodelc
 
-This document explains the technical limitations that prevent the Cohere Transcribe decoder from being compiled to `.mlmodelc` format, unlike other FluidAudio models.
+This document explains the technical limitations that prevent the Cohere Transcribe models from being compiled to `.mlmodelc` format, unlike other FluidAudio models.
 
 ## TL;DR
 
-**The Cohere stateful decoder MUST be `.mlpackage` - it cannot be `.mlmodelc`.**
+**Both Cohere encoder and decoder MUST be `.mlpackage` - neither can be `.mlmodelc`.**
 
-- **Reason:** Uses CoreML State API (macOS 15+/iOS 18+ only)
-- **State API:** Only available in ML Program format
-- **ML Program:** Cannot be compiled to `.mlmodelc`
-- **Consequence:** First load takes ~20s (ANE compilation), then cached
+- **Decoder limitation:** Uses CoreML State API (macOS 15+/iOS 18+ only) → ML Program format required → cannot be .mlmodelc
+- **Encoder limitation:** Exported as ML Program (iOS 17+) → cannot be .mlmodelc. Neural Network conversion failed (memory exhaustion)
+- **Practical impact:** First load takes ~20s (ANE compilation for both models), then cached
+- **Decision:** Keep both as .mlpackage for consistency
 
 ## Background: CoreML Model Formats
 
@@ -170,6 +170,30 @@ iOS 15+ requires ML Program for new models. Cannot force Neural Network.
 
 **Verdict:** Not possible.
 
+### ❌ Attempt 4: Convert Encoder to Neural Network (April 2026)
+
+**Idea:** Encoder doesn't use State API, so convert it from ML Program to Neural Network format to enable .mlmodelc
+
+**Approach:**
+```python
+# export_encoder_neuralnetwork.py
+mlmodel = ct.convert(
+    traced_encoder,
+    minimum_deployment_target=ct.target.iOS14,
+    convert_to="neuralnetwork",
+)
+mlmodel = quantization_utils.quantize_weights(mlmodel, nbits=16)
+mlmodel.save("f16/cohere_encoder.mlmodelc")
+```
+
+**Result:**
+- Conversion started successfully
+- Translated all 7643 MIL operations to Neural Network ops (100% complete)
+- Process killed with exit code 137 during final compilation step
+- Cause: Memory exhaustion (encoder is 1.9B params / 3.6GB FP16, conversion requires multiple copies in RAM)
+
+**Verdict:** Not feasible due to memory constraints. Encoder will stay as .mlpackage.
+
 ## Performance Comparison
 
 | Approach | Format | .mlmodelc | Speed | Quality | Status |
@@ -229,16 +253,22 @@ All Parakeet models use `.mlmodelc` because:
 ### Cohere Requirements
 
 ```swift
-// Must be .mlpackage
+// Both must be .mlpackage
 public static let encoderFile = "cohere_encoder.mlpackage"
 public static let decoderFile = "cohere_decoder_stateful.mlpackage"
 ```
+
+**Why both are .mlpackage:**
+
+1. **Decoder**: MUST be .mlpackage (State API requirement)
+2. **Encoder**: Exported as ML Program (iOS 17+), cannot be .mlmodelc. Neural Network conversion failed (memory exhaustion)
+3. **Practical**: First load compiles both models (~20s total), then both are cached
 
 **FluidAudio needs to support .mlpackage** for Cohere models:
 
 1. `MLModel(contentsOf:)` already supports both formats
 2. Only difference: ~20s first-load compilation (then cached)
-3. Encoder can be .mlpackage too (consistency)
+3. Both models share the same format for consistency
 
 ## Recommendations
 
@@ -313,12 +343,19 @@ python export-decoder-external-v2.py
 
 ## Conclusion
 
-**The Cohere decoder CANNOT be .mlmodelc** due to:
+**Neither the Cohere encoder nor decoder can be .mlmodelc:**
+
+**Decoder:**
 1. CoreML State API requirement (ML Program only)
 2. ML Program format cannot be .mlmodelc (enforced by CoreML Tools)
 3. External cache approaches blocked by CoreML Tools validation
 
-**The ONLY viable solution is .mlpackage** with State API.
+**Encoder:**
+1. Exported as ML Program (iOS 17+) due to Conformer architecture
+2. Neural Network conversion attempted but failed (memory exhaustion during final compilation)
+3. Keeping as .mlpackage for consistency with decoder
+
+**The ONLY viable solution is .mlpackage for both models.**
 
 This is not a bug or oversight - it's a fundamental platform limitation that cannot be worked around.
 
@@ -330,8 +367,9 @@ This is not a bug or oversight - it's a fundamental platform limitation that can
 - State API: Requires macOS 15+/iOS 18+ and ML Program format
 - Benchmark results: Stateless 10-15× slower and produces wrong outputs
 - External cache: CoreML Tools rejects input→output cache aliasing
+- Encoder Neural Network conversion: Failed with exit code 137 (memory exhaustion)
 
 ---
 
-**Last Updated:** April 6, 2026 (added historical context and verified performance results)
+**Last Updated:** April 6, 2026 (documented encoder Neural Network conversion attempt, added historical context and verified performance results)
 **Tested With:** CoreML Tools 8.2, macOS 15.0, Python 3.10, M3 Max
