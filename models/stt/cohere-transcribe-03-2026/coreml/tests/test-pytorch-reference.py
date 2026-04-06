@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
-"""Test Cohere Transcribe Stateless Decoder on LibriSpeech test-clean.
+"""Benchmark original Cohere PyTorch model on LibriSpeech test-clean.
 
-This script evaluates the stateless CoreML decoder on 10 samples from LibriSpeech test-clean
-and reports Word Error Rate (WER).
+This establishes the gold standard baseline for the model's expected performance.
+Compare CoreML results against this to identify conversion issues.
 """
 
+import torch
 import numpy as np
-import coremltools as ct
-from cohere_mel_spectrogram import CohereMelSpectrogram
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
 
 print("="*70)
-print("Cohere Transcribe - LibriSpeech Test-Clean WER Test (Stateless)")
+print("Cohere Transcribe PyTorch Reference - LibriSpeech Test-Clean")
 print("="*70)
 
 # Configuration
 NUM_SAMPLES = 10
-PROMPT_IDS = [13764, 7, 4, 16, 62, 62, 5, 9, 11, 13]
-EOS_TOKEN_ID = 3
 MAX_NEW_TOKENS = 200
 
 # Load LibriSpeech test-clean
-print(f"\n[1/6] Loading {NUM_SAMPLES} samples from LibriSpeech test-clean...")
+print(f"\n[1/5] Loading {NUM_SAMPLES} samples from LibriSpeech test-clean...")
 try:
     from datasets import load_dataset
     dataset = load_dataset("librispeech_asr", "clean", split="test", streaming=True)
@@ -34,24 +32,23 @@ except Exception as e:
     print(f"   ❌ Error loading LibriSpeech: {e}")
     exit(1)
 
-# Load models
-print("\n[2/6] Loading CoreML models...")
+# Load PyTorch model and processor
+print("\n[2/5] Loading PyTorch model...")
 try:
-    encoder = ct.models.MLModel(
-        "build/cohere_encoder.mlpackage",
-        compute_units=ct.ComputeUnit.CPU_AND_GPU
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(
+        "CohereLabs/cohere-transcribe-03-2026",
+        trust_remote_code=True,
+        torch_dtype=torch.float16,
+        device_map="auto"
     )
-    decoder = ct.models.MLModel(
-        "build/cohere_decoder_stateless.mlpackage",
-        compute_units=ct.ComputeUnit.CPU_AND_GPU
-    )
-    print(f"   ✓ Models loaded (Stateless decoder, FP16)")
+    processor = AutoProcessor.from_pretrained("CohereLabs/cohere-transcribe-03-2026")
+    print(f"   ✓ Model loaded (FP16, PyTorch)")
 except Exception as e:
-    print(f"   ❌ Error loading models: {e}")
+    print(f"   ❌ Error loading model: {e}")
     exit(1)
 
 # Load tokenizer
-print("\n[3/6] Loading tokenizer...")
+print("\n[3/5] Loading tokenizer...")
 try:
     import sentencepiece as spm
     sp = spm.SentencePieceProcessor()
@@ -62,99 +59,50 @@ except Exception as e:
     exit(1)
 
 # Process samples
-print(f"\n[4/6] Processing {NUM_SAMPLES} samples...")
-mel_processor = CohereMelSpectrogram()
+print(f"\n[4/5] Processing {NUM_SAMPLES} samples...")
 results = []
 
 for sample_idx, sample in enumerate(samples):
     print(f"\n   Sample {sample_idx + 1}/{NUM_SAMPLES}:")
 
-    audio = sample['audio']['array'].astype(np.float32)
+    audio = sample['audio']['array']
     ground_truth = sample['text'].lower()
     duration = len(audio) / 16000.0
 
     print(f"     Duration: {duration:.2f}s")
     print(f"     Ground truth: \"{ground_truth}\"")
 
-    # Compute mel spectrogram
-    mel = mel_processor(audio)
-    mel_padded = np.pad(
-        mel,
-        ((0, 0), (0, 0), (0, 3001 - mel.shape[2])),
-        mode='constant',
-        constant_values=0
-    )
+    # Process audio
+    inputs = processor(
+        audio,
+        sampling_rate=16000,
+        return_tensors="pt"
+    ).to(model.device)
 
-    # Encode
-    encoder_output = encoder.predict({
-        "input_features": mel_padded.astype(np.float32),
-        "feature_length": np.array([mel.shape[2]], dtype=np.int32)
-    })
+    # Generate
+    with torch.no_grad():
+        generated_ids = model.generate(
+            inputs["input_features"],
+            max_new_tokens=MAX_NEW_TOKENS,
+        )
 
-    encoder_hidden = None
-    for key, value in encoder_output.items():
-        if hasattr(value, 'shape') and len(value.shape) == 3:
-            encoder_hidden = value
-            break
-
-    cross_attention_mask = np.ones((1, 1, 1, encoder_hidden.shape[1]), dtype=np.float16)
-
-    # Decode with stateless decoder (starts with prompt)
-    tokens = list(PROMPT_IDS)
-
-    # Generate new tokens
-    for step in range(len(PROMPT_IDS), len(PROMPT_IDS) + MAX_NEW_TOKENS):
-        # Stateless: pass ALL tokens so far
-        input_ids = np.array([tokens], dtype=np.int32)
-
-        decoder_input = {
-            "input_ids": input_ids,
-            "encoder_hidden_states": encoder_hidden.astype(np.float16),
-            "cross_attention_mask": cross_attention_mask,
-        }
-
-        decoder_output = decoder.predict(decoder_input)
-
-        # Extract logits
-        logits = None
-        for key, value in decoder_output.items():
-            if hasattr(value, 'shape') and len(value.shape) == 2 and value.shape[1] > 1000:
-                logits = value
-                break
-
-        next_token = int(np.argmax(logits[0]))
-        tokens.append(next_token)
-
-        if next_token == EOS_TOKEN_ID:
-            break
-
-    # Decode tokens
-    hypothesis = sp.DecodeIds(tokens)
-
-    # Remove special tokens
-    special_tokens = [
-        '<|startofcontext|>', '<|startoftranscript|>', '<|emo:undefined|>',
-        '<|it|>', '<|pnc|>', '<|nopnc|>', '<|itn|>', '<|noitn|>',
-        '<|timestamp|>', '<|notimestamp|>', '<|diarize|>', '<|nodiarize|>',
-        '<|endoftext|>', '<|en|>'
-    ]
-    for special in special_tokens:
-        hypothesis = hypothesis.replace(special, '')
+    # Decode
+    hypothesis = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
     hypothesis = hypothesis.strip().lower()
 
     print(f"     Hypothesis:   \"{hypothesis}\"")
-    print(f"     Tokens: {len(tokens) - len(PROMPT_IDS)}")
+    print(f"     Tokens:       {len(generated_ids[0])}")
 
     results.append({
         'sample_idx': sample_idx,
         'duration': duration,
         'ground_truth': ground_truth,
         'hypothesis': hypothesis,
-        'tokens': len(tokens) - len(PROMPT_IDS)
+        'tokens': len(generated_ids[0])
     })
 
 # Calculate WER
-print("\n[5/6] Calculating WER...")
+print("\n[5/5] Calculating WER...")
 
 def calculate_wer(reference, hypothesis):
     """Calculate Word Error Rate."""
@@ -188,8 +136,9 @@ for result in results:
     result['wer'] = calculate_wer(result['ground_truth'], result['hypothesis'])
 
 # Print results
-print("\n[6/6] Results:")
 print("\n" + "="*70)
+print("RESULTS")
+print("="*70)
 
 total_duration = 0
 for result in results:
@@ -208,7 +157,7 @@ min_wer = min(r['wer'] for r in results)
 max_wer = max(r['wer'] for r in results)
 
 print(f"\n{'='*70}")
-print("SUMMARY")
+print("SUMMARY - PyTorch Reference (Gold Standard)")
 print(f"{'='*70}")
 print(f"Samples:      {len(results)}")
 print(f"Total audio:  {total_duration:.2f}s")
@@ -217,3 +166,5 @@ print(f"Median WER:   {median_wer:.2f}%")
 print(f"Min WER:      {min_wer:.2f}%")
 print(f"Max WER:      {max_wer:.2f}%")
 print(f"{'='*70}")
+print("\nUse this as the baseline to compare against CoreML conversions.")
+print("Any significant WER increase indicates a conversion issue.")
