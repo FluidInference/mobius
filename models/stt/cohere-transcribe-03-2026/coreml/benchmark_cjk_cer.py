@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Benchmark Cohere Transcribe CoreML models on LibriSpeech or FLEURS.
+"""Benchmark CJK languages using Character Error Rate (CER) instead of WER.
+
+CJK languages (Chinese, Japanese, Korean) don't have clear word boundaries,
+so CER is the appropriate metric instead of WER.
 
 Examples:
-    # Test FP16 models on 10 LibriSpeech samples
-    python benchmark.py --precision fp16 --samples 10
+    # Test FP16 models on 100 samples for all CJK languages
+    python benchmark_cjk_cer.py --precision fp16 --samples 100
 
-    # Test Q8 models on 100 FLEURS samples (Japanese)
-    python benchmark.py --precision q8 --samples 100 --dataset fleurs --language ja_jp
+    # Test Q8 models on 100 samples
+    python benchmark_cjk_cer.py --precision q8 --samples 100
 
-    # Test with normalized WER (removes punctuation)
-    python benchmark.py --precision fp16 --samples 10 --normalize
-
-    # Output to custom file
-    python benchmark.py --precision q8 --samples 50 --output results.json
+    # Test specific CJK language
+    python benchmark_cjk_cer.py --precision q8 --samples 100 --language ja_jp
 """
 
 import sys
@@ -26,33 +26,38 @@ import numpy as np
 import coremltools as ct
 from cohere_mel_spectrogram import CohereMelSpectrogram
 from datasets import load_dataset
-from jiwer import wer
+from jiwer import cer
 from jiwer.transforms import Compose, ToLowerCase, RemovePunctuation, RemoveMultipleSpaces, Strip
 import json
 import time
 
 
 # Create text normalization pipeline using jiwer
-# Works for all languages: English, CJK, European, Cyrillic, Arabic, etc.
 normalize_text = Compose([
-    ToLowerCase(),           # Convert to lowercase (all case-bearing scripts)
-    RemovePunctuation(),     # Remove punctuation (Latin, CJK, Cyrillic, Arabic, etc.)
-    RemoveMultipleSpaces(),  # Normalize whitespace
-    Strip(),                 # Strip leading/trailing whitespace
+    ToLowerCase(),
+    RemovePunctuation(),
+    RemoveMultipleSpaces(),
+    Strip(),
 ])
 
 
-def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=None,
-              dataset="librispeech", language="en_us"):
-    """Run benchmark on specified precision and number of samples."""
+CJK_LANGUAGES = [
+    ("ja_jp", "Japanese"),
+    ("cmn_hans_cn", "Chinese (Mandarin)"),
+    ("ko_kr", "Korean"),
+]
+
+
+def benchmark_single(precision="fp16", num_samples=10, normalize=False, output_file=None, language="ja_jp"):
+    """Run CER benchmark on a single CJK language."""
 
     model_dir = precision
 
     print("="*70)
-    print(f"Cohere Transcribe Benchmark ({precision.upper()}, {num_samples} samples)")
-    print(f"Dataset: {dataset.upper()}" + (f" ({language})" if dataset == "fleurs" else ""))
+    print(f"Cohere Transcribe CER Benchmark ({precision.upper()}, {num_samples} samples)")
+    print(f"Language: {language}")
     if normalize:
-        print("WER: Punctuation-normalized")
+        print("CER: Punctuation-normalized")
     print("="*70)
 
     # Configuration
@@ -73,14 +78,8 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
     print("   ✓ Vocabulary loaded")
 
     # Load dataset
-    if dataset == "librispeech":
-        print(f"\n[3/4] Loading {num_samples} samples from LibriSpeech test-clean...")
-        ds = load_dataset("librispeech_asr", "clean", split="test", streaming=True)
-    elif dataset == "fleurs":
-        print(f"\n[3/4] Loading {num_samples} samples from FLEURS ({language})...")
-        ds = load_dataset("google/fleurs", language, split="train", streaming=True, trust_remote_code=True)
-    else:
-        raise ValueError(f"Unknown dataset: {dataset}")
+    print(f"\n[3/4] Loading {num_samples} samples from FLEURS ({language})...")
+    ds = load_dataset("google/fleurs", language, split="train", streaming=True, trust_remote_code=True)
 
     samples = []
     for i, sample in enumerate(ds):
@@ -99,9 +98,8 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
         sample_start = time.time()
 
         audio = sample['audio']['array'].astype(np.float32)
-        # LibriSpeech uses 'text', FLEURS uses 'transcription'
-        text_field = 'transcription' if dataset == 'fleurs' else 'text'
-        ground_truth = sample[text_field].lower()
+        # FLEURS uses 'transcription' field
+        ground_truth = sample['transcription'].lower()
         duration = len(audio) / 16000.0
 
         # Compute mel spectrogram
@@ -148,13 +146,13 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
 
         hypothesis = "".join(text_tokens).replace("▁", " ").strip()
 
-        # Calculate WER
+        # Calculate CER (not WER!)
         if normalize:
             ground_truth_norm = normalize_text(ground_truth)
             hypothesis_norm = normalize_text(hypothesis)
-            sample_wer = wer(ground_truth_norm, hypothesis_norm) * 100
+            sample_cer = cer(ground_truth_norm, hypothesis_norm) * 100
         else:
-            sample_wer = wer(ground_truth, hypothesis) * 100
+            sample_cer = cer(ground_truth, hypothesis) * 100
 
         sample_time = time.time() - sample_start
 
@@ -165,7 +163,7 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
             "duration": duration,
             "ground_truth": ground_truth,
             "hypothesis": hypothesis,
-            "wer": sample_wer,
+            "cer": sample_cer,
             "processing_time": sample_time,
         })
 
@@ -173,26 +171,25 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
 
     # Calculate statistics
     print("\n" + "="*70)
-    print(f"RESULTS ({num_samples} Samples, {precision.upper()}, {dataset.upper()}" +
-          (f" {language}" if dataset == "fleurs" else "") + ")")
+    print(f"RESULTS ({num_samples} Samples, {precision.upper()}, {language})")
     if normalize:
-        print("WER: Punctuation-normalized")
+        print("CER: Punctuation-normalized")
     else:
-        print("WER: Raw with punctuation")
+        print("CER: Raw with punctuation")
     print("="*70)
 
-    avg_wer = np.mean([r["wer"] for r in results])
-    median_wer = np.median([r["wer"] for r in results])
-    perfect_matches = sum(1 for r in results if r["wer"] < 5.0)
-    good_matches = sum(1 for r in results if r["wer"] < 20.0)
+    avg_cer = np.mean([r["cer"] for r in results])
+    median_cer = np.median([r["cer"] for r in results])
+    perfect_matches = sum(1 for r in results if r["cer"] < 5.0)
+    good_matches = sum(1 for r in results if r["cer"] < 20.0)
     perfect_pct = (perfect_matches / len(results)) * 100
     good_pct = (good_matches / len(results)) * 100
 
     print(f"\n📊 Quality Metrics:")
-    print(f"   Average WER:         {avg_wer:.2f}%")
-    print(f"   Median WER:          {median_wer:.2f}%")
-    print(f"   Perfect (WER < 5%):  {perfect_matches}/{len(results)} ({perfect_pct:.1f}%)")
-    print(f"   Good (WER < 20%):    {good_matches}/{len(results)} ({good_pct:.1f}%)")
+    print(f"   Average CER:         {avg_cer:.2f}%")
+    print(f"   Median CER:          {median_cer:.2f}%")
+    print(f"   Perfect (CER < 5%):  {perfect_matches}/{len(results)} ({perfect_pct:.1f}%)")
+    print(f"   Good (CER < 20%):    {good_matches}/{len(results)} ({good_pct:.1f}%)")
 
     print(f"\n⚡ Performance Metrics:")
     avg_proc_time = np.mean([r["processing_time"] for r in results])
@@ -203,8 +200,8 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
     print(f"   Avg RTFx:            {avg_rtfx:.2f}x")
     print(f"   Total time:          {total_time:.1f}s")
 
-    print(f"\n📈 WER Distribution:")
-    wer_ranges = [
+    print(f"\n📈 CER Distribution:")
+    cer_ranges = [
         ("Perfect (0-5%)", 0, 5),
         ("Excellent (5-10%)", 5, 10),
         ("Good (10-20%)", 10, 20),
@@ -213,8 +210,8 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
         ("Failed (>100%)", 100, float('inf')),
     ]
 
-    for label, min_wer, max_wer in wer_ranges:
-        count = sum(1 for r in results if min_wer <= r["wer"] < max_wer)
+    for label, min_cer, max_cer in cer_ranges:
+        count = sum(1 for r in results if min_cer <= r["cer"] < max_cer)
         pct = (count / len(results)) * 100
         bar = "█" * int(pct / 2)
         print(f"   {label:20s} {count:3d} ({pct:5.1f}%) {bar}")
@@ -222,26 +219,25 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
     # Show worst samples
     if num_samples >= 5:
         print(f"\n❌ Worst 5 samples:")
-        worst_samples = sorted(results, key=lambda x: x["wer"], reverse=True)[:5]
+        worst_samples = sorted(results, key=lambda x: x["cer"], reverse=True)[:5]
         for i, r in enumerate(worst_samples):
-            print(f"\n   {i+1}. WER: {r['wer']:.2f}% ({r['duration']:.1f}s)")
+            print(f"\n   {i+1}. CER: {r['cer']:.2f}% ({r['duration']:.1f}s)")
             print(f"      GT:  {r['ground_truth'][:80]}...")
             print(f"      Hyp: {r['hypothesis'][:80]}...")
 
     # Save results to JSON
     if output_file is None:
-        dataset_suffix = f"{dataset}_{language}" if dataset == "fleurs" else dataset
-        output_file = f"benchmark_{precision}_{dataset_suffix}_{num_samples}_{'normalized' if normalize else 'raw'}.json"
+        output_file = f"benchmark_{precision}_fleurs_{language}_{num_samples}_{'normalized' if normalize else 'raw'}_cer.json"
 
     with open(output_file, "w") as f:
         json.dump({
             "precision": precision,
-            "dataset": dataset,
-            "language": language if dataset == "fleurs" else None,
+            "language": language,
             "num_samples": len(results),
             "normalized": normalize,
-            "avg_wer": avg_wer,
-            "median_wer": median_wer,
+            "metric": "cer",
+            "avg_cer": avg_cer,
+            "median_cer": median_cer,
             "perfect_matches": perfect_matches,
             "perfect_pct": perfect_pct,
             "good_matches": good_matches,
@@ -254,9 +250,87 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
     print()
 
 
+def benchmark_all_cjk(precision="fp16", num_samples=100, normalize=False):
+    """Run CER benchmark on all CJK languages."""
+
+    print("="*70)
+    print(f"Running CER benchmark on all {len(CJK_LANGUAGES)} CJK languages")
+    print(f"Precision: {precision.upper()}, Samples: {num_samples} per language")
+    print("="*70)
+
+    results_summary = []
+
+    for i, (lang_code, lang_name) in enumerate(CJK_LANGUAGES, 1):
+        print(f"\n[{i}/{len(CJK_LANGUAGES)}] Testing {lang_name} ({lang_code})...")
+        print("-"*70)
+
+        try:
+            # Run benchmark for this language
+            import subprocess
+            result = subprocess.run([
+                "uv", "run", "python", "benchmark_cjk_cer.py",
+                "--precision", precision,
+                "--samples", str(num_samples),
+                "--language", lang_code,
+                "--normalize" if normalize else "--no-normalize"
+            ], check=True, capture_output=True, text=True)
+
+            # Extract CER from output
+            for line in result.stdout.split('\n'):
+                if "Average CER:" in line:
+                    metric_value = line.split("Average CER:")[1].strip().split("%")[0].strip()
+                    results_summary.append({
+                        "language": lang_name,
+                        "code": lang_code,
+                        "cer": float(metric_value)
+                    })
+                    print(f"   ✓ {lang_name}: {metric_value}% CER")
+                    break
+
+        except subprocess.CalledProcessError as e:
+            print(f"   ✗ Failed: {e}")
+            results_summary.append({
+                "language": lang_name,
+                "code": lang_code,
+                "cer": None,
+                "error": str(e)
+            })
+
+    # Print summary
+    print("\n" + "="*70)
+    print("SUMMARY - All CJK Languages (CER)")
+    print("="*70)
+    print(f"\nPrecision: {precision.upper()}, Samples: {num_samples} per language\n")
+
+    successful = [r for r in results_summary if r.get("cer") is not None]
+    failed = [r for r in results_summary if r.get("cer") is None]
+
+    if successful:
+        # Sort by CER
+        successful.sort(key=lambda x: x["cer"])
+
+        print("Results (sorted by CER):")
+        print(f"{'Language':<25} {'Code':<15} {'CER':<10}")
+        print("-"*50)
+        for r in successful:
+            print(f"{r['language']:<25} {r['code']:<15} {r['cer']:>6.2f}%")
+
+        avg_cer = sum(r["cer"] for r in successful) / len(successful)
+        print(f"\n{'Average across all CJK languages':<40} {avg_cer:>6.2f}%")
+
+    if failed:
+        print(f"\n\nFailed ({len(failed)}):")
+        for r in failed:
+            print(f"  - {r['language']} ({r['code']})")
+
+    print("\n" + "="*70)
+    print(f"Individual results saved to: benchmark_{precision}_fleurs_*_normalized_cer.json")
+    print("="*70)
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Benchmark Cohere Transcribe CoreML models",
+        description="Benchmark CJK languages using CER metric",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__
     )
@@ -278,40 +352,46 @@ def main():
     parser.add_argument(
         "--normalize",
         action="store_true",
-        help="Use punctuation-normalized WER (removes punctuation/capitalization)"
+        help="Use punctuation-normalized CER (removes punctuation/capitalization)"
     )
 
     parser.add_argument(
-        "--dataset", "-d",
-        choices=["librispeech", "fleurs"],
-        default="librispeech",
-        help="Dataset to test on (default: librispeech)"
+        "--no-normalize",
+        action="store_true",
+        help="Do not normalize (for use in subprocess calls)"
     )
 
     parser.add_argument(
         "--language", "-l",
         type=str,
-        default="en_us",
-        help="Language code for FLEURS dataset (e.g., ja_jp, fr_fr, es_419). Default: en_us"
+        choices=["ja_jp", "cmn_hans_cn", "ko_kr", "all"],
+        default="all",
+        help="Language to test (default: all CJK languages)"
     )
 
     parser.add_argument(
         "--output", "-o",
         type=str,
-        help="Output JSON file (default: benchmark_<precision>_<dataset>_<samples>_<normalized|raw>.json)"
+        help="Output JSON file (default: benchmark_<precision>_fleurs_<lang>_<samples>_<normalized|raw>_cer.json)"
     )
 
     args = parser.parse_args()
 
     try:
-        benchmark(
-            precision=args.precision,
-            num_samples=args.samples,
-            normalize=args.normalize,
-            output_file=args.output,
-            dataset=args.dataset,
-            language=args.language
-        )
+        if args.language == "all":
+            benchmark_all_cjk(
+                precision=args.precision,
+                num_samples=args.samples,
+                normalize=args.normalize
+            )
+        else:
+            benchmark_single(
+                precision=args.precision,
+                num_samples=args.samples,
+                normalize=args.normalize,
+                output_file=args.output,
+                language=args.language
+            )
     except Exception as e:
         print(f"\n❌ Benchmark failed: {e}")
         import traceback
