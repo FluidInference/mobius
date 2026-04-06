@@ -22,7 +22,7 @@ print("="*70)
 PROMPT_IDS = [13764, 7, 4, 16, 62, 62, 5, 9, 11, 13]
 EOS_TOKEN_ID = 3
 MAX_NEW_TOKENS = 200
-MAX_SEQ_LEN = 108
+MAX_SEQ_LEN = 256  # Using 256-token decoder
 TARGET_DURATION_MIN = 20.0  # seconds
 TARGET_DURATION_MAX = 28.0  # seconds (max ~30s due to encoder 3001 frame limit)
 NUM_SAMPLES = 10
@@ -65,7 +65,7 @@ try:
         compute_units=ct.ComputeUnit.CPU_AND_GPU
     )
     stateful_decoder = ct.models.MLModel(
-        "build/cohere_decoder_stateful.mlpackage",
+        "build/cohere_decoder_stateful_256.mlpackage",
         compute_units=ct.ComputeUnit.CPU_AND_GPU
     )
     print(f"   ✓ Models loaded")

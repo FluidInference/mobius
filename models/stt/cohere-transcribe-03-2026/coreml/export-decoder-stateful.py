@@ -374,7 +374,12 @@ def main():
     print(f"   ✓ Converted in {time.time() - t0:.1f}s")
 
     # Save
-    output_path = output_dir / "cohere_decoder_stateful.mlpackage"
+    # Include max_seq_len in filename if not default (108)
+    if args.max_seq_len == 108:
+        output_path = output_dir / "cohere_decoder_stateful.mlpackage"
+    else:
+        output_path = output_dir / f"cohere_decoder_stateful_{args.max_seq_len}.mlpackage"
+
     mlmodel.save(str(output_path))
     print(f"\n✓ Saved to: {output_path}")
 
