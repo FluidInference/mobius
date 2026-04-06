@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Benchmark Cohere Transcribe CoreML models on LibriSpeech test-clean.
+"""Benchmark Cohere Transcribe CoreML models on LibriSpeech or FLEURS.
 
 Examples:
-    # Test FP16 models on 10 samples
+    # Test FP16 models on 10 LibriSpeech samples
     python benchmark.py --precision fp16 --samples 10
 
-    # Test Q8 models on 100 samples
-    python benchmark.py --precision q8 --samples 100
+    # Test Q8 models on 100 FLEURS samples (Japanese)
+    python benchmark.py --precision q8 --samples 100 --dataset fleurs --language ja_jp
 
     # Test with normalized WER (removes punctuation)
     python benchmark.py --precision fp16 --samples 10 --normalize
@@ -27,26 +27,30 @@ import coremltools as ct
 from cohere_mel_spectrogram import CohereMelSpectrogram
 from datasets import load_dataset
 from jiwer import wer
+from jiwer.transforms import Compose, ToLowerCase, RemovePunctuation, RemoveMultipleSpaces, Strip
 import json
-import re
 import time
 
 
-def normalize_text(text):
-    """Remove punctuation and normalize case."""
-    text = text.lower()
-    text = re.sub(r'[^\w\s]', '', text)
-    text = ' '.join(text.split())
-    return text
+# Create text normalization pipeline using jiwer
+# Works for all languages: English, CJK, European, Cyrillic, Arabic, etc.
+normalize_text = Compose([
+    ToLowerCase(),           # Convert to lowercase (all case-bearing scripts)
+    RemovePunctuation(),     # Remove punctuation (Latin, CJK, Cyrillic, Arabic, etc.)
+    RemoveMultipleSpaces(),  # Normalize whitespace
+    Strip(),                 # Strip leading/trailing whitespace
+])
 
 
-def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=None):
+def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=None,
+              dataset="librispeech", language="en_us"):
     """Run benchmark on specified precision and number of samples."""
 
     model_dir = precision
 
     print("="*70)
     print(f"Cohere Transcribe Benchmark ({precision.upper()}, {num_samples} samples)")
+    print(f"Dataset: {dataset.upper()}" + (f" ({language})" if dataset == "fleurs" else ""))
     if normalize:
         print("WER: Punctuation-normalized")
     print("="*70)
@@ -68,11 +72,18 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
         vocab = {int(k): v for k, v in json.load(f).items()}
     print("   ✓ Vocabulary loaded")
 
-    # Load LibriSpeech
-    print(f"\n[3/4] Loading {num_samples} samples from LibriSpeech test-clean...")
-    dataset = load_dataset("librispeech_asr", "clean", split="test", streaming=True)
+    # Load dataset
+    if dataset == "librispeech":
+        print(f"\n[3/4] Loading {num_samples} samples from LibriSpeech test-clean...")
+        ds = load_dataset("librispeech_asr", "clean", split="test", streaming=True)
+    elif dataset == "fleurs":
+        print(f"\n[3/4] Loading {num_samples} samples from FLEURS ({language})...")
+        ds = load_dataset("FluidInference/fleurs-full", language, split="train", streaming=True)
+    else:
+        raise ValueError(f"Unknown dataset: {dataset}")
+
     samples = []
-    for i, sample in enumerate(dataset):
+    for i, sample in enumerate(ds):
         if i >= num_samples:
             break
         samples.append(sample)
@@ -160,11 +171,12 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
 
     # Calculate statistics
     print("\n" + "="*70)
-    print(f"RESULTS ({num_samples} Samples, {precision.upper()}")
+    print(f"RESULTS ({num_samples} Samples, {precision.upper()}, {dataset.upper()}" +
+          (f" {language}" if dataset == "fleurs" else "") + ")")
     if normalize:
-        print("WER: Punctuation-normalized)")
+        print("WER: Punctuation-normalized")
     else:
-        print("WER: Raw with punctuation)")
+        print("WER: Raw with punctuation")
     print("="*70)
 
     avg_wer = np.mean([r["wer"] for r in results])
@@ -216,11 +228,14 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
 
     # Save results to JSON
     if output_file is None:
-        output_file = f"benchmark_{precision}_{num_samples}_{'normalized' if normalize else 'raw'}.json"
+        dataset_suffix = f"{dataset}_{language}" if dataset == "fleurs" else dataset
+        output_file = f"benchmark_{precision}_{dataset_suffix}_{num_samples}_{'normalized' if normalize else 'raw'}.json"
 
     with open(output_file, "w") as f:
         json.dump({
             "precision": precision,
+            "dataset": dataset,
+            "language": language if dataset == "fleurs" else None,
             "num_samples": len(results),
             "normalized": normalize,
             "avg_wer": avg_wer,
@@ -265,9 +280,23 @@ def main():
     )
 
     parser.add_argument(
+        "--dataset", "-d",
+        choices=["librispeech", "fleurs"],
+        default="librispeech",
+        help="Dataset to test on (default: librispeech)"
+    )
+
+    parser.add_argument(
+        "--language", "-l",
+        type=str,
+        default="en_us",
+        help="Language code for FLEURS dataset (e.g., ja_jp, fr_fr, es_419). Default: en_us"
+    )
+
+    parser.add_argument(
         "--output", "-o",
         type=str,
-        help="Output JSON file (default: benchmark_<precision>_<samples>_<normalized|raw>.json)"
+        help="Output JSON file (default: benchmark_<precision>_<dataset>_<samples>_<normalized|raw>.json)"
     )
 
     args = parser.parse_args()
@@ -277,7 +306,9 @@ def main():
             precision=args.precision,
             num_samples=args.samples,
             normalize=args.normalize,
-            output_file=args.output
+            output_file=args.output,
+            dataset=args.dataset,
+            language=args.language
         )
     except Exception as e:
         print(f"\n❌ Benchmark failed: {e}")
