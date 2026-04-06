@@ -22,10 +22,11 @@ print("Cohere Transcribe - Stateful Decoder Test")
 print("="*70)
 
 # Configuration
-NUM_SAMPLES = 3
+NUM_SAMPLES = 100
 PROMPT_IDS = [13764, 7, 4, 16, 62, 62, 5, 9, 11, 13]
 EOS_TOKEN_ID = 3
 MAX_NEW_TOKENS = 200
+MAX_SEQ_LEN = 108  # Model was exported with this max sequence length
 
 # Load LibriSpeech test-clean
 print(f"\n[1/5] Loading {NUM_SAMPLES} samples from LibriSpeech test-clean...")
@@ -110,7 +111,9 @@ for sample_idx, sample in enumerate(samples):
     # Process ALL tokens (prompt + generated) through decoder
     # Step 0-9: Process prompt tokens (build up cache)
     # Step 10+: Generate new tokens
-    for step in range(MAX_NEW_TOKENS + len(PROMPT_IDS)):
+    max_steps = min(MAX_NEW_TOKENS + len(PROMPT_IDS), MAX_SEQ_LEN)
+
+    for step in range(max_steps):
         # Determine current token
         if step < len(PROMPT_IDS):
             # Processing prompt
@@ -150,6 +153,9 @@ for sample_idx, sample in enumerate(samples):
             if next_token == EOS_TOKEN_ID:
                 print(f"       EOS at step {step}")
                 break
+
+    if step >= MAX_SEQ_LEN - 1:
+        print(f"       ⚠️  Hit max sequence length ({MAX_SEQ_LEN})")
 
     # Decode tokens (include prompt for full decoding)
     all_tokens = list(PROMPT_IDS) + tokens
