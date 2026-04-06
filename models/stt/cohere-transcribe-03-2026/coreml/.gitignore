@@ -32,6 +32,3 @@ cross_caches.pkl
 
 # Reference models (external git repo)
 barathwaj-models/
-
-# Reference code from HuggingFace
-reference-code/
