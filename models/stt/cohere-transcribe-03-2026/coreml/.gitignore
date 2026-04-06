@@ -1,0 +1,37 @@
+# Virtual environments
+.venv/
+.venv312/
+
+# Build artifacts
+build/
+*.mlpackage
+*.mlmodelc
+
+# Large model files
+onnx-models/
+*.onnx
+
+# Audio test files
+*.wav
+*.mp3
+*.flac
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Misc
+.DS_Store
+uv.lock
+cross_caches.pkl
+
+# Reference models (external git repo)
+barathwaj-models/
+
+# Reference code from HuggingFace
+reference-code/

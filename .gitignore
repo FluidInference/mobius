@@ -10,3 +10,13 @@ __pycache__
 
 # Large numpy arrays (exported constants - regenerate via export_constants.py)
 *.npy
+
+# PyTorch model weights (download from HuggingFace)
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+
+# ONNX models
+*.onnx
