@@ -192,12 +192,26 @@ English, French, German, Italian, Spanish, Portuguese, Greek, Dutch, Polish, Ara
 ## Files
 
 - `cohere_encoder.mlpackage` / `.mlmodelc` - Encoder
-- `cohere_decoder_cached.mlpackage` / `.mlmodelc` - Decoder
+- `cohere_decoder_cached.mlpackage` / `.mlmodelc` - Decoder (⚠️ HAS QUALITY ISSUES - see note below)
 - `cohere_cross_kv_projector.mlpackage` / `.mlmodelc` - Cross-KV projector
 - `cohere_mel_spectrogram.py` - Preprocessing implementation
-- `export-*.py` - Export scripts (reference)
+- `export-encoder.py` - Encoder export script (working)
+- `export-cross-kv-projector.py` - Cross-KV projector export script
+- `export-decoder-cached.py.BROKEN` - ⚠️ BROKEN: Cached decoder (174% WER, sliding window bug)
+- `export-decoder-with-cross-kv.py.BROKEN` - ⚠️ BROKEN: Optimized decoder variant (untested)
 - `metadata.json` - Model metadata
 - `model_card.md` - Model card
+
+## ⚠️ Known Issues
+
+**The cached decoder models in this repository have quality issues** due to a sliding window bug in the cache management (174% WER on LibriSpeech test-clean).
+
+**For production use**, see the main repository for the **stateless decoder** which fixes 2/3 test samples:
+- [mobius/models/stt/cohere-transcribe-03-2026/coreml](https://github.com/FluidInference/mobius/tree/main/models/stt/cohere-transcribe-03-2026/coreml)
+- Working export: `export-decoder-stateless.py`
+- Documentation: `docs/DECODER_CACHE_FIX.md`
+
+**This HuggingFace upload is for reference only** - the models work but have degraded quality.
 
 ## Citation
 
