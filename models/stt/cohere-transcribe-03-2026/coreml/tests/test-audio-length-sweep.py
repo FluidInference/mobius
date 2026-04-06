@@ -94,12 +94,12 @@ for min_dur, max_dur, bucket_name, num_samples in LENGTH_BUCKETS:
 
         # Compute mel spectrogram
         mel = mel_processor(audio)
-        if mel.shape[2] > 3001:
-            mel_padded = mel[:, :, :3001]
+        if mel.shape[2] > 3500:
+            mel_padded = mel[:, :, :3500]
         else:
             mel_padded = np.pad(
                 mel,
-                ((0, 0), (0, 0), (0, 3001 - mel.shape[2])),
+                ((0, 0), (0, 0), (0, 3500 - mel.shape[2])),
                 mode='constant',
                 constant_values=0
             )

@@ -24,7 +24,7 @@ EOS_TOKEN_ID = 3
 MAX_NEW_TOKENS = 200
 MAX_SEQ_LEN = 256  # Using 256-token decoder
 TARGET_DURATION_MIN = 20.0  # seconds
-TARGET_DURATION_MAX = 28.0  # seconds (max ~30s due to encoder 3001 frame limit)
+TARGET_DURATION_MAX = 28.0  # seconds (max ~30s due to encoder 3500 frame limit)
 NUM_SAMPLES = 10
 
 # Load LibriSpeech test-clean and filter for longer samples
@@ -97,14 +97,14 @@ for sample_idx, sample in enumerate(samples):
     # Compute mel spectrogram
     mel = mel_processor(audio)
 
-    # Encoder max is 3001 frames - truncate or pad as needed
-    if mel.shape[2] > 3001:
-        print(f"       ⚠️  Mel is {mel.shape[2]} frames, truncating to 3001")
-        mel_padded = mel[:, :, :3001]
+    # Encoder max is 3500 frames - truncate or pad as needed
+    if mel.shape[2] > 3500:
+        print(f"       ⚠️  Mel is {mel.shape[2]} frames, truncating to 3500")
+        mel_padded = mel[:, :, :3500]
     else:
         mel_padded = np.pad(
             mel,
-            ((0, 0), (0, 0), (0, 3001 - mel.shape[2])),
+            ((0, 0), (0, 0), (0, 3500 - mel.shape[2])),
             mode='constant',
             constant_values=0
         )

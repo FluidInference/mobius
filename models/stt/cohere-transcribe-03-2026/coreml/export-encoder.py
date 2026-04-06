@@ -76,7 +76,7 @@ def export_encoder(output_dir: Path, precision: str = "float16"):
     print("\n[3/5] Creating example inputs...")
     batch_size = 1
     n_mels = 128
-    max_frames = 3001  # From manifest
+    max_frames = 3500  # Official: 35 seconds at 10ms/frame (hop_length=160, sr=16000)
 
     example_input_features = torch.randn(batch_size, n_mels, max_frames)
     example_feature_length = torch.tensor([max_frames], dtype=torch.int32)
@@ -130,7 +130,7 @@ def export_encoder(output_dir: Path, precision: str = "float16"):
     print("="*70)
     print(f"\nOutput: {output_path}")
     print(f"\nModel inputs:")
-    print(f"  - input_features: (1, 128, 3001) float32 - mel spectrogram")
+    print(f"  - input_features: (1, 128, 3500) float32 - mel spectrogram (35s max)")
     print(f"  - feature_length: (1,) int32 - actual length before padding")
     print(f"\nModel output:")
     print(f"  - hidden_states: (1, 376, 1024) float16/32 - encoder output after projection")

@@ -73,11 +73,11 @@ mel_processor = CohereMelSpectrogram()
 mel = mel_processor(audio)
 actual_frames = mel.shape[2]
 
-if mel.shape[2] > 3001:
-    mel_padded = mel[:, :, :3001]
-    actual_frames = 3001
+if mel.shape[2] > 3500:
+    mel_padded = mel[:, :, :3500]
+    actual_frames = 3500
 else:
-    mel_padded = np.pad(mel, ((0, 0), (0, 0), (0, 3001 - mel.shape[2])), mode='constant', constant_values=0)
+    mel_padded = np.pad(mel, ((0, 0), (0, 0), (0, 3500 - mel.shape[2])), mode='constant', constant_values=0)
 
 print(f"   Mel shape: {mel.shape}, padded: {mel_padded.shape}")
 

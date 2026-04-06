@@ -50,7 +50,7 @@ print(f"   Ground truth: \"{ground_truth[:80]}...\"")
 print("\n[3/3] Testing both decoders...")
 mel_processor = CohereMelSpectrogram()
 mel = mel_processor(audio)
-mel_padded = np.pad(mel, ((0, 0), (0, 0), (0, 3001 - mel.shape[2])), mode='constant', constant_values=0)
+mel_padded = np.pad(mel, ((0, 0), (0, 0), (0, 3500 - mel.shape[2])), mode='constant', constant_values=0)
 
 encoder_output = encoder.predict({
     "input_features": mel_padded.astype(np.float32),

@@ -55,7 +55,7 @@ for sample_idx, sample in enumerate(samples):
 
     # Compute mel spectrogram
     mel = mel_processor(audio)
-    mel_padded = np.pad(mel, ((0, 0), (0, 0), (0, 3001 - mel.shape[2])), mode='constant', constant_values=0)
+    mel_padded = np.pad(mel, ((0, 0), (0, 0), (0, 3500 - mel.shape[2])), mode='constant', constant_values=0)
 
     # Encode
     encoder_output = encoder.predict({
