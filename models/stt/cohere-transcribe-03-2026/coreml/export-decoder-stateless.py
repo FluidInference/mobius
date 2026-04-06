@@ -97,8 +97,8 @@ def export_decoder_stateless(output_dir: Path, precision: str = "float16"):
     print("\n[3/5] Creating inputs...")
     # Start with just the BOS token
     example_input_ids = torch.tensor([[13764]], dtype=torch.long)  # (1, 1)
-    example_encoder_hidden = torch.randn(1, 376, 1024)
-    example_cross_mask = torch.ones(1, 1, 1, 376)
+    example_encoder_hidden = torch.randn(1, 438, 1024)  # 3500 frames @ 35s -> 438 outputs
+    example_cross_mask = torch.ones(1, 1, 1, 438)
 
     print("\n[4/5] Tracing...")
     with torch.no_grad():
@@ -130,17 +130,22 @@ def export_decoder_stateless(output_dir: Path, precision: str = "float16"):
         ct.TensorType(name="cross_attention_mask", shape=example_cross_mask.shape, dtype=np.float32),
     ]
 
-    compute_precision = ct.precision.FLOAT16 if precision == "float16" else ct.precision.FLOAT32
-
+    # Neural Network format requires iOS 14 or lower (iOS 15+ forces ML Program)
+    # Note: Neural Network doesn't support compute_precision, FP16 conversion happens differently
     mlmodel = ct.convert(
         traced,
         inputs=inputs,
         outputs=[
             ct.TensorType(name="logits"),
         ],
-        minimum_deployment_target=ct.target.iOS17,
-        compute_precision=compute_precision,
+        minimum_deployment_target=ct.target.iOS14,
+        convert_to="neuralnetwork",  # Force Neural Network format for .mlmodelc support
     )
+
+    # Convert to FP16 for Neural Network format
+    if precision == "float16":
+        from coremltools.models.neural_network import quantization_utils
+        mlmodel = quantization_utils.quantize_weights(mlmodel, nbits=16)
 
     output_path = output_dir / "cohere_decoder_stateless.mlpackage"
     mlmodel.save(str(output_path))

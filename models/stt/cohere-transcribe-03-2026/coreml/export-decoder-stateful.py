@@ -82,8 +82,8 @@ class StatefulCohereDecoder(nn.Module):
 
         Args:
             input_id: [1, 1] - current token ID
-            encoder_hidden_states: [1, 376, 1024] - from encoder
-            cross_attention_mask: [1, 1, 1, 376] - encoder mask
+            encoder_hidden_states: [1, 438, 1024] - from encoder (3500 frames @ 35s)
+            cross_attention_mask: [1, 1, 1, 438] - encoder mask
             attention_mask: [1, 1, 1, end_step] - self-attention mask
                 The size of attention_mask determines the current position:
                 - end_step = attention_mask.shape[-1]
@@ -270,8 +270,8 @@ def main():
 
     # Trace inputs (single token decode at step 0)
     input_id = torch.tensor([[13764]], dtype=torch.long)  # Start token
-    encoder_hidden = torch.randn(1, 376, 1024)
-    cross_mask = torch.ones(1, 1, 1, 376)
+    encoder_hidden = torch.randn(1, 438, 1024)  # 3500 frames @ 35s
+    cross_mask = torch.ones(1, 1, 1, 438)
     # Attention mask: [1, 1, 1, 1] for first token (position 0)
     attention_mask = torch.zeros(1, 1, 1, 1)
     # Position IDs: [1, 1] with value 0 for first token
@@ -299,8 +299,8 @@ def main():
         stateful_ref.eval()
 
         test_input_id = torch.tensor([[13764]], dtype=torch.long)
-        test_encoder = torch.randn(1, 376, 1024)
-        test_cross_mask = torch.ones(1, 1, 1, 376)
+        test_encoder = torch.randn(1, 438, 1024)  # 3500 frames @ 35s
+        test_cross_mask = torch.ones(1, 1, 1, 438)
         test_attn_mask = torch.zeros(1, 1, 1, 1)
         test_position_ids = torch.tensor([[0]], dtype=torch.long)
 
@@ -329,8 +329,8 @@ def main():
 
     inputs = [
         ct.TensorType("input_id", shape=(1, 1), dtype=np.int32),
-        ct.TensorType("encoder_hidden_states", shape=(1, 376, 1024), dtype=np.float16),
-        ct.TensorType("cross_attention_mask", shape=(1, 1, 1, 376), dtype=np.float16),
+        ct.TensorType("encoder_hidden_states", shape=(1, 438, 1024), dtype=np.float16),
+        ct.TensorType("cross_attention_mask", shape=(1, 1, 1, 438), dtype=np.float16),
         ct.TensorType("attention_mask", shape=(1, 1, 1, attn_mask_dim), dtype=np.float16),
         ct.TensorType("position_ids", shape=(1, 1), dtype=np.int32),
     ]
@@ -389,8 +389,8 @@ def main():
         state = mlmodel.make_state()
         test_input = {
             "input_id": np.array([[13764]], dtype=np.int32),
-            "encoder_hidden_states": np.random.randn(1, 376, 1024).astype(np.float16),
-            "cross_attention_mask": np.ones((1, 1, 1, 376), dtype=np.float16),
+            "encoder_hidden_states": np.random.randn(1, 438, 1024).astype(np.float16),
+            "cross_attention_mask": np.ones((1, 1, 1, 438), dtype=np.float16),
             "attention_mask": np.zeros((1, 1, 1, 1), dtype=np.float16),
             "position_ids": np.array([[0]], dtype=np.int32),
         }
