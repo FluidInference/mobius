@@ -27,7 +27,6 @@ __pycache__/
 
 # Misc
 .DS_Store
-uv.lock
 cross_caches.pkl
 
 # Reference models (external git repo)
