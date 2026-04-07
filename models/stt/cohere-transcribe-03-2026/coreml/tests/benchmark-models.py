@@ -42,8 +42,8 @@ class CoreMLPipeline:
         print(f"Loading CoreML decoder from {decoder_path}...")
         self.decoder = ct.models.MLModel(str(decoder_path))
         self.processor = processor
-        # EOS token ID from Cohere config
-        self.eos_token_id = processor.eos_token_id if processor else 2
+        # EOS token ID from Cohere config (token 3 is EOS, not 2 which is PAD)
+        self.eos_token_id = processor.eos_token_id if processor else 3
         self.mel_processor = CohereMelSpectrogram()
 
     def transcribe(self, audio_path: Path, max_new_tokens: int = 200) -> Tuple[str, Dict]:
@@ -57,10 +57,10 @@ class CoreMLPipeline:
         mel_start = time.perf_counter()
         mel = self.mel_processor(audio)
 
-        # Pad to 3001 frames (expected by encoder)
+        # Pad to 3500 frames (expected by encoder)
         mel_padded = np.pad(
             mel,
-            ((0, 0), (0, 0), (0, 3001 - mel.shape[2])),
+            ((0, 0), (0, 0), (0, 3500 - mel.shape[2])),
             mode='constant',
             constant_values=0
         )

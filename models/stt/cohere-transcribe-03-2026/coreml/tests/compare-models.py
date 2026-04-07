@@ -30,7 +30,7 @@ mel_processor = CohereMelSpectrogram()
 mel = mel_processor(audio)
 mel_padded = np.pad(
     mel,
-    ((0, 0), (0, 0), (0, 3001 - mel.shape[2])),
+    ((0, 0), (0, 0), (0, 3500 - mel.shape[2])),
     mode='constant',
     constant_values=0
 )
@@ -46,7 +46,7 @@ try:
     )
     our_encoder_output = our_encoder.predict({
         "input_features": mel_padded.astype(np.float32),
-        "feature_length": np.array([3001], dtype=np.int32)
+        "feature_length": np.array([3500], dtype=np.int32)
     })
     our_hidden = None
     for key, value in our_encoder_output.items():
@@ -61,7 +61,7 @@ try:
     )
     ref_encoder_output = ref_encoder.predict({
         "input_features": mel_padded.astype(np.float32),
-        "feature_length": np.array([3001], dtype=np.int32)
+        "feature_length": np.array([3500], dtype=np.int32)
     })
     ref_hidden = None
     for key, value in ref_encoder_output.items():
@@ -97,7 +97,7 @@ except FileNotFoundError as e:
     encoder = ct.models.MLModel("build/cohere_encoder.mlpackage", compute_units=ct.ComputeUnit.CPU_AND_GPU)
     encoder_output = encoder.predict({
         "input_features": mel_padded.astype(np.float32),
-        "feature_length": np.array([3001], dtype=np.int32)
+        "feature_length": np.array([3500], dtype=np.int32)
     })
     for key, value in encoder_output.items():
         if hasattr(value, 'shape') and len(value.shape) == 3:
@@ -161,9 +161,9 @@ try:
             if hasattr(value, 'shape'):
                 if len(value.shape) == 2 and value.shape[1] > 1000:
                     our_logits = value
-                elif len(value.shape) == 4 and 'cache_k' in key.lower() or key == 'new_cache_k':
+                elif len(value.shape) == 4 and ('cache_k' in key.lower() or key == 'new_cache_k'):
                     our_cache_k = value
-                elif len(value.shape) == 4 and 'cache_v' in key.lower() or key == 'new_cache_v':
+                elif len(value.shape) == 4 and ('cache_v' in key.lower() or key == 'new_cache_v'):
                     our_cache_v = value
 
         our_next_token = int(np.argmax(our_logits[0]))

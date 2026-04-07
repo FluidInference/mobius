@@ -62,7 +62,7 @@ def measure_model_memory(encoder_path: Path, decoder_path: Path, audio_path: Pat
     print(f"\n[4/5] Computing mel spectrogram...")
     mel_processor = CohereMelSpectrogram()
     mel = mel_processor(audio)
-    mel_padded = np.pad(mel, ((0, 0), (0, 0), (0, 3001 - mel.shape[2])), mode='constant')
+    mel_padded = np.pad(mel, ((0, 0), (0, 0), (0, 3500 - mel.shape[2])), mode='constant')
     mel_features = mel_padded.astype(np.float32)
     mel_length = np.array([mel.shape[2]], dtype=np.int32)
 
