@@ -29,5 +29,9 @@ __pycache__/
 .DS_Store
 cross_caches.pkl
 
+# Test results and temporary files
+*_results.json
+.hf_cache/
+
 # Reference models (external git repo)
 barathwaj-models/
