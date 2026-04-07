@@ -34,7 +34,7 @@ class EncoderWrapper(nn.Module):
         """
         encoder_outputs = self.encoder(
             input_features=input_features,
-            lengths=feature_length,
+            length=feature_length,
             return_dict=True
         )
 

@@ -1,7 +1,7 @@
 [project]
-name = "parakeet-coreml"
+name = "cohere-transcribe-coreml"
 version = "0.1.0"
-description = "Add your description here"
+description = "Cohere Transcribe CoreML conversion and inference tools"
 readme = "README.md"
 requires-python = "==3.10.12"
 dependencies = [
