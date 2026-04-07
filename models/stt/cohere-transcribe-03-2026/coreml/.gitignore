@@ -16,10 +16,6 @@ onnx-models/
 *.mp3
 *.flac
 
-# Benchmark results
-benchmark_*.json
-test_*_results.json
-
 # Logs
 *.log
 
