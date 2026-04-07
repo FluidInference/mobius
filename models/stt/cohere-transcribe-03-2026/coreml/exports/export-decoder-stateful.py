@@ -143,11 +143,12 @@ class StatefulCohereDecoder(nn.Module):
             hidden_states = layer.layer_norm_3(hidden_states)
             hidden_states = residual + layer.third_sub_layer(hidden_states)
 
-        # 3. Final norm and projection to logits
+        # 3. Final norm and projection to log-probabilities
         hidden_states = self.final_norm(hidden_states)
         logits = self.lm_head(hidden_states)
+        log_probs = torch.log_softmax(logits, dim=-1)
 
-        return logits.squeeze(1)  # [1, 16384]
+        return log_probs.squeeze(1)  # [1, 16384]
 
     def _manual_self_attention(
         self,
@@ -401,16 +402,20 @@ def main():
         print(f"   Max logit token: {np.argmax(logits[0])}")
 
         # Test multi-step inference with growing attention mask
-        print(f"\n   Testing multi-step inference...")
+        print(f"\n   Testing multi-step inference (autoregressive)...")
         state = mlmodel.make_state()
+        current_token = 4  # Start token
         for i in range(3):
             # Attention mask grows: [1,1,1,1] -> [1,1,1,2] -> [1,1,1,3]
             # Position IDs match current position
+            # Feed the predicted token from previous step (autoregressive)
+            test_input["input_id"] = np.array([[current_token]], dtype=np.int32)
             test_input["attention_mask"] = np.zeros((1, 1, 1, i+1), dtype=np.float16)
             test_input["position_ids"] = np.array([[i]], dtype=np.int32)
             output = mlmodel.predict(test_input, state=state)
             next_token = int(np.argmax(output["logits"][0]))
-            print(f"     Step {i}: attn_mask_size={i+1}, position={i}, token={next_token}")
+            print(f"     Step {i}: input_token={current_token}, position={i}, predicted_token={next_token}")
+            current_token = next_token  # Update for next iteration
 
         print("   ✓ CoreML validation passed!")
     except Exception as e:
