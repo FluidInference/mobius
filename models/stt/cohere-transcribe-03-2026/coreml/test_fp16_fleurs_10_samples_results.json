@@ -1,0 +1,1262 @@
+{
+  "en_us": {
+    "name": "English",
+    "code": "en",
+    "metric": "WER",
+    "avg_error": 212.87027227158805,
+    "good_count": 2,
+    "repetition_count": 0,
+    "results": [
+      {
+        "ground_truth": "however due to the slow communication channels styles in the west could lag behind by 25 to 30 year",
+        "hypothesis": "the world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world,",
+        "error_rate": 410.5263157894737,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "hypothesis": "all nouns alongside the world's safe for you always begin with a capital letter, even in the middle of a sentence.",
+        "error_rate": 19.047619047619047,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "to the north and within easy reach is the romantic and fascinating town of sintra and which was made famous to foreigners after a glowing account of its splendours recorded by lord byron",
+        "hypothesis": "the world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world,",
+        "error_rate": 221.2121212121212,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "the cabbage juice changes color depending on how acidic or basic alkaline the chemical is",
+        "hypothesis": "the world is a world of the world, and the world is a world of the world.",
+        "error_rate": 106.66666666666667,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "many people don't think about them as dinosaurs because they have feathers and can fly",
+        "hypothesis": "the world is a world of the world, and the world is a world of the world.",
+        "error_rate": 113.33333333333333,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "the hospital has followed protocol for infection control including separating the patient from others to prevent possible infection of others",
+        "hypothesis": "the hospital has followed protocol for infection control, including separating the patient from others to prevent possible infection of others.",
+        "error_rate": 10.0,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "the northern marianas emergency management office said that there were no damages reported in the nation",
+        "hypothesis": "the world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world,",
+        "error_rate": 487.5,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed",
+        "hypothesis": "the world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and",
+        "error_rate": 493.75,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "the aspect ratio of this format dividing by twelve to obtain the simplest whole-number ratio is therefore said to be 3:2",
+        "hypothesis": "the aspect ratio of this format, dividing by twelve to obtain the simplest whole number ratio, is therefore said to be three to two.",
+        "error_rate": 33.33333333333333,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "as light pollution in their heyday was not the kind of problem it is today they are usually located in cities or at campuses easier to reach than those built in modern times",
+        "hypothesis": "the world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world,",
+        "error_rate": 233.33333333333334,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "es_419": {
+    "name": "Spanish",
+    "code": "es",
+    "metric": "WER",
+    "avg_error": 235.22973740402526,
+    "good_count": 1,
+    "repetition_count": 0,
+    "results": [
+      {
+        "ground_truth": "se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo de clima extremo en el área que visitan dado que ello puede afectar sus planes de viaje",
+        "hypothesis": ". se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo del clima extremo en el área que visitan, dado que ello pueda afectar sus planes de viaje.",
+        "error_rate": 17.24137931034483,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "el uso adecuado de los blogs «puede empoderar a los alumnos para que sean más analíticos y críticos a través de la respuesta activa a los contenidos de internet pueden definir sus posturas en el contexto de los escritos de otros además de establecer sus perspectivas sobre temas específicos» oravec 2002",
+        "hypothesis": ", so i'm going to go ahead and talk about the next question. i'm going to go ahead and talk about the next question. i'm going to talk about the next question.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "fue tanta la cantidad de gente que se concentró que no todos pudieron acceder al funeral en la plaza de san pedro",
+        "hypothesis": ", the city of san pedro, the city of san pedro, the city of san pedro, the city of san pedro.",
+        "error_rate": 95.45454545454545,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "esto parece tener sentido ya que en la tierra no se percibe su movimiento ¿cierto?",
+        "hypothesis": ", ya que la tierra no se percibe su movimiento, certo.",
+        "error_rate": 46.666666666666664,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "carpanedo participó en dos carreras individuales del campeonato aparte de la competencia del miércoles",
+        "hypothesis": ", albeit in the same way as the other side of the world.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "hoy en día las personas escriben mensajes en las pantallas de sus computadoras no tienen la necesidad de siquiera aproximarse a un sacapuntas",
+        "hypothesis": ". hoy en día, las personas escriben mensajes en las pantallas de sus computadoras. no tienen la necesidad de siquiera aproximar sus escapatos.",
+        "error_rate": 30.434782608695656,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "los luchadores compañeros de luna también le rindieron homenaje",
+        "hypothesis": ", the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most important thing is that the most",
+        "error_rate": 1100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "duvall que está casado y tiene dos hijos adultos no causó una buena impresión a miller que fue a quien le relató la historia",
+        "hypothesis": ", the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife of the wife",
+        "error_rate": 412.5,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "entre los fenómenos climáticos regionales y estacionales extremos encontramos los ventarrones las tormentas de nieve hielo o polvo",
+        "hypothesis": ". the most important thing about the rainbow is that the rainbow is not the rainbow, it is the rainbow, it is the rainbow, it is the rainbow, it is the rainbow, it is the rainbow, it is the rainbow, it is the rainbow, it is the rainbow, it is the rainbow, it is the rainbow, it is the rainbow",
+        "error_rate": 333.33333333333337,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "se puede definir a una civilización como una cultura específica de la que forma parte un extenso grupo de personas que viven y trabajan en conjunto es decir una sociedad",
+        "hypothesis": ", so i'm going to go ahead and talk about the next question. i'm going to go ahead and talk about the next question. i'm going to go ahead and talk about the next question.",
+        "error_rate": 116.66666666666667,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "fr_fr": {
+    "name": "French",
+    "code": "fr",
+    "metric": "WER",
+    "avg_error": 259.82825109037924,
+    "good_count": 0,
+    "repetition_count": 0,
+    "results": [
+      {
+        "ground_truth": "l'accident a eu lieu en terrain montagneux et il semblerait que cela ait été causé par un incendie malveillant",
+        "hypothesis": "as, so the question is, is there a reason why you have to do this? because you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to",
+        "error_rate": 442.1052631578948,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "nous sommes d'accord avec la déclaration de l'usoc comité olympique des états-unis selon laquelle les intérêts de nos athlètes et de nos clubs ainsi que de leur sport pourraient être mieux servis. cela peut être fait en allant de l'avant et en procédant plutôt à des changements significatifs au sein de notre organisation qu'à la révocation d'accréditation",
+        "hypothesis": "as, so the question is, is there a reason why you have to do this? because you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to",
+        "error_rate": 149.12280701754386,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités. »",
+        "hypothesis": "theoristical. the other is the theoristical. the other is the theoristical. the other is the theoristical. the theoristical. the theoristical. the theoristical. the theoristical. the theoristical. the theoristical. the theoristical. the theoristical. the theoristical. the theoristical. the theoristical. the",
+        "error_rate": 162.5,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "le rugissement du tigre ne ressemble pas au rugissement ample du lion mais plutôt à une phrase dont les mots seraient des cris et des grondements",
+        "hypothesis": "as, so the question is, is there anything you can do to improve the quality of life of the individual, or is there anything you can do to improve the quality of life of the individual?",
+        "error_rate": 138.46153846153845,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "le même mois un autre avion de ligne a fait une sortie de piste à mashhad et a heurté un mur tuant ainsi dix-sept personnes",
+        "hypothesis": ", a non-agent de ligne, a fait une sortie de liste, un machade, et, a porté un mur, tuant ainsi dix-sept personnes.",
+        "error_rate": 56.00000000000001,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "giancarlo fisichella a perdu le contrôle de sa voiture et a terminé la course peu après le démarrage",
+        "hypothesis": ". the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other",
+        "error_rate": 550.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "malgré le net avantage de del potro pendant le deuxième set il a fallu passer par un tie-break une fois que le score a atteint 6-6",
+        "hypothesis": "the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side",
+        "error_rate": 380.7692307692308,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "malheureusement il est difficile d'étudier le flux de circulation car le comportement des conducteurs ne peut être prédit avec cent pour cent de certitude",
+        "hypothesis": "ircirculation, and the conductors of the conductors are not always satisfied with 100% of the accidents.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "les deux composés réagissent l'un avec l'autre pour former des cristaux qui peuvent bloquer la fonction rénale ont déclaré des chercheurs de l'université",
+        "hypothesis": ", the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other is the other",
+        "error_rate": 430.4347826086956,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "par exemple des étudiants de l'école bennet en caroline du nord conçoivent chaque année un site web consacré à leur visite de la capitale de l'état chaque année le site est remis à jour mais les anciennes versions sont conservées en ligne pour servir d'album",
+        "hypothesis": "as, so the question is, is there a reason why you have to do this? because you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to do this, and you have to",
+        "error_rate": 188.88888888888889,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "de_de": {
+    "name": "German",
+    "code": "de",
+    "metric": "WER",
+    "avg_error": 70.3373015873016,
+    "good_count": 3,
+    "repetition_count": 0,
+    "results": [
+      {
+        "ground_truth": "für die besten aussichten auf hongkong sollten sie die insel verlassen und zum gegenüberliegenden ufer von kowloon fahren",
+        "hypothesis": "",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "er griff auch alles an was ins wasser kam selbst ein großer dinosaurier wie der t rex war ihm nicht gewachsen",
+        "hypothesis": "er griff auf alles an, was ins wasser kam. selbst ein großer dinosaurier wie der t-rex war ihm nicht gewachsen.",
+        "error_rate": 28.57142857142857,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "wenn sie den film das vermächtnis der tempelritter gesehen haben denken sie vielleicht dass auf die rückseite der unabhängigkeitserklärung eine schatzkarte gezeichnet wurde",
+        "hypothesis": "",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "es leben noch viele männer und frauen die ihre zeit hier überlebt haben und viele weitere mit angehörigen die dort ermordet wurden oder sich zu tode arbeiteten juden und nichtjuden gleichermaßen",
+        "hypothesis": "",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "die höhle befindet sich auf der spitze eines der berge nördlich von mekka und ist vom rest der welt völlig isoliert",
+        "hypothesis": "the höhle befindet sich auf der spitze eines der berge nördlich von mekka und ist vom rest der welt völlig isoliert.",
+        "error_rate": 9.523809523809524,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "dieses sediment war nötig um sandbänke und strände zu bilden die als lebensräume für wildtiere dienten",
+        "hypothesis": "dieses sediment war nötig, um sandbänko-stände zu bilden, die als lebensräume für wildtiere dienten.",
+        "error_rate": 37.5,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "blogs können auch dazu beitragen die schreibfertigkeiten von schülern zu verbessern zwar haben schüler am anfang ihrer blogerfahrung oft eine schlampige grammatik und rechtschreibung aber das ändert sich normalerweise wenn es ein publikum gibt",
+        "hypothesis": "",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "nachdem der damm 1963 erbaut worden war kamen die jahreszeitlichen überflutungen die sedimente im fluss verteilen zum stillstand",
+        "hypothesis": "",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "insbesondere wird behauptet dass man erkennen kann ob jemand lügt indem man minimale veränderungen des gesichtsausdrucks richtig deutet.x",
+        "hypothesis": "insbesondere wird behauptet, dass man erkennen kann, ob jemand glüht, indem er minimale veränderungen des gesichtsausdrucks richtig deutet.",
+        "error_rate": 27.77777777777778,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "die angemessene nutzung von blogs kann schülerinnen und schüler befähigen analytischer und kritischer zu werden; durch die aktive reaktion auf internetmaterialien können die schülerinnen und schüler ihre positionen im kontext der texte anderer definieren und ihre eigenen perspektiven zu bestimmten themen darlegen  oravec 2002",
+        "hypothesis": "",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "it_it": {
+    "name": "Italian",
+    "code": "it",
+    "metric": "WER",
+    "avg_error": 121.82709230180231,
+    "good_count": 2,
+    "repetition_count": 0,
+    "results": [
+      {
+        "ground_truth": "il blog è uno strumento che si prefigge di incoraggiare la collaborazione e sviluppare l'apprendimento degli studenti ben oltre la giornata scolastica normale",
+        "hypothesis": "as, z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well",
+        "error_rate": 243.47826086956525,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "sotto il ponte lo spazio in verticale libero è di 15 metri la costruzione è terminata nell'agosto del 2011 ma l'apertura al traffico è avvenuta solo nel marzo 2017",
+        "hypothesis": "as, z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well",
+        "error_rate": 193.10344827586206,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "se avete visto il film il mistero dei templari potreste pensare che sul retro della dichiarazione d'indipendenza sia disegnata una mappa del tesoro",
+        "hypothesis": "ur.eu. the film il mistero dei templari potreste pensare che sul retro della dichiarazione di indipendenza sia disegnata una mappa del tesoro.",
+        "error_rate": 30.434782608695656,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "con ioni idrogeno si intendono dei protoni cui sono stati strappati via gli elettroni dato che gli atomi di idrogeno sono formati da un protone e da un elettrone",
+        "hypothesis": "coniúdrogeno si intendono dei protoni cui sono stati scappati via gli elettroni dato che gli atomi di idrogeno sono formati da un protone e da un elettrone.",
+        "error_rate": 17.24137931034483,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "l'incidente è avvenuto in alta montagna e si ritiene sia stato causato da fuoco nemico",
+        "hypothesis": "inccidente è avvenuto in alta montagna e si ritiene sia stato causato da fuoco nemico.",
+        "error_rate": 13.333333333333334,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "in maniera analoga agli uomini è richiesto di indossare pantaloni lunghi fin sotto le ginocchia",
+        "hypothesis": "ogastre.com.org.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "se avete visto il film il mistero dei templari potreste pensare che sul retro della dichiarazione d'indipendenza sia disegnata una mappa del tesoro",
+        "hypothesis": "as, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well, z.g. as well",
+        "error_rate": 186.95652173913044,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "l'iniziativa contro le oscenità è stata finanziata dal congresso a partire dall'anno fiscale 2005 con la specifica richiesta all'fbi di assegnare 10 agenti alla pornografia per adulti",
+        "hypothesis": "as, z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well as z.g. as well",
+        "error_rate": 207.4074074074074,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "anche nelle elezioni parlamentari la maggioranza resta in mano al partito di governo l'organizzazione del popolo dell'africa del sud-ovest swapo",
+        "hypothesis": "ur egiziane.org.eu, bananas.org.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "la grotta poggia sulla sommità di una delle montagne a nord della mecca completamente distaccata dal resto del mondo",
+        "hypothesis": "uralia, torda so la sovida diana della montagna, ala la la la, torda la la de la sacrata, ala la la sacrata la la la.",
+        "error_rate": 126.3157894736842,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "pt_br": {
+    "name": "Portuguese",
+    "code": "pt",
+    "metric": "WER",
+    "avg_error": 277.7106774368552,
+    "good_count": 2,
+    "repetition_count": 2,
+    "results": [
+      {
+        "ground_truth": "segundo informações ele estava na casa dos 20 anos em uma declaração bieber disse que embora eu não estivesse presente nem diretamente envolvido neste trágico incidente meus pensamentos e orações estão com a família da vítima",
+        "hypothesis": ", the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem",
+        "error_rate": 275.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "construída pelos egípcios no século 3 a.c. a grande pirâmide é uma das muitas grandes estruturas de pirâmide construídas para honrar faraós mortos",
+        "hypothesis": "the most sacred of the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the dead, the",
+        "error_rate": 291.30434782608694,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "giancarlo fisichella perdeu o controle do carro e acabou a corrida logo após a largada",
+        "hypothesis": "the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the",
+        "error_rate": 660.0,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "o romantismo tinha um grande elemento de determinismo cultural extraído de escritores como goethe fichte e schlegel",
+        "hypothesis": ". o romantismo tinha um grande elemento de determinismo cultural, extraindo de escritores como gold, fist e skeleton.",
+        "error_rate": 35.294117647058826,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "o scaffolding não é um método de aprendizado mas sim uma ajuda para alunos que estão passando por uma nova experiência de aprendizado como usar um novo computador ou começar um novo projeto",
+        "hypothesis": "o scaffolding não é um método de aprendizado, mas sim uma ajuda para alunos que estão passando por uma nova experiência de aprendizado, como usar um computador ou começar um novo projeto.",
+        "error_rate": 12.121212121212121,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "a parte central da meditação tibetana é o deity yoga através da visualização de várias divindades os canais de energia são limpos os chacras são ativados e a consciência da iluminação é criada",
+        "hypothesis": ", the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem of the problem",
+        "error_rate": 300.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "suas longas mandíbulas eram cravejadas com mais de 70 dentes afiados junto com um conjunto extra no céu da boca o que mostra que nada que cruzasse seu caminho poderia escapar",
+        "hypothesis": ". so, as long as mandíbulas eram cravejadas com mais de setenta dentes afiados, junto com um conjunto extra no céu da boca, o que mostra que nada que cruzasse seu caminho poderia escapar.",
+        "error_rate": 29.03225806451613,
+        "has_repetition": false,
+        "is_good": true,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "o acidente ocorreu em grande altitude no terreno montanhoso e acredita-se que tenha sido causado por fogo inimigo",
+        "hypothesis": "the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the the",
+        "error_rate": 550.0,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "ele também estava envolvido na gravação de cédulas para muitos países e exemplos recentes de seu trabalho incluíram os retratos do primeiro-ministro nas novas notas de 5 e 100 dólares canadenses",
+        "hypothesis": "the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is that the problem is",
+        "error_rate": 319.3548387096774,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "consequentemente duas espécies de peixe entraram em extinção e duas outras passaram a correr risco como a espécie gila cypha",
+        "hypothesis": ". the problem is that the problem is not the problem. the problem is that the problem is not the problem. the problem is that the problem is not the problem. the problem is that the problem is not the problem. the problem is that the problem is not the problem. the problem is that the problem is not the problem.",
+        "error_rate": 305.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "pl_pl": {
+    "name": "Polish",
+    "code": "pl",
+    "metric": "WER",
+    "avg_error": 141.86622807017542,
+    "good_count": 0,
+    "repetition_count": 1,
+    "results": [
+      {
+        "ground_truth": "podróżni zwiedzający państwa obłożone szczególnie wysokimi podatkami mogą czasem zaoszczędzić sporo pieniędzy szczególnie na takich towarach jak alkohol i tytoń",
+        "hypothesis": "u kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, kyoto, ky",
+        "error_rate": 130.0,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "większość mniejszych wysp to narody niezależne lub sprzymierzone z francją i słynące jako luksusowe nadmorskie miejscowości wypoczynkowe",
+        "hypothesis": "mniejszych wysp to narody niezależne lub sprzymierzone z francją i słynące jako luxuryowe narwalskie miejscowością do pożynkowej.",
+        "error_rate": 35.294117647058826,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "zgodnie z oświadczeniem biura gubernatora wśród rannych było dziewiętnastu policjantów",
+        "hypothesis": "the olympic games, the olympic games, the olympic games, the olympic games, the olympic games, the olympic games, the olympic games, the olympic games, the olympic games, the olympic games, the olympic games,",
+        "error_rate": 330.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "dzieci umieszcza się w pieczy zastępczej z rozmaitych przyczyn jak zaniedbanie wykorzystywanie a nawet wymuszenia",
+        "hypothesis": "yes, the same reason is because of the nature of the",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "jak twierdzi japońska agencja nuklearna w elektrowni wykryto radioaktywny cez oraz jod",
+        "hypothesis": ", the energy of the voice, the agent, the dograd, the electronegative, the radio, the telephone, the other.",
+        "error_rate": 150.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "jednym z najbardziej popularnych sposobów obrazujących wagę socjalizacji jest oparcie się na nielicznych nieszczęśliwych przypadkach dzieci które nie zostały uspołecznione przez dorosłych w okresie dorastania czy to z powodu zaniedbania nieszczęścia czy umyślnego wykorzystywania",
+        "hypothesis": ", to the extent that he is a victim of the evil, to the extent that he is a victim of the evil, to the extent that he is a victim of the evil, to the extent that he is a victim of the evil, to the extent that he is a victim of the evil, to the extent that he is a victim of the evil, to the extent that he is a victim of the evil, to the extent that he is a victim of the evil, to the",
+        "error_rate": 264.70588235294116,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "terytorium hongkongu bierze swą nazwę od wyspy hongkong która stanowi najważniejszą atrakcję dla wielu turystów",
+        "hypothesis": ", the telecom, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the copyright, the cop",
+        "error_rate": 233.33333333333334,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "naukowcy zdołali wyciągnąć wniosek że ciemna materia wpływa na inną ciemną materię tak jak standardowa materia",
+        "hypothesis": "ukowcy zdołali wyciągnąć wniosek, że ciemna materia wpływa na inną ciemną materię tak, jak to na dole materia.",
+        "error_rate": 43.75,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "jeżeli schodzisz na brzeg wyłącznie podczas wycieczek statkiem nie musisz mieć oddzielnej wizy sytuacja na 2009 r.",
+        "hypothesis": ". the president of the united states of america.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "udostępniając wycieczkę terenową w trybie wirtualnym można stymulować refleksje na jej temat i podzielić się doświadczeniami z kolejnymi klasami",
+        "hypothesis": "u dostępniając wycieczkę telefonową w trybie wirtualnym, można stymulować refleksję na jej temat i podzielić się doświadczeniami z kolejnymi czasami.",
+        "error_rate": 31.57894736842105,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "nl_nl": {
+    "name": "Dutch",
+    "code": "nl",
+    "metric": "WER",
+    "avg_error": 402.5337301587301,
+    "good_count": 0,
+    "repetition_count": 0,
+    "results": [
+      {
+        "ground_truth": "volgens angel 2006 kunnen organisaties beter presteren met een aanpak op basis van het continuümmodel",
+        "hypothesis": "ensivist, which means that we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more",
+        "error_rate": 593.3333333333334,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "varkens dragen de ziekte bij zich en dragen het via muggen over op mensen",
+        "hypothesis": "ensetts.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "bij een verkeersstroom wordt gekeken naar de bewegingen van individuele bestuurders en voertuigen tussen twee punten en de interacties die plaatsvinden tussen de individuen",
+        "hypothesis": "ensivist, which means that we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more",
+        "error_rate": 370.83333333333337,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "vanaf boekjaar 2005 financierde het congres het initiatief tegen obsceniteit en verklaarde dat de fbi tien agenten moet inzetten op volwassenenpornografie",
+        "hypothesis": "ensivist, which means that we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more",
+        "error_rate": 423.8095238095238,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "des te minder stress des te positiever de aanwezige levenskracht ieder mens is in staat tevredenheid en totale rust te bereiken",
+        "hypothesis": "ensivist, which means that we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more",
+        "error_rate": 423.8095238095238,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "er wordt met name gesteld dat niemand een leugen kan herkennen door op enkel op micro-expressies te letten",
+        "hypothesis": "ensivist, which means that we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more",
+        "error_rate": 494.44444444444446,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "de officiële munt van de falklandeilanden is het falklandeilands pond fkp. de waarde ligt ongeveer op één brits pond gbp",
+        "hypothesis": "ensivist, which means that we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more",
+        "error_rate": 445.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "oliver sacks beschreef in zijn essay the president's speech hoe het kan dat mensen die spraak niet kunnen begrijpen vanwege hersenbeschadiging de oprechtheid ervan toch nauwkeurig kunnen inschatten",
+        "hypothesis": "ensivist, which means that we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more",
+        "error_rate": 317.85714285714283,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "het kan ook handig zijn om een wild card te kopen deze bieden of toegang tot bepaalde delen van parken in zuid-afrika of tot alle nationale parken in zuid-afrika",
+        "hypothesis": "ensivist, which means that we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more",
+        "error_rate": 300.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "de aankondiging kwam na een telefonisch overleg tussen trump en de turkse president recep tayyip erdoğan",
+        "hypothesis": "ensivist, which means that we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more of this, and we have to be able to do more",
+        "error_rate": 556.25,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "sv_se": {
+    "name": "Swedish",
+    "code": "sv",
+    "metric": "WER",
+    "avg_error": 311.23882696251115,
+    "good_count": 0,
+    "repetition_count": 2,
+    "results": [
+      {
+        "ground_truth": "månens yta utgörs av stenar och stoft månens yttre lager kallas skorpan",
+        "hypothesis": ", the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other side of the other",
+        "error_rate": 825.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "många tyska bakverk har också mandlar hasselnötter och andra nötter populära kakor passar ofta särskilt bra med en kopp starkt kaffe",
+        "hypothesis": ", citing the word deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed de",
+        "error_rate": 171.42857142857142,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "enligt guvernörsstaben var nitton av de skadade poliser",
+        "hypothesis": "ethere.tv.tv.tv.tv.tv.tv.tv.tv.tv.tv.tv.tv.tv.tv.tv.tv.tv.tv.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "bussar avgår från den distriktsgemensamma busstationen över floden hela dagen men de flesta särskilt de som är på väg mot öster och jakar/bumthang går mellan 6.30 och 7.30",
+        "hypothesis": ", bursar amgor from the district, jemen samobushtahunen, pavilf luden, hyaradogen, madame festa selfrid, domson afuven, mut ester, ock, yakar, buntang, gormelan, halfhul, ockhawotan.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "australiens mitchell gourley slutade som elva i herrarnas stående super-g den tjeckiska konkurrenten oldrich jelinek slutade som nummer sexton i herrarnas super-g",
+        "hypothesis": ", australian's mitchell golley sluited us on elba, i hear our nostalgia, then czechiska concurrenten, oldrich jelinek, sluited us on number sixth, i hear our nostalgia.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "vandalisera inte platsen genom att måla eller skrapa graffiti på strukturer",
+        "hypothesis": "as. the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other thing is that the other",
+        "error_rate": 890.9090909090909,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "de andra nomineringarna inkluderar bästa film regissör filmkonst kostymdesign filmredigering originalmusik produktionsdesign ljudredigering ljudmixning och originalmanus",
+        "hypothesis": "as, the task of fear, the task of fear, the task of fear, the task of fear, the task of fear, the task of fear, the task of fear, the task of fear, the task of fear, the task of fear, the task of fear, the task of fear, the",
+        "error_rate": 312.5,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "i norr besök också fantastiska sanctuary of our lady of fatima helgedom en plats världsberömd för uppenbarelser av maria",
+        "hypothesis": ", citing the word deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed deemed de",
+        "error_rate": 189.4736842105263,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "därför var blyertspennan en trogen följeslagare för många människor när den kom ut",
+        "hypothesis": ", the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dutch, the dut",
+        "error_rate": 315.38461538461536,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "giancarlo fisichella förlorade kontrollen över sin bil och avslutade loppet strax efter starten",
+        "hypothesis": ", the controller of the wheel, also for the local stacks of the stack.",
+        "error_rate": 107.6923076923077,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "tr_tr": {
+    "name": "Turkish",
+    "code": "tr",
+    "metric": "WER",
+    "avg_error": 227.8397435897436,
+    "good_count": 0,
+    "repetition_count": 1,
+    "results": [
+      {
+        "ground_truth": "aynı ay başka bir yolcu uçağı meşhed'deki bir pisti aşarak bir duvara çarptı ve on yedi kişinin ölümüne neden oldu",
+        "hypothesis": ", i like my friend and also with her, richard pickett, and his daughter, and the other one, chapter, and all the education for the better.",
+        "error_rate": 130.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "romantizm goethe fichte ve schlegel gibi yazarlardan geçen geniş bir kültürel determinizm özelliği taşıyordu",
+        "hypothesis": ",此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "japonya'nın nükleer ajansına göre tesiste radyoaktif sezyum ve iyodin tespit edildi",
+        "hypothesis": ", the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other",
+        "error_rate": 900.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "bu teoriler bazı insanların yaptıkları şeyleri arzu etmelerine sebebiyet veren şeylere ve çevrelerindeki şeylerin onlara belirli şeyleri yapıp yapmamasına sebep olan şeyler ile ilgilenir",
+        "hypothesis": ". i'm not sure what i'm saying. i'm not sure what i'm saying. i'm not sure what i'm saying. i'm not sure what i'm saying. i'm not sure what i'm saying.",
+        "error_rate": 129.16666666666669,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "avrupa nispeten küçük ama birçok bağımsız ülkenin bulunduğu bir kıtadır normal şartlar altında birden fazla ülkeyi gezmek birçok vize uygulamalarından ve pasaport kontrollerinden geçmek anlamına gelmektedir",
+        "hypothesis": ",此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言,此言",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "güreşçi arkadaşları da luna'ya saygılarını sundular",
+        "hypothesis": "ist and i've got a stir that i don't know. i'm sorry, but i'm sorry.",
+        "error_rate": 250.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "apia samoa'nın başkentidir şehir upolu adasındadır ve 40.000'in biraz altında bir nüfusa sahiptir",
+        "hypothesis": ", a piazza, a lava, a cheddar, a piazza, a cheddar, a cheddar, a cheddar, a cheddar, a cheddar, a cheddar, a cheddar, a cheddar, a cheddar, a cheddar, a cheddar, a cheddar, a cheddar,",
+        "error_rate": 269.2307692307692,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "özellikle mikro ifadeleri doğru bir şekilde yorumlama yöntemi ile bir kişinin yalan söyleyip söylemediğinin anlaşılabileceği öne sürülüyor",
+        "hypothesis": ", aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye, aye",
+        "error_rate": 200.0,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "bu bazı fiiller ve nesneler arasında ayrım yapmanın önemli bir yoludur",
+        "hypothesis": ". i don't know if you know what i mean.",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "örneğin kuzey carolina'daki bennet okulu'ndan öğrenciler her yıl eyalet başkenti'ne yaptıkları gezilerle ilgili bir web sitesi tasarlarlar her yıl web sitesi yeniden düzenlenir ancak eski sürümler bir not defteri olarak kullanılmak üzere çevrimiçi olarak tutulur",
+        "hypothesis": ", <0xc4><0x90>orā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,śrā<0xe1><0xb9><0x87>a,",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "ru_ru": {
+    "name": "Russian",
+    "code": "ru",
+    "metric": "WER",
+    "avg_error": 484.2824584140373,
+    "good_count": 0,
+    "repetition_count": 1,
+    "results": [
+      {
+        "ground_truth": "в древнем китае использовали уникальный способ обозначения периодов времени каждый этап китая или каждая семья находившаяся у власти были особой династией",
+        "hypothesis": "ephone.com.org. we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about",
+        "error_rate": 409.5238095238095,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "мадагаскар намного больше других и является самобытным континентом в том что касается дикой природы",
+        "hypothesis": "ephone.com.org. we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about",
+        "error_rate": 614.2857142857143,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "во всех научных вопросах включая психологию были приняты взгляды аристотеля",
+        "hypothesis": "ephone.com.org. we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about",
+        "error_rate": 860.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "в различных местах рима были установлены большие телевизионные экраны с помощью которых люди могли наблюдать за церемонией",
+        "hypothesis": "ephone.com",
+        "error_rate": 100.0,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "причиной дебатов стали разногласия относительно затрат на оказание материальной поддержки и восстановление зданий после урагана катрина который некоторые фискальные консерваторы в шутку назвали новоорлеанской сделкой буша",
+        "hypothesis": "ephone.com.org. we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about",
+        "error_rate": 330.7692307692308,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "в 1990 году он был добавлен в список всемирного наследия находящегося под угрозой из-за опасности со стороны песков пустыни",
+        "hypothesis": "ephone.com.org. we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about",
+        "error_rate": 452.6315789473684,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "согласно ядерному управлению японии на заводе были обнаружены радиоактивный цезий и йод",
+        "hypothesis": "asa la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la la",
+        "error_rate": 816.6666666666666,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "надлежащее использование блогов может дать учащимся возможность стать более аналитичными и критичными. путём активного отклика на интернет-материалы учащиеся могут определять свою позицию в контексте чужих работ а также излагать свои собственные взгляды на конкретные вопросы оравек 2002",
+        "hypothesis": "ephone.com.org. we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about the importance of the community, and we have a lot of questions about",
+        "error_rate": 232.43243243243242,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "только мутации в клетках зародышевой линии могут передаваться далее детям в то время как мутации где-то ещё могут привести к гибели клеток или раку",
+        "hypothesis": "is, the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the other one is the",
+        "error_rate": 408.3333333333333,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "не оскверняйте это место нанося или выцарапывая граффити на объекты вокруг",
+        "hypothesis": "ascarinetescalyasa de la sala de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de la calle de",
+        "error_rate": 618.1818181818181,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "cmn_hans_cn": {
+    "name": "Chinese",
+    "code": "zh",
+    "metric": "CER",
+    "avg_error": 341.8197650147359,
+    "good_count": 0,
+    "repetition_count": 0,
+    "results": [
+      {
+        "ground_truth": "这 并 不 是 告 别 这 是 一 个 篇 章 的 结 束 也 是 新 篇 章 的 开 始",
+        "hypothesis": "ayo.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.",
+        "error_rate": 435.55555555555554,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "钙 钾 等 元 素 属 于 金 属 银 和 金 等 元 素 当 然 也 是 金 属",
+        "hypothesis": "as, so to speak. i'm not going to talk about the word i'm talking about. i'm talking about the word i'm talking about. i'm talking about the word i'm talking about. i'm talking about the word i'm talking about. i'm talking about the word i'm talking about. i'm talking about the word i'm talking about.",
+        "error_rate": 687.8048780487804,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "桥 下 垂 直 净 空 15 米 该 项 目 于 2011 年 8 月 完 工 但 直 到 2017 年 3 月 才 开 始 通 车",
+        "hypothesis": "ayo.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.",
+        "error_rate": 296.969696969697,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "适 当 使 用 博 客 可 以 使 学 生 变 得 更 善 于 分 析 和 进 行 思 辨 通 过 积 极 回 应 网 络 材 料 学 生 们 可 以 在 他 人 文 章 的 上 下 文 语 境 中 找 到 自 己 的 立 场 并 能 够 针 对 特 定 问 题 提 出 自 己 的 观 点 oravec 2002",
+        "hypothesis": ", which is a very important thing to do in the world.",
+        "error_rate": 91.71974522292994,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "科 学 家 们 可 以 得 出 结 论 暗 物 质 对 其 他 暗 物 质 的 影 响 方 式 与 普 通 物 质 相 同",
+        "hypothesis": "as, so to speak. i'm not going to talk about the word i'm talking about. i'm not going to talk about the word i'm talking about. i'm not going to talk about the word i'm talking about. i'm not going to talk about the word i'm talking about. i'm not going to talk about the word i'm talking about. i'm not going to talk about the word i'm",
+        "error_rate": 503.2786885245901,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "大 多 数 现 代 科 研 望 远 镜 都 是 巨 型 设 施 位 于 大 气 条 件 优 良 的 偏 远 地 区",
+        "hypothesis": "ayo.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.",
+        "error_rate": 343.859649122807,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "1963 年 大 坝 建 成 后 季 节 性 洪 水 被 控 制 住 了 沉 积 物 不 再 冲 散 到 河 流 里",
+        "hypothesis": "ayo.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.",
+        "error_rate": 337.9310344827586,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "它 的 长 下 颚 上 布 满 了 70 多 颗 剃 刀 般 锋 利 的 牙 齿 上 颚 上 还 有 一 排 这 意 味 着 任 何 与 它 相 遇 的 东 西 都 无 路 可 逃",
+        "hypothesis": "ayo.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.org.",
+        "error_rate": 217.77777777777777,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "scotturb 403 路 公 共 汽 车 定 期 发 车 前 往 辛 特 拉 sintra 在 罗 卡 角 停 靠",
+        "hypothesis": "2403 路公交<0xe6><0xb1><0xbd>车定期发车前往辛特<0xe5><0x85><0xb0>,在<0xe7><0xbd><0x97><0xe5><0x8d><0xa1>角停车口。",
+        "error_rate": 155.9322033898305,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "这 里 几 乎 都 是 沙 滩 游 泳 很 安 全 大 部 分 地 方 都 有 新 西 兰 圣 诞 树 的 树 荫",
+        "hypothesis": "asarayanananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananananan",
+        "error_rate": 347.3684210526316,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "ja_jp": {
+    "name": "Japanese",
+    "code": "ja",
+    "metric": "CER",
+    "avg_error": 433.7814976310512,
+    "good_count": 0,
+    "repetition_count": 1,
+    "results": [
+      {
+        "ground_truth": "インターネットで 敵対的環境コース について検索すると おそらく現地企業の住所が出てくるでしょう",
+        "hypothesis": ". i'm going to go to the hospital. i'm going to go to the hospital. i'm going to go to the hospital.",
+        "error_rate": 202.08333333333334,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "また 北側に行くなら世界的に有名なマリア像の聖地であるファティマの聖母の聖域神社を訪れましょう",
+        "hypothesis": ". mata,北側に行くなら, sekai dekini youme na maiazou no seeti de arre, fatihma no seeti, jinja, otozele macho.",
+        "error_rate": 204.25531914893617,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "バルセロナの公用語はカタルーニャ語とスペイン語です 約半数がカタルーニャ語を好み 大多数がカタルーニャ語を理解し ほぼ全員がスペイン語を知っています",
+        "hypothesis": ". barcelona's popular go a catalunya go to spain go this. yaku, hansu, catalunya go, kono, guy, tasu, gatalunya go, guy, guy, guy, guy, guy, guy, guy, guy, guy, guy, guy, guy, guy, guy, guy, guy",
+        "error_rate": 258.1081081081081,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "その長い顎には70本以上の鋭い歯が並び 口蓋には別の歯列があり つまりここを通ったら逃げ道はないということになります",
+        "hypothesis": ". so the長いあごには70本以上の<0xe9><0x8b><0xad>い<0xe5><0x88><0x83>が並び<0xe9><0x83><0x8a>外には別のしれつがありつまりここを通ったら右目ちゃあないということになります.",
+        "error_rate": 129.31034482758622,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "ロスビー数が小さいほど磁気反転に関して星の活性が低下するわけです",
+        "hypothesis": ". rossby's was a cisayo. rossby's had an ekanse to wash the karate. aka. rossby's had a cisayo. rossby's had a cisayo. rossby's had a cisayo. rossby's had a cisayo. rossby's had a cisayo. rossby'",
+        "error_rate": 609.375,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "群島や湖では 必ずしもヨットは必要ありません",
+        "hypothesis": ", to say the word not the word, but the word not the word, but the word not the word, but the word not the word, but the word not the word, but the word not the word, but the word not the word, but the word not the word, but the word not the word, but the word, but the word,",
+        "error_rate": 1245.4545454545455,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "パリジャンは 自己中心的で横柄で失礼な人が多いと言われています",
+        "hypothesis": ". i'm a very young woman, i'm a very young woman, i'm a very young woman, i'm a very young woman, i'm a very young woman, i'm a very young woman, i'm a very young woman, i'm a very young woman, i'm a very young woman, i'm a very young woman, i'm a very young woman, i'm a very young woman, i'",
+        "error_rate": 938.7096774193548,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "メインステージの音楽が終わっても フェスティバルには夜遅くまで演奏を流し続けるセクションがあるかもしれないことを覚えておいてください",
+        "hypothesis": ". mainstage. the ongakuwa. what? the festival. the ongakuwa. the ongakuwa. the ongakuwa. the ongakuwa. the ongakuwa. the ongakuwa.",
+        "error_rate": 195.45454545454547,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "参列者の数が多すぎて 全員がサンピエトロ広場での葬儀に参加することは不可能でした",
+        "hypothesis": ". i'm not sure if i'm going to be able to do it. i'm not sure if i'm going to be able to do it. i'm not sure if i'm going to be able to do it.",
+        "error_rate": 352.5,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "香港の最高の景色を見るには 島から出て九龍のウォーターフロントに向かいましょう",
+        "hypothesis": ". hong kong noさい kong no keshi kiyo miru niwa島から出て kuroon no waterfronti mwai mashou.",
+        "error_rate": 202.56410256410254,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  },
+  "ko_kr": {
+    "name": "Korean",
+    "code": "ko",
+    "metric": "CER",
+    "avg_error": 534.596941684102,
+    "good_count": 0,
+    "repetition_count": 9,
+    "results": [
+      {
+        "ground_truth": "다리 밑 수직 간격은 15미터이며 공사는 2011년 8월에 마무리되었으며 해당 다리의 통행금지는 2017년 3월까지이다",
+        "hypothesis": ", extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism",
+        "error_rate": 530.3030303030303,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "델 포트로가 2세트에서 먼저 어드밴티지를 얻었지만 6 대 6이 된 후 다시 타이 브레이크가 필요했다",
+        "hypothesis": ", extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism",
+        "error_rate": 634.5454545454546,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "염소 사육은 대략 일만 년 전에 이란의 자그로스산맥에서 시작한 것으로 보입니다",
+        "hypothesis": ", extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism",
+        "error_rate": 820.9302325581396,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "겨울에 북발트해를 건널 경우에는 빙판을 통과하면서 꽤 끔찍한 소음이 발생하기 때문에 객실의 위치를 확인하는 것이 좋다",
+        "hypothesis": ", extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism",
+        "error_rate": 535.3846153846154,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "홍콩의 스카이라인을 이루는 빌딩 행렬은 빅토리아 항구의 수면에 선명히 비치는 모습 때문에 반짝이는 막대그래프에 비유된다",
+        "hypothesis": ", extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism",
+        "error_rate": 528.7878787878788,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "합금은 기본적으로 금속 두 개 이상의 혼합물이다 주기율표 상에 원소가 많이 있다는 것을 잊지 마라",
+        "hypothesis": ", extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism",
+        "error_rate": 646.2962962962963,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "\"1940년 8월 15일 연합군은 프랑스 남부를 침략했고 이 침략은 \"드래군 작전\"\"이라 불렸다. ",
+        "hypothesis": ", extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism",
+        "error_rate": 651.8518518518518,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "그래도 관계자의 조언을 듣고 모든 표지판을 지키고 안전 경고에 세심한 주의를 기울여야 합니다",
+        "hypothesis": ", awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awakening awaken",
+        "error_rate": 619.6078431372549,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "지하철의 정규 안내 방송은 카탈로니아어로만 제공되나 계획에 없던 운행 중단 시에는 자동 시스템을 통해 스페인어 영어 프랑스어 아라비아어 일본어를 포함한 다양한 언어로 방송됩니다",
+        "hypothesis": ", extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism, extremism",
+        "error_rate": 347.9591836734694,
+        "has_repetition": true,
+        "is_good": false,
+        "is_perfect": false
+      },
+      {
+        "ground_truth": "교전이 발발한 직후 영국은 독일에 대한 해상 봉쇄를 시작한다",
+        "hypothesis": "교전이 발발해지고 영국은 독일에 대한 더 이상 문제를 시작한다.",
+        "error_rate": 30.303030303030305,
+        "has_repetition": false,
+        "is_good": false,
+        "is_perfect": false
+      }
+    ]
+  }
+}
