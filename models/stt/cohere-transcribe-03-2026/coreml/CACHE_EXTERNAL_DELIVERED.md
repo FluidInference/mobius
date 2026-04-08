@@ -229,14 +229,18 @@ mobius/models/stt/cohere-transcribe-03-2026/coreml/
 ├── test-wer-hybrid.py                         ✅ WER test (EOS token fixed)
 ├── test-debug-tokens.py                       ✅ Debug script (EOS token fixed)
 ├── test-wer-cache-external.py                 ✅ Alternative test (EOS token fixed)
+├── test-mlmodelc.swift                        ✅ Swift .mlmodelc test
+├── test-wer-mlmodelc.py                       ✅ WER test for compiled model
 ├── build-test/
 │   ├── cohere_decoder_cache_external.mlpackage ✅ 291MB
+│   ├── cohere_decoder_cache_external.mlmodelc/ ✅ Compiled (for Swift)
 │   └── cohere_encoder.mlpackage                ✅ 6.97GB
 ├── librispeech_test_samples/
 │   └── wer_results_cache_external.json         ✅ WER results (11.95% after fix)
 ├── PARAKEET_PATTERN_IMPLEMENTATION.md         ✅ Technical docs
 ├── IMPLEMENTATION_COMPLETE.md                 ✅ Full guide
-└── CACHE_EXTERNAL_DELIVERED.md                ✅ This file
+├── CACHE_EXTERNAL_DELIVERED.md                ✅ This file
+└── MLMODELC_VERIFIED.md                       ✅ Compilation verification
 
 FluidAudio/Sources/FluidAudio/ASR/Cohere/
 ├── CohereDecoderState.swift                   ✅ State management
@@ -251,9 +255,11 @@ FluidAudio/Sources/FluidAudio/ASR/Cohere/
 4. ✅ Analyze WER results
 5. ✅ Fix EOS token detection issue (EOS_TOKEN: 151643 → 3)
 6. ✅ Re-test WER (11.95% achieved!)
-7. ⬜ Compare with stateless decoder WER
-8. ⬜ Integrate into FluidAudio package
-9. ⬜ Ship it!
+7. ✅ Compile to .mlmodelc for Swift
+8. ✅ Verify .mlmodelc works in Swift
+9. ⬜ Compare with stateless decoder WER
+10. ⬜ Integrate into FluidAudio package
+11. ⬜ Ship it!
 
 ## Status
 
