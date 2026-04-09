@@ -1,0 +1,72 @@
+[
+  {
+    "id": 0,
+    "audio": "fleurs_samples/fr_fr/sample_0000.wav",
+    "text": "l'accident a eu lieu en terrain montagneux et il semblerait que cela ait \u00e9t\u00e9 caus\u00e9 par un incendie malveillant",
+    "duration": 10.2,
+    "language": "fr_fr"
+  },
+  {
+    "id": 1,
+    "audio": "fleurs_samples/fr_fr/sample_0001.wav",
+    "text": "nous sommes d'accord avec la d\u00e9claration de l'usoc comit\u00e9 olympique des \u00e9tats-unis selon laquelle les int\u00e9r\u00eats de nos athl\u00e8tes et de nos clubs ainsi que de leur sport pourraient \u00eatre mieux servis. cela peut \u00eatre fait en allant de l'avant et en proc\u00e9dant plut\u00f4t \u00e0 des changements significatifs au sein de notre organisation qu'\u00e0 la r\u00e9vocation d'accr\u00e9ditation",
+    "duration": 23.4,
+    "language": "fr_fr"
+  },
+  {
+    "id": 2,
+    "audio": "fleurs_samples/fr_fr/sample_0002.wav",
+    "text": "il a ajout\u00e9 qu\u2019\u00ab\u2009on ne devrait cependant pas leur demander d\u2019assumer des obligations qui d\u00e9passent leur stade de d\u00e9veloppement leur responsabilit\u00e9 et leurs capacit\u00e9s.\u2009\u00bb",
+    "duration": 8.28,
+    "language": "fr_fr"
+  },
+  {
+    "id": 3,
+    "audio": "fleurs_samples/fr_fr/sample_0003.wav",
+    "text": "le rugissement du tigre ne ressemble pas au rugissement ample du lion mais plut\u00f4t \u00e0 une phrase dont les mots seraient des cris et des grondements",
+    "duration": 10.2,
+    "language": "fr_fr"
+  },
+  {
+    "id": 4,
+    "audio": "fleurs_samples/fr_fr/sample_0004.wav",
+    "text": "le m\u00eame mois un autre avion de ligne a fait une sortie de piste \u00e0 mashhad et a heurt\u00e9 un mur tuant ainsi dix-sept personnes",
+    "duration": 8.34,
+    "language": "fr_fr"
+  },
+  {
+    "id": 5,
+    "audio": "fleurs_samples/fr_fr/sample_0005.wav",
+    "text": "giancarlo fisichella a perdu le contr\u00f4le de sa voiture et a termin\u00e9 la course peu apr\u00e8s le d\u00e9marrage",
+    "duration": 7.2,
+    "language": "fr_fr"
+  },
+  {
+    "id": 6,
+    "audio": "fleurs_samples/fr_fr/sample_0006.wav",
+    "text": "malgr\u00e9 le net avantage de del potro pendant le deuxi\u00e8me set il a fallu passer par un tie-break une fois que le score a atteint 6-6",
+    "duration": 8.4,
+    "language": "fr_fr"
+  },
+  {
+    "id": 7,
+    "audio": "fleurs_samples/fr_fr/sample_0007.wav",
+    "text": "malheureusement il est difficile d'\u00e9tudier le flux de circulation car le comportement des conducteurs ne peut \u00eatre pr\u00e9dit avec cent pour cent de certitude",
+    "duration": 11.64,
+    "language": "fr_fr"
+  },
+  {
+    "id": 8,
+    "audio": "fleurs_samples/fr_fr/sample_0008.wav",
+    "text": "les deux compos\u00e9s r\u00e9agissent l'un avec l'autre pour former des cristaux qui peuvent bloquer la fonction r\u00e9nale ont d\u00e9clar\u00e9 des chercheurs de l'universit\u00e9",
+    "duration": 7.68,
+    "language": "fr_fr"
+  },
+  {
+    "id": 9,
+    "audio": "fleurs_samples/fr_fr/sample_0009.wav",
+    "text": "par exemple des \u00e9tudiants de l'\u00e9cole bennet en caroline du nord con\u00e7oivent chaque ann\u00e9e un site web consacr\u00e9 \u00e0 leur visite de la capitale de l'\u00e9tat chaque ann\u00e9e le site est remis \u00e0 jour mais les anciennes versions sont conserv\u00e9es en ligne pour servir d'album",
+    "duration": 14.82,
+    "language": "fr_fr"
+  }
+]

@@ -1,0 +1,402 @@
+[
+  {
+    "cer" : 1.0253164556962024,
+    "duration" : 10.56,
+    "fileName" : "sample_0000",
+    "hypothesis" : "The world is a world of the world. The world is a world of the world. The world is a world of the world. The world is a world of the world.",
+    "processingTime" : 3.1527410745620728,
+    "reference" : "however due to the slow communication channels styles in the west could lag behind by 25 to 30 year",
+    "rtfx" : 3.349466305750092,
+    "wer" : 1.5789473684210527
+  },
+  {
+    "cer" : 0.03409090909090909,
+    "duration" : 8.76,
+    "fileName" : "sample_0001",
+    "hypothesis" : "All nouns alongside the world say for you always begin with a capital letter, even in the middle of a sentence.",
+    "processingTime" : 2.0742729902267456,
+    "reference" : "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+    "rtfx" : 4.22316640156531,
+    "wer" : 0.09523809523809523
+  },
+  {
+    "cer" : 1.34640522875817,
+    "duration" : 11.46,
+    "fileName" : "sample_0002",
+    "hypothesis" : "The world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world,",
+    "processingTime" : 4.357594966888428,
+    "reference" : "to the north and within easy reach is the romantic and fascinating town of sintra and which was made famous to foreigners after a glowing account of its splendours recorded by lord byron",
+    "rtfx" : 2.6298910493241863,
+    "wer" : 2.212121212121212
+  },
+  {
+    "cer" : 3.1333333333333333,
+    "duration" : 5.76,
+    "fileName" : "sample_0003",
+    "hypothesis" : "The world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world,",
+    "processingTime" : 4.29257595539093,
+    "reference" : "the cabbage juice changes color depending on how acidic or basic alkaline the chemical is",
+    "rtfx" : 1.3418516200665411,
+    "wer" : 5.133333333333334
+  },
+  {
+    "cer" : 3.25,
+    "duration" : 4.32,
+    "fileName" : "sample_0004",
+    "hypothesis" : "The world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world,",
+    "processingTime" : 5.491189002990723,
+    "reference" : "many people don't think about them as dinosaurs because they have feathers and can fly",
+    "rtfx" : 0.7867148622360575,
+    "wer" : 4.9375
+  },
+  {
+    "cer" : 0,
+    "duration" : 11.42,
+    "fileName" : "sample_0005",
+    "hypothesis" : "The hospital has followed protocol for infection control, including separating the patient from others to prevent possible infection of others.",
+    "processingTime" : 2.31459903717041,
+    "reference" : "the hospital has followed protocol for infection control including separating the patient from others to prevent possible infection of others",
+    "rtfx" : 4.933899918130491,
+    "wer" : 0
+  },
+  {
+    "cer" : 2.449438202247191,
+    "duration" : 10.8,
+    "fileName" : "sample_0006",
+    "hypothesis" : "The world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world,",
+    "processingTime" : 5.202672004699707,
+    "reference" : "the northern marianas emergency management office said that there were no damages reported in the nation",
+    "rtfx" : 2.0758564042176952,
+    "wer" : 4.875
+  },
+  {
+    "cer" : 2.8518518518518516,
+    "duration" : 6.96,
+    "fileName" : "sample_0007",
+    "hypothesis" : "The world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and",
+    "processingTime" : 4.455408930778503,
+    "reference" : "twentieth century research has shown that there are two pools of genetic variation hidden and expressed",
+    "rtfx" : 1.5621461706734658,
+    "wer" : 4.9375
+  },
+  {
+    "cer" : 0.14606741573033707,
+    "duration" : 11.04,
+    "fileName" : "sample_0008",
+    "hypothesis" : "The aspect ratio of this format, dividing by 12 to obtain the simplest whole number ratio, is therefore said to be free to do.",
+    "processingTime" : 2.450796961784363,
+    "reference" : "the aspect ratio of this format dividing by twelve to obtain the simplest whole-number ratio is therefore said to be 3:2",
+    "rtfx" : 4.504657126701372,
+    "wer" : 0.18181818181818182
+  },
+  {
+    "cer" : 1.475177304964539,
+    "duration" : 9.9,
+    "fileName" : "sample_0009",
+    "hypothesis" : "The world is a world of the world, and the world is a world of the world, and the world is a world of the world, and the world of the world, and the world of the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world, and the world,",
+    "processingTime" : 4.621608018875122,
+    "reference" : "as light pollution in their heyday was not the kind of problem it is today they are usually located in cities or at campuses easier to reach than those built in modern times",
+    "rtfx" : 2.1421115680013068,
+    "wer" : 2.3333333333333335
+  },
+  {
+    "cer" : 0.9888888888888889,
+    "duration" : 10.2,
+    "fileName" : "sample_0000",
+    "hypothesis" : "Les éditions Coopératives de France et les États-Unis ont fait l'évasion de la guerre contre les éditions Coopératives de France et les États-Unis.",
+    "processingTime" : 2.7040629386901855,
+    "reference" : "l'accident a eu lieu en terrain montagneux et il semblerait que cela ait été causé par un incendie malveillant",
+    "rtfx" : 3.772101549138036,
+    "wer" : 1.3
+  },
+  {
+    "cer" : 0.8945578231292517,
+    "duration" : 23.4,
+    "fileName" : "sample_0001",
+    "hypothesis" : "C'est une très bonne chose. C'est une très bonne chose.",
+    "processingTime" : 2.0556811094284058,
+    "reference" : "nous sommes d'accord avec la déclaration de l'usoc comité olympique des états-unis selon laquelle les intérêts de nos athlètes et de nos clubs ainsi que de leur sport pourraient être mieux servis. cela peut être fait en allant de l'avant et en procédant plutôt à des changements significatifs au sein de notre organisation qu'à la révocation d'accréditation",
+    "rtfx" : 11.383088501750404,
+    "wer" : 1
+  },
+  {
+    "cer" : 1.565217391304348,
+    "duration" : 8.28,
+    "fileName" : "sample_0002",
+    "hypothesis" : "Les gens qui ont été victimes de la guerre des droits de l'homme étaient les plus forts et les plus forts. Les gens qui ont été victimes de la guerre des droits de l'homme étaient les plus forts et les plus forts. Les gens qui ont été victimes de la guerre des droits de l'homme étaient les plus forts et les plus forts. Les gens qui ont été victimes de la guerre des",
+    "processingTime" : 4.6635459661483765,
+    "reference" : "il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités. »",
+    "rtfx" : 1.7754730113314297,
+    "wer" : 2.769230769230769
+  },
+  {
+    "cer" : 1.9,
+    "duration" : 10.2,
+    "fileName" : "sample_0003",
+    "hypothesis" : "Les gens qui ont été victimes de la guerre civile et qui ont été victimes de la guerre civile et qui ont été victimes de la guerre civile et qui ont été victimes de la guerre civile et qui ont été victimes de la guerre civile et qui ont été victimes de la guerre civile et qui ont été victimes de la guerre civile et qui ont été victimes de la guerre civile et qui",
+    "processingTime" : 4.514140009880066,
+    "reference" : "le rugissement du tigre ne ressemble pas au rugissement ample du lion mais plutôt à une phrase dont les mots seraient des cris et des grondements",
+    "rtfx" : 2.2595666013183755,
+    "wer" : 2.8461538461538463
+  },
+  {
+    "cer" : 1.511111111111111,
+    "duration" : 8.34,
+    "fileName" : "sample_0004",
+    "hypothesis" : "Le gouvernement a fait un travail de recherche et de soutien à la bataille de l'homme. Il a fait un travail de recherche et de soutien à la bataille de l'homme. Il a fait un travail de recherche et de soutien à la bataille de l'homme.",
+    "processingTime" : 3.6993770599365234,
+    "reference" : "le même mois un autre avion de ligne a fait une sortie de piste à mashhad et a heurté un mur tuant ainsi dix-sept personnes",
+    "rtfx" : 2.2544336154106723,
+    "wer" : 1.6
+  },
+  {
+    "cer" : 0.8433734939759037,
+    "duration" : 7.2,
+    "fileName" : "sample_0005",
+    "hypothesis" : "Nous sommes en train de faire des choses ensemble. Nous sommes en train de faire des choses ensemble.",
+    "processingTime" : 2.19942307472229,
+    "reference" : "giancarlo fisichella a perdu le contrôle de sa voiture et a terminé la course peu après le démarrage",
+    "rtfx" : 3.2735857337993544,
+    "wer" : 1
+  },
+  {
+    "cer" : 0.7872340425531915,
+    "duration" : 8.4,
+    "fileName" : "sample_0006",
+    "hypothesis" : "La première, c'est la vérité de la mort de l'homme. La première, c'est la mort de l'homme. La première, c'est la mort de l'homme.",
+    "processingTime" : 2.872220993041992,
+    "reference" : "malgré le net avantage de del potro pendant le deuxième set il a fallu passer par un tie-break une fois que le score a atteint 6-6",
+    "rtfx" : 2.9245660484862253,
+    "wer" : 1.0740740740740742
+  },
+  {
+    "cer" : 0.1484375,
+    "duration" : 11.64,
+    "fileName" : "sample_0007",
+    "hypothesis" : "Malheureusement, il est difficile d'éviter le flux de circulation et le comportement des conducteurs ne peut pas être présent avec 100% de certitude.",
+    "processingTime" : 2.3935710191726685,
+    "reference" : "malheureusement il est difficile d'étudier le flux de circulation car le comportement des conducteurs ne peut être prédit avec cent pour cent de certitude",
+    "rtfx" : 4.863026794176066,
+    "wer" : 0.24
+  },
+  {
+    "cer" : 1.532258064516129,
+    "duration" : 7.68,
+    "fileName" : "sample_0008",
+    "hypothesis" : "Les gens qui ont été victimes de la guerre des droits de l'homme étaient les plus forts et les plus forts. Les gens qui ont été victimes de la guerre des droits de l'homme étaient les plus forts et les plus forts. Les gens qui ont été victimes de la guerre des droits de l'homme étaient les plus forts et les plus forts.",
+    "processingTime" : 4.51741099357605,
+    "reference" : "les deux composés réagissent l'un avec l'autre pour former des cristaux qui peuvent bloquer la fonction rénale ont déclaré des chercheurs de l'université",
+    "rtfx" : 1.7000888364864932,
+    "wer" : 2.230769230769231
+  },
+  {
+    "cer" : 0.6952380952380952,
+    "duration" : 14.82,
+    "fileName" : "sample_0009",
+    "hypothesis" : "Les éditions de Radio-Saint-Denis Internationale, Radio-Saint-Denis Internationale, Radio-Saint-Denis Internationale, Radio-Saint-Denis Internationale, Radio-Saint-Denis Internationale, Radio-Saint-Denis Internationale, Radio-Saint-Denis Internationale, Radio-",
+    "processingTime" : 4.341464996337891,
+    "reference" : "par exemple des étudiants de l'école bennet en caroline du nord conçoivent chaque année un site web consacré à leur visite de la capitale de l'état chaque année le site est remis à jour mais les anciennes versions sont conservées en ligne pour servir d'album",
+    "rtfx" : 3.413594261960181,
+    "wer" : 0.9791666666666666
+  },
+  {
+    "cer" : 0.0070921985815602835,
+    "duration" : 12.84,
+    "fileName" : "sample_0000",
+    "hypothesis" : "Se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo del clima extremo en el área que visitan, dado que ello puede afectar sus planes de viaje.",
+    "processingTime" : 2.945098042488098,
+    "reference" : "se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo de clima extremo en el área que visitan dado que ello puede afectar sus planes de viaje",
+    "rtfx" : 4.35978694588803,
+    "wer" : 0.034482758620689655
+  },
+  {
+    "cer" : 0.2788844621513944,
+    "duration" : 21.36,
+    "fileName" : "sample_0001",
+    "hypothesis" : "El uso de los datos puede encuadrar a los alumnos para que sean más analíticos y críticos a través de la perspectiva de los contenidos en la red. Puede definir sus posturas en el contexto de los críticos de los datos, además de establecer sus perspectivas sobre temas específicos. Para ver, los datos son más analíticos.",
+    "processingTime" : 4.325515031814575,
+    "reference" : "el uso adecuado de los blogs «puede empoderar a los alumnos para que sean más analíticos y críticos a través de la respuesta activa a los contenidos de internet pueden definir sus posturas en el contexto de los escritos de otros además de establecer sus perspectivas sobre temas específicos» oravec 2002",
+    "rtfx" : 4.938140277607444,
+    "wer" : 0.39215686274509803
+  },
+  {
+    "cer" : 0,
+    "duration" : 9.72,
+    "fileName" : "sample_0002",
+    "hypothesis" : "Fue tanta la cantidad de gente que se concentró que no todos pudieron acceder al funeral en la plaza de San Pedro.",
+    "processingTime" : 2.3978490829467773,
+    "reference" : "fue tanta la cantidad de gente que se concentró que no todos pudieron acceder al funeral en la plaza de san pedro",
+    "rtfx" : 4.053632928413847,
+    "wer" : 0
+  },
+  {
+    "cer" : 0.09090909090909091,
+    "duration" : 8.58,
+    "fileName" : "sample_0003",
+    "hypothesis" : "Esto parece tener sentido, ya que en la tierra no se percibe su movimiento.",
+    "processingTime" : 1.919787049293518,
+    "reference" : "esto parece tener sentido ya que en la tierra no se percibe su movimiento ¿cierto?",
+    "rtfx" : 4.469245692201873,
+    "wer" : 0.06666666666666667
+  },
+  {
+    "cer" : 0.16853932584269662,
+    "duration" : 10.62,
+    "fileName" : "sample_0004",
+    "hypothesis" : "El partido participó en dos carreras individuales del campeonato, aparte de la competencia de la",
+    "processingTime" : 2.141256093978882,
+    "reference" : "carpanedo participó en dos carreras individuales del campeonato aparte de la competencia del miércoles",
+    "rtfx" : 4.959705674563156,
+    "wer" : 0.3076923076923077
+  },
+  {
+    "cer" : 0.1440677966101695,
+    "duration" : 9.78,
+    "fileName" : "sample_0005",
+    "hypothesis" : "Hoy en día las personas que envían mensajes en las pantallas de sus computadores no tienen la necesidad de siquiera aproximarse a su computador.",
+    "processingTime" : 2.888551950454712,
+    "reference" : "hoy en día las personas escriben mensajes en las pantallas de sus computadoras no tienen la necesidad de siquiera aproximarse a un sacapuntas",
+    "rtfx" : 3.3857795074312045,
+    "wer" : 0.21739130434782608
+  },
+  {
+    "cer" : 0.21818181818181817,
+    "duration" : 5.64,
+    "fileName" : "sample_0006",
+    "hypothesis" : "Los luchadores compañeros de Luna también le accedieron a ver a Luna.",
+    "processingTime" : 2.0186480283737183,
+    "reference" : "los luchadores compañeros de luna también le rindieron homenaje",
+    "rtfx" : 2.7939491782248678,
+    "wer" : 0.5555555555555556
+  },
+  {
+    "cer" : 0.6534653465346535,
+    "duration" : 10.26,
+    "fileName" : "sample_0007",
+    "hypothesis" : "No hay ninguna cosa de que no se pase por el mundo, por favor, no hay impresión de que es la historia.",
+    "processingTime" : 2.2610210180282593,
+    "reference" : "duvall que está casado y tiene dos hijos adultos no causó una buena impresión a miller que fue a quien le relató la historia",
+    "rtfx" : 4.537772943370209,
+    "wer" : 0.9166666666666666
+  },
+  {
+    "cer" : 0.017699115044247787,
+    "duration" : 10.68,
+    "fileName" : "sample_0008",
+    "hypothesis" : "Entre los fenómenos climáticos regionales y estacionales extremos encontramos los ventanrones, las tormentas de nieve, hielos o polvo.",
+    "processingTime" : 2.6368370056152344,
+    "reference" : "entre los fenómenos climáticos regionales y estacionales extremos encontramos los ventarrones las tormentas de nieve hielo o polvo",
+    "rtfx" : 4.050307234484564,
+    "wer" : 0.1111111111111111
+  },
+  {
+    "cer" : 1.3093525179856116,
+    "duration" : 12.12,
+    "fileName" : "sample_0009",
+    "hypothesis" : "Desde su concepción, The Onion se ha vuelto un verdadero imperio de parodias de noticias, con una edición impresa, una página web que recibió 5 000 000 de visitas únicas en el mes de octubre, publicidad personal, una red de noticias las 24 horas, pódcast y el recientemente lanzado atlas mundial llam",
+    "processingTime" : 4.683237075805664,
+    "reference" : "se puede definir a una civilización como una cultura específica de la que forma parte un extenso grupo de personas que viven y trabajan en conjunto es decir una sociedad",
+    "rtfx" : 2.587953546621378,
+    "wer" : 1.6551724137931034
+  },
+  {
+    "cer" : 1.434782608695652,
+    "duration" : 10.38,
+    "fileName" : "sample_0000",
+    "hypothesis" : "呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,",
+    "processingTime" : 3.4649410247802734,
+    "reference" : "这 并 不 是 告 别 这 是 一 个 篇 章 的 结 束 也 是 新 篇 章 的 开 始",
+    "rtfx" : 2.995721983654322,
+    "wer" : 1.434782608695652
+  },
+  {
+    "cer" : 1.5714285714285714,
+    "duration" : 8.28,
+    "fileName" : "sample_0001",
+    "hypothesis" : "呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,",
+    "processingTime" : 3.6028120517730713,
+    "reference" : "钙 钾 等 元 素 属 于 金 属 银 和 金 等 元 素 当 然 也 是 金 属",
+    "rtfx" : 2.2982048136330393,
+    "wer" : 1.5714285714285714
+  },
+  {
+    "cer" : 1,
+    "duration" : 13.86,
+    "fileName" : "sample_0002",
+    "hypothesis" : "呃,呃,呃,呃。",
+    "processingTime" : 2.07069194316864,
+    "reference" : "桥 下 垂 直 净 空 15 米 该 项 目 于 2011 年 8 月 完 工 但 直 到 2017 年 3 月 才 开 始 通 车",
+    "rtfx" : 6.6934147523609795,
+    "wer" : 1
+  },
+  {
+    "cer" : 1,
+    "duration" : 15.42,
+    "fileName" : "sample_0003",
+    "hypothesis" : "呃呃呃呃",
+    "processingTime" : 1.5291310548782349,
+    "reference" : "适 当 使 用 博 客 可 以 使 学 生 变 得 更 善 于 分 析 和 进 行 思 辨 通 过 积 极 回 应 网 络 材 料 学 生 们 可 以 在 他 人 文 章 的 上 下 文 语 境 中 找 到 自 己 的 立 场 并 能 够 针 对 特 定 问 题 提 出 自 己 的 观 点 oravec 2002",
+    "rtfx" : 10.084158549266988,
+    "wer" : 1
+  },
+  {
+    "cer" : 3.161290322580645,
+    "duration" : 12.9,
+    "fileName" : "sample_0004",
+    "hypothesis" : "啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊",
+    "processingTime" : 4.28186297416687,
+    "reference" : "科 学 家 们 可 以 得 出 结 论 暗 物 质 对 其 他 暗 物 质 的 影 响 方 式 与 普 通 物 质 相 同",
+    "rtfx" : 3.01270733739675,
+    "wer" : 1
+  },
+  {
+    "cer" : 1,
+    "duration" : 13.74,
+    "fileName" : "sample_0005",
+    "hypothesis" : "呃,呃,呃,呃。",
+    "processingTime" : 1.7885180711746216,
+    "reference" : "大 多 数 现 代 科 研 望 远 镜 都 是 巨 型 设 施 位 于 大 气 条 件 优 良 的 偏 远 地 区",
+    "rtfx" : 7.682337808852085,
+    "wer" : 1
+  },
+  {
+    "cer" : 1,
+    "duration" : 15.18,
+    "fileName" : "sample_0006",
+    "hypothesis" : "呃呃呃呃",
+    "processingTime" : 1.6576049327850342,
+    "reference" : "1963 年 大 坝 建 成 后 季 节 性 洪 水 被 控 制 住 了 沉 积 物 不 再 冲 散 到 河 流 里",
+    "rtfx" : 9.157791280516545,
+    "wer" : 1
+  },
+  {
+    "cer" : 1,
+    "duration" : 15.46,
+    "fileName" : "sample_0007",
+    "hypothesis" : "呃,呃,呃,呃。",
+    "processingTime" : 1.6270850896835327,
+    "reference" : "它 的 长 下 颚 上 布 满 了 70 多 颗 剃 刀 般 锋 利 的 牙 齿 上 颚 上 还 有 一 排 这 意 味 着 任 何 与 它 相 遇 的 东 西 都 无 路 可 逃",
+    "rtfx" : 9.501654276118384,
+    "wer" : 1
+  },
+  {
+    "cer" : 0.972972972972973,
+    "duration" : 7.62,
+    "fileName" : "sample_0008",
+    "hypothesis" : "好多人都是在用<0xE6><0x88><0xB7>的<0xE6><0x89><0xA7>照,但是在用<0xE6><0x88><0xB7>的时候,在用<0xE6><0x88><0xB7>的时候",
+    "processingTime" : 2.2668919563293457,
+    "reference" : "scotturb 403 路 公 共 汽 车 定 期 发 车 前 往 辛 特 拉 sintra 在 罗 卡 角 停 靠",
+    "rtfx" : 3.3614306048968694,
+    "wer" : 1
+  },
+  {
+    "cer" : 1.1379310344827587,
+    "duration" : 6.84,
+    "fileName" : "sample_0009",
+    "hypothesis" : "呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,呃,",
+    "processingTime" : 3.438204050064087,
+    "reference" : "这 里 几 乎 都 是 沙 滩 游 泳 很 安 全 大 部 分 地 方 都 有 新 西 兰 圣 诞 树 的 树 荫",
+    "rtfx" : 1.98941072152844,
+    "wer" : 1.1379310344827587
+  }
+]

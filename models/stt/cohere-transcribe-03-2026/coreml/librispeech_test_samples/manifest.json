@@ -1,0 +1,62 @@
+[
+  {
+    "id": 0,
+    "audio": "librispeech_test_samples/sample_00.wav",
+    "text": "CONCORD RETURNED TO ITS PLACE AMIDST THE TENTS",
+    "duration": 3.505
+  },
+  {
+    "id": 1,
+    "audio": "librispeech_test_samples/sample_01.wav",
+    "text": "THE ENGLISH FORWARDED TO THE FRENCH BASKETS OF FLOWERS OF WHICH THEY HAD MADE A PLENTIFUL PROVISION TO GREET THE ARRIVAL OF THE YOUNG PRINCESS THE FRENCH IN RETURN INVITED THE ENGLISH TO A SUPPER WHICH WAS TO BE GIVEN THE NEXT DAY",
+    "duration": 14.225
+  },
+  {
+    "id": 2,
+    "audio": "librispeech_test_samples/sample_02.wav",
+    "text": "CONGRATULATIONS WERE POURED IN UPON THE PRINCESS EVERYWHERE DURING HER JOURNEY",
+    "duration": 5.025
+  },
+  {
+    "id": 3,
+    "audio": "librispeech_test_samples/sample_03.wav",
+    "text": "FROM THE RESPECT PAID HER ON ALL SIDES SHE SEEMED LIKE A QUEEN AND FROM THE ADORATION WITH WHICH SHE WAS TREATED BY TWO OR THREE SHE APPEARED AN OBJECT OF WORSHIP THE QUEEN MOTHER GAVE THE FRENCH THE MOST AFFECTIONATE RECEPTION FRANCE WAS HER NATIVE COUNTRY AND SHE HAD SUFFERED TOO MUCH UNHAPPINESS IN ENGLAND FOR ENGLAND TO HAVE MADE HER FORGET FRANCE",
+    "duration": 23.315
+  },
+  {
+    "id": 4,
+    "audio": "librispeech_test_samples/sample_04.wav",
+    "text": "SHE TAUGHT HER DAUGHTER THEN BY HER OWN AFFECTION FOR IT THAT LOVE FOR A COUNTRY WHERE THEY HAD BOTH BEEN HOSPITABLY RECEIVED AND WHERE A BRILLIANT FUTURE OPENED BEFORE THEM",
+    "duration": 11.065
+  },
+  {
+    "id": 5,
+    "audio": "librispeech_test_samples/sample_05.wav",
+    "text": "THE COUNT HAD THROWN HIMSELF BACK ON HIS SEAT LEANING HIS SHOULDERS AGAINST THE PARTITION OF THE TENT AND REMAINED THUS HIS FACE BURIED IN HIS HANDS WITH HEAVING CHEST AND RESTLESS LIMBS",
+    "duration": 13.16
+  },
+  {
+    "id": 6,
+    "audio": "librispeech_test_samples/sample_06.wav",
+    "text": "THIS HAS INDEED BEEN A HARASSING DAY CONTINUED THE YOUNG MAN HIS EYES FIXED UPON HIS FRIEND",
+    "duration": 5.85
+  },
+  {
+    "id": 7,
+    "audio": "librispeech_test_samples/sample_07.wav",
+    "text": "YOU WILL BE FRANK WITH ME I ALWAYS AM",
+    "duration": 3.315
+  },
+  {
+    "id": 8,
+    "audio": "librispeech_test_samples/sample_08.wav",
+    "text": "CAN YOU IMAGINE WHY BUCKINGHAM HAS BEEN SO VIOLENT I SUSPECT",
+    "duration": 4.785
+  },
+  {
+    "id": 9,
+    "audio": "librispeech_test_samples/sample_09.wav",
+    "text": "IT IS YOU WHO ARE MISTAKEN RAOUL I HAVE READ HIS DISTRESS IN HIS EYES IN HIS EVERY GESTURE AND ACTION THE WHOLE DAY",
+    "duration": 7.28
+  }
+]
