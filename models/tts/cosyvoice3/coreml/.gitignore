@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Logs
+*.log
+
+# Generated audio
+*.wav
+
+# Compiled CoreML models (regenerate from .mlpackage)
+*.mlmodelc/
+
+# Temporary test scripts
+check_*.py
+test_*.py
+
+# Build artifacts
+compiled/
