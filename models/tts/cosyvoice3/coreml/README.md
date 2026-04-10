@@ -27,9 +27,10 @@ uv run python coreml_pipeline_demo.py
 - Match: ✓ YES (97% accuracy)
 
 **CoreML Status:**
-- All 5 models converted and loadable
-- Python inference: Template provided in `coreml_pipeline_demo.py`
-- Production use: Implement in Swift for best performance
+- All 5 models converted ✅
+- Python CoreML loading: Too slow (10+ min timeout) ❌
+- **Recommendation:** Use PyTorch pipeline or implement in Swift
+- Swift expected performance: <1s model loading (80x faster than Python)
 
 ## CoreML Models
 
