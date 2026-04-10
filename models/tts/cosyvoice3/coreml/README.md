@@ -14,14 +14,37 @@ Complete CoreML conversion of the CosyVoice3-0.5B-2512 text-to-speech model for 
 # Install dependencies
 uv sync
 
-# Run full TTS pipeline
+# Run full TTS pipeline (PyTorch)
 uv run python full_tts_pytorch.py
+
+# Test CoreML model loading
+uv run python coreml_pipeline_demo.py
 ```
 
-**Result:**
+**PyTorch Pipeline Result:**
 - Input: "Hello world, this is a test of the CosyVoice text to speech system."
 - Transcription: "Hello world, this is a test of the Cosavoy's text to speech system."
 - Match: ✓ YES (97% accuracy)
+
+**CoreML Status:**
+- All 5 models converted and loadable
+- Python inference: Template provided in `coreml_pipeline_demo.py`
+- Production use: Implement in Swift for best performance
+
+## CoreML Models
+
+The converted models are ready for deployment:
+
+1. **cosyvoice_llm_embedding.mlpackage** - Text token embeddings
+2. **cosyvoice_llm_decoder_coreml.mlpackage** - 24-layer transformer (1.3GB, compressed)
+3. **cosyvoice_llm_lm_head.mlpackage** - Language model head
+4. **flow_decoder.mlpackage** - Flow matching decoder (23MB)
+5. **converted/hift_vocoder.mlpackage** - HiFi-GAN vocoder
+
+**Usage:**
+- See `coreml_pipeline_demo.py` for CoreML loading template
+- Full inference requires CosyVoice frontend integration
+- For production: Implement in Swift (see CosyVoiceSwift/ for reference)
 
 ## Conversion Scripts
 
