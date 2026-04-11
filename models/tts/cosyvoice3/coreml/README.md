@@ -51,10 +51,17 @@ coreml/
 │   ├── quick_finetune.py             # Quick validation demo
 │   └── train_mbmelgan.py             # Production fine-tuning
 │
-└── benchmarks/                        # 🧪 Performance tests
-    ├── test_fp32_vs_fp16.py          # Precision comparison
-    ├── test_rangedim_quickstart.py   # Input shape strategy
-    └── test_quickstart_quality.py    # Quality evaluation
+├── benchmarks/                        # 🧪 Performance tests
+│   ├── test_fp32_vs_fp16.py          # Precision comparison
+│   ├── test_rangedim_quickstart.py   # Input shape strategy
+│   └── test_quickstart_quality.py    # Quality evaluation
+│
+└── trials/                            # 🔬 Research documentation (43 trial docs)
+    ├── README.md                      # Trial documentation index
+    ├── MBMELGAN_SUCCESS.md            # Vocoder breakthrough
+    ├── KOKORO_APPROACH_ANALYSIS.md    # CoreML patterns research
+    ├── OPERATION_REDUCTION_GUIDE.md   # 3,494× complexity reduction
+    └── ...                            # Failed trials, analysis, issues
 ```
 
 ---
@@ -127,6 +134,17 @@ Analysis of successful CoreML audio models:
 - **OpenVoice V2**: Voice conversion
 - **HTDemucs**: Audio source separation
 - **pyannote**: Speaker diarization
+
+### 🔬 [trials/](trials/) - Research Documentation
+
+All trial documentation and research artifacts (43 documents):
+- **Success stories**: MBMELGAN_SUCCESS.md, DECODER_COMPRESSION_SUCCESS.md
+- **Failed approaches**: COREML_STFT_ATTEMPT.md, FRAME_BASED_VOCODER_FAILED.md
+- **Analysis**: OPERATION_COUNT_ANALYSIS.md, KOKORO_APPROACH_ANALYSIS.md
+- **Status reports**: PROGRESS.md, FINAL_STATUS.md, COMPLETE_ANALYSIS.md
+- **Issue documentation**: VOCODER_COREML_ISSUE.md, SWIFT_LOADING_ISSUE.md
+
+See [trials/README.md](trials/README.md) for full index and key learnings.
 
 ---
 
