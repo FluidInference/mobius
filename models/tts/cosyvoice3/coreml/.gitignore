@@ -34,18 +34,15 @@ compiled/
 converted/
 decoder_layers/
 
-# Trial/research files (not part of organized structure)
-# Keep only: docs/, scripts/, benchmarks/, README.md, pyproject.toml
-*.md
+# Trial/research files in root (organized in trials/ directory)
+# Keep only: docs/, scripts/, benchmarks/, trials/, README.md, pyproject.toml
+/*.md
 !README.md
-!docs/*.md
-*.py
-!scripts/*.py
-!benchmarks/*.py
-*.swift
-*.sh
-*.pid
-*.txt
+/*.py
+/*.swift
+/*.sh
+/*.pid
+/*.txt
 cosyvoice_repo/
 CosyVoiceSwift/
 ParallelWaveGAN/
