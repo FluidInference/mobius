@@ -3,6 +3,10 @@ __pycache__/
 *.pyc
 .venv/
 *.egg-info/
+venv_*/
+
+# Dependencies
+uv.lock
 
 # Logs
 *.log
@@ -10,12 +14,39 @@ __pycache__/
 # Generated audio
 *.wav
 
+# Generated data
+mbmelgan_training_data/
+mbmelgan_quickstart/
+mbmelgan_pretrained/
+precision_test/
+rangedim_test/
+rangedim_quickstart_test/
+mbmelgan_quality_test/
+mbmelgan_standalone_test/
+pretrained_models/
+
 # Compiled CoreML models (regenerate from .mlpackage)
 *.mlmodelc/
-
-# Temporary test scripts
-check_*.py
-test_*.py
+*.mlpackage/
 
 # Build artifacts
 compiled/
+converted/
+decoder_layers/
+
+# Trial/research files (not part of organized structure)
+# Keep only: docs/, scripts/, benchmarks/, README.md, pyproject.toml
+*.md
+!README.md
+!docs/*.md
+*.py
+!scripts/*.py
+!benchmarks/*.py
+*.swift
+*.sh
+*.pid
+*.txt
+cosyvoice_repo/
+CosyVoiceSwift/
+ParallelWaveGAN/
+fargan_source/
