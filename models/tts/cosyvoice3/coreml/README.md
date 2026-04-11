@@ -43,7 +43,8 @@ coreml/
 ├── docs/                              # 📚 Documentation
 │   ├── MBMELGAN_FINETUNING_GUIDE.md  # Complete pipeline guide
 │   ├── JOHN_ROCKY_PATTERNS.md        # 10 CoreML conversion patterns
-│   └── COREML_MODELS_INSIGHTS.md     # Analysis of john-rocky's repo
+│   ├── COREML_MODELS_INSIGHTS.md     # Analysis of john-rocky's repo
+│   └── RESEARCH_PAPERS.md            # Bibliography & citations
 │
 ├── scripts/                           # 🏗️ Training pipeline
 │   ├── download_mbmelgan.py          # Download pre-trained checkpoint
@@ -134,6 +135,19 @@ Analysis of successful CoreML audio models:
 - **OpenVoice V2**: Voice conversion
 - **HTDemucs**: Audio source separation
 - **pyannote**: Speaker diarization
+
+### 📄 [RESEARCH_PAPERS.md](docs/RESEARCH_PAPERS.md)
+
+Complete bibliography and citations for all models referenced:
+- **CosyVoice3** - Target model (705k operations)
+- **Multi-band MelGAN** - Replacement vocoder (202 operations)
+- **Kokoro TTS / StyleTTS 2** - CoreML implementation patterns
+- **HTDemucs** - Audio quality reference (FP32 validation)
+- **pyannote.audio** - Speaker diarization reference
+- **VCTK Corpus** - Training data for MB-MelGAN
+- **FARGAN** - Investigated alternative vocoder
+
+Includes arXiv links, BibTeX citations, and key contributions from each paper.
 
 ### 🔬 [trials/](trials/) - Research Documentation
 
