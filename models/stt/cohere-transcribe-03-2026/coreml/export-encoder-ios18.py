@@ -2,6 +2,12 @@
 """Export Cohere Transcribe encoder (with projection) to CoreML.
 
 This exports the Conformer encoder + encoder_decoder_proj layer as a single model.
+
+The `--target-frames` flag controls the fixed input length baked into the exported
+.mlpackage. Cohere's reference configuration is 3500 frames (35 s at
+hop_length=160, sr=16000). Smaller buckets (e.g. 500 / 1000 / 2000) are used by
+the ANE-bucket plan — see docs/ENCODER_BUCKETS_PLAN.md — to avoid paying 35 s
+of encoder compute for short audio.
 """
 
 import argparse
@@ -13,6 +19,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 from transformers import AutoModelForSpeechSeq2Seq
+
+# Conformer subsampling stride. target_frames must be divisible by this or the
+# traced encoder will produce a fractional last subsampled block.
+CONFORMER_SUBSAMPLE = 4
+
+# Cohere reference input length (35 s at hop_length=160, sr=16000).
+DEFAULT_TARGET_FRAMES = 3500
 
 
 class EncoderWrapper(nn.Module):
@@ -47,11 +60,33 @@ class EncoderWrapper(nn.Module):
         return hidden_states
 
 
-def export_encoder(output_dir: Path, precision: str = "float16"):
-    """Export the Cohere encoder to CoreML."""
-    print("="*70)
+def export_encoder(
+    output_dir: Path,
+    precision: str = "float16",
+    target_frames: int = DEFAULT_TARGET_FRAMES,
+):
+    """Export the Cohere encoder to CoreML.
+
+    Args:
+        output_dir: directory to write the .mlpackage into.
+        precision: "float16" or "float32" compute precision for the converter.
+        target_frames: fixed input length (mel frames). Must be > 0 and
+            divisible by the Conformer subsampling stride.
+    """
+    if target_frames <= 0:
+        raise ValueError(f"target_frames must be positive, got {target_frames}")
+    if target_frames % CONFORMER_SUBSAMPLE != 0:
+        raise ValueError(
+            f"target_frames ({target_frames}) must be divisible by "
+            f"{CONFORMER_SUBSAMPLE} (Conformer subsampling stride)"
+        )
+
+    duration_s = target_frames * 160 / 16000
+
+    print("=" * 70)
     print("Cohere Transcribe Encoder Export")
-    print("="*70)
+    print("=" * 70)
+    print(f"Target frames: {target_frames} ({duration_s:.2f} s at 10 ms/frame)")
 
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -76,7 +111,7 @@ def export_encoder(output_dir: Path, precision: str = "float16"):
     print("\n[3/5] Creating example inputs...")
     batch_size = 1
     n_mels = 128
-    max_frames = 3500  # Official: 35 seconds at 10ms/frame (hop_length=160, sr=16000)
+    max_frames = target_frames
 
     example_input_features = torch.randn(batch_size, n_mels, max_frames)
     example_feature_length = torch.tensor([max_frames], dtype=torch.int32)
@@ -118,22 +153,40 @@ def export_encoder(output_dir: Path, precision: str = "float16"):
         compute_precision=compute_precision,
     )
 
-    # Save
-    output_path = output_dir / "cohere_encoder.mlpackage"
+    # Save — encode target_frames into the filename so bucket variants
+    # coexist in the same output dir without overwriting each other.
+    # The default 3500-frame export keeps the legacy "cohere_encoder.mlpackage"
+    # name for backwards compatibility with downstream quantization/compile
+    # scripts; smaller buckets get a `_fN` suffix.
+    if target_frames == DEFAULT_TARGET_FRAMES:
+        output_path = output_dir / "cohere_encoder.mlpackage"
+    else:
+        output_path = output_dir / f"cohere_encoder_f{target_frames}.mlpackage"
     mlmodel.save(str(output_path))
 
+    size_gb = sum(f.stat().st_size for f in output_path.rglob('*') if f.is_file()) / 1024**3
     print(f"   ✓ Saved to: {output_path}")
-    print(f"   Model size: {sum(f.stat().st_size for f in output_path.rglob('*') if f.is_file()) / 1024**3:.2f} GB")
+    print(f"   Model size: {size_gb:.2f} GB")
 
-    print("\n" + "="*70)
+    # The Conformer encoder runs 4× subsampling, so encoded frames =
+    # target_frames / 4 (integer because we validated divisibility above).
+    encoded_frames = target_frames // CONFORMER_SUBSAMPLE
+
+    print("\n" + "=" * 70)
     print("ENCODER EXPORT COMPLETE")
-    print("="*70)
+    print("=" * 70)
     print(f"\nOutput: {output_path}")
     print(f"\nModel inputs:")
-    print(f"  - input_features: (1, 128, 3500) float32 - mel spectrogram (35s max)")
+    print(
+        f"  - input_features: (1, 128, {target_frames}) float32 - "
+        f"mel spectrogram ({duration_s:.1f}s max)"
+    )
     print(f"  - feature_length: (1,) int32 - actual length before padding")
     print(f"\nModel output:")
-    print(f"  - hidden_states: (1, 376, 1024) float16/32 - encoder output after projection")
+    print(
+        f"  - hidden_states: (1, {encoded_frames}, 1024) float16/32 - "
+        f"encoder output after projection"
+    )
     print()
 
 
@@ -151,11 +204,23 @@ def main():
         default="float16",
         help="Model precision (default: float16)"
     )
+    parser.add_argument(
+        "--target-frames",
+        type=int,
+        default=DEFAULT_TARGET_FRAMES,
+        help=(
+            "Fixed mel-frame input length to bake into the exported model. "
+            f"Default {DEFAULT_TARGET_FRAMES} = Cohere reference (35 s). "
+            "Smaller values (e.g. 500/1000/2000) are used by the ANE-bucket "
+            "plan to avoid paying 35 s of encoder compute for short audio. "
+            f"Must be divisible by {CONFORMER_SUBSAMPLE}."
+        ),
+    )
 
     args = parser.parse_args()
 
     try:
-        export_encoder(args.output_dir, args.precision)
+        export_encoder(args.output_dir, args.precision, args.target_frames)
     except Exception as e:
         print(f"\n❌ Export failed: {e}", file=sys.stderr)
         import traceback
