@@ -2,228 +2,148 @@
 
 CoreML export of [CohereLabs/cohere-transcribe-03-2026](https://huggingface.co/CohereLabs/cohere-transcribe-03-2026) for on-device speech recognition on Apple Silicon.
 
-## ⚠️ IMPORTANT: .mlpackage Format Required
+## Status
 
-**The Cohere decoder CANNOT be .mlmodelc format** (unlike other FluidAudio models).
+The current shipping recommendation is the **cache-external decoder** paired with
+its companion encoder. See [docs/DECODER_ARCHITECTURE_FINAL.md](docs/DECODER_ARCHITECTURE_FINAL.md)
+for the full investigation and numbers.
 
-- **Reason:** Uses CoreML State API (macOS 15+/iOS 18+ only)
-- **Format:** Must be `.mlpackage` (ML Program format)
-- **First load:** ~20s for ANE compilation (then cached)
-- **Subsequent loads:** ~1s (uses macOS cached compilation)
+| Component | Variant | Status |
+|---|---|---|
+| Encoder | companion FP32 (7.0 GB) | ✅ works, ships |
+| Encoder | f16-download (3.6 GB) | ❌ wrong pairing — incompatible with cache-external decoder |
+| Encoder | q8-download (1.8 GB) | ❌ wrong pairing |
+| Decoder | cache-external FP16 (291 MB) | ✅ works: EN 10.6% / ES 4.9% / FR 16.8% / ZH 14.1% |
+| Decoder | cache-external INT8 (146 MB) | ✅ token-identical to FP16 on CPU; ⚠️ MPSGraph crash on GPU/ANE |
+| Decoder | stateful (HF-shipped, f16/q8) | ❌ over-generates past EOS (58–73% WER) |
+| Decoder | stateless | ❌ over-generates (older "3.14% WER" claim measured with broken preprocessor) |
+| Host preprocessing | `tools/cohere_features_v2.py` (v2 mel + CMVN) | ✅ required — old `hf-upload/example.py` mel is broken |
 
-See [MLMODELC_LIMITATION.md](MLMODELC_LIMITATION.md) for technical details.
+All WER/CER numbers are on a 12-sample FLEURS slice (3 per language) with
+the fixed host pipeline (v2 mel, masked cross-attention, CJK byte-fallback
+detokenization, repetition penalty 1.1, no-repeat 3-gram).
 
-## Status: ✅ Working with Stateful Decoder (.mlpackage)
+## Decoder architectures
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| **Encoder** | ✅ Working | FP16, 3500 frames (35 seconds) |
-| **Decoder (Stateful)** | ✅ Working | GPU-resident KV cache, ~37ms/token |
-| **Decoder (Stateless)** | ❌ Broken | Wrong outputs, 10× slower (archived) |
-| **Mel Preprocessing** | ✅ Working | Pure Python, no transformers dependency |
+Three architectures were explored:
 
-### Performance (M3 Max)
+1. **Stateful** (`decoder.make_state()`, `state=state` in `predict`) — KV cache
+   inside the model as `MLState`. Requires macOS 15+ / iOS 18+. Over-generates
+   past EOS on FLEURS regardless of quantization — do not ship.
+2. **Stateless** — re-encode full prefix each step, take `logits[-1]`.
+   No cache. Also over-generates on the fixed pipeline.
+3. **Cache-external** — host-threads 16 KV cache tensors (8 layers × K/V,
+   shape `[1, 8, 108, 128]`) as explicit function I/O. No `MLState`,
+   runs on macOS 14+. **Only variant that produces clean transcripts.**
 
-**Stateful Decoder:**
-- ✅ 23.76% WER on LibriSpeech test-clean
-- ✅ 64% perfect matches (WER < 5%)
-- ✅ ~37ms per token average
-- ✅ 0.2-0.3 RTFx (real-time capable)
-- ⚠️ Requires macOS 15+/iOS 18+ (State API)
+See [docs/DECODER_ARCHITECTURE_FINAL.md](docs/DECODER_ARCHITECTURE_FINAL.md)
+for op names, benchmark results, quantization recipe, and host integration
+notes.
 
-**Stateless Decoder (abandoned):**
-- ❌ Wrong outputs ("icon icon icon..." repetition)
-- ❌ ~155ms per token (4× slower)
-- ❌ 1.0-1.7 RTFx (slower than real-time)
-
-## Current Models
-
-**FP16 Models (f16/):**
-- `cohere_encoder.mlpackage` (3.6 GB) - ✅ Encoder with projection
-- `cohere_decoder_stateful.mlpackage` (291 MB) - ✅ Stateful decoder (State API)
-- `vocab.json` (331 KB) - 16,384 token vocabulary
-- `cohere_mel_spectrogram.py` - Pure Python preprocessor
-- `quickstart.py` - Minimal 50-line example
-- `example_inference.py` - Complete CLI with 14 languages
-
-**Total Package:** 3.9 GB (ready for HuggingFace)
-
-**Archived (broken approaches):**
-- `export-decoder-stateless.py` - ❌ Wrong outputs, 10× slower
-- `export-decoder-external-cache.py` - ❌ Blocked by CoreML Tools
-- `export-decoder-external-v2.py` - ❌ Same aliasing error
-
-## Quick Start
-
-### Export Models
-
-```bash
-# Export encoder (FP16)
-uv run python3 export-encoder.py --output-dir build --precision float16
-
-# Export stateless decoder (FP16)
-uv run python3 export-decoder-stateless.py --output-dir build --precision float16
-```
-
-### Test Models
-
-```bash
-# Test stateless decoder on LibriSpeech samples
-uv run python3 tests/test-stateless-coreml.py
-
-# Test on 10 LibriSpeech samples (legacy test)
-uv run python3 tests/test-librispeech.py
-```
-
-## Decoder Cache Fix
-
-### Problem: Sliding Window Bug
-
-The original cached decoder had **174% WER** due to a bug where keeping "last 108 positions" caused cache positions to shift at each step, breaking positional encoding.
-
-**Example failure**:
-- Ground truth: "concord returned to its place **amidst** the tents"
-- Cached decoder: "concord returned to its place **amidnace amidnace** of the tents"
-
-### Solution: Stateless Decoder
-
-The stateless decoder reprocesses all tokens at each step (O(n^2) complexity) instead of managing cache state. This is:
-- ✅ Fully CoreML traceable (no `.item()` calls)
-- ✅ Fixes 2/3 test samples perfectly
-- ✅ Simpler architecture (no cache management)
-- ⚠️ O(n^2) complexity (acceptable for < 200 tokens)
-
-**See `docs/DECODER_CACHE_FIX.md` for complete investigation.**
-
-## Critical Implementation Details
-
-### 10-Token Prompt Required
-
-The decoder requires a 10-token configuration prompt:
+## Cache-external decode loop
 
 ```python
-PROMPT_IDS = [13764, 7, 4, 16, 62, 62, 5, 9, 11, 13]
-# ▁ <|startofcontext|> <|startoftranscript|> <|emo:undefined|>
-# <|en|> <|en|> <|pnc|> <|noitn|> <|notimestamp|> <|nodiarize|>
-```
+k_caches = [np.zeros((1, 8, 108, 128), dtype=np.float32) for _ in range(8)]
+v_caches = [np.zeros((1, 8, 108, 128), dtype=np.float32) for _ in range(8)]
 
-### Stateless Decoder Interface
-
-**Inputs**:
-- `input_ids`: All tokens so far, shape (1, seq_len) - EnumeratedShapes [1,1] to [1,108]
-- `encoder_hidden_states`: Encoder output, shape (1, enc_len, 1024)
-- `cross_attention_mask`: Encoder attention mask, shape (1, 1, 1, enc_len)
-
-**Outputs**:
-- `logits`: Log probabilities for next token, shape (1, vocab_size=16384)
-
-**Usage**:
-```python
-# Initialize with prompt
-tokens = [13764, 7, 4, 16, 62, 62, 5, 9, 11, 13]
-
-# Generate tokens
-for step in range(10, 200):  # Up to 200 tokens
-    input_ids = np.array([tokens], dtype=np.int32)
-    output = decoder.predict({
-        "input_ids": input_ids,
-        "encoder_hidden_states": encoder_hidden,
-        "cross_attention_mask": cross_mask,
-    })
-    next_token = np.argmax(output["logits"][0])
-    tokens.append(next_token)
-    if next_token == EOS_TOKEN_ID:
+for step in range(MAX_TOKENS):
+    current = prompt_ids[step] if step < len(prompt_ids) else last
+    inp = {
+        "input_id": np.array([[current]], dtype=np.int32),
+        "position_id": np.array([[step]], dtype=np.int32),
+        "encoder_hidden_states": enc_out.astype(np.float32),
+        "cross_attention_mask": cross_mask.astype(np.float32),
+        "attention_mask": np.zeros((1, 1, 1, step + 1), dtype=np.float32),
+    }
+    for i in range(8):
+        inp[f"k_cache_{i}"] = k_caches[i]
+        inp[f"v_cache_{i}"] = v_caches[i]
+    out = decoder.predict(inp)
+    for i in range(8):
+        k_caches[i] = out[f"k_cache_{i}_out"]
+        v_caches[i] = out[f"v_cache_{i}_out"]
+    last = int(np.argmax(out["logits"][0]))
+    if step >= len(prompt_ids) - 1 and last == EOS:
         break
 ```
 
-## Files Organization
+Fully working reference: [tests/bench-fix-vs-broken.py](tests/bench-fix-vs-broken.py).
 
-### Working Solution
-- `export-decoder-stateless.py` - Stateless decoder export (O(n^2), fully traceable)
-- `export-encoder.py` - Encoder + projection layer export
-- `export-cross-kv-projector.py` - Cross-attention KV projector export
+## Language prompt (required)
 
-### Documentation
-- `docs/CACHE_INVESTIGATION_SUMMARY.md` - Complete investigation of 6 approaches
-- `docs/DECODER_CACHE_FIX.md` - Concise fix documentation
-- `docs/REVERSE_ENGINEERING.md` - Model architecture details
-- `docs/OFFICIAL_USAGE_ANALYSIS.md` - Official implementation analysis
+The decoder is seeded with a 10-token prompt that encodes task + language:
 
-### Tests
-- `tests/test-stateless-coreml.py` - Test stateless decoder
-- `tests/test-librispeech.py` - Legacy WER test (10 samples)
-- `tests/debug-*.py` - Debug scripts
-- `tests/test-*.py` - Various test scripts
+```python
+PROMPTS = {
+    "en_us":       [13764, 7, 4, 16,  62,  62, 5, 9, 11, 13],
+    "es_419":      [13764, 7, 4, 16, 169, 169, 5, 9, 11, 13],
+    "fr_fr":       [13764, 7, 4, 16,  69,  69, 5, 9, 11, 13],
+    "cmn_hans_cn": [13764, 7, 4, 16,  50,  50, 5, 9, 11, 13],
+}
+# ▁ <|startofcontext|> <|startoftranscript|> <|emo:undefined|>
+# <|lang|> <|lang|> <|pnc|> <|noitn|> <|notimestamp|> <|nodiarize|>
+```
 
-### Archive
-- `archive-failed-approaches/` - 7 failed decoder exports with explanations
-  - `export-decoder-cached.py` - Original sliding window bug
-  - `export-decoder-fixed.py` - Works in PyTorch but not CoreML (uses `.item()`)
-  - `export-decoder-masked.py` - Attention masking attempt (still has repetitions)
-  - `export-decoder-narrow.py` - torch.narrow approach (not traceable)
-  - `export-decoder-static.py` - StaticCache attempt (shape mismatches)
-  - `export-decoder-manual.py` - Investigation script
-  - `export-decoder-index-select.py` - torch.index_select attempt
-- `archive-failed-approaches/README.md` - Why each approach failed
+## Models (local layout)
 
-### Preprocessing
-- `cohere_mel_spectrogram.py` - Mel spectrogram computation (Python reference)
+```
+hf-upload/cohere-transcribe-cache-external-coreml/     ← canonical, ships
+    cohere_encoder.mlpackage                           (7.0 GB FP32, companion)
+    cohere_decoder_cache_external.mlpackage            (291 MB FP16)
+    tokenizer.model, example.py, README.md
 
-### Utilities
-- `benchmark-models.py` - Model performance benchmarking
-- `compare-models.py` - PyTorch vs CoreML comparison
-- `compile_models.py` - Compile .mlpackage to .mlmodelc
-- `measure-memory.py` - Memory usage measurement
+build-cache-external-q8/                               ← from tests/quantize-cache-external.py
+    cohere_decoder_cache_external_q8.mlpackage         (146 MB INT8)
 
-## Known Issues
+hf-upload/f16-download/, hf-upload/q8-download/        ← stateful export, deprecated
+    cohere_encoder.mlpackage                           (3.6 GB / 1.8 GB — WRONG for cache-external)
+    cohere_decoder_stateful.mlpackage                  (305 MB / 150 MB — broken, over-generates)
+```
 
-1. **Sample 2 degradation**: Longer audio (14.2s) still has issues with stateless decoder
-   - Hypothesis: Numerical precision (float16), encoder issues, or sequence length effects
-   - Affects longer sequences more than short ones
+## Fixed host preprocessor
 
-2. **O(n^2) complexity**: Stateless decoder reprocesses all tokens at each step
-   - Acceptable for < 200 tokens (typical transcription length)
-   - May be slower on very long sequences
+The mel extractor in `hf-upload/example.py` is broken (`n_fft=400`,
+no CMVN). Use `tools/cohere_features_v2.py` (`CohereMelSpectrogram`)
+instead — it matches the HF `CohereAsrFeatureExtractor` reference.
 
-3. **Quantization not tested**: Only FP16 models have been tested with stateless decoder
-   - Previous cached decoder: INT8/INT6 crashed or produced worse quality
+Fixed in commit `0da224a` (`fix(cohere): correct host-side preprocessing + CJK detokenization`).
 
-## Investigation Summary
+## Benchmarks and scripts
 
-Tested 6+ different approaches to fix the cache bug:
+| script | purpose |
+|---|---|
+| `tests/bench-fix-vs-broken.py` | reference cache-external FP16 benchmark |
+| `tests/bench-cache-external-hybrid.py` | cache-external f16 vs q8 |
+| `tests/quantize-cache-external.py` | quantize cache-external decoder to INT8 |
+| `tests/bench-hybrid-configs.py` | stateful f16/q8 × enc/dec combos (confirms stateful is broken) |
+| `tests/bench-stateless-fleurs.py` | stateless decoder FLEURS bench (confirms stateless is broken) |
+| `tests/bench-q8-variants.py` | re-quantization A/B on stateful (quantization tweaks don't fix stateful) |
 
-1. ❌ **Cached with sliding window** - Original bug (174% WER)
-2. ✅ **Fixed cache (PyTorch only)** - Perfect results but uses `.item()` (not CoreML traceable)
-3. ❌ **Attention masking** - Still has repetitions
-4. ❌ **torch.narrow** - Requires `.item()`
-5. ❌ **torch.index_select** - Requires `.item()`
-6. ❌ **StaticCache** - Shape mismatches
-7. ✅ **Stateless** - Works in CoreML, fixes 2/3 samples
+## Open tasks
 
-**Key finding**: CoreML tracing doesn't support dynamic slicing with `.item()` - it gets traced as a constant value.
-
-**See `docs/CACHE_INVESTIGATION_SUMMARY.md` for complete timeline.**
-
-## Next Steps
-
-1. **Investigate Sample 2 degradation**: Try float32 precision, debug encoder output
-2. **Benchmark O(n^2) performance**: Measure actual overhead on typical transcriptions
-3. **Test quantization**: INT8/INT6 quantization with stateless decoder
-4. **Hybrid approach**: Consider cache for short sequences, stateless for long
+1. Quantize the 7 GB FP32 companion encoder to INT8, benchmark the all-q8 pipeline.
+2. Fix the MPSGraph `MLIR pass manager failed` crash on the q8 cache-external decoder
+   for GPU/ANE compute units (CPU runs fine).
+3. Promote `cohere-transcribe-cache-external-coreml/` as the canonical HF layout;
+   retire/deprecate `f16-download/` and `q8-download/` (they ship the broken
+   stateful decoder).
+4. Update Swift host integration in FluidAudio to use the cache-external decode
+   loop (drops `MLState` dependency, allows macOS 14 / iOS 17).
 
 ## Requirements
 
-- macOS 14+ / iOS 17+
+- macOS 14+ / iOS 17+ (cache-external path; stateful path would need macOS 15+)
 - Python 3.10+
-- Dependencies: see `pyproject.toml`
-  - coremltools
-  - PyTorch
-  - transformers
-  - datasets (for testing)
-  - sentencepiece (for tokenization)
+- See `pyproject.toml` (coremltools, PyTorch, transformers, datasets, sentencepiece)
+
+## Remaining documentation
+
+- [docs/DECODER_ARCHITECTURE_FINAL.md](docs/DECODER_ARCHITECTURE_FINAL.md) — authoritative decoder comparison and q8 findings
+- [docs/REVERSE_ENGINEERING.md](docs/REVERSE_ENGINEERING.md) — Cohere Transcribe architecture details
+- [docs/RESEARCH_INSIGHTS.md](docs/RESEARCH_INSIGHTS.md) — general encoder-decoder ASR background
+- [MLMODELC_LIMITATION.md](MLMODELC_LIMITATION.md) — why the stateful decoder cannot be `.mlmodelc`
 
 ## License
 
-GPL-3.0 (matching upstream CoreML conversion)
-
-Base model: Apache-2.0 ([CohereLabs/cohere-transcribe-03-2026](https://huggingface.co/CohereLabs/cohere-transcribe-03-2026))
+GPL-3.0 (matching upstream CoreML conversion).
+Base model: Apache-2.0 ([CohereLabs/cohere-transcribe-03-2026](https://huggingface.co/CohereLabs/cohere-transcribe-03-2026)).
