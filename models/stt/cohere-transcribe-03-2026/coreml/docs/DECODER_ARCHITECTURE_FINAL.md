@@ -107,9 +107,21 @@ pass** with a different normalization / projection calibration; they are
 not drop-in replacements for the companion encoder.
 
 **Implication**: when we ship cache-external, we must also ship the
-companion encoder. The 7 GB FP32 encoder still needs to be quantized
-(separate follow-up); we have not yet tested `companion_encoder_q8 +
-decoder_q8` as a full pipeline.
+companion encoder. The INT8-quantized companion encoder (per-channel
+symmetric weight-only, same recipe as the decoder — see
+[../tests/quantize-encoder-cache-external.py](../tests/quantize-encoder-cache-external.py))
+preserves quality losslessly:
+
+| encoder | decoder | EN | ES | FR | ZH | notes |
+|---|---|---|---|---|---|---|
+| companion FP32 (7.0 GB) | f16 (291 MB) | 10.6% | 4.9% | 16.8% | 14.1% | reference |
+| companion INT8 (1.8 GB) | f16 (291 MB) | 10.6% | 4.9% | 16.8% | 14.1% | 12/12 transcripts bit-identical to ref |
+| companion INT8 (1.8 GB) | q8 (146 MB) | 10.6% | 4.9% | 16.8% | 14.1% | 12/12 bit-identical; CPU only (decoder MPSGraph crash) |
+
+Measured in
+[../tests/bench-encoder-q8-hybrid.py](../tests/bench-encoder-q8-hybrid.py).
+The all-q8 pipeline is **~1.94 GB total** (down from 7.3 GB FP32-enc/FP16-dec)
+with zero measurable quality loss on the 12-sample FLEURS slice.
 
 ## Known issue: ANE / GPU predict crash on q8 decoder
 
@@ -179,26 +191,17 @@ macOS 14 / iOS 17 (no State API).
 
 ## Outstanding work for PR #41
 
-1. Quantize the 7 GB FP32 companion encoder to INT8, benchmark the
-   all-q8 pipeline (companion_q8 + decoder_q8).
-2. Investigate and fix the MPSGraph crash on the q8 decoder for GPU/ANE.
+1. ~~Quantize the 7 GB FP32 companion encoder to INT8, benchmark the
+   all-q8 pipeline (companion_q8 + decoder_q8).~~ **Done** — see the
+   pairing table above. All-q8 pipeline is 1.94 GB with lossless quality.
+2. Investigate and fix the MPSGraph crash on the q8 decoder for GPU/ANE
+   (blocks full ANE deployment of the all-q8 pipeline).
 3. Update `hf-upload/` canonical layout: promote
-   `cohere-transcribe-cache-external-coreml/` to primary, retire the
-   stateful variants in `f16-download/` and `q8-download/` (or clearly
-   mark them deprecated).
+   `cohere-transcribe-cache-external-coreml/` to primary, add the
+   `cohere_encoder_q8.mlpackage` artifact, retire the stateful variants
+   in `f16-download/` and `q8-download/` (or clearly mark them deprecated).
 4. Update Swift host integration in `FluidAudio` to use the cache-external
    decode loop.
-
-## Relevant commits on `docs/cohere-transcribe-coreml-decoder-fix`
-
-```
-2b2a624  test(cohere): cache-external decoder survives q8 quantization losslessly
-53448d7  test(cohere): bench hybrid q8/f16 and stateless decoders on FLEURS
-5281011  test(cohere): try re-quantization fixes for q8 decoder
-d0bbbff  test(cohere): diagnose q8 over-generation + demonstrate +4 EOS bias fix
-bf97ae0  test(cohere): add FLEURS benchmark for HF-shipped q8 stateful decoder
-0da224a  fix(cohere): correct host-side preprocessing + CJK detokenization
-```
 
 ## Relevant scripts
 
@@ -207,6 +210,9 @@ bf97ae0  test(cohere): add FLEURS benchmark for HF-shipped q8 stateful decoder
 - `../tests/bench-stateless-fleurs.py` — stateless decoder FLEURS bench
 - `../tests/bench-q8-variants.py` — re-quantization A/B on stateful
 - `../tests/bench-q8-eosboost.py` — +4 EOS bias workaround diagnostic
-- `../tests/bench-cache-external-hybrid.py` — cache-external f16 vs q8
-- `../tests/quantize-cache-external.py` — quantize cache-external to q8
+- `../tests/bench-cache-external-hybrid.py` — cache-external f16 vs q8 (decoder-only)
+- `../tests/bench-encoder-q8-hybrid.py` — **encoder q8 × decoder {f16, q8}** (all-q8 pipeline)
+- `../tests/quantize-cache-external.py` — quantize cache-external decoder to q8
+- `../tests/quantize-encoder-cache-external.py` — **quantize companion encoder to q8**
+- `../tests/inspect-encoder-ops.py` — weights / shared-const audit of the encoder
 - `../tests/requantize-decoder.py` — attempted per-layer q8 fixes for stateful

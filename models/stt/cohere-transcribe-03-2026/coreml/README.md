@@ -10,14 +10,19 @@ for the full investigation and numbers.
 
 | Component | Variant | Status |
 |---|---|---|
-| Encoder | companion FP32 (7.0 GB) | ✅ works, ships |
+| Encoder | companion FP32 (7.0 GB) | ✅ reference — EN 10.6% / ES 4.9% / FR 16.8% / ZH 14.1% |
+| Encoder | companion **INT8 (1.8 GB)** | ✅ bit-identical to FP32 on 12/12 FLEURS samples |
 | Encoder | f16-download (3.6 GB) | ❌ wrong pairing — incompatible with cache-external decoder |
 | Encoder | q8-download (1.8 GB) | ❌ wrong pairing |
-| Decoder | cache-external FP16 (291 MB) | ✅ works: EN 10.6% / ES 4.9% / FR 16.8% / ZH 14.1% |
-| Decoder | cache-external INT8 (146 MB) | ✅ token-identical to FP16 on CPU; ⚠️ MPSGraph crash on GPU/ANE |
+| Decoder | cache-external FP16 (291 MB) | ✅ reference |
+| Decoder | cache-external **INT8 (146 MB)** | ✅ bit-identical to FP16; ⚠️ MPSGraph crash on GPU/ANE (CPU works) |
 | Decoder | stateful (HF-shipped, f16/q8) | ❌ over-generates past EOS (58–73% WER) |
 | Decoder | stateless | ❌ over-generates (older "3.14% WER" claim measured with broken preprocessor) |
 | Host preprocessing | `tools/cohere_features_v2.py` (v2 mel + CMVN) | ✅ required — old `hf-upload/example.py` mel is broken |
+
+**All-q8 pipeline** (`encoder_q8 + decoder_q8`) is **1.94 GB total**, down from
+7.3 GB at FP32-enc/FP16-dec, with zero measurable quality loss. Currently
+CPU-only until the decoder MPSGraph crash on GPU/ANE is fixed.
 
 All WER/CER numbers are on a 12-sample FLEURS slice (3 per language) with
 the fixed host pipeline (v2 mel, masked cross-attention, CJK byte-fallback
@@ -92,8 +97,11 @@ hf-upload/cohere-transcribe-cache-external-coreml/     ← canonical, ships
     cohere_decoder_cache_external.mlpackage            (291 MB FP16)
     tokenizer.model, example.py, README.md
 
+build-cache-external-enc-q8/                           ← from tests/quantize-encoder-cache-external.py
+    cohere_encoder_q8.mlpackage                        (1.8 GB INT8, lossless)
+
 build-cache-external-q8/                               ← from tests/quantize-cache-external.py
-    cohere_decoder_cache_external_q8.mlpackage         (146 MB INT8)
+    cohere_decoder_cache_external_q8.mlpackage         (146 MB INT8, lossless)
 
 hf-upload/f16-download/, hf-upload/q8-download/        ← stateful export, deprecated
     cohere_encoder.mlpackage                           (3.6 GB / 1.8 GB — WRONG for cache-external)
@@ -113,18 +121,24 @@ Fixed in commit `0da224a` (`fix(cohere): correct host-side preprocessing + CJK d
 | script | purpose |
 |---|---|
 | `tests/bench-fix-vs-broken.py` | reference cache-external FP16 benchmark |
-| `tests/bench-cache-external-hybrid.py` | cache-external f16 vs q8 |
+| `tests/bench-cache-external-hybrid.py` | cache-external decoder f16 vs q8 (shared FP32 encoder) |
+| `tests/bench-encoder-q8-hybrid.py` | **encoder q8 × decoder {f16, q8} — all-q8 pipeline** |
 | `tests/quantize-cache-external.py` | quantize cache-external decoder to INT8 |
+| `tests/quantize-encoder-cache-external.py` | **quantize companion encoder to INT8** |
+| `tests/inspect-encoder-ops.py` | weights / shared-const audit of the encoder |
 | `tests/bench-hybrid-configs.py` | stateful f16/q8 × enc/dec combos (confirms stateful is broken) |
 | `tests/bench-stateless-fleurs.py` | stateless decoder FLEURS bench (confirms stateless is broken) |
 | `tests/bench-q8-variants.py` | re-quantization A/B on stateful (quantization tweaks don't fix stateful) |
 
 ## Open tasks
 
-1. Quantize the 7 GB FP32 companion encoder to INT8, benchmark the all-q8 pipeline.
+1. ~~Quantize the 7 GB FP32 companion encoder to INT8, benchmark the all-q8 pipeline.~~
+   **Done**: all-q8 is 1.94 GB, bit-identical to FP32-enc/FP16-dec on FLEURS.
 2. Fix the MPSGraph `MLIR pass manager failed` crash on the q8 cache-external decoder
-   for GPU/ANE compute units (CPU runs fine).
-3. Promote `cohere-transcribe-cache-external-coreml/` as the canonical HF layout;
+   for GPU/ANE compute units (CPU runs fine). Blocks ANE deployment of the all-q8
+   pipeline.
+3. Promote `cohere-transcribe-cache-external-coreml/` as the canonical HF layout,
+   add the `cohere_encoder_q8.mlpackage` artifact alongside the FP32 one;
    retire/deprecate `f16-download/` and `q8-download/` (they ship the broken
    stateful decoder).
 4. Update Swift host integration in FluidAudio to use the cache-external decode

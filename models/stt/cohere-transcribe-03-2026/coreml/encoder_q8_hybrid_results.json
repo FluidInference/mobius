@@ -1,0 +1,320 @@
+{
+  "fp32_f16": {
+    "en_us": [
+      {
+        "id": 0,
+        "ref": "however due to the slow communication channels styles in the west could lag behind by 25 to 30 year",
+        "hyp": "However, due to the slow communication channels, styles in the West could lag behind by twenty-five to thirty years.",
+        "wer": 0.21052631578947367,
+        "n_tok": 29,
+        "dt_s": 6.142784595489502
+      },
+      {
+        "id": 1,
+        "ref": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "hyp": "All nouns alongside the word \"sea for you\" always begin with a capital letter, even in the middle of a sentence.",
+        "wer": 0.047619047619047616,
+        "n_tok": 29,
+        "dt_s": 5.395922899246216
+      },
+      {
+        "id": 2,
+        "ref": "to the north and within easy reach is the romantic and fascinating town of sintra and which was made famous to foreigners after a glowing account of its splendours recorded by lord byron",
+        "hyp": "To the north, and within easy reach is the romantic and fascinating town of Sintra, which was made famous to foreigners after a glowing account of its splendors recorded by Lord Byron.",
+        "wer": 0.06060606060606061,
+        "n_tok": 46,
+        "dt_s": 13.130405187606812
+      }
+    ],
+    "es_419": [
+      {
+        "id": 0,
+        "ref": "se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo de clima extremo en el área que visitan dado que ello puede afectar sus planes de viaje",
+        "hyp": "Se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo del clima extremo en el área que visitan, dado que ello pueda afectar sus planes de viaje.",
+        "wer": 0.06896551724137931,
+        "n_tok": 47,
+        "dt_s": 9.859178066253662
+      },
+      {
+        "id": 1,
+        "ref": "el uso adecuado de los blogs «puede empoderar a los alumnos para que sean más analíticos y críticos a través de la respuesta activa a los contenidos de internet pueden definir sus posturas en el contexto de los escritos de otros además de establecer sus perspectivas sobre temas específicos» oravec 2002",
+        "hyp": "El uso adecuado de los blogs puede empoderar a los alumnos para que sean más analíticos y críticos a través de la respuesta activa a los contenidos de Internet. Pueden definir sus posturas en el contexto de los escritos de otros, además de establecer sus perspectivas sobre temas específicos (hora Beck, 2002).",
+        "wer": 0.0784313725490196,
+        "n_tok": 91,
+        "dt_s": 17.15192699432373
+      },
+      {
+        "id": 2,
+        "ref": "fue tanta la cantidad de gente que se concentró que no todos pudieron acceder al funeral en la plaza de san pedro",
+        "hyp": "Fue tanta la cantidad de gente que se concentró, que no todos pudieron acceder al funeral en la plaza de San Pedro.",
+        "wer": 0.0,
+        "n_tok": 35,
+        "dt_s": 13.094377994537354
+      }
+    ],
+    "fr_fr": [
+      {
+        "id": 0,
+        "ref": "l'accident a eu lieu en terrain montagneux et il semblerait que cela ait été causé par un incendie malveillant",
+        "hyp": "L’accident a eu lieu en terrain montagneux, et il semblerait que cela ait été causé par un incendie malveillant.",
+        "wer": 0.1,
+        "n_tok": 38,
+        "dt_s": 10.865707874298096
+      },
+      {
+        "id": 1,
+        "ref": "nous sommes d'accord avec la déclaration de l'usoc comité olympique des états-unis selon laquelle les intérêts de nos athlètes et de nos clubs ainsi que de leur sport pourraient être mieux servis. cela peut être fait en allant de l'avant et en procédant plutôt à des changements significatifs au sein de notre organisation qu'à la révocation d'accréditation",
+        "hyp": "Nous sommes d'accord avec la déclaration de l'USOC, Comité olympique des États-Unis, selon laquelle les intérêts de nos athlètes et de nos clubs, ainsi que de leurs sports, pourraient être mieux servis. Cela peut être fait en allant de l’avant et en procédant plutôt à des changements significatifs au sein de notre organ",
+        "wer": 0.1746031746031746,
+        "n_tok": 99,
+        "dt_s": 24.677202939987183
+      },
+      {
+        "id": 2,
+        "ref": "il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités. »",
+        "hyp": "Il a ajouté qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur stade de développement, leurs responsabilités et leurs capacités.",
+        "wer": 0.23076923076923078,
+        "n_tok": 45,
+        "dt_s": 10.80771017074585
+      }
+    ],
+    "cmn_hans_cn": [
+      {
+        "id": 0,
+        "ref": "这 并 不 是 告 别 这 是 一 个 篇 章 的 结 束 也 是 新 篇 章 的 开 始",
+        "hyp": "这并不是告别:这是一个篇章的结束,也是新篆竿的开始。",
+        "wer": 0.13043478260869565,
+        "n_tok": 32,
+        "dt_s": 10.095890998840332
+      },
+      {
+        "id": 1,
+        "ref": "钙 钾 等 元 素 属 于 金 属 银 和 金 等 元 素 当 然 也 是 金 属",
+        "hyp": "盖甲等元素属于金属,银河金等元处当然也是金属。",
+        "wer": 0.23809523809523808,
+        "n_tok": 28,
+        "dt_s": 7.551494121551514
+      },
+      {
+        "id": 2,
+        "ref": "桥 下 垂 直 净 空 15 米 该 项 目 于 2011 年 8 月 完 工 但 直 到 2017 年 3 月 才 开 始 通 车",
+        "hyp": "桥下垂直镜空 15 米,该项目于 2011 年 8 月完工,但直到 2017 年 3 月才开始通车。",
+        "wer": 0.05405405405405406,
+        "n_tok": 47,
+        "dt_s": 9.734752893447876
+      }
+    ]
+  },
+  "q8_f16": {
+    "en_us": [
+      {
+        "id": 0,
+        "ref": "however due to the slow communication channels styles in the west could lag behind by 25 to 30 year",
+        "hyp": "However, due to the slow communication channels, styles in the West could lag behind by twenty-five to thirty years.",
+        "wer": 0.21052631578947367,
+        "n_tok": 29,
+        "dt_s": 7.385937929153442
+      },
+      {
+        "id": 1,
+        "ref": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "hyp": "All nouns alongside the word \"sea for you\" always begin with a capital letter, even in the middle of a sentence.",
+        "wer": 0.047619047619047616,
+        "n_tok": 29,
+        "dt_s": 9.870605945587158
+      },
+      {
+        "id": 2,
+        "ref": "to the north and within easy reach is the romantic and fascinating town of sintra and which was made famous to foreigners after a glowing account of its splendours recorded by lord byron",
+        "hyp": "To the north, and within easy reach is the romantic and fascinating town of Sintra, which was made famous to foreigners after a glowing account of its splendors recorded by Lord Byron.",
+        "wer": 0.06060606060606061,
+        "n_tok": 46,
+        "dt_s": 8.886965036392212
+      }
+    ],
+    "es_419": [
+      {
+        "id": 0,
+        "ref": "se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo de clima extremo en el área que visitan dado que ello puede afectar sus planes de viaje",
+        "hyp": "Se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo del clima extremo en el área que visitan, dado que ello pueda afectar sus planes de viaje.",
+        "wer": 0.06896551724137931,
+        "n_tok": 47,
+        "dt_s": 9.352208137512207
+      },
+      {
+        "id": 1,
+        "ref": "el uso adecuado de los blogs «puede empoderar a los alumnos para que sean más analíticos y críticos a través de la respuesta activa a los contenidos de internet pueden definir sus posturas en el contexto de los escritos de otros además de establecer sus perspectivas sobre temas específicos» oravec 2002",
+        "hyp": "El uso adecuado de los blogs puede empoderar a los alumnos para que sean más analíticos y críticos a través de la respuesta activa a los contenidos de Internet. Pueden definir sus posturas en el contexto de los escritos de otros, además de establecer sus perspectivas sobre temas específicos (hora Beck, 2002).",
+        "wer": 0.0784313725490196,
+        "n_tok": 91,
+        "dt_s": 20.20689082145691
+      },
+      {
+        "id": 2,
+        "ref": "fue tanta la cantidad de gente que se concentró que no todos pudieron acceder al funeral en la plaza de san pedro",
+        "hyp": "Fue tanta la cantidad de gente que se concentró, que no todos pudieron acceder al funeral en la plaza de San Pedro.",
+        "wer": 0.0,
+        "n_tok": 35,
+        "dt_s": 14.688163757324219
+      }
+    ],
+    "fr_fr": [
+      {
+        "id": 0,
+        "ref": "l'accident a eu lieu en terrain montagneux et il semblerait que cela ait été causé par un incendie malveillant",
+        "hyp": "L’accident a eu lieu en terrain montagneux, et il semblerait que cela ait été causé par un incendie malveillant.",
+        "wer": 0.1,
+        "n_tok": 38,
+        "dt_s": 14.294867277145386
+      },
+      {
+        "id": 1,
+        "ref": "nous sommes d'accord avec la déclaration de l'usoc comité olympique des états-unis selon laquelle les intérêts de nos athlètes et de nos clubs ainsi que de leur sport pourraient être mieux servis. cela peut être fait en allant de l'avant et en procédant plutôt à des changements significatifs au sein de notre organisation qu'à la révocation d'accréditation",
+        "hyp": "Nous sommes d'accord avec la déclaration de l'USOC, Comité olympique des États-Unis, selon laquelle les intérêts de nos athlètes et de nos clubs, ainsi que de leurs sports, pourraient être mieux servis. Cela peut être fait en allant de l’avant et en procédant plutôt à des changements significatifs au sein de notre organ",
+        "wer": 0.1746031746031746,
+        "n_tok": 99,
+        "dt_s": 28.140872955322266
+      },
+      {
+        "id": 2,
+        "ref": "il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités. »",
+        "hyp": "Il a ajouté qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur stade de développement, leurs responsabilités et leurs capacités.",
+        "wer": 0.23076923076923078,
+        "n_tok": 45,
+        "dt_s": 13.624595880508423
+      }
+    ],
+    "cmn_hans_cn": [
+      {
+        "id": 0,
+        "ref": "这 并 不 是 告 别 这 是 一 个 篇 章 的 结 束 也 是 新 篇 章 的 开 始",
+        "hyp": "这并不是告别:这是一个篇章的结束,也是新篆竿的开始。",
+        "wer": 0.13043478260869565,
+        "n_tok": 32,
+        "dt_s": 8.882901906967163
+      },
+      {
+        "id": 1,
+        "ref": "钙 钾 等 元 素 属 于 金 属 银 和 金 等 元 素 当 然 也 是 金 属",
+        "hyp": "盖甲等元素属于金属,银河金等元处当然也是金属。",
+        "wer": 0.23809523809523808,
+        "n_tok": 28,
+        "dt_s": 8.958232641220093
+      },
+      {
+        "id": 2,
+        "ref": "桥 下 垂 直 净 空 15 米 该 项 目 于 2011 年 8 月 完 工 但 直 到 2017 年 3 月 才 开 始 通 车",
+        "hyp": "桥下垂直镜空 15 米,该项目于 2011 年 8 月完工,但直到 2017 年 3 月才开始通车。",
+        "wer": 0.05405405405405406,
+        "n_tok": 47,
+        "dt_s": 12.272304773330688
+      }
+    ]
+  },
+  "q8_q8": {
+    "en_us": [
+      {
+        "id": 0,
+        "ref": "however due to the slow communication channels styles in the west could lag behind by 25 to 30 year",
+        "hyp": "However, due to the slow communication channels, styles in the West could lag behind by twenty-five to thirty years.",
+        "wer": 0.21052631578947367,
+        "n_tok": 29,
+        "dt_s": 7.0345892906188965
+      },
+      {
+        "id": 1,
+        "ref": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+        "hyp": "All nouns alongside the word \"sea for you\" always begin with a capital letter, even in the middle of a sentence.",
+        "wer": 0.047619047619047616,
+        "n_tok": 29,
+        "dt_s": 6.709161996841431
+      },
+      {
+        "id": 2,
+        "ref": "to the north and within easy reach is the romantic and fascinating town of sintra and which was made famous to foreigners after a glowing account of its splendours recorded by lord byron",
+        "hyp": "To the north, and within easy reach is the romantic and fascinating town of Sintra, which was made famous to foreigners after a glowing account of its splendors recorded by Lord Byron.",
+        "wer": 0.06060606060606061,
+        "n_tok": 46,
+        "dt_s": 7.779062032699585
+      }
+    ],
+    "es_419": [
+      {
+        "id": 0,
+        "ref": "se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo de clima extremo en el área que visitan dado que ello puede afectar sus planes de viaje",
+        "hyp": "Se recomienda enfáticamente a los viajeros que se informen sobre cualquier riesgo del clima extremo en el área que visitan, dado que ello pueda afectar sus planes de viaje.",
+        "wer": 0.06896551724137931,
+        "n_tok": 47,
+        "dt_s": 6.644139051437378
+      },
+      {
+        "id": 1,
+        "ref": "el uso adecuado de los blogs «puede empoderar a los alumnos para que sean más analíticos y críticos a través de la respuesta activa a los contenidos de internet pueden definir sus posturas en el contexto de los escritos de otros además de establecer sus perspectivas sobre temas específicos» oravec 2002",
+        "hyp": "El uso adecuado de los blogs puede empoderar a los alumnos para que sean más analíticos y críticos a través de la respuesta activa a los contenidos de Internet. Pueden definir sus posturas en el contexto de los escritos de otros, además de establecer sus perspectivas sobre temas específicos (hora Beck, 2002).",
+        "wer": 0.0784313725490196,
+        "n_tok": 91,
+        "dt_s": 10.660440683364868
+      },
+      {
+        "id": 2,
+        "ref": "fue tanta la cantidad de gente que se concentró que no todos pudieron acceder al funeral en la plaza de san pedro",
+        "hyp": "Fue tanta la cantidad de gente que se concentró, que no todos pudieron acceder al funeral en la plaza de San Pedro.",
+        "wer": 0.0,
+        "n_tok": 35,
+        "dt_s": 4.639492988586426
+      }
+    ],
+    "fr_fr": [
+      {
+        "id": 0,
+        "ref": "l'accident a eu lieu en terrain montagneux et il semblerait que cela ait été causé par un incendie malveillant",
+        "hyp": "L’accident a eu lieu en terrain montagneux, et il semblerait que cela ait été causé par un incendie malveillant.",
+        "wer": 0.1,
+        "n_tok": 38,
+        "dt_s": 5.0958311557769775
+      },
+      {
+        "id": 1,
+        "ref": "nous sommes d'accord avec la déclaration de l'usoc comité olympique des états-unis selon laquelle les intérêts de nos athlètes et de nos clubs ainsi que de leur sport pourraient être mieux servis. cela peut être fait en allant de l'avant et en procédant plutôt à des changements significatifs au sein de notre organisation qu'à la révocation d'accréditation",
+        "hyp": "Nous sommes d'accord avec la déclaration de l'USOC, Comité olympique des États-Unis, selon laquelle les intérêts de nos athlètes et de nos clubs, ainsi que de leurs sports, pourraient être mieux servis. Cela peut être fait en allant de l’avant et en procédant plutôt à des changements significatifs au sein de notre organ",
+        "wer": 0.1746031746031746,
+        "n_tok": 99,
+        "dt_s": 10.073046922683716
+      },
+      {
+        "id": 2,
+        "ref": "il a ajouté qu’« on ne devrait cependant pas leur demander d’assumer des obligations qui dépassent leur stade de développement leur responsabilité et leurs capacités. »",
+        "hyp": "Il a ajouté qu'on ne devrait cependant pas leur demander d'assumer des obligations qui dépassent leur stade de développement, leurs responsabilités et leurs capacités.",
+        "wer": 0.23076923076923078,
+        "n_tok": 45,
+        "dt_s": 5.455988883972168
+      }
+    ],
+    "cmn_hans_cn": [
+      {
+        "id": 0,
+        "ref": "这 并 不 是 告 别 这 是 一 个 篇 章 的 结 束 也 是 新 篇 章 的 开 始",
+        "hyp": "这并不是告别:这是一个篇章的结束,也是新篆竿的开始。",
+        "wer": 0.13043478260869565,
+        "n_tok": 32,
+        "dt_s": 4.3949291706085205
+      },
+      {
+        "id": 1,
+        "ref": "钙 钾 等 元 素 属 于 金 属 银 和 金 等 元 素 当 然 也 是 金 属",
+        "hyp": "盖甲等元素属于金属,银河金等元处当然也是金属。",
+        "wer": 0.23809523809523808,
+        "n_tok": 28,
+        "dt_s": 3.8752572536468506
+      },
+      {
+        "id": 2,
+        "ref": "桥 下 垂 直 净 空 15 米 该 项 目 于 2011 年 8 月 完 工 但 直 到 2017 年 3 月 才 开 始 通 车",
+        "hyp": "桥下垂直镜空 15 米,该项目于 2011 年 8 月完工,但直到 2017 年 3 月才开始通车。",
+        "wer": 0.05405405405405406,
+        "n_tok": 47,
+        "dt_s": 6.618413925170898
+      }
+    ]
+  }
+}
