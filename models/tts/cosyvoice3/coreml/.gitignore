@@ -5,7 +5,7 @@ __pycache__/
 *.egg-info/
 venv_*/
 
-# Dependencies
+# Dependencies (lockfile regenerated from pyproject.toml)
 uv.lock
 
 # Logs
@@ -14,36 +14,42 @@ uv.lock
 # Generated audio
 *.wav
 
-# Generated data
-mbmelgan_training_data/
-mbmelgan_quickstart/
-mbmelgan_pretrained/
-precision_test/
-rangedim_test/
-rangedim_quickstart_test/
-mbmelgan_quality_test/
-mbmelgan_standalone_test/
-pretrained_models/
-
-# Compiled CoreML models (regenerate from .mlpackage)
+# Compiled / packaged CoreML artifacts (regenerate from conversion scripts)
 *.mlmodelc/
 *.mlpackage/
 
-# Build artifacts
+# Conversion output tree (large; contains mlpackages, safetensors, fixtures, refs)
+build/
+
+# Downloaded upstream CosyVoice3 checkpoints (multi-GB; fetched from HF / ModelScope)
+cosyvoice3_dl/
+cosyvoice_repo/
+cosyvoice_dl/
+CosyVoiceSwift/
+ParallelWaveGAN/
+fargan_source/
+
+# Legacy MB-MelGAN sandboxes (removed from repo; ignore any local residue)
+mbmelgan_training_data/
+mbmelgan_quickstart/
+mbmelgan_pretrained/
+mbmelgan_quality_test/
+mbmelgan_standalone_test/
+pretrained_models/
+precision_test/
+rangedim_test/
+rangedim_quickstart_test/
 compiled/
 converted/
 decoder_layers/
 
-# Trial/research files in root (organized in trials/ directory)
-# Keep only: docs/, scripts/, benchmarks/, trials/, README.md, pyproject.toml
-/*.md
-!README.md
-/*.py
-/*.swift
-/*.sh
-/*.pid
-/*.txt
-cosyvoice_repo/
-CosyVoiceSwift/
-ParallelWaveGAN/
-fargan_source/
+# Swift app scratch (imported via symlink from FluidAudio during development)
+swift/
+
+# Stray tool output files (e.g. `sample <pid> > -`)
+/-
+
+# Upstream clones that the verify/ scripts pull in-place
+verify/CosyVoice/
+verify/cosyvoice_dl/
+verify/out/
