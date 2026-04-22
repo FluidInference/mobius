@@ -1,0 +1,75 @@
+{
+  "overall_wer": 0.11952191235059761,
+  "samples": [
+    {
+      "id": 0,
+      "duration": 3.505,
+      "reference": "concord returned to its place amidst the tents",
+      "hypothesis": "concorde returned to its place amidst the tanks.",
+      "wer": 0.25
+    },
+    {
+      "id": 1,
+      "duration": 14.225,
+      "reference": "the english forwarded to the french baskets of flowers of which they had made a plentiful provision to greet the arrival of the young princess the french in return invited the english to a supper which was to be given the next day",
+      "hypothesis": "the english forwarded to the french baskets of flowers of which they had made a plentiful provision to greet the arrival of the young princess. the french, in return, invited the english to a supper which was to be given the next day.",
+      "wer": 0.09302325581395349
+    },
+    {
+      "id": 2,
+      "duration": 5.025,
+      "reference": "congratulations were poured in upon the princess everywhere during her journey",
+      "hypothesis": "congratulations were poured in upon the princess everywhere during her journey.",
+      "wer": 0.09090909090909091
+    },
+    {
+      "id": 3,
+      "duration": 23.315,
+      "reference": "from the respect paid her on all sides she seemed like a queen and from the adoration with which she was treated by two or three she appeared an object of worship the queen mother gave the french the most affectionate reception france was her native country and she had suffered too much unhappiness in england for england to have made her forget france",
+      "hypothesis": "from the respect paid her on all sides, she seemed like a queen, and from the adoration with which she was treated by two or three, she appeared an object of worship. the queen-mother gave the french the most affectionate reception. france was her native country, and she had suffered too much unhappiness in england for england to have made her forget france.",
+      "wer": 0.140625
+    },
+    {
+      "id": 4,
+      "duration": 11.065,
+      "reference": "she taught her daughter then by her own affection for it that love for a country where they had both been hospitably received and where a brilliant future opened before them",
+      "hypothesis": "she taught her daughter, then, by her own affection for it, that love for a country where they had both been hospitably received, and where a brilliant future opened for them.",
+      "wer": 0.1935483870967742
+    },
+    {
+      "id": 5,
+      "duration": 13.16,
+      "reference": "the count had thrown himself back on his seat leaning his shoulders against the partition of the tent and remained thus his face buried in his hands with heaving chest and restless limbs",
+      "hypothesis": "the count had thrown himself back on his seat leaning his shoulders against the partition of the tent and remained thus his face buried in his hands with heaving chest and restless limbs",
+      "wer": 0.0
+    },
+    {
+      "id": 6,
+      "duration": 5.85,
+      "reference": "this has indeed been a harassing day continued the young man his eyes fixed upon his friend",
+      "hypothesis": "this has indeed been a harassing day continued the young man his eyes fixed upon his friend",
+      "wer": 0.0
+    },
+    {
+      "id": 7,
+      "duration": 3.315,
+      "reference": "you will be frank with me i always am",
+      "hypothesis": "you will be frank with me. i always am.",
+      "wer": 0.2222222222222222
+    },
+    {
+      "id": 8,
+      "duration": 4.785,
+      "reference": "can you imagine why buckingham has been so violent i suspect",
+      "hypothesis": "can you imagine why buckingham has been so violent? i suspect.",
+      "wer": 0.18181818181818182
+    },
+    {
+      "id": 9,
+      "duration": 7.28,
+      "reference": "it is you who are mistaken raoul i have read his distress in his eyes in his every gesture and action the whole day",
+      "hypothesis": "it is you who are mistaken, raoul. i have read his distress in his eyes, in his every gesture and action the whole day.",
+      "wer": 0.16666666666666666
+    }
+  ]
+}

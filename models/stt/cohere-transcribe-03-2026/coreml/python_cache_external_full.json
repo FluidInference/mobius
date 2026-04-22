@@ -1,0 +1,356 @@
+{
+  "languages": {
+    "en_us": {
+      "language_name": "English",
+      "num_samples": 10,
+      "overall_wer": 0.5502392344497608,
+      "samples": [
+        {
+          "id": 0,
+          "duration": 10.56,
+          "reference": "however due to the slow communication channels styles in the west could lag behind by 25 to 30 year",
+          "hypothesis": "\u0648\u0644\u0648 \u0627\u0646\u0647\u0645 \u064a\u062d\u0628\u0648\u0646 \u0627\u0646\u0647\u0645 \u064a\u062d\u0628\u0648\u0646 \u0627\u0646\u0647\u0645 \u064a\u062d\u0628\u0648\u0646 \u0627\u0646\u0647\u0645 \u064a\u062d\u0628\u0648\u0646 \u0627\u0646\u0647\u0645 \u064a\u062d\u0628\u0648\u0646",
+          "wer": 1.0,
+          "language": "en_us"
+        },
+        {
+          "id": 1,
+          "duration": 8.76,
+          "reference": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+          "hypothesis": "all the hours on which i do all the things for you, always begin with a capital letter, even in the middle of the sentence.",
+          "wer": 0.6190476190476191,
+          "language": "en_us"
+        },
+        {
+          "id": 2,
+          "duration": 11.46,
+          "reference": "to the north and within easy reach is the romantic and fascinating town of sintra and which was made famous to foreigners after a glowing account of its splendours recorded by lord byron",
+          "hypothesis": "to the north, on the same easy reach, is the romantic and fascinating town of sintra, in which was made famous to foreigners after a glowing account of exposures recorded by lord byron.",
+          "wer": 0.30303030303030304,
+          "language": "en_us"
+        },
+        {
+          "id": 3,
+          "duration": 5.76,
+          "reference": "the cabbage juice changes color depending on how acidic or basic alkaline the chemical is",
+          "hypothesis": "the cabbage juice changes color depending on how acidic, basic, or alkaline the chemical is.",
+          "wer": 0.26666666666666666,
+          "language": "en_us"
+        },
+        {
+          "id": 4,
+          "duration": 4.32,
+          "reference": "many people don't think about them as dinosaurs because they have feathers and can fly",
+          "hypothesis": "\u0645\u064a\u0646 \u0628\u0635\u0648\u062a\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646\u0643 \u0641\u0649 \u0645\u0643\u0627\u0646",
+          "wer": 2.6666666666666665,
+          "language": "en_us"
+        },
+        {
+          "id": 5,
+          "duration": 11.42,
+          "reference": "the hospital has followed protocol for infection control including separating the patient from others to prevent possible infection of others",
+          "hypothesis": "hospital has followed protocol for inspection, including separating the patient from others to prevent possible infection of others.",
+          "wer": 0.2,
+          "language": "en_us"
+        },
+        {
+          "id": 6,
+          "duration": 10.8,
+          "reference": "the northern marianas emergency management office said that there were no damages reported in the nation",
+          "hypothesis": "the northern marianas emergency management office said there were no damages reported in the nation.",
+          "wer": 0.125,
+          "language": "en_us"
+        },
+        {
+          "id": 7,
+          "duration": 6.96,
+          "reference": "twentieth century research has shown that there are two pools of genetic variation hidden and expressed",
+          "hypothesis": "twentieth-century research has shown that there are two poles of genetic variation in human expression.",
+          "wer": 0.375,
+          "language": "en_us"
+        },
+        {
+          "id": 8,
+          "duration": 11.04,
+          "reference": "the aspect ratio of this format dividing by twelve to obtain the simplest whole-number ratio is therefore said to be 3:2",
+          "hypothesis": "the aspect ratio of this format, dividing by 12 to obtain the simplest whole number ratio, is therefore said to be 3 to 2.",
+          "wer": 0.38095238095238093,
+          "language": "en_us"
+        },
+        {
+          "id": 9,
+          "duration": 9.9,
+          "reference": "as light pollution in their heyday was not the kind of problem it is today they are usually located in cities or at campuses easier to reach than those built in modern times",
+          "hypothesis": "as life wasted in 1980 was not the kind of problem it is today, they are usually located in cities or on campuses, easier to reach than those built modern times.",
+          "wer": 0.2727272727272727,
+          "language": "en_us"
+        }
+      ]
+    },
+    "fr_fr": {
+      "language_name": "French",
+      "num_samples": 10,
+      "overall_wer": 0.9233449477351916,
+      "samples": [
+        {
+          "id": 0,
+          "duration": 10.2,
+          "reference": "l'accident a eu lieu en terrain montagneux et il semblerait que cela ait \u00e9t\u00e9 caus\u00e9 par un incendie malveillant",
+          "hypothesis": "\u0646\u062d\u0646 \u0646\u0639\u0644\u0645 \u0627\u0646 \u0647\u0646\u0627\u0643 \u0645\u0646 \u064a\u062d\u0645\u0644 \u062d\u064a\u0627\u062a\u0646\u0627 \u0641\u064a \u0627\u0644\u0648\u0635\u0641 \u0648\u0641\u064a \u0627\u0644\u062d\u064a\u0627\u062a\u0627\u062a \u0627\u0644\u0645\u062a\u062d\u062f\u0647",
+          "wer": 1.0,
+          "language": "fr_fr"
+        },
+        {
+          "id": 1,
+          "duration": 23.4,
+          "reference": "nous sommes d'accord avec la d\u00e9claration de l'usoc comit\u00e9 olympique des \u00e9tats-unis selon laquelle les int\u00e9r\u00eats de nos athl\u00e8tes et de nos clubs ainsi que de leur sport pourraient \u00eatre mieux servis. cela peut \u00eatre fait en allant de l'avant et en proc\u00e9dant plut\u00f4t \u00e0 des changements significatifs au sein de notre organisation qu'\u00e0 la r\u00e9vocation d'accr\u00e9ditation",
+          "hypothesis": "nous sommes d'accord avec la d\u00e9claration de l'\u00e9tat, comme il est connu en 2015, sur laquelle les op\u00e9rateurs de la soci\u00e9t\u00e9 de l'occident ont fait face \u00e0 une crise de la vie. cela veut dire qu'on est dans le m\u00eame ordre et on consid\u00e8re plut\u00f4t la diff\u00e9rence significative entre l'organisation et la r\u00e9putation de la soci\u00e9t\u00e9.",
+          "wer": 0.7894736842105263,
+          "language": "fr_fr"
+        },
+        {
+          "id": 2,
+          "duration": 8.28,
+          "reference": "il a ajout\u00e9 qu\u2019\u00ab\u2009on ne devrait cependant pas leur demander d\u2019assumer des obligations qui d\u00e9passent leur stade de d\u00e9veloppement leur responsabilit\u00e9 et leurs capacit\u00e9s.\u2009\u00bb",
+          "hypothesis": "\u0627\u0630\u0627 \u0634\u0631\u0637\u0643\u0645 \u0627\u0644\u062c\u0644\u0648\u0633 \u0648\u063a\u064a\u0631\u0647\u0645 \u0645\u0646 \u0627\u0644\u0634\u0645\u0633 \u0648\u0645\u0646 \u0627\u0644\u0634\u0645\u0633 \u0648\u0645\u0646 \u0627\u0644\u0634\u0645\u0633 \u0648\u0645\u0646 \u0627\u0644\u0634\u0645\u0633 \u0648\u0645\u0646 \u0627\u0644\u0634\u0645\u0633",
+          "wer": 1.0,
+          "language": "fr_fr"
+        },
+        {
+          "id": 3,
+          "duration": 10.2,
+          "reference": "le rugissement du tigre ne ressemble pas au rugissement ample du lion mais plut\u00f4t \u00e0 une phrase dont les mots seraient des cris et des grondements",
+          "hypothesis": "\u0648\u0644\u0648 \u0627\u0646\u0647\u0645 \u064a\u062d\u0628\u0648\u0646 \u0627\u0646 \u064a\u0643\u0648\u0646\u0648\u0627 \u0645\u062b\u0644 \u0647\u0630\u0627 \u0627\u0644\u0648\u0636\u0639",
+          "wer": 1.0,
+          "language": "fr_fr"
+        },
+        {
+          "id": 4,
+          "duration": 8.34,
+          "reference": "le m\u00eame mois un autre avion de ligne a fait une sortie de piste \u00e0 mashhad et a heurt\u00e9 un mur tuant ainsi dix-sept personnes",
+          "hypothesis": "\u0645\u0646 \u0627\u0644\u0645\u0645\u0643\u0646 \u0627\u0644\u062d\u064a\u0648\u0627\u0646\u0627\u062a \u0641\u064a \u0635\u062d\u064a\u0641\u0647 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0647 \u0641\u064a \u0627\u063a\u0644\u0628 \u0627\u0644\u0627\u0634\u064a\u0627\u0621",
+          "wer": 1.0,
+          "language": "fr_fr"
+        },
+        {
+          "id": 5,
+          "duration": 7.2,
+          "reference": "giancarlo fisichella a perdu le contr\u00f4le de sa voiture et a termin\u00e9 la course peu apr\u00e8s le d\u00e9marrage",
+          "hypothesis": "\u062c\u0648\u0646 \u0643\u0627\u0631\u0644\u0648 \u0634\u064a\u062a\u0634\u064a\u0646\u0627 \u0648\u062c\u0645\u064a\u0639 \u0627\u0644\u062e\u0645\u0633 \u0633\u0628\u0639 \u0634\u0648\u064a\u0647 \u0645\u0646 \u0627\u0644\u062e\u0645\u0633 \u0633\u0628\u0639 \u062e\u0645\u0633 \u0633\u0646\u0648\u0627\u062a",
+          "wer": 1.0,
+          "language": "fr_fr"
+        },
+        {
+          "id": 6,
+          "duration": 8.4,
+          "reference": "malgr\u00e9 le net avantage de del potro pendant le deuxi\u00e8me set il a fallu passer par un tie-break une fois que le score a atteint 6-6",
+          "hypothesis": "\u0644\u0643\u0646 \u0627\u0630\u0627 \u0643\u0627\u0646\u062a \u0644\u062f\u064a\u0643 \u0648\u0635\u0641\u0647 \u0642\u0636\u0627\u0621 \u0627\u0644\u062c\u0646\u0633\u064a\u0647 \u0627\u0630\u0627 \u0643\u0627\u0646\u062a \u0627\u0644\u0633\u064a\u0637\u0631\u0647 \u0627\u0644\u062a\u0627\u064a\u0645\u0627\u0646\u064a\u0647 \u062a\u0641\u0643\u0631 \u0634\u063a\u0644\u0627\u0646\u0647 \u0641\u064a \u0627\u0644\u0634\u0645\u0633",
+          "wer": 1.0,
+          "language": "fr_fr"
+        },
+        {
+          "id": 7,
+          "duration": 11.64,
+          "reference": "malheureusement il est difficile d'\u00e9tudier le flux de circulation car le comportement des conducteurs ne peut \u00eatre pr\u00e9dit avec cent pour cent de certitude",
+          "hypothesis": "malheureusement, les limites sont d\u00e9finies de la crise de circulation et le comportement des conducteurs ne peut \u00eatre pr\u00e9vu avec 100% de certitude.",
+          "wer": 0.5833333333333334,
+          "language": "fr_fr"
+        },
+        {
+          "id": 8,
+          "duration": 7.68,
+          "reference": "les deux compos\u00e9s r\u00e9agissent l'un avec l'autre pour former des cristaux qui peuvent bloquer la fonction r\u00e9nale ont d\u00e9clar\u00e9 des chercheurs de l'universit\u00e9",
+          "hypothesis": "\u064a\u0645\u0643\u0646\u0643\u0645 \u0645\u0634\u0627\u0647\u062f\u0647 \u0627\u0644\u0634\u0639\u0631 \u0627\u0644\u0649 \u0627\u0644\u0634\u0639\u0631 \u0627\u0644\u0649 \u0627\u0644\u0634\u0631\u0643\u0647 \u0627\u0644\u062b\u0627\u0646\u064a\u0647 \u0644\u0644\u0634\u0631\u0643\u0647 \u0627\u0644\u062b\u0627\u0644\u062b\u0647",
+          "wer": 1.0,
+          "language": "fr_fr"
+        },
+        {
+          "id": 9,
+          "duration": 14.82,
+          "reference": "par exemple des \u00e9tudiants de l'\u00e9cole bennet en caroline du nord con\u00e7oivent chaque ann\u00e9e un site web consacr\u00e9 \u00e0 leur visite de la capitale de l'\u00e9tat chaque ann\u00e9e le site est remis \u00e0 jour mais les anciennes versions sont conserv\u00e9es en ligne pour servir d'album",
+          "hypothesis": "\u0648\u064a\u0635\u064a\u0631 \u0641\u064a \u062c\u0648\u062f\u0647 \u0643\u0644\u0647\u0627 \u0648\u0643\u0644\u0647\u0627 \u0648\u0643\u0644\u0647\u0627 \u0648\u062d\u0634\u0647 \u0648\u0634\u0643\u0644\u0647\u0627 \u0648\u0634\u0643\u0644\u0647\u0627 \u0648\u0634\u0643\u0644\u0647\u0627",
+          "wer": 1.0,
+          "language": "fr_fr"
+        }
+      ]
+    },
+    "es_419": {
+      "language_name": "Spanish",
+      "num_samples": 10,
+      "overall_wer": 0.2425531914893617,
+      "samples": [
+        {
+          "id": 0,
+          "duration": 12.84,
+          "reference": "se recomienda enf\u00e1ticamente a los viajeros que se informen sobre cualquier riesgo de clima extremo en el \u00e1rea que visitan dado que ello puede afectar sus planes de viaje",
+          "hypothesis": "se recomienda enf\u00e1ticamente a los viajeros que se informen sobre cualquier riesgo del clima extremo en el \u00e1rea que visiten, dado que eso puede afectar sus planes de viaje.",
+          "wer": 0.13793103448275862,
+          "language": "es_419"
+        },
+        {
+          "id": 1,
+          "duration": 21.36,
+          "reference": "el uso adecuado de los blogs \u00abpuede empoderar a los alumnos para que sean m\u00e1s anal\u00edticos y cr\u00edticos a trav\u00e9s de la respuesta activa a los contenidos de internet pueden definir sus posturas en el contexto de los escritos de otros adem\u00e1s de establecer sus perspectivas sobre temas espec\u00edficos\u00bb oravec 2002",
+          "hypothesis": "el uso adecuado de los blogs puede empoderar a los alumnos para que sean m\u00e1s anal\u00edticos y cr\u00edticos a trav\u00e9s de la perspectiva de los contenidos de internet. pueden definir sus posturas en el contexto de los escritos de otros, adem\u00e1s de establecer sus perspectivas sobre temas espec\u00edficos o a veces incluso en la web.",
+          "wer": 0.27450980392156865,
+          "language": "es_419"
+        },
+        {
+          "id": 2,
+          "duration": 9.72,
+          "reference": "fue tanta la cantidad de gente que se concentr\u00f3 que no todos pudieron acceder al funeral en la plaza de san pedro",
+          "hypothesis": "fue tanta la cantidad de gente que se concentr\u00f3 que no todos pudieron acceder al funeral en la plaza de san pedro.",
+          "wer": 0.045454545454545456,
+          "language": "es_419"
+        },
+        {
+          "id": 3,
+          "duration": 8.58,
+          "reference": "esto parece tener sentido ya que en la tierra no se percibe su movimiento \u00bfcierto?",
+          "hypothesis": "esto parece tener sentido, ya que en la tierra no se percibe su movimiento. \u00bfcierto?",
+          "wer": 0.13333333333333333,
+          "language": "es_419"
+        },
+        {
+          "id": 4,
+          "duration": 10.62,
+          "reference": "carpanedo particip\u00f3 en dos carreras individuales del campeonato aparte de la competencia del mi\u00e9rcoles",
+          "hypothesis": "catalu\u00f1a particip\u00f3 en dos carreras individuales del campeonato, aparte de la competencia en el colegio.",
+          "wer": 0.35714285714285715,
+          "language": "es_419"
+        },
+        {
+          "id": 5,
+          "duration": 9.78,
+          "reference": "hoy en d\u00eda las personas escriben mensajes en las pantallas de sus computadoras no tienen la necesidad de siquiera aproximarse a un sacapuntas",
+          "hypothesis": "hoy en d\u00eda las personas que env\u00edan mensajes en la pantalla de su computadora no tienen la necesidad de siquiera aproximarse una computadora.",
+          "wer": 0.391304347826087,
+          "language": "es_419"
+        },
+        {
+          "id": 6,
+          "duration": 5.64,
+          "reference": "los luchadores compa\u00f1eros de luna tambi\u00e9n le rindieron homenaje",
+          "hypothesis": "la muchedumbre compa\u00f1era de luna tambi\u00e9n le reuni\u00f3 a la familia.",
+          "wer": 0.7777777777777778,
+          "language": "es_419"
+        },
+        {
+          "id": 7,
+          "duration": 10.26,
+          "reference": "duvall que est\u00e1 casado y tiene dos hijos adultos no caus\u00f3 una buena impresi\u00f3n a miller que fue a quien le relat\u00f3 la historia",
+          "hypothesis": "double, que est\u00e1 casado y tiene dos hijos adultos, no caus\u00f3 una buena impresi\u00f3n a miguel, que fue quien le relat\u00f3 la historia.",
+          "wer": 0.20833333333333334,
+          "language": "es_419"
+        },
+        {
+          "id": 8,
+          "duration": 10.68,
+          "reference": "entre los fen\u00f3menos clim\u00e1ticos regionales y estacionales extremos encontramos los ventarrones las tormentas de nieve hielo o polvo",
+          "hypothesis": "entre los fen\u00f3menos clim\u00e1ticos regionales y nacionales extremos encontramos los ventanales, las tormentas de nieve, hielo o polvo.",
+          "wer": 0.2222222222222222,
+          "language": "es_419"
+        },
+        {
+          "id": 9,
+          "duration": 12.12,
+          "reference": "se puede definir a una civilizaci\u00f3n como una cultura espec\u00edfica de la que forma parte un extenso grupo de personas que viven y trabajan en conjunto es decir una sociedad",
+          "hypothesis": "se puede definir a una civilizaci\u00f3n como una cultura espec\u00edfica de que forma parte de un extenso grupo de personas que viven y trabajan en una sociedad.",
+          "wer": 0.2,
+          "language": "es_419"
+        }
+      ]
+    },
+    "cmn_hans_cn": {
+      "language_name": "Mandarin Chinese",
+      "num_samples": 10,
+      "overall_wer": 1.0508982035928143,
+      "samples": [
+        {
+          "id": 0,
+          "duration": 10.38,
+          "reference": "\u8fd9 \u5e76 \u4e0d \u662f \u544a \u522b \u8fd9 \u662f \u4e00 \u4e2a \u7bc7 \u7ae0 \u7684 \u7ed3 \u675f \u4e5f \u662f \u65b0 \u7bc7 \u7ae0 \u7684 \u5f00 \u59cb",
+          "hypothesis": "to tylko szybko odkry\u0107. to szybko k\u0119dzamy ciesz\u0105, to jest szybko k\u0119dzamy ciesz\u0105.",
+          "wer": 1.0,
+          "language": "cmn_hans_cn"
+        },
+        {
+          "id": 1,
+          "duration": 8.28,
+          "reference": "\u9499 \u94be \u7b49 \u5143 \u7d20 \u5c5e \u4e8e \u91d1 \u5c5e \u94f6 \u548c \u91d1 \u7b49 \u5143 \u7d20 \u5f53 \u7136 \u4e5f \u662f \u91d1 \u5c5e",
+          "hypothesis": "\u0643\u0639\u0643\u0639\u0643 \u064a\u0627 \u0634\u0648\u0634\u0648 \u064a\u0627 \u0634\u0648\u0634\u0648 \u0644\u064a \u0641\u062a\u064a \u0628\u064a\u0627 \u0634\u0648\u0634\u0648 \u0647\u0627\u064a \u064a\u0627 \u0634\u0648\u0634\u0648",
+          "wer": 1.0,
+          "language": "cmn_hans_cn"
+        },
+        {
+          "id": 2,
+          "duration": 13.86,
+          "reference": "\u6865 \u4e0b \u5782 \u76f4 \u51c0 \u7a7a 15 \u7c73 \u8be5 \u9879 \u76ee \u4e8e 2011 \u5e74 8 \u6708 \u5b8c \u5de5 \u4f46 \u76f4 \u5230 2017 \u5e74 3 \u6708 \u624d \u5f00 \u59cb \u901a \u8f66",
+          "hypothesis": "\u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641\u0648 \u0643\u0648\u0646\u063a \u0641",
+          "wer": 1.3333333333333333,
+          "language": "cmn_hans_cn"
+        },
+        {
+          "id": 3,
+          "duration": 15.42,
+          "reference": "\u9002 \u5f53 \u4f7f \u7528 \u535a \u5ba2 \u53ef \u4ee5 \u4f7f \u5b66 \u751f \u53d8 \u5f97 \u66f4 \u5584 \u4e8e \u5206 \u6790 \u548c \u8fdb \u884c \u601d \u8fa8 \u901a \u8fc7 \u79ef \u6781 \u56de \u5e94 \u7f51 \u7edc \u6750 \u6599 \u5b66 \u751f \u4eec \u53ef \u4ee5 \u5728 \u4ed6 \u4eba \u6587 \u7ae0 \u7684 \u4e0a \u4e0b \u6587 \u8bed \u5883 \u4e2d \u627e \u5230 \u81ea \u5df1 \u7684 \u7acb \u573a \u5e76 \u80fd \u591f \u9488 \u5bf9 \u7279 \u5b9a \u95ee \u9898 \u63d0 \u51fa \u81ea \u5df1 \u7684 \u89c2 \u70b9 oravec 2002",
+          "hypothesis": "przyda\u0142 si\u0119 woko\u0142o kre\u015bli\u0107 si\u0119 na dwie noty, a ja w sensie chodzi\u0142em na studi\u0119, nauczyciel po jego o\u0142acaniu si\u0119 na kre\u015b tak, a ja uda\u0142 si\u0119 do szansa, a ja si\u0119 na dwa tygodnie \u015bwiata. pin\u0119\u0142o ci\u0119, by koledzy si\u0119 z niego nie u\u0142acali.",
+          "wer": 1.0,
+          "language": "cmn_hans_cn"
+        },
+        {
+          "id": 4,
+          "duration": 12.9,
+          "reference": "\u79d1 \u5b66 \u5bb6 \u4eec \u53ef \u4ee5 \u5f97 \u51fa \u7ed3 \u8bba \u6697 \u7269 \u8d28 \u5bf9 \u5176 \u4ed6 \u6697 \u7269 \u8d28 \u7684 \u5f71 \u54cd \u65b9 \u5f0f \u4e0e \u666e \u901a \u7269 \u8d28 \u76f8 \u540c",
+          "hypothesis": "i'm sure the government, i don't forget it. i wish you'd be a cheater. i wish you'd be a cheater. i wish you'd be a cheater. i wish you'd be a cheater. i wish you'd be a cheater.",
+          "wer": 1.2258064516129032,
+          "language": "cmn_hans_cn"
+        },
+        {
+          "id": 5,
+          "duration": 13.74,
+          "reference": "\u5927 \u591a \u6570 \u73b0 \u4ee3 \u79d1 \u7814 \u671b \u8fdc \u955c \u90fd \u662f \u5de8 \u578b \u8bbe \u65bd \u4f4d \u4e8e \u5927 \u6c14 \u6761 \u4ef6 \u4f18 \u826f \u7684 \u504f \u8fdc \u5730 \u533a",
+          "hypothesis": "\u0648\u0644\u0648 \u0643\u0646\u062a \u0628\u062d\u0627\u0648\u0644 \u0627\u0646 \u062a\u0646\u0638\u0631 \u0627\u0644\u0649 \u0645\u0648\u0639\u062f\u0643 \u0648\u0645\u0648\u0639\u062f\u0643 \u0648\u0645\u0648\u0639\u062f\u0643 \u0648\u0645\u0648\u0639\u062f\u0643 \u0648\u0645\u0648\u0639\u062f\u0643 \u0648\u0645\u0648\u0639\u062f\u0643",
+          "wer": 1.0,
+          "language": "cmn_hans_cn"
+        },
+        {
+          "id": 6,
+          "duration": 15.18,
+          "reference": "1963 \u5e74 \u5927 \u575d \u5efa \u6210 \u540e \u5b63 \u8282 \u6027 \u6d2a \u6c34 \u88ab \u63a7 \u5236 \u4f4f \u4e86 \u6c89 \u79ef \u7269 \u4e0d \u518d \u51b2 \u6563 \u5230 \u6cb3 \u6d41 \u91cc",
+          "hypothesis": "\u0645\u0648\u0633\u064a\u0642\u0649",
+          "wer": 1.0,
+          "language": "cmn_hans_cn"
+        },
+        {
+          "id": 7,
+          "duration": 15.46,
+          "reference": "\u5b83 \u7684 \u957f \u4e0b \u989a \u4e0a \u5e03 \u6ee1 \u4e86 70 \u591a \u9897 \u5243 \u5200 \u822c \u950b \u5229 \u7684 \u7259 \u9f7f \u4e0a \u989a \u4e0a \u8fd8 \u6709 \u4e00 \u6392 \u8fd9 \u610f \u5473 \u7740 \u4efb \u4f55 \u4e0e \u5b83 \u76f8 \u9047 \u7684 \u4e1c \u897f \u90fd \u65e0 \u8def \u53ef \u9003",
+          "hypothesis": "\u0634\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648\u0648",
+          "wer": 1.0,
+          "language": "cmn_hans_cn"
+        },
+        {
+          "id": 8,
+          "duration": 7.62,
+          "reference": "scotturb 403 \u8def \u516c \u5171 \u6c7d \u8f66 \u5b9a \u671f \u53d1 \u8f66 \u524d \u5f80 \u8f9b \u7279 \u62c9 sintra \u5728 \u7f57 \u5361 \u89d2 \u505c \u9760",
+          "hypothesis": "<0xe8><0x8b><0x8f>\u7279\u666e\u65af\u6797\u52a0\u5165<0xe5><0xa7><0x91>\u5a18<0xe6><0xb1><0xbd>\u8f66,\u5e76\u4e14\u5927\u8f66\u524d\u5f80<0xe6><0xb1><0xbd>\u8f66\u7ad9,\u5728\u8def\u5f00<0xe6><0x9e><0xb6>\u8f66<0xe5><0xba><0x93>\u3002",
+          "wer": 1.0,
+          "language": "cmn_hans_cn"
+        },
+        {
+          "id": 9,
+          "duration": 6.84,
+          "reference": "\u8fd9 \u91cc \u51e0 \u4e4e \u90fd \u662f \u6c99 \u6ee9 \u6e38 \u6cf3 \u5f88 \u5b89 \u5168 \u5927 \u90e8 \u5206 \u5730 \u65b9 \u90fd \u6709 \u65b0 \u897f \u5170 \u5723 \u8bde \u6811 \u7684 \u6811 \u836b",
+          "hypothesis": "czyli ci uda si\u0119 szarfem, ci uda nam si\u0119 znale\u017a\u0107 kapotyk\u0119, kt\u00f3re ju\u017c nie przynale\u017c\u0105 naszych ludzi?",
+          "wer": 1.0,
+          "language": "cmn_hans_cn"
+        }
+      ]
+    }
+  },
+  "overall": {
+    "total_samples": 40,
+    "languages_tested": 4
+  }
+}
