@@ -5,12 +5,20 @@ alongside the numpy port on a handful of real audio samples across
 languages and lengths. Reports max/mean absolute diff in the mel output
 and exits non-zero if parity is not within tolerance.
 
+The HF reference is fetched on demand from CohereLabs/cohere-transcribe-03-2026.
+Override with --pytorch-dir to point at a local snapshot, e.g.
+
+    huggingface-cli download CohereLabs/cohere-transcribe-03-2026 \\
+        --local-dir ../cohere-pytorch
+    uv run python tests/test-feature-parity.py --pytorch-dir ../cohere-pytorch
+
 Usage:
     uv run python tests/test-feature-parity.py
 """
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -24,17 +32,22 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from cohere_features_v2 import CohereMelSpectrogram as CohereMelV2  # noqa: E402
 
+HF_REPO = "CohereLabs/cohere-transcribe-03-2026"
 
-def load_hf_extractor():
-    """Load the official Cohere HF feature extractor from local pytorch dir."""
+
+def load_hf_extractor(pytorch_dir: Path | None = None):
+    """Load the official Cohere HF feature extractor.
+
+    Uses pytorch_dir if it exists, otherwise pulls directly from HF.
+    """
     from transformers import AutoFeatureExtractor
 
-    pytorch_dir = ROOT.parent / "cohere-pytorch"
-    if not pytorch_dir.is_dir():
-        print(f"ERROR: pytorch model dir not found at {pytorch_dir}")
-        sys.exit(1)
+    if pytorch_dir is not None and pytorch_dir.is_dir():
+        source = str(pytorch_dir)
+    else:
+        source = HF_REPO
 
-    fe = AutoFeatureExtractor.from_pretrained(str(pytorch_dir), trust_remote_code=True)
+    fe = AutoFeatureExtractor.from_pretrained(source, trust_remote_code=True)
     return fe
 
 
@@ -77,12 +90,23 @@ def compare(label: str, a: np.ndarray, b: np.ndarray, tol_max: float, tol_mean: 
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--pytorch-dir",
+        type=Path,
+        default=None,
+        help=f"Local snapshot of {HF_REPO}. Defaults to downloading from HF.",
+    )
+    args = parser.parse_args()
+
     print("=" * 72)
     print("Feature Extractor Parity Test")
     print("=" * 72)
 
-    print("\n[1/3] Loading HF CohereAsrFeatureExtractor...")
-    fe_hf = load_hf_extractor()
+    src = str(args.pytorch_dir) if args.pytorch_dir and args.pytorch_dir.is_dir() else HF_REPO
+    print(f"\n[1/3] Loading HF CohereAsrFeatureExtractor from {src}...")
+    fe_hf = load_hf_extractor(args.pytorch_dir)
     print(f"  sampling_rate={fe_hf.sampling_rate}")
     print(f"  hop_length={fe_hf.hop_length}")
 

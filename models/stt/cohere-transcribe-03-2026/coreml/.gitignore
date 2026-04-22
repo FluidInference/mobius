@@ -31,7 +31,18 @@ cross_caches.pkl
 
 # Test results and temporary files
 *_results.json
+benchmark_*.json
+*_fleurs_*.json
+*_cache_external*.json
 .hf_cache/
 
 # Reference models (external git repo)
 barathwaj-models/
+
+# HF source clone (download via huggingface-cli, do not vendor)
+../cohere-pytorch/
+
+# Local working dirs for the quantization toolchain
+# (populated via huggingface-cli download FluidInference/cohere-transcribe-03-2026-coreml)
+f16/
+q8/
