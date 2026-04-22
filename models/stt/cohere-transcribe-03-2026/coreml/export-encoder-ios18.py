@@ -64,6 +64,7 @@ def export_encoder(
     output_dir: Path,
     precision: str = "float16",
     target_frames: int = DEFAULT_TARGET_FRAMES,
+    deployment_target: str = "iOS18",
 ):
     """Export the Cohere encoder to CoreML.
 
@@ -72,6 +73,9 @@ def export_encoder(
         precision: "float16" or "float32" compute precision for the converter.
         target_frames: fixed input length (mel frames). Must be > 0 and
             divisible by the Conformer subsampling stride.
+        deployment_target: "iOS17" or "iOS18". iOS18 uses the newest MIL ops;
+            iOS17 keeps the bundle compatible with the existing FP16
+            cache-external decoder (specVersion=8).
     """
     if target_frames <= 0:
         raise ValueError(f"target_frames must be positive, got {target_frames}")
@@ -144,12 +148,20 @@ def export_encoder(
     # Set compute precision
     compute_precision = ct.precision.FLOAT16 if precision == "float16" else ct.precision.FLOAT32
 
+    # Resolve deployment target
+    target_map = {"iOS17": ct.target.iOS17, "iOS18": ct.target.iOS18}
+    if deployment_target not in target_map:
+        raise ValueError(
+            f"Unknown deployment_target {deployment_target!r}; expected one of {list(target_map)}"
+        )
+    min_target = target_map[deployment_target]
+
     # Convert
     mlmodel = ct.convert(
         traced_encoder,
         inputs=inputs,
         outputs=[ct.TensorType(name="hidden_states")],
-        minimum_deployment_target=ct.target.iOS18,
+        minimum_deployment_target=min_target,
         compute_precision=compute_precision,
     )
 
@@ -216,11 +228,27 @@ def main():
             f"Must be divisible by {CONFORMER_SUBSAMPLE}."
         ),
     )
+    parser.add_argument(
+        "--deployment-target",
+        choices=["iOS17", "iOS18"],
+        default="iOS18",
+        help=(
+            "CoreML minimum deployment target. iOS17 keeps the exported "
+            "encoder on specVersion=8 so it pairs cleanly with the existing "
+            "FP16 cache-external decoder (also specVersion=8). iOS18 unlocks "
+            "newer MIL ops. Default: iOS18."
+        ),
+    )
 
     args = parser.parse_args()
 
     try:
-        export_encoder(args.output_dir, args.precision, args.target_frames)
+        export_encoder(
+            args.output_dir,
+            args.precision,
+            args.target_frames,
+            args.deployment_target,
+        )
     except Exception as e:
         print(f"\n❌ Export failed: {e}", file=sys.stderr)
         import traceback
