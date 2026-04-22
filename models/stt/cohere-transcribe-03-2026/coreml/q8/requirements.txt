@@ -1,0 +1,9 @@
+# CoreML and inference
+coremltools>=9.0
+numpy>=1.24.0
+
+# Audio I/O
+soundfile>=0.12.0
+
+# Model downloading (optional, if loading from HuggingFace)
+huggingface-hub>=0.20.0
