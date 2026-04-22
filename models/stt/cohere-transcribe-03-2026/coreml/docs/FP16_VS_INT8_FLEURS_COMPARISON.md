@@ -1,14 +1,29 @@
-# FP16 vs INT8 on FLEURS: Quantization Impact Analysis
+# FP16 vs INT8 on FLEURS: Quantization Impact Analysis (historical)
+
+> **Note — superseded.** The numbers in this document were captured
+> **before** the three host-side inference bugs documented in
+> [HOST_SIDE_FIXES.md](./HOST_SIDE_FIXES.md) were identified and fixed.
+> The catastrophic WER / CER and decoder-loop rates below reflect those
+> bugs, **not** the weights. After the host-side fixes, f16 quality on
+> FLEURS is within a few points of the PyTorch reference on every tested
+> language, and q8 quality matches f16 once the EOS logit bias
+> ([Q8_EOS_BIAS.md](./Q8_EOS_BIAS.md)) is applied. This doc is kept for
+> historical context on why the fix was investigated.
 
 Comprehensive comparison of Cohere Transcribe FP16 and INT8 models on FLEURS dataset (140 samples across 14 languages).
 
-## TL;DR
+## TL;DR (pre-fix)
 
 - **FP16 is 6x more stable than INT8 on FLEURS** (12.1% vs 71% repetition loops)
 - **Both struggle with FLEURS overall** (7.1% success rate for FP16)
 - **Korean has severe decoder issues** (90% loop rate even on FP16)
 - **Quantization significantly destabilizes decoder** on out-of-distribution data
-- **Recommendation**: Use FP16 for production multilingual transcription
+- **Recommendation (pre-fix)**: Use FP16 for production multilingual transcription
+
+**Actual root cause (post-investigation):** mel spectrogram drift,
+all-ones `cross_attention_mask`, and token-by-token CJK detokenization
+in the shipped `example.py` — fixed in
+[HOST_SIDE_FIXES.md](./HOST_SIDE_FIXES.md).
 
 ---
 
