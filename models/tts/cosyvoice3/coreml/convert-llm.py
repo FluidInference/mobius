@@ -38,7 +38,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE / "verify" / "CosyVoice"))
 sys.path.insert(0, str(HERE / "verify" / "CosyVoice" / "third_party" / "Matcha-TTS"))
 
-from src.llm_coreml import Qwen2Prefill, Qwen2Decode  # noqa: E402
+from src.llm_coreml import Qwen2Prefill, Qwen2Decode, Qwen2DecodeStateful  # noqa: E402
 
 
 MODEL_DIR = HERE / "cosyvoice3_dl"
@@ -191,6 +191,75 @@ def convert_decode(qwen, speech_head, max_len, prefill_kv_k, prefill_kv_v, cur_l
     return mlp, (dummy_embed, cur_len_t, speech_logits, kv_k_out, kv_v_out)
 
 
+def convert_decode_stateful(qwen, speech_head, max_len, prefill_kv_k, prefill_kv_v,
+                              cur_len_val, out_dir, fp16, min_dep):
+    """Stateful variant: kv_k / kv_v live inside the model as StateType,
+    mutated in place per call. macOS 15+ only. ~2-3× faster decode vs
+    pass-through (no per-step MLMultiArray binding for the 18 MB KV).
+    """
+    print(f"[decode-stateful 1/4] Building Qwen2DecodeStateful wrapper (max_len={max_len})...")
+    wrapper = Qwen2DecodeStateful(qwen, speech_head, max_len=max_len).eval()
+
+    L, _, Hkv, M, D = prefill_kv_k.shape
+
+    def _seed_from_prefill():
+        with torch.no_grad():
+            for i in range(L):
+                getattr(wrapper, f"kv_k_{i}").copy_(prefill_kv_k[i])
+                getattr(wrapper, f"kv_v_{i}").copy_(prefill_kv_v[i])
+
+    _seed_from_prefill()
+
+    torch.manual_seed(0)
+    dummy_embed = torch.randn(1, 1, 896, dtype=torch.float32) * 0.02
+    cur_len_t = torch.tensor([cur_len_val], dtype=torch.int32)
+
+    print(f"[decode-stateful 2/4] Running PyTorch wrapper (warm-up)...")
+    with torch.no_grad():
+        speech_logits = wrapper(dummy_embed, cur_len_t)
+    print(f"      speech_logits: {tuple(speech_logits.shape)}")
+
+    # Restore state buffers for tracing (warm-up mutated them).
+    _seed_from_prefill()
+
+    print(f"[decode-stateful 3/4] Tracing...")
+    with torch.no_grad():
+        traced = torch.jit.trace(wrapper, (dummy_embed, cur_len_t), strict=False)
+
+    print(f"[decode-stateful 4/4] Converting to CoreML mlpackage (stateful)...")
+    precision = _make_precision(fp16)
+    state_dtype = np.float16 if fp16 else np.float32
+    states = []
+    for i in range(L):
+        states.append(ct.StateType(
+            wrapped_type=ct.TensorType(shape=(1, Hkv, M, D), dtype=state_dtype),
+            name=f"kv_k_{i}",
+        ))
+        states.append(ct.StateType(
+            wrapped_type=ct.TensorType(shape=(1, Hkv, M, D), dtype=state_dtype),
+            name=f"kv_v_{i}",
+        ))
+    mlmodel = ct.convert(
+        traced,
+        inputs=[
+            ct.TensorType(name="inputs_embeds", shape=(1, 1, 896), dtype=np.float32),
+            ct.TensorType(name="cur_len", shape=(1,), dtype=np.int32),
+        ],
+        outputs=[
+            ct.TensorType(name="speech_logits", dtype=np.float32),
+        ],
+        states=states,
+        compute_precision=precision,
+        minimum_deployment_target=min_dep,
+        convert_to="mlprogram",
+    )
+    tag = "fp16" if fp16 else "fp32"
+    mlp = out_dir / f"LLM-Decode-M{max_len}-{tag}-stateful.mlpackage"
+    mlmodel.save(str(mlp))
+    print(f"      saved: {mlp}")
+    return mlp, (dummy_embed, cur_len_t, speech_logits)
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--output-dir", required=True)
@@ -203,6 +272,9 @@ def main() -> None:
                    choices=["macOS13", "macOS14", "macOS15"])
     p.add_argument("--skip-prefill", action="store_true")
     p.add_argument("--skip-decode", action="store_true")
+    p.add_argument("--stateful-decode", action="store_true",
+                   help="Emit a stateful LLM-Decode mlpackage (macOS 15+, "
+                        "~2-3× faster per-step vs pass-through KV).")
     args = p.parse_args()
 
     if args.t_prefill > args.max_len:
@@ -241,17 +313,35 @@ def main() -> None:
                                             torch.tensor([input_len_val], dtype=torch.int32))
 
     if not args.skip_decode:
-        decode_mlp, (dummy_embed, cur_len_t, dec_logits, kv_k_out, kv_v_out) = \
-            convert_decode(qwen, speech_head, args.max_len,
-                            kv_k, kv_v, input_len_val,
-                            out_dir, args.fp16, _deployment(args.min_deployment))
-        ref.update({
-            "decode_input_embed": dummy_embed,
-            "decode_cur_len": cur_len_t,
-            "decode_speech_logits": dec_logits,
-            "decode_kv_k_out": kv_k_out,
-            "decode_kv_v_out": kv_v_out,
-        })
+        if args.stateful_decode:
+            # Stateful path: prefill still outputs tensor KV (Swift seeds the
+            # state on the first decode step). No kv_k_out / kv_v_out.
+            if args.min_deployment != "macOS15":
+                print(f"[decode-stateful] forcing min-deployment=macOS15 "
+                      f"(was {args.min_deployment})")
+            decode_mlp, (dummy_embed, cur_len_t, dec_logits) = \
+                convert_decode_stateful(qwen, speech_head, args.max_len,
+                                         kv_k, kv_v, input_len_val,
+                                         out_dir, args.fp16,
+                                         _deployment("macOS15"))
+            ref.update({
+                "decode_input_embed": dummy_embed,
+                "decode_cur_len": cur_len_t,
+                "decode_speech_logits": dec_logits,
+                "decode_stateful": torch.tensor([1], dtype=torch.int32),
+            })
+        else:
+            decode_mlp, (dummy_embed, cur_len_t, dec_logits, kv_k_out, kv_v_out) = \
+                convert_decode(qwen, speech_head, args.max_len,
+                                kv_k, kv_v, input_len_val,
+                                out_dir, args.fp16, _deployment(args.min_deployment))
+            ref.update({
+                "decode_input_embed": dummy_embed,
+                "decode_cur_len": cur_len_t,
+                "decode_speech_logits": dec_logits,
+                "decode_kv_k_out": kv_k_out,
+                "decode_kv_v_out": kv_v_out,
+            })
 
     tag = "fp16" if args.fp16 else "fp32"
     ref_pt = out_dir / f"ref-T{args.t_prefill}-M{args.max_len}-{tag}.pt"

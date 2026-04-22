@@ -343,6 +343,118 @@ class Qwen2Prefill(nn.Module):
         return last_hidden, speech_logits, kv_k, kv_v
 
 
+class Qwen2DecodeStateful(nn.Module):
+    """Stateful single-step decode. macOS 15+ / iOS 18+ only.
+
+    Unlike ``Qwen2Decode``, the KV cache lives inside the model as a
+    collection of ``register_buffer`` slots (one per layer per K/V)
+    mutated in place each call. CoreML's ``StateType`` persists those
+    buffers across calls so Swift no longer needs to round-trip ~18 MB
+    of KV tensors through the binding layer every step.
+
+    Per-layer buffers (instead of one stacked ``[L, …]`` tensor) keep
+    each state's read / write symmetric — a single ``aten::copy_`` on
+    the full buffer — which is the pattern coremltools' stateful pass
+    recognises cleanly during trace lowering.
+
+    Inputs:
+        inputs_embeds: [1, 1, 896]
+        cur_len:       [1] int32 — number of tokens already in cache;
+                                    this step writes position cur_len and
+                                    attends to positions [0, cur_len].
+    States (persistent across calls):
+        kv_k_{i}, kv_v_{i}: [1, Hkv, max_len, D] for i in 0..L-1,
+                            populated externally by prefill before the
+                            first decode step.
+    Outputs:
+        speech_logits: [1, 1, speech_vocab]
+    """
+    def __init__(self,
+                 qwen_for_causal_lm: nn.Module,
+                 speech_lm_head: nn.Linear,
+                 max_len: int):
+        super().__init__()
+        qw = qwen_for_causal_lm
+        cfg = qw.config
+        self.num_layers   = cfg.num_hidden_layers
+        self.num_heads    = cfg.num_attention_heads
+        self.num_kv_heads = cfg.num_key_value_heads
+        self.head_dim     = cfg.hidden_size // cfg.num_attention_heads
+        self.hidden_size  = cfg.hidden_size
+        self.rope_theta   = cfg.rope_parameters["rope_theta"] if hasattr(cfg, "rope_parameters") else cfg.rope_theta
+        self.max_len      = max_len
+
+        self.register_buffer(
+            "inv_freq",
+            _build_rope_inv_freq(self.head_dim, self.rope_theta),
+            persistent=False,
+        )
+        self.register_buffer(
+            "pos_ids",
+            torch.arange(max_len, dtype=torch.int32),
+            persistent=False,
+        )
+
+        # Per-layer stateful KV cache buffers: 2*L entries, each
+        # [1, Hkv, max_len, D] fp32 at trace time; coremltools will emit
+        # them as StateType(fp16) when fp16 compute precision is used.
+        Hkv, D = self.num_kv_heads, self.head_dim
+        for i in range(self.num_layers):
+            self.register_buffer(
+                f"kv_k_{i}",
+                torch.zeros(1, Hkv, max_len, D, dtype=torch.float32),
+                persistent=False,
+            )
+            self.register_buffer(
+                f"kv_v_{i}",
+                torch.zeros(1, Hkv, max_len, D, dtype=torch.float32),
+                persistent=False,
+            )
+
+        self.layers = nn.ModuleList([
+            Qwen2LayerDecode(qw.model.layers[i],
+                             self.num_heads, self.num_kv_heads, self.head_dim)
+            for i in range(self.num_layers)
+        ])
+        self.norm = RMSNorm(qw.model.norm.weight)
+        self.speech_lm_head = _LinearLike(speech_lm_head)
+
+    def forward(self,
+                inputs_embeds: torch.Tensor,  # [1, 1, 896]
+                cur_len: torch.Tensor,         # [1] int32
+                ) -> torch.Tensor:
+        M = self.max_len
+        cur = cur_len.view(1).to(torch.int32)
+
+        positions = cur.view(1, 1)
+        cos, sin = _rope_cos_sin(positions, self.inv_freq)
+
+        pj = self.pos_ids.view(1, 1, M, 1)
+        update_mask = (pj == cur.view(1, 1, 1, 1)).to(inputs_embeds.dtype)
+
+        attendable = self.pos_ids.view(1, 1, 1, M) <= cur.view(1, 1, 1, 1)
+        neg_inf = torch.tensor(-1e4, dtype=torch.float32)
+        attn_mask = torch.where(attendable,
+                                torch.zeros((), dtype=torch.float32),
+                                neg_inf).to(inputs_embeds.dtype)
+
+        x = inputs_embeds
+        for i, layer in enumerate(self.layers):
+            k_i = getattr(self, f"kv_k_{i}")
+            v_i = getattr(self, f"kv_v_{i}")
+            x, k_full, v_full = layer(x, cos, sin, k_i, v_i, update_mask, attn_mask)
+            # In-place state writes. coremltools' generate_tensor_assignment_ops
+            # pass requires `.copy_()` to be preceded by a `select` / `slice`;
+            # writing via [:] satisfies that while still overwriting the whole
+            # buffer. Each of these lowers to an independent StateType update.
+            getattr(self, f"kv_k_{i}")[:] = k_full
+            getattr(self, f"kv_v_{i}")[:] = v_full
+
+        x = self.norm(x)
+        speech_logits = self.speech_lm_head(x)
+        return speech_logits
+
+
 class Qwen2Decode(nn.Module):
     """Static-shape single-step decode with KV cache update.
 
