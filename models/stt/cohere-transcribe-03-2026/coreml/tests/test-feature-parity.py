@@ -1,11 +1,9 @@
 """Parity test: numpy CohereMelSpectrogram vs HF CohereAsrFeatureExtractor.
 
 Loads the real HF feature extractor (trust_remote_code) and runs it
-alongside the new numpy port on a handful of real audio samples across
+alongside the numpy port on a handful of real audio samples across
 languages and lengths. Reports max/mean absolute diff in the mel output
 and exits non-zero if parity is not within tolerance.
-
-Also checks against the OLD cohere_mel_spectrogram.py for comparison.
 
 Usage:
     uv run python tests/test-feature-parity.py
@@ -23,7 +21,6 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
-sys.path.insert(0, str(ROOT / "f16"))
 
 from cohere_features_v2 import CohereMelSpectrogram as CohereMelV2  # noqa: E402
 
@@ -84,27 +81,15 @@ def main():
     print("Feature Extractor Parity Test")
     print("=" * 72)
 
-    print("\n[1/4] Loading HF CohereAsrFeatureExtractor...")
+    print("\n[1/3] Loading HF CohereAsrFeatureExtractor...")
     fe_hf = load_hf_extractor()
     print(f"  sampling_rate={fe_hf.sampling_rate}")
     print(f"  hop_length={fe_hf.hop_length}")
 
-    print("\n[2/4] Loading CohereMelSpectrogram (numpy port v2)...")
+    print("\n[2/3] Loading CohereMelSpectrogram (numpy port v2)...")
     mel_v2 = CohereMelV2()
     print(f"  n_fft={mel_v2.n_fft} win_length={mel_v2.win_length} "
           f"hop={mel_v2.hop_length} n_mels={mel_v2.n_mels}")
-
-    # Also attempt to load the old broken extractor for reference.
-    old_available = False
-    try:
-        from cohere_mel_spectrogram import CohereMelSpectrogram as OldMel  # type: ignore
-
-        old_mel = OldMel()
-        old_available = True
-        print(f"\n[3/4] Loaded OLD cohere_mel_spectrogram.py "
-              f"(n_fft={old_mel.n_fft}, n_mels={old_mel.n_mels})")
-    except Exception as exc:
-        print(f"\n[3/4] Could not load old extractor: {exc}")
 
     # Collect a few test samples across languages and durations.
     candidates = [
@@ -119,7 +104,7 @@ def main():
         print("ERROR: no test audio samples found")
         sys.exit(1)
 
-    print(f"\n[4/4] Running parity across {len(samples)} samples...")
+    print(f"\n[3/3] Running parity across {len(samples)} samples...")
 
     all_v2_ok = True
     for wav in samples:
@@ -147,16 +132,6 @@ def main():
             tol_mean=5e-3,
         )
         all_v2_ok &= ok_valid
-
-        if old_available:
-            old_mel_arr = old_mel(audio)
-            compare(
-                "HF vs OLD (broken) extractor",
-                hf_mel[:, :, :hf_len],
-                old_mel_arr[:, :, :hf_len],
-                tol_max=5e-2,
-                tol_mean=5e-3,
-            )
 
     print("\n" + "=" * 72)
     if all_v2_ok:

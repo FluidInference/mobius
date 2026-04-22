@@ -19,12 +19,12 @@ import sys
 from pathlib import Path
 import argparse
 
-# Add model directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent / "f16"))
+# Add tools/ to path for the numpy feature extractor
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 import numpy as np
 import coremltools as ct
-from cohere_mel_spectrogram import CohereMelSpectrogram
+from cohere_features_v2 import CohereMelSpectrogram
 from datasets import load_dataset
 from jiwer import wer
 from jiwer.transforms import Compose, ToLowerCase, RemovePunctuation, RemoveMultipleSpaces, Strip
@@ -43,14 +43,17 @@ normalize_text = Compose([
 
 
 def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=None,
-              dataset="librispeech", language="en_us"):
+              dataset="librispeech", language="en_us", models_dir=None):
     """Run benchmark on specified precision and number of samples."""
 
-    model_dir = precision
+    # models_dir defaults to ./<precision> (caller should pass an absolute path
+    # populated via `huggingface-cli download FluidInference/cohere-transcribe-03-2026-coreml`).
+    model_dir = models_dir if models_dir is not None else precision
 
     print("="*70)
     print(f"Cohere Transcribe Benchmark ({precision.upper()}, {num_samples} samples)")
     print(f"Dataset: {dataset.upper()}" + (f" ({language})" if dataset == "fleurs" else ""))
+    print(f"Models:  {model_dir}")
     if normalize:
         print("WER: Punctuation-normalized")
     print("="*70)
@@ -68,7 +71,7 @@ def benchmark(precision="fp16", num_samples=10, normalize=False, output_file=Non
 
     # Load vocab
     print("\n[2/4] Loading vocabulary...")
-    with open("f16/vocab.json") as f:
+    with open(f"{model_dir}/vocab.json") as f:
         vocab = {int(k): v for k, v in json.load(f).items()}
     print("   ✓ Vocabulary loaded")
 
@@ -301,6 +304,15 @@ def main():
         help="Output JSON file (default: benchmark_<precision>_<dataset>_<samples>_<normalized|raw>.json)"
     )
 
+    parser.add_argument(
+        "--models-dir",
+        type=str,
+        default=None,
+        help="Directory containing cohere_encoder.mlpackage, cohere_decoder_stateful.mlpackage, "
+             "vocab.json (default: ./<precision>). Populate via "
+             "`huggingface-cli download FluidInference/cohere-transcribe-03-2026-coreml`."
+    )
+
     args = parser.parse_args()
 
     try:
@@ -310,7 +322,8 @@ def main():
             normalize=args.normalize,
             output_file=args.output,
             dataset=args.dataset,
-            language=args.language
+            language=args.language,
+            models_dir=args.models_dir,
         )
     except Exception as e:
         print(f"\n❌ Benchmark failed: {e}")
