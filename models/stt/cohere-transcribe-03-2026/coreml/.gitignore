@@ -1,0 +1,37 @@
+# Virtual environments
+.venv/
+.venv312/
+
+# Build artifacts
+build/
+*.mlpackage
+*.mlmodelc
+
+# Large model files
+onnx-models/
+*.onnx
+
+# Audio test files
+*.wav
+*.mp3
+*.flac
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Misc
+.DS_Store
+cross_caches.pkl
+
+# Test results and temporary files
+*_results.json
+.hf_cache/
+
+# Reference models (external git repo)
+barathwaj-models/

@@ -1,0 +1,18 @@
+{
+  "auto_map": {
+    "AutoFeatureExtractor": "processing_cohere_asr.CohereAsrFeatureExtractor"
+  },
+  "dither": 1e-05,
+  "feature_extractor_type": "CohereAsrFeatureExtractor",
+  "feature_size": 128,
+  "frame_splicing": 1,
+  "log": true,
+  "n_fft": 512,
+  "n_window_size": 400,
+  "n_window_stride": 160,
+  "normalize": "per_feature",
+  "pad_to": 0,
+  "padding_value": 0.0,
+  "sampling_rate": 16000,
+  "window": "hann"
+}

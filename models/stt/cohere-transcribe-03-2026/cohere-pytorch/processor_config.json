@@ -1,0 +1,6 @@
+{
+  "auto_map": {
+    "AutoProcessor": "processing_cohere_asr.CohereAsrProcessor"
+  },
+  "processor_class": "CohereAsrProcessor"
+}
