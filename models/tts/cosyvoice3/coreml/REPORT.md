@@ -1,197 +1,184 @@
 # CosyVoice3 → CoreML Progress Report
 
-## Scope
+Status snapshot of the CosyVoice3 (Mandarin) CoreML conversion pipeline.
+The authoritative deep history — every trial, every NaN, every revert —
+lives in [`TRIALS_AND_ERRORS.md`](./TRIALS_AND_ERRORS.md). This file is
+the single-page "what ships today, what's in-flight" view.
 
-Port CosyVoice3 TTS (Qwen2-LLM + CFM Flow + HiFT vocoder + CAMPPlus speaker embed
-+ SpeechTokenizer) to CoreML mlpackages with static shapes targeting Apple Silicon.
+## Shipping configuration (frozen)
 
-Target: full on-device zero-shot TTS with Swift integration.
+Four CoreML models + two runtime tables + tokenizer assets, staged in
+`build/upload/cosyvoice3-coreml/` for the `FluidInference/cosyvoice3-coreml`
+HuggingFace repo. Minimum OS: **macOS 15 / iOS 18** (required by the
+stateful decode model's `MLState` buffers).
 
-## Status Summary
+| Model | Compute | Purpose | dtype | Size |
+|---|---|---|---|---|
+| `LLM-Prefill-T256-M768-fp16` | CPU + ANE | Qwen2-0.5B prefill over 256-token context, initializes 768-slot KV cache | fp16 | 695 MB |
+| `LLM-Decode-M768-fp16-stateful` | CPU + GPU | Single-step AR decode against 768-slot KV cache held in `MLState` (48 per-layer buffers) | fp16 | 695 MB |
+| `Flow-N250-fp16` | CPU + GPU | Speech tokens → 80-bin log-mel @ 24 kHz | fp16 | 638 MB |
+| `HiFT-T500-fp16` | CPU + ANE | Mel → 24 kHz PCM via iSTFT vocoder | fp16 | 44 MB |
 
-| Component | mlpackage | Status | Parity vs Ref |
-|---|---|---|---|
-| Qwen2 LLM — Prefill (T=256, M=768) | `LLM-Prefill-T256-M768-fp16.mlpackage` (695 MB) | Shipped | argmax OK, logits MAE 0.068 (fp16) |
-| Qwen2 LLM — Decode  (M=768) | `LLM-Decode-M768-fp16.mlpackage`  (695 MB) | Shipped | argmax OK, logits MAE 0.018 (fp16) |
-| Flow (N=125 → M=250) | `Flow-N125-fp32.mlpackage` (1.2 GB) | Shipped | OK (existing) |
-| Flow (N=250 → M=500) | `Flow-N250-fp32.mlpackage` (1.2 GB) | **NEW** | torch→ml trace succeeded |
-| HiFT (T=250 → 5 s audio) | `HiFT-T250-fp32.mlpackage` (84 MB) | Shipped | OK (existing) |
-| HiFT (T=500 → 10 s audio) | `HiFT-T500-fp32.mlpackage` (88 MB) | **NEW** | Trace OK |
-| CAMPPlus (T=300) | `CAMPPlus-T300-fp32.mlpackage` (27 MB) | Shipped | cos=0.96 vs onnx (known drift) |
-| SpeechTokenizerV3 (T=500) | `SpeechTokenizerV3-T500-fp32.mlpackage` (924 MB) | **NEW** | 44/87 tokens drift vs onnx on real audio |
-| Embedding tables | `embeddings-fp32.safetensors` (542 MB) / `-fp16` (271 MB) | **NEW** | exact copy of Qwen2 + speech embed weights |
+Runtime tables:
+- `embeddings/embeddings-runtime-fp32.safetensors` (542 MB) — Qwen2
+  `embed_tokens` at runtime fp32 dtype (required for bit-exact parity).
+- `embeddings/speech_embedding-fp16.safetensors` (12 MB) — CosyVoice3
+  `speech_embedding` table (6761 × 896 fp16).
 
-## New Artifacts (this session)
+Voices:
+- `voices/cosyvoice3-default-zh.safetensors` — upstream `zero_shot_prompt.wav`
+  (female, 希望你以后能够做的比我还好呦。).
+- 10 AISHELL-3 bootstrapped voices (5 F + 5 M, north + south accents).
+
+Total disk footprint (`.mlmodelc` + `.mlpackage` + runtime tables): **~6.6 GB**.
+
+## End-to-end performance (Swift, M-series)
+
+Measured via `fluidaudio tts --backend cosyvoice3-parity`, shipping
+fixture, N_new=87, N_prompt=87 → 3.48 s audio @ 24 kHz:
+
+| Stage   | Wall time | Compute unit       |
+|---------|----------:|--------------------|
+| prefill | ~0.9 s    | cpuAndNeuralEngine |
+| decode  | ~2.0 s    | cpuAndGPU (stateful KV) |
+| flow    | ~6.9 s    | cpuAndGPU          |
+| hift    | ~0.9 s    | cpuAndNeuralEngine |
+| **total** | **~10.7 s** (RTFx ~0.33×) | — |
+
+Flow is the dominant cost at ~65% of total synth. See
+"Flow ANE port" below for the attempted — and reverted — ANE variant.
+
+## Parity
+
+End-to-end ASR round-trip on the shipping fixture
+(`build/wavs/e2e_shipping.wav`):
+- Peak amplitude 0.815, mean |x| 0.052.
+- CTC-ZH: 希望你以后能够做得比我还好哟。
+- Qwen3: 希望你以后能够做得比我还好哟。
+- Matches prompt text modulo one homophone (`的` ↔ `得`), which is
+  upstream CosyVoice3 behavior.
+
+Per-model parity vs PyTorch fp32 reference:
+
+| Model | Metric | Value |
+|---|---|---|
+| LLM-Prefill fp16 | logits MAE | 0.068 (argmax OK) |
+| LLM-Decode fp16 (stateful) | logits MAE | 0.018 (argmax OK) |
+| Flow-N250 fp16 (cpuAndGPU) | mel MAE | 4.7e-02 |
+| HiFT-T500 fp16 | audio MAE | within fp16 envelope |
+
+## Conversion scripts
+
+| Script | Produces | Notes |
+|---|---|---|
+| `convert-llm.py` | LLM-Prefill + LLM-Decode (stateful) | Selective fp32 pins (`pow/reduce_mean/rsqrt/softmax`) for RMSNorm stability |
+| `convert-flow.py` | Flow-N250-fp16 | Default path is cpuAndGPU fp16; `--ane-port` path is experimental (see ANE port section) |
+| `convert-coreml.py` | HiFT-T500-fp16 | Folded weight-norm, iSTFT stays on ANE |
+| `convert-campplus.py` | CAMPPlus speaker embed | Python-side only (not in shipping pipeline — prompt embeddings pre-extracted per voice) |
+| `convert-speech-tokenizer.py` | SpeechTokenizerV3 | Python-side only (CoreML version had 44/87 token drift from MIL argmax instability) |
+| `export-embeddings.py` | Runtime embedding tables | Qwen2 + speech_embedding safetensors |
+
+CAMPPlus and SpeechTokenizerV3 were intentionally dropped from the
+shipping Swift pipeline: they run server-side once per voice, not per
+synthesis. Their outputs (speaker embedding, prompt speech tokens) are
+baked into the per-voice safetensors bundle.
+
+## Flow ANE port — attempted and reverted
+
+An ANE-port BC1S rewrite of the Flow DiT was built and benchmarked end
+to end. Compiled cleanly, ran ~3× faster, and passed the Stage 0 "no
+NaN" gate — but collapsed the mel dynamic range on the parity fixture,
+yielding audio unintelligible to both CTC-ZH and Qwen3 ASR. Reverted
+to the cpuAndGPU fp16 baseline.
+
+| Compute unit | mel range | MAE vs fp32 ref | NaN | Audio peak |
+|---|---|---:|---:|---:|
+| PyTorch fp32 reference | [-12.443, 5.157] | 0.000 | 0 | — |
+| Baseline Flow cpuAndGPU (**shipping**) | [-12.500, 5.172] | 4.7e-02 | 0 | 0.815 |
+| ANE-port Flow CPU_AND_NE | **[-10.094, -0.825]** | **2.582** | 0 | **0.019** |
+
+Hypothesis: precision loss in the AdaLN `(1+scale)*norm` or manual-SDPA
+softmax path accumulates across 22 DiT blocks × 10 Euler steps ×
+CFG batch=2, manifesting as progressive magnitude attenuation rather
+than a NaN blowup. Stage 1's NaN probe was skipped because Stage 0
+produced no NaN; a **range** probe (not a NaN probe) is the first
+next step to pin the regressing block.
+
+Debugging artifacts kept for follow-up:
 
 ```
+src/
+├── ane_attention.py       ANEAttention (manual SDPA, einsum-based)
+├── ane_layernorm.py       ANEUnfusedLayerNorm (axis-1 BC1S) + patch helper
+├── ane_layers.py          ANELinear (Conv2d 1x1), ANEGELU, ANEFeedForward, ANERotaryEmbedding
+├── conv_pos_ane.py        Attempts (A, C, L) to break the 77-op conv_pos_embed CPU island
+├── dit_ane.py             ANEDiTBlock, ANEAdaLayerNormZero(Final), ANEDiT top-level
+├── flow_coreml_ane.py     FlowCoreML mirror with ANEDiT replacing flow.decoder.estimator
+├── state_dict_port.py     Linear→Conv2d + LN affine reshape + rename map
+└── nan_probe.py           Binary-search and shadow-fp32 block bisection helpers
+
 build/
-├── flow-fp32-n250/
-│   ├── Flow-N250-fp32.mlpackage       (1.2 GB)
-│   └── ref-N250.pt                    (parity reference)
-├── hift-fp32-t500/
-│   ├── HiFT-T500-fp32.mlpackage       (88 MB)
-│   └── ref-T500.pt
-├── speech-tok-fp32/
-│   └── SpeechTokenizerV3-T500-fp32.mlpackage   (924 MB)
-├── embeddings/
-│   ├── embeddings-fp32.safetensors    (542 MB)
-│   ├── embeddings-fp16.safetensors    (271 MB)
-│   ├── embeddings-fp32.json           (layout metadata)
-│   └── embeddings-fp16.json
-└── mlmodelc/                          (pre-compiled .mlmodelc for profiling)
-    ├── CAMPPlus-T300-fp32.mlmodelc
-    ├── Flow-N125-fp32.mlmodelc
-    ├── Flow-N250-fp32.mlmodelc
-    ├── HiFT-T250-fp32.mlmodelc
-    ├── HiFT-T500-fp32.mlmodelc
-    ├── LLM-Prefill-T256-M768-fp16.mlmodelc
-    ├── LLM-Decode-M768-fp16.mlmodelc
-    └── SpeechTokenizerV3-T500-fp32.mlmodelc
+├── flow-ane-fp16-n250/    Original ANE-port build
+└── flow-ane-n250/         Symlink shim for verify/test_coreml_e2e_fp16.py --flow-precision ane
+
+compare-flow-ane.py        Per-block fp32 parity between host DiT and ANE port
 ```
 
-## New Scripts
+Swift side, the `runHiFT` dtype branch (`fullMel.dataType` → fp16/fp32)
+was kept — it's a no-op for the shipping fp32 Flow and makes the path
+future-proof if a correct fp16 ANE Flow ever ships.
 
-- `convert-speech-tokenizer.py` — ONNX → CoreML via onnx2torch for
-  `speech_tokenizer_v3.onnx`. Registers coremltools torch-ops for
-  `greater_equal` / `less_equal`, patches onnx2torch's missing `GreaterOrEqual`
-  opset-16 converter.
-- `export-embeddings.py` — Exports Qwen2 `embed_tokens` (151936×896) and
-  CosyVoice3 `speech_embedding` (6761×896) to safetensors + JSON metadata.
+Full debugging trail is in [`TRIALS_AND_ERRORS.md`](./TRIALS_AND_ERRORS.md)
+under **"Stage 4: Swift integration — ATTEMPTED, REVERTED"** (lines 832+).
 
-## End-to-End Test (already working)
+## ANE profiling status
 
-`verify/test_coreml_e2e.py` chains: Python frontend → CoreML LLM-Prefill →
-decode loop (ras_sampling) → CoreML Flow → CoreML HiFT → WAV.
+`tools/coreml-cli --fallback` currently fails with "unknown error" on
+`MLComputePlan.loadContentsOfURL` for all four CosyVoice3 shipping
+models on macOS 26.5 / M2 — likely because stateful-KV ops (LLM-Decode)
+and the Flow DiT's fused ops exceed what `MLComputePlan`'s introspection
+classifier handles. Sanity-check models (e.g. `silero-vad-unified-v6.0.0`)
+profile fine on the same machine.
 
-Latest run (CPU_ONLY):
+Workaround: `MLModel.compileModel(at:)` + `MLComputePlan.load(...)` in
+Swift returns a structured fallback diagnostic. A one-shot Swift
+harness (no existing tracker issue) would restore per-op ANE residency
+visibility.
+
+Measured Flow + HiFT + Prefill ANE residency via wall-clock A/B (model
+on `.cpuAndNeuralEngine` vs `.cpuAndGPU`) is the current substitute.
+
+## Verification
+
+```bash
+cd mobius/models/tts/cosyvoice3/coreml
+
+# End-to-end Python parity (shipping config)
+uv run python verify/test_coreml_e2e_fp16.py --flow-precision fp16
+
+# End-to-end with the kept ANE Flow (reproduces the silence defect)
+uv run python verify/test_coreml_e2e_fp16.py --flow-precision ane --compute-units CPU_AND_NE
+
+# Per-block ANE-port parity (fp32 host vs ANE port on random input)
+uv run python compare-flow-ane.py
+
+# Swift end-to-end
+cd ../../../../FluidAudio
+swift build -c release
+.build/release/fluidaudio tts --backend cosyvoice3-parity \
+    --fixture .../shipping.safetensors \
+    --models-dir mobius/.../coreml/build \
+    --reference mobius/.../coreml/build/wavs/e2e_shipping.wav \
+    --output /tmp/swift.wav --seed 42
 ```
-prefill  3.57 s
-decode   2.92 s  (38 tokens, 13 tok/s)
-flow    28.58 s
-hift     1.18 s
-output   build/wavs/e2e_coreml.wav  (1.52 s audio)
-Whisper: '希望你以后能够' vs expected '希望你以后能够做的比我还好用'
-  (truncated because Flow N=125 left only 38 new-token room after 87 prompt tokens)
-```
 
-With Flow N=250 we now have room for N_new = 250 − N_prompt ≈ 160 new tokens
-(~6.4 s of audio), enough for full sentences.
+## Ready for Swift / FluidAudio
 
-## Known Parity Drift
+Everything the Swift `CosyVoice3TtsManager` consumes is present:
+- 4 CoreML mlpackages + precompiled mlmodelcs in `build/upload/cosyvoice3-coreml/`.
+- Runtime embedding tables under `embeddings/`.
+- 11 zero-shot voice bundles under `voices/`.
+- Tokenizer assets + 281-entry special-tokens map under `tokenizer/`.
 
-### 1. SpeechTokenizerV3 (44/87 tokens differ on real audio)
-
-**Cause.** The model ends with a vector quantizer (argmax over a 6561-entry
-codebook). Tiny numerical differences during MIL graph optimization flip the
-argmax to neighboring codes. onnx2torch→torch matches onnxruntime bit-exactly;
-the drift is introduced by coremltools conversion/MIL.
-
-**Example drift** (zero_shot_prompt.wav, first 10 tokens):
-```
-onnx   : [4966, 488, 244, 28, 28, 28, 1, 108, 5535, 5049, ...]
-coreml : [4885, 488, 271, 28, 28, 28, 28, 108, 5535, 5049, ...]
-```
-
-**Impact.** These are the prompt-speech IDs fed to (a) the LLM as context, and
-(b) Flow's token embedding. Since Flow *also* receives the ground-truth prompt
-mel (computed separately by the 24 kHz path), voice cloning quality should be
-robust to token drift. LLM context drift is more concerning but similar to the
-CAMPPlus cos=0.96 drift which empirically still produces usable voice cloning.
-
-**Next steps (if needed).** Identify the op(s) where fp32 MIL diverges from
-onnxruntime by running `--debug` with intermediate output capture.
-
-### 2. CAMPPlus (cos=0.96, MAE 0.18)
-
-Known; pre-existing. Likely BatchNorm numerical drift from onnx2torch. Shipped
-as-is.
-
-## Cleared Issues
-
-- **`~47 GB ANE compile cache** in `~/Library/Caches/.../com.apple.e5rt.e5bundlecache/`
-  was filling the disk and causing "weights.bin could not be opened" failures in
-  profiling. Cleared during this session, freeing disk from 14 → 60 GB.
-
-## Profiling (partial)
-
-`uv run coreml-cli <model.mlmodelc>` on Apple M2 / macOS 26.5:
-
-| Model | Best unit | Predict (ms) | ANE % | Notes |
-|---|---|---:|---:|---|
-| CAMPPlus-T300-fp32 | cpu_and_gpu | 23.6 | 0% | GPU path only |
-| HiFT-T250-fp32 | all / cpu_and_gpu | 513–534 | 0% | fp32 ⇒ ANE rejects every op |
-| HiFT-T500-fp32 | cpu_and_gpu | 848 | 0% | same — "Invalid output tensor format: fp32" |
-
-**Root cause for 0% ANE:** ANE requires fp16. All three models are compiled
-with `compute_precision=FLOAT32`. HiFT/Flow/CAMPPlus need a **revised fp16
-conversion** to land on ANE.
-
-**Remaining profiles (not yet run):**
-- `Flow-N125-fp32` / `Flow-N250-fp32`
-- `LLM-Prefill-T256-M768-fp16` — interrupted by "unknown error" compute-plan
-  load (likely E5 cache re-population, should retry after cache warmed)
-- `LLM-Decode-M768-fp16`
-- `SpeechTokenizerV3-T500-fp32`
-
-The LLM is the only model currently in fp16 (with fp32 ops for
-RMSNorm/softmax). Expected to have meaningful ANE residency once we
-re-profile after cache rebuild.
-
-**2026-04 retry (all four shipping models, on macOS 26.5 / M2):**
-
-| Model | `MLComputePlan.loadContentsOfURL` | Cold compile | Notes |
-|---|---|---:|---|
-| LLM-Prefill-T256-M768-fp16 | fails ("unknown error") | n/a | compute-plan path never returns |
-| LLM-Decode-M768-fp16       | fails ("unknown error") | n/a | same |
-| Flow-N250-fp32             | fails ("unknown error") | n/a | same |
-| HiFT-T500-fp16             | fails ("unknown error") | 118,313 ms | compile succeeds, plan extraction doesn't |
-
-Sanity check: `silero-vad-unified-v6.0.0.mlmodelc` profiles cleanly with the
-same tool on the same machine (0.57 ms predict, 100% CPU), so the failure is
-specific to CosyVoice3 graphs — likely the stateful-KV ops in the LLM and the
-fused `layer_norm` in Flow exceed what `MLComputePlan`'s introspection path
-can classify. `coreml-cli --fallback` takes the same code path and fails
-identically.
-
-**Workaround for ANE residency data:** use Instruments' CoreML template or
-log device assignments from a Swift harness (`MLModel.compileModel(at:)` +
-`MLComputePlan.load(contentsOf:configuration:)` returning a structured
-fallback). That Swift harness doesn't exist yet — tracked as a follow-up in
-the FluidAudio repo (pending).
-
-## Recommended Next Steps
-
-1. **Re-profile after ANE cache warms.** Run `coreml-cli` individually on each
-   remaining `.mlmodelc`. Expect non-zero ANE% only for the fp16 LLM models.
-2. **Produce fp16 variants** of Flow, HiFT, CAMPPlus, SpeechTokenizer. For each,
-   use the same selective-fp32 trick we used for LLM
-   (`compute_precision=ct.transform.FP16ComputePrecision(op_selector=...)`) to
-   keep numerically-sensitive ops in fp32 (RMSNorm / softmax / VQ argmax
-   comparisons) while letting the bulk land on ANE.
-3. **Flow / HiFT CPU-fallback fix.** HiFT fallback reasons included scatter,
-   cumsum, range_1d — these are already in the MIL graph. Some are avoidable
-   with CoreML-friendly rewrites in `src/hift_coreml.py` /
-   `src/weight_norm_fold.py`; worth re-examining if ANE residency matters.
-4. **SpeechTokenizer parity.** If downstream voice-cloning quality degrades,
-   try a bit-exact path via ONNX Runtime on device (NB: ORT has a CoreML
-   execution provider that may dispatch to ANE anyway), or narrow MIL precision
-   overrides.
-
-## Ready-for-Swift
-
-Everything the Swift side needs (excluding the still-Python frontend + wetext
-normalization) is now present:
-
-- CoreML mlpackages for LLM, Flow (up to N=250), HiFT (up to T=500), CAMPPlus,
-  SpeechTokenizerV3.
-- `embeddings-fp16.safetensors` / `embeddings-fp32.safetensors` with
-  `text_embedding` + `speech_embedding` tables and a JSON metadata file
-  documenting layout, sos/task/eos IDs, and the `lm_input` construction recipe
-  (see `SWIFT_PORT_NOTES` in `src/text_frontend.py`).
-
-Remaining Swift-port gaps (design, not conversion):
-- Qwen2 tiktoken BPE tokenizer (swift-transformers has it)
-- wetext text normalization (recommend server-side)
-- 16 kHz Whisper log-mel and 80-d kaldi fbank preprocessing (vDSP)
-- 24 kHz log-mel for Flow prompt
-- `ras_sampling` loop (trivial port, reference in `verify/test_coreml_e2e.py`)
+See `build/upload/cosyvoice3-coreml/README.md` + `manifest.json` for the
+HuggingFace-facing layout.

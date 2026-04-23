@@ -742,6 +742,266 @@ End-to-end Swift-vs-Python parity: **MAE 7e-6, max\|Δ\| 3e-5, SNR 78.08 dB**
 
 ---
 
+## Flow ANE port: `conv_pos_embed` CPU island (residual after Stage 3)
+
+After the BC1S rewrite landed (ANE ≥ 80%, Flow ≤ 10 s), `coreml-cli
+--fallback` showed a single remaining CPU island of **77 ops** in
+`input_embed.conv_pos_embed`: host `CausalConvPositionEmbedding` =
+`Conv1d(1024, 1024, kernel_size=31, groups=16)` + Mish × 2 with
+asymmetric causal `F.pad(x, (k-1, 0))`. Trace-unrolled across 10 Euler
+steps → 20 convs + 10 softplus + 10 tanh + 11 mul + 10 pad + 5 cast +
+assorted reshapes.
+
+Three decomposition attempts tried to move this island onto ANE. All
+failed; the CPU island is **intrinsic to the `k=31 × dim=1024` Conv1d
+footprint**, not to `groups > 1` or Mish or pad style.
+
+### Option A — 16-way `groups=1` split (math-equivalent)
+
+Replace `Conv1d(1024, 1024, k=31, groups=16)` with 16 parallel
+`Conv1d(64, 64, k=31, groups=1)` operating on channel slices, concat
+their outputs. Pad style switched to `torch.cat([zeros, x])` (concat
+prefix) instead of `F.pad(x, (30, 0))` to stay ANE-native. Mish preserved
+→ bit-exact weights.
+
+- fp32 parity at all lengths (S ∈ {32, 64, 125, 250}): MAE = 0.
+- Full-DiT fp32 cumulative MAE: **2.907e-05** (passes <1e-3 gate).
+- `ANECCompile() FAILED (11)` after 900 s probe timeout.
+- Bisection (revert concat → F.pad): still FAILED (11) → rules out pad.
+
+### Option C — 16-way split + Mish → SiLU (NOT math-equivalent)
+
+Same 16-way slice/conv/concat scaffold as Option A, but swap `nn.Mish()`
+→ `nn.SiLU()`. SiLU is a single ANE-native op; Mish decomposes to
+`softplus → tanh → mul` (3 ops). Hypothesis: Mish op count was the
+tiling blocker.
+
+- `ANECCompile() FAILED (11)`.
+- **Rules out Mish** as the cause: Option A and Option C differ only in
+  activation; both failed identically.
+
+### Option L — Dense `groups=1` Conv1d with block-diagonal weight
+
+Expand the host grouped conv into a single `Conv1d(1024, 1024, k=31,
+groups=1)` whose weight is zero outside the 16 diagonal `(64, 64, 31)`
+blocks. Math-equivalent (matmul entries for off-diagonal blocks are zero
+→ contribute nothing), ANE-native op topology (no split/concat).
+
+Cost: 16× FLOPs per call, +129 MB fp16 weight for the two convs.
+
+- fp32 parity: bit-exact (MAE = 0).
+- **ANE compile SUCCEEDED** (241.5 s, vs `FAILED (11)` on A/C).
+- Device plan: 77 CPU ops **unchanged** — the dense conv is still
+  evicted to CPU by ANEF.
+- Wall-time regressed: p50 **904 ms → 1035 ms** (16× FLOPs on CPU, not
+  ANE). Load time +180 s due to +129 MB weight.
+
+### Finding
+
+ANEF's rejection of the host conv is **not** about `groups > 1`. A
+dense `groups=1` Conv1d with the same `(1024 × 1024 × 31)` footprint is
+also evicted. The tile limit is the `kernel_size × in_channels` weight
+bandwidth, which is independent of group count. Mish is unrelated
+(SiLU variant also failed to compile in the 16-split case for a
+different reason — ANEF couldn't tile the 10×-replicated
+slice/conv/concat pattern regardless of activation).
+
+### Hoist-out-of-loop is infeasible
+
+`InputEmbedding.forward` does
+`x = proj(cat(x, cond, text_embed)); x = conv_pos_embed(x) + x`.
+The noisy `x` is step-varying → the projected tensor varies per step →
+`conv_pos_embed` input varies per step. Cannot precompute once.
+
+### Residual options (not pursued in this session)
+
+- Swap `k=31` for a smaller kernel (k=7, k=15): ANE-friendly but
+  changes receptive field → audio quality regression unknown; needs
+  distillation or empirical mel-MAE check.
+- Cascade k=31 into smaller convs (e.g., 3× k=11 stride-1): receptive
+  field preserved, approximation not math-equivalent → weight
+  distillation or retraining required.
+
+Baseline shipped as-is: Flow p50 ≈ 904 ms warm on ANE with `77 CPU /
+12878 ANE / 22223 const` op distribution. `src/conv_pos_ane.py` is
+retained for reference (Option L implementation); the swap is disabled
+in `src/flow_coreml_ane.py` per the comment above `load_state_dict`.
+
+---
+
+## Stage 4: Swift integration — ATTEMPTED, REVERTED
+
+**Outcome: ANE port failed the audio-intelligibility gate; shipped the
+prior cpuAndGPU Flow instead.**
+
+Wired the ANE-port Flow into `FluidAudio`. Artifact swap + Swift-side
+dtype fix + measurement — all mechanically clean. Then discovered the
+ANE port is numerically broken end-to-end.
+
+### Artifacts updated
+
+- `build/upload/cosyvoice3-coreml/Flow-N250-fp16.{mlpackage,mlmodelc}`
+  replaced with ANE-port build from `build/flow-ane-fp16-n250/`.
+- `build/upload/cosyvoice3-coreml/manifest.json` — Flow block:
+  `compute_units: cpuAndNeuralEngine`, updated purpose text,
+  `size_bytes: 670101045`.
+- `build/upload/cosyvoice3-coreml/README.md` — Flow row moved from
+  "CPU + GPU" → "CPU + ANE" with the 3× speedup description.
+
+### Swift changes
+
+- `FluidAudio/Sources/FluidAudio/TTS/CosyVoice3/Assets/CosyVoice3ModelStore.swift`:
+  `flowConfig.computeUnits = .cpuAndGPU` → `.cpuAndNeuralEngine`.
+  Docstring updated to reflect the ANE port; notes the residual 77-op
+  `conv_pos_embed` CPU island.
+- `FluidAudio/Sources/FluidAudio/TTS/CosyVoice3/CosyVoice3Constants.swift`:
+  header comment block updated (Flow row: `cpuAndGPU` → `cpuAndNE`,
+  dropped the "fused LayerNorm → NaN" caveat).
+- `FluidAudio/Sources/FluidAudio/TTS/CosyVoice3/Pipeline/Synthesize/CosyVoice3Synthesizer.swift`
+  `runHiFT()`: branch on `fullMel.dataType`. The ANE-port Flow emits
+  fp16 mel (graph stays fp16 end-to-end); the prior cpuAndGPU Flow
+  emitted fp32. HiFT input is fp32 either way. Without this branch the
+  fp16 output got reinterpreted as fp32 via `bindMemory(to: Float.self)`
+  and walked off the buffer end → SIGSEGV in the first E2E run.
+
+### Measured on M-series (Swift CLI, N_new=87, N_prompt=87)
+
+| Stage   | Before (cpuAndGPU Flow) | After (cpuAndNE ANE Flow) |
+|---------|-------------------------|----------------------------|
+| prefill | ~0.9 s                  | 0.94 s                     |
+| decode  | ~2.0 s (87 steps)       | 2.00 s                     |
+| flow    | **~6.9 s**              | **1.80 s** (~3.8× faster)  |
+| hift    | ~0.9 s                  | 0.87 s                     |
+| total   | ~10.7 s                 | **5.63 s**                 |
+| RTFx    | ~0.33×                  | **0.62×**                  |
+
+Swift Flow speedup (3.8×) exceeds the Python bench (3.1×; 6.9 → 2.2 s)
+because Swift's prior baseline also paid per-call MLMultiArray binding
+overhead that the tighter ANE path elides.
+
+### Parity vs obsolete `e2e_shipping.wav`
+
+Swift MAE vs `build/wavs/e2e_shipping.wav` is 0.052 (reference >> 1e-3
+gate). This reference was generated with the prior cpuAndGPU fp16 Flow.
+The ANE-port rewrite is intentionally not bit-identical (BC1S layout,
+`Linear → Conv2d(1×1)`, `LayerNorm` on axis=1, manual SDPA, pre-baked
+rotary sin/cos). Regenerating the reference via the Python E2E path
+pointing at the ANE Flow mlpackage is the proper parity target and is
+deferred as a follow-up. Audio shape (83520 samples @ 24 kHz = 3.48 s)
+and no-NaN both confirmed.
+
+### Runtime log note
+
+`E5RT encountered an STL exception. msg = MILCompilerForANE error:
+failed to compile ANE model using ANEF` appears at first Flow
+invocation. This is the ANE runtime attempting JIT compilation for the
+77-op `conv_pos_embed` sub-graph and falling back to CPU — same CPU
+island documented above. Flow wall time confirms the remainder of the
+graph runs on ANE (1.8 s matches the Python ANE bench p50, not the
+~6.9 s GPU baseline).
+
+### Swift unit tests
+
+`swift test -c debug --filter CosyVoice3`: 16 / 16 passed
+(`CosyVoice3ChineseNormalizerTests`, `CosyVoice3PromptMelTests`).
+
+### Audio intelligibility check — **FAILED**
+
+After the first E2E run succeeded (no crash, no NaN logged, Flow 1.8 s,
+audio saved), an amplitude check showed the output was **44× quieter**
+than the shipping baseline:
+
+```
+shipping ref wav : peak 0.815, mean |x| 0.052 (reads
+                   "希望你以后能够做得比我还好哟" via CTC-ZH + Qwen3)
+ANE Flow wav     : peak 0.019, mean |x| 0.003 (both CTC-ZH and
+                   Qwen3 ASR return empty / only "。")
+```
+
+Rerunning the Python E2E harness with `--flow-precision ane
+--compute-units CPU_AND_NE` produced the same failure mode:
+
+```
+audio peak 0.021, whisper transcript: ""  (vs expected
+ "希望你以后能够做的比我还好用")
+```
+
+So the defect is in the ANE Flow itself, not in the Swift dtype
+branching.
+
+### Root cause: mel dynamic range collapse, not NaN
+
+Direct Flow-output inspection on the parity fixture:
+
+| Path (compute unit)                | mel range       | MAE vs fp32 ref | NaN |
+|------------------------------------|-----------------|-----------------|-----|
+| PyTorch fp32 reference             | [-12.443, 5.157]| 0.000           | 0   |
+| Baseline Flow, `CPU_AND_GPU`       | [-12.500, 5.172]| 4.7e-02         | 0   |
+| ANE-port Flow, `CPU_AND_NE`        | **[-10.094, -0.825]** | **2.582** | 0 |
+
+The ANE port produces finite, NaN-free mel — but the dynamic range is
+compressed by ~7 dB at the top and the peak energy bins (vocal
+formants) are clipped entirely. HiFT fed these flat mels yields
+near-silence. This is NOT the "Phase 3 fused-LayerNorm NaN" failure
+mode the Stage 0 plan was gated against, and the plan's "0/5 NaN"
+gate in Stage 3 passed only because bench inputs didn't trigger the
+saturation pattern the parity fixture does.
+
+Hypothesis (not yet pinned down): the BC1S rewrite introduces a
+precision loss in the AdaLN `(1+scale)*norm` or manual-SDPA softmax
+path that accumulates across 22 blocks × 10 Euler steps × CFG batch=2,
+manifesting as progressive magnitude attenuation rather than a single
+NaN. Stage 1 ("NaN probe") was skipped because Stage 0's unfuse-LN
+experiment passed and no NaN appeared; we now need a **range-probe**
+variant that tracks fp16 peak magnitudes per block against the fp32
+shadow.
+
+### Revert
+
+- `build/upload/cosyvoice3-coreml/Flow-N250-fp16.{mlpackage,mlmodelc}`
+  — restored from `build/flow-fp16-n250/` (the original cpuAndGPU
+  artifact, 638 MB / 669208054 bytes).
+- `FluidAudio/.../CosyVoice3ModelStore.swift` —
+  `flowConfig.computeUnits` back to `.cpuAndGPU`; docstring rewritten
+  to document the ANE attempt + revert rationale.
+- `FluidAudio/.../CosyVoice3Constants.swift` — header comment block:
+  Flow row back to `cpuAndGPU`, notes the ANE port was attempted and
+  reverted.
+- `build/upload/cosyvoice3-coreml/manifest.json` — Flow
+  `compute_units: cpuAndGPU`, purpose rewritten, size_bytes corrected.
+- `build/upload/cosyvoice3-coreml/README.md` — Flow row: "CPU + GPU";
+  opening paragraph ("Neural Engine for Prefill + HiFT, CPU+GPU for
+  Decode + Flow").
+- `FluidAudio/.../CosyVoice3Synthesizer.swift` `runHiFT()` — the
+  fp16/fp32 dtype branch is kept. It's harmless on fp32 (just takes the
+  second arm) and makes the path future-proof if a correct fp16 Flow
+  variant ever ships.
+
+### Residual hygiene
+
+- `build/flow-ane-n250/Flow-N250-ane.mlpackage` → symlink to the
+  ANE mlpackage; kept for re-debugging (range probe, per-block shadow
+  trace).
+- `build/flow-ane-fp16-n250/` — original ANE-port build; kept.
+- `verify/test_coreml_e2e_fp16.py` — `--flow-precision` choices now
+  include `"ane"` for follow-up debugging runs.
+
+### What would unblock the port
+
+1. Add per-block fp32-shadow range probe (planned Stage 1 but skipped);
+   identify which block first diverges in magnitude.
+2. Audit the BC1S rotary sin/cos pre-bake: the real-valued rotate-half
+   pattern must match x_transformers' even/odd interleaved layout
+   exactly, and the 10 timestep embeddings must all fall inside the
+   baked table.
+3. Audit `ANEAttention` softmax: without per-head scaling of QK⊤ before
+   softmax, fp16 can quietly underflow entire rows to 0 for large S.
+4. Audit `ANEAdaLayerNormZero`: `(1 + scale) * norm` with
+   `scale ∈ [-1, +1]` is fine, but larger modulation ranges (which the
+   fp32 path shrugs off) hit fp16 at 2-layer cascades.
+
+---
+
 ## Commit trail
 
 | SHA | Title |

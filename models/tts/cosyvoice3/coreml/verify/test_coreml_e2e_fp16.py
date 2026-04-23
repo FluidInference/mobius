@@ -123,7 +123,7 @@ def main() -> None:
     ap.add_argument("--output-wav", default=str(BUILD / "wavs" / "e2e_coreml_fp16.wav"))
     ap.add_argument("--compute-units", default="CPU_ONLY",
                     choices=["CPU_ONLY", "CPU_AND_GPU", "CPU_AND_NE", "ALL"])
-    ap.add_argument("--flow-precision", default="fp16", choices=["fp16", "fp16v2", "fp32"])
+    ap.add_argument("--flow-precision", default="fp16", choices=["fp16", "fp16v2", "fp32", "ane"])
     ap.add_argument("--hift-precision", default="fp16", choices=["fp16", "fp32"])
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-new-tokens", type=int, default=0)
