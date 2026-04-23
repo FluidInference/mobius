@@ -187,23 +187,12 @@ CoreML can handle dynamic input shapes, just not dynamic indexing operations.
 
 ## Files Organization
 
-### Working Solution
-- `export-decoder-stateless.py` - Export script (root directory)
-- `tests/test-stateless-coreml.py` - Test script
-- `build/cohere_decoder_stateless.mlpackage` - CoreML model (290.5 MB)
-
-### Documentation
-- `docs/CACHE_INVESTIGATION_SUMMARY.md` - This file
-- `docs/DECODER_CACHE_FIX.md` - Concise fix documentation
-- `docs/REVERSE_ENGINEERING.md` - Model architecture documentation
-- `docs/OFFICIAL_USAGE_ANALYSIS.md` - Official implementation analysis
-
-### Archive
-- `archive-failed-approaches/` - All failed attempts with explanations
-- `archive-failed-approaches/README.md` - Why each approach failed
-
-### Tests
-- `tests/` - Test and debug scripts
+This document records the historical investigation. The pipeline that
+shipped is the **cache-external decoder** (host-managed KV cache),
+exported via `exports/export-decoder-cache-external.py`. See the top-level
+`README.md` and `docs/CACHE_EXTERNAL_DELIVERED.md` for the canonical
+artifacts and I/O contract. The stateless and stateful exports referenced
+throughout this document are no longer in the tree.
 
 ## Lessons Learned
 
@@ -229,10 +218,6 @@ CoreML can handle dynamic input shapes, just not dynamic indexing operations.
 
 ## Conclusion
 
-The **stateless decoder** is the pragmatic solution:
-- Simple architecture eliminates cache management complexity
-- Fully CoreML compatible (no dynamic operations)
-- Fixes 2/3 test samples perfectly
-- O(n^2) complexity acceptable for typical transcription lengths
+The root cause was a **sliding window bug** where keeping "last 108 positions" caused positions to shift, breaking positional encoding. The fix (only pass filled positions) works perfectly in PyTorch but cannot be expressed in CoreML's static execution model.
 
-The root cause was a **sliding window bug** where keeping "last 108 positions" caused positions to shift, breaking positional encoding. The fix (only pass filled positions) works perfectly in PyTorch but can't be expressed in CoreML's static execution model, so we adopted a stateless approach instead.
+The stateless approach explored here was a stepping stone: it eliminated dynamic slicing but was O(n²) and degraded on longer sequences during validation. The pipeline ultimately moved cache management out of the model entirely (cache-external decoder), letting the Swift loader allocate K/V buffers and pass them through each step. That design is what ships in `exports/export-decoder-cache-external.py`.
