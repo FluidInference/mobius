@@ -45,8 +45,8 @@ Constants: `num_layers=8`, `num_heads=8`, `head_dim=128`, `hidden=1024`, `vocab=
 # Encoder (FP16)
 uv run python3 exports/export-encoder.py --output-dir build --precision float16
 
-# Decoder (cache-external, FP16)
-uv run python3 exports/export-decoder-cache-external.py --output-dir build --precision float16
+# Decoder (cache-external)
+uv run python3 exports/export-decoder-cache-external.py --output-dir build
 
 # Optional: INT8 encoder
 uv run python3 tools/quantize_to_int8.py
