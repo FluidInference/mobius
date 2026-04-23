@@ -110,10 +110,15 @@ def export_encoder(output_dir: Path, precision: str = "float16"):
     compute_precision = ct.precision.FLOAT16 if precision == "float16" else ct.precision.FLOAT32
 
     # Convert
+    # compute_units=CPU_ONLY + convert_to="mlprogram" match the repo
+    # convention (parakeet-tdt-v3-0.6b/coreml/individual_components.py)
+    # and the CLAUDE.md "Trace with .CpuOnly" constraint.
     mlmodel = ct.convert(
         traced_encoder,
         inputs=inputs,
         outputs=[ct.TensorType(name="hidden_states")],
+        convert_to="mlprogram",
+        compute_units=ct.ComputeUnit.CPU_ONLY,
         minimum_deployment_target=ct.target.iOS17,
         compute_precision=compute_precision,
     )
@@ -133,7 +138,7 @@ def export_encoder(output_dir: Path, precision: str = "float16"):
     print(f"  - input_features: (1, 128, 3500) float32 - mel spectrogram (35s max)")
     print(f"  - feature_length: (1,) int32 - actual length before padding")
     print(f"\nModel output:")
-    print(f"  - hidden_states: (1, 376, 1024) float16/32 - encoder output after projection")
+    print(f"  - hidden_states: (1, 438, 1024) float16/32 - encoder output after projection")
     print()
 
 

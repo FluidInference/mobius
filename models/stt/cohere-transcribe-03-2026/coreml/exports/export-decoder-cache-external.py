@@ -263,7 +263,7 @@ def main():
         inputs=inputs,
         outputs=outputs,
         convert_to="mlprogram",
-        compute_units=ct.ComputeUnit.ALL,
+        compute_units=ct.ComputeUnit.CPU_ONLY,
         minimum_deployment_target=ct.target.macOS14,
     )
 
