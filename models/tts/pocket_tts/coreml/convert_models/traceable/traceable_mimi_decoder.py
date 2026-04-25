@@ -402,7 +402,20 @@ class TraceableMimiDecoder(nn.Module):
         return state
 
     def _unpack_state(self, state: dict) -> tuple:
-        """Extract flat tensor tuple (MIMI_STATE_SPEC order) from nested dict."""
+        """Extract flat tensor tuple (MIMI_STATE_SPEC order) from nested dict.
+
+        Several state tensors are pass-throughs (the `*_first` scalars after
+        first frame, and the zero-length `res{0,1,2}_conv1_prev` tensors
+        that are never written when their layer's kernel is empty). At the
+        MIL level these outputs share an SSA value with the corresponding
+        input parameter. We deliberately do NOT try to break that aliasing
+        here — `clone()`, `+0`, etc. all get folded by `noop_elimination`
+        anyway. Instead the converter's rename pass is taught to skip
+        pass-through outputs (see `rename_outputs_semantic` in
+        `convert_mimi_decoder.py`), and the Swift schema loader has a
+        fallback that accepts the bare input name as the output for those
+        tensors.
+        """
         tensors = []
         for spec_name, module_name, key in _SPEC_TO_NESTED:
             tensors.append(state[module_name][key])

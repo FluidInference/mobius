@@ -55,3 +55,57 @@ def parse_language() -> str:
 def build_output_dir(coreml_dir: str, language: str) -> str:
     """`<coreml_dir>/build/<language>` — created on demand by the caller."""
     return os.path.join(coreml_dir, "build", language)
+
+
+# --- compute precision / units -------------------------------------------------
+#
+# Defaults switched from (FLOAT32, CPU_AND_GPU) → (FLOAT16, ALL) so the
+# converted mlpackages can be dispatched to the Apple Neural Engine where
+# possible. ANE requires FLOAT16; ops it can't run fall back to GPU/CPU
+# automatically when compute_units=ALL. FP32+CPU_AND_GPU is preserved as an
+# escape hatch via flags, since it was the original release behavior.
+
+_PRECISION_CHOICES = ("fp16", "fp32")
+_DEFAULT_PRECISION = "fp16"
+
+_UNITS_CHOICES = ("ALL", "CPU_AND_GPU", "CPU_AND_NE", "CPU_ONLY")
+_DEFAULT_UNITS = "ALL"
+
+
+def add_compute_args(parser: argparse.ArgumentParser) -> None:
+    """Register `--compute-precision` and `--compute-units` flags."""
+    parser.add_argument(
+        "--compute-precision",
+        choices=_PRECISION_CHOICES,
+        default=_DEFAULT_PRECISION,
+        help=(
+            "CoreML compute precision. fp16 is required for the Apple "
+            f"Neural Engine. Default: {_DEFAULT_PRECISION}."
+        ),
+    )
+    parser.add_argument(
+        "--compute-units",
+        choices=_UNITS_CHOICES,
+        default=_DEFAULT_UNITS,
+        help=(
+            "CoreML compute units used for the post-save load test. ALL "
+            "lets CoreML route ops to ANE when supported and fall back to "
+            f"GPU/CPU otherwise. Default: {_DEFAULT_UNITS}."
+        ),
+    )
+
+
+def resolve_compute_precision(precision: str):
+    """Map our CLI string → coremltools.precision enum (lazy import)."""
+    import coremltools as ct  # noqa: WPS433  (function-local import for CLI helper)
+    if precision == "fp16":
+        return ct.precision.FLOAT16
+    if precision == "fp32":
+        return ct.precision.FLOAT32
+    raise ValueError(f"unknown compute precision: {precision}")
+
+
+def resolve_compute_units(units: str):
+    """Map our CLI string → coremltools.ComputeUnit enum (lazy import)."""
+    import coremltools as ct  # noqa: WPS433
+    return getattr(ct.ComputeUnit, units)

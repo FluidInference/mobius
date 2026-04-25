@@ -14,11 +14,17 @@ sys.path.insert(0, _PROJECT_DIR)  # for: from pocket_tts import ...
 sys.path.insert(0, _SCRIPT_DIR)  # for: from _language_arg import ...
 sys.path.insert(0, os.path.join(_CONVERT_MODELS_DIR, "traceable"))  # for: from traceable_* import ...
 
-from _language_arg import add_language_arg, build_output_dir
+from _language_arg import (
+    add_compute_args,
+    add_language_arg,
+    build_output_dir,
+    resolve_compute_precision,
+    resolve_compute_units,
+)
 from traceable_flowlm_step import TraceableFlowLMStep
 
 
-def convert_flowlm_step(language: str):
+def convert_flowlm_step(language: str, compute_precision: str = "fp16", compute_units: str = "ALL"):
     print(f"Loading model (language={language})...")
     from pocket_tts import TTSModel
     model = TTSModel.load_model(language=language, lsd_decode_steps=8)
@@ -58,31 +64,44 @@ def convert_flowlm_step(language: str):
     with torch.no_grad():
         traced = torch.jit.trace(step_model, tuple(trace_inputs))
 
-    print("Converting to CoreML...")
+    # NOTE: Force fp32 IO contract via `dtype=np.float32` on every TensorType
+    # plus anonymous fp32 outputs. With `compute_precision=fp16`, internal
+    # ops still run in fp16 (the perf win we want) but coremltools inserts
+    # fp16↔fp32 cast ops at the IO boundary so Swift can drive the model
+    # with `MLMultiArrayDataType.float32` buffers. Without this, the macOS
+    # MLE5 binder rejects fp16 MLMultiArrays ("Invalid heap allocated handle").
+    print("Converting to CoreML (precision={}, IO=fp32)...".format(compute_precision))
     inputs = [
-        ct.TensorType(name="sequence", shape=(1, 1, 32)),
-        ct.TensorType(name="bos_emb", shape=(32,)),
+        ct.TensorType(name="sequence", shape=(1, 1, 32), dtype=np.float32),
+        ct.TensorType(name="bos_emb", shape=(32,), dtype=np.float32),
     ]
     for i in range(num_layers):
-        inputs.append(ct.TensorType(name=f"cache{i}", shape=(2, 1, max_seq_len, H, D)))
-        inputs.append(ct.TensorType(name=f"position{i}", shape=(1,)))
+        inputs.append(ct.TensorType(
+            name=f"cache{i}", shape=(2, 1, max_seq_len, H, D), dtype=np.float32))
+        inputs.append(ct.TensorType(
+            name=f"position{i}", shape=(1,), dtype=np.float32))
+
+    # Outputs: (x, is_eos, cache0_out, position0_out, ..., cacheN_out, positionN_out)
+    n_outputs = 2 + 2 * num_layers
+    ct_outputs = [ct.TensorType(dtype=np.float32) for _ in range(n_outputs)]
 
     mlmodel = ct.convert(
         traced,
         inputs=inputs,
+        outputs=ct_outputs,
         minimum_deployment_target=ct.target.iOS17,
-        compute_precision=ct.precision.FLOAT32,
+        compute_precision=resolve_compute_precision(compute_precision),
     )
 
     output_dir = build_output_dir(_COREML_DIR, language)
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, "flowlm_step.mlpackage")
-    print(f"Saving to {output_path}...")
+    print(f"Saving to {output_path} (precision={compute_precision})...")
     mlmodel.save(output_path)
 
     # Test
-    print("\nTesting CoreML model...")
-    coreml_model = ct.models.MLModel(output_path, compute_units=ct.ComputeUnit.CPU_AND_GPU)
+    print(f"\nTesting CoreML model (compute_units={compute_units})...")
+    coreml_model = ct.models.MLModel(output_path, compute_units=resolve_compute_units(compute_units))
 
     # Create test inputs
     test_seq = np.random.randn(1, 1, 32).astype(np.float32)
@@ -115,5 +134,6 @@ def convert_flowlm_step(language: str):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     add_language_arg(parser)
+    add_compute_args(parser)
     args = parser.parse_args()
-    convert_flowlm_step(args.language)
+    convert_flowlm_step(args.language, args.compute_precision, args.compute_units)

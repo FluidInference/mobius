@@ -20,6 +20,7 @@ setups.
 import argparse
 import os
 import sys
+import time
 import numpy as np
 import sentencepiece as sp
 import coremltools as ct
@@ -310,6 +311,7 @@ def generate_v4(
     output_path: str = "coreml_v4.wav",
     seed: int = 42,
     language: str | None = None,
+    compute_units: str | None = None,
 ):
     """Generate audio using pure CoreML — no PyTorch.
 
@@ -376,24 +378,71 @@ def generate_v4(
     quantizer_W = quantizer_weight.squeeze(-1).astype(np.float32)     # [512, 32]
     mimi_state_npz = dict(np.load(os.path.join(const_dir, "mimi_init_state.npz")))
 
-    # 6. Load CoreML models
-    print("\nLoading CoreML models...")
+    # 6. Load CoreML models — per-model compute-unit strategy (profiled M-series, FP16):
+    #
+    #   model         units            median_predict_ms   rationale
+    #   ────────────  ───────────────  ──────────────────  ──────────────────────────
+    #   cond_step     CPU_AND_GPU      20.42               ANE ≈ GPU (indifferent),
+    #                                                      prefer GPU to AVOID a rare
+    #                                                      MPSGraph rank-5/zero-shape
+    #                                                      assert during prefill on ANE
+    #   flowlm_step   ALL              19.91               1.97× faster than GPU;
+    #                                                      autoregressive bottleneck
+    #   flow_decoder  CPU_AND_NE       0.39                tiny model, pure ANE wins
+    #                                                      (and 8 calls/frame)
+    #   mimi_decoder  CPU_ONLY          9.90               1.74× faster than CPU+GPU;
+    #                                                      cannot use ANE (segfaults
+    #                                                      on 64-byte stride misalign)
+    #
+    # When `--compute-units` is ALL or omitted we apply the per-model overrides
+    # above. When the caller explicitly picks CPU_ONLY / CPU_AND_GPU / CPU_AND_NE
+    # we honor it for all 4 models (still pin mimi off ANE to avoid segfault).
+    units_name = compute_units or "CPU_AND_GPU"
+    if units_name == "ALL":
+        cond_units_name = "CPU_AND_GPU"
+        step_units_name = "ALL"
+        flow_units_name = "CPU_AND_NE"
+        mimi_units_name = "CPU_ONLY"
+    elif units_name == "CPU_AND_NE":
+        # Pure ANE: cond_step is slower here so leave it on CPU+GPU; mimi can't
+        # do ANE so pin to CPU+GPU.
+        cond_units_name = "CPU_AND_GPU"
+        step_units_name = "CPU_AND_NE"
+        flow_units_name = "CPU_AND_NE"
+        mimi_units_name = "CPU_AND_GPU"
+    else:
+        cond_units_name = step_units_name = flow_units_name = units_name
+        mimi_units_name = "CPU_ONLY" if units_name == "CPU_AND_GPU" else units_name
+
+    cond_units = getattr(ct.ComputeUnit, cond_units_name)
+    step_units = getattr(ct.ComputeUnit, step_units_name)
+    flow_units = getattr(ct.ComputeUnit, flow_units_name)
+    mimi_units = getattr(ct.ComputeUnit, mimi_units_name)
+    # Maintained for log-summary compatibility.
+    units = step_units
+    print(
+        f"\nLoading CoreML models (units: cond={cond_units_name}, "
+        f"flowlm={step_units_name}, flow={flow_units_name}, mimi={mimi_units_name})..."
+    )
+    t_load0 = time.time()
     coreml_cond = ct.models.MLModel(
         os.path.join(model_dir, 'cond_step.mlpackage'),
-        compute_units=ct.ComputeUnit.CPU_AND_GPU
+        compute_units=cond_units,
     )
     coreml_step = ct.models.MLModel(
         os.path.join(model_dir, 'flowlm_step.mlpackage'),
-        compute_units=ct.ComputeUnit.CPU_AND_GPU
+        compute_units=step_units,
     )
     coreml_flow = ct.models.MLModel(
         os.path.join(model_dir, 'flow_decoder.mlpackage'),
-        compute_units=ct.ComputeUnit.CPU_AND_GPU
+        compute_units=flow_units,
     )
     coreml_mimi = ct.models.MLModel(
         os.path.join(model_dir, 'mimi_decoder.mlpackage'),
-        compute_units=ct.ComputeUnit.CPU_AND_GPU
+        compute_units=mimi_units,
     )
+    load_time = time.time() - t_load0
+    print(f"Loaded 4 mlpackages in {load_time:.2f}s")
 
     # 7. Introspect cache shape + output names from CoreML models so we
     # handle both 6-layer and 24-layer packs without hard-coding.
@@ -430,6 +479,7 @@ def generate_v4(
     # 9. Prefill remaining conditioning tokens (v2: text only; v1: voice+text).
     prefill_len = prefill_tokens.shape[1]
     print(f"Prefilling KV cache ({prefill_len} tokens)...")
+    t_prefill0 = time.time()
     for tok_idx in range(prefill_len):
         cond_token = prefill_tokens[:, tok_idx:tok_idx + 1, :]  # [1, 1, 1024]
         cond_inputs = {
@@ -444,7 +494,9 @@ def generate_v4(
             positions[f'position{i}'] = cond_out[cond_pos_keys[i]]
 
     start_pos = positions['position0'][0]
-    print(f"KV cache filled to position: {start_pos}")
+    prefill_time = time.time() - t_prefill0
+    print(f"KV cache filled to position: {start_pos} (prefill {prefill_time:.2f}s, "
+          f"{prefill_len / max(prefill_time, 1e-6):.1f} tok/s)")
 
     # 10. Autoregressive generation loop (pure CoreML)
     gen_len_sec = len(text.split()) * 1 + 2.0
@@ -452,6 +504,11 @@ def generate_v4(
     print(f"\nGenerating (max {max_gen_len} frames)...")
 
     np.random.seed(seed)
+
+    t_gen0 = time.time()
+    t_step_total = 0.0
+    t_flow_total = 0.0
+    t_mimi_total = 0.0
 
     audio_chunks = []
     eos_step = None
@@ -489,7 +546,9 @@ def generate_v4(
             **caches,
             **positions,
         }
+        _t0 = time.time()
         step_out = coreml_step.predict(step_inputs)
+        t_step_total += time.time() - _t0
 
         transformer_out = step_out[step_xfmr_key]  # [1, 1, 1024]
         eos_logit = step_out[step_eos_key]  # [1, 1, 1]
@@ -520,12 +579,14 @@ def generate_v4(
         for lsd_step in range(num_lsd_steps):
             s_np = np.array([[lsd_step * dt]], dtype=np.float32)
             t_np = np.array([[(lsd_step + 1) * dt]], dtype=np.float32)
+            _t0 = time.time()
             flow_out = coreml_flow.predict({
                 'transformer_out': transformer_out_flat,
                 'latent': latent,
                 's': s_np,
                 't': t_np,
             })
+            t_flow_total += time.time() - _t0
             velocity = list(flow_out.values())[0]
             latent = latent + velocity * dt
 
@@ -534,7 +595,9 @@ def generate_v4(
         # straight in (no numpy-side standardize/quantizer).
         _ = (emb_mean, emb_std, quantizer_W)  # retained above for flow_decoder only
         mimi_inputs = {'latent': latent.astype(np.float32), **coreml_mimi_state}
+        _t0 = time.time()
         mimi_out = coreml_mimi.predict(mimi_inputs)
+        t_mimi_total += time.time() - _t0
 
         # Outputs are positional: [audio, state_0, state_1, ..., state_23]
         # where state_i matches the i-th non-`latent` input in spec order.
@@ -549,7 +612,21 @@ def generate_v4(
         if step % 20 == 0:
             print(f"  Step {step}...")
 
-    print(f"Generated {len(audio_chunks)} frames")
+    gen_time = time.time() - t_gen0
+    n_steps = len(audio_chunks)
+    audio_secs = n_steps * 0.08  # 80 ms / frame
+    rtfx = audio_secs / max(gen_time, 1e-6)
+    print(f"Generated {n_steps} frames")
+    print(
+        f"\n=== Timing (compute_units={units_name}) ===\n"
+        f"  load        : {load_time:.2f}s\n"
+        f"  prefill     : {prefill_time:.2f}s ({prefill_len} tokens)\n"
+        f"  generation  : {gen_time:.2f}s ({n_steps} frames → {audio_secs:.2f}s audio)\n"
+        f"  RTFx        : {rtfx:.3f}x  (>1 means faster than realtime)\n"
+        f"  per-step (avg): step={t_step_total/max(n_steps,1)*1000:.1f}ms "
+        f"flow×8={t_flow_total/max(n_steps,1)*1000:.1f}ms "
+        f"mimi={t_mimi_total/max(n_steps,1)*1000:.1f}ms"
+    )
 
     # Concatenate and save
     audio = np.concatenate(audio_chunks, axis=-1)
@@ -601,6 +678,15 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         default=42,
         help="Sampling seed.",
     )
+    parser.add_argument(
+        "--compute-units",
+        choices=("ALL", "CPU_AND_GPU", "CPU_AND_NE", "CPU_ONLY"),
+        default="CPU_AND_GPU",
+        help=(
+            "CoreML compute units. ALL lets CoreML route to ANE when supported. "
+            "Default CPU_AND_GPU preserves the original release behavior."
+        ),
+    )
     return parser
 
 
@@ -612,4 +698,5 @@ if __name__ == "__main__":
         output_path=args.output,
         seed=args.seed,
         language=args.language,
+        compute_units=args.compute_units,
     )
