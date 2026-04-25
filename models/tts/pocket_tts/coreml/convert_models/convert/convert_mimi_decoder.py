@@ -1,12 +1,18 @@
 """Convert Mimi streaming decoder to CoreML.
 
 Traces the TraceableMimiDecoder (which bakes in denormalize + quantize)
-and converts to CoreML .mlpackage. Strips zero-length state tensors
-from the spec to avoid Espresso crash on iOS.
+and converts to CoreML .mlpackage.
 
-Input:  latent [1, 32]       +  23 state tensors (26 minus 3 zero-length)
-Output: audio  [1, 1, 1920]  +  23 updated state tensors
+v2 schema (pocket_tts >= 2.0.0): attention dropped `end_offset`, so the
+total state count is 24 (was 26 in v1). The 3 zero-length state tensors
+(`res{0,1,2}_conv1_prev` with T=0) are kept in the mlProgram spec —
+stripping them causes "Model and main function must have same number of
+inputs and states"; the Swift side provides them as empty MLMultiArrays.
+
+Input:  latent [1, 32]       +  24 state tensors
+Output: audio  [1, 1, 1920]  +  24 updated state tensors
 """
+import argparse
 import torch
 import numpy as np
 import coremltools as ct
@@ -18,8 +24,10 @@ _CONVERT_MODELS_DIR = os.path.dirname(_SCRIPT_DIR)
 _COREML_DIR = os.path.dirname(_CONVERT_MODELS_DIR)
 _PROJECT_DIR = os.path.dirname(_COREML_DIR)
 sys.path.insert(0, _PROJECT_DIR)  # for: from pocket_tts import ...
+sys.path.insert(0, _SCRIPT_DIR)  # for: from _language_arg import ...
 sys.path.insert(0, os.path.join(_CONVERT_MODELS_DIR, "traceable"))  # for: from traceable_* import ...
 
+from _language_arg import add_language_arg, build_output_dir
 from traceable_mimi_decoder import TraceableMimiDecoder, MIMI_STATE_SPEC
 
 
@@ -78,10 +86,14 @@ def strip_zero_length_io(mlpackage_path):
     updated.save(mlpackage_path)
 
 
-def convert():
-    print("Loading PocketTTS model...")
+def convert(language: str):
+    # NOTE: Mimi codec weights are shared across all languages. We still accept
+    # a --language flag so the orchestrator can run this per language for
+    # isolated `build/<lang>/` directories; the resulting mlpackage is
+    # byte-identical across languages.
+    print(f"Loading PocketTTS model (language={language})...")
     from pocket_tts import TTSModel
-    model = TTSModel.load_model(lsd_decode_steps=8)
+    model = TTSModel.load_model(language=language, lsd_decode_steps=8)
     model.eval()
 
     print("Creating traceable Mimi decoder (with denormalize + quantize baked in)...")
@@ -113,7 +125,9 @@ def convert():
         compute_precision=ct.precision.FLOAT32,
     )
 
-    output_path = os.path.join(_COREML_DIR, "mimi_decoder.mlpackage")
+    output_dir = build_output_dir(_COREML_DIR, language)
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, "mimi_decoder.mlpackage")
     print(f"Saving to {output_path}...")
     mlmodel.save(output_path)
 
@@ -160,4 +174,7 @@ def convert():
 
 
 if __name__ == "__main__":
-    convert()
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_language_arg(parser)
+    args = parser.parse_args()
+    convert(args.language)

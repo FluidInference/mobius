@@ -2,6 +2,10 @@
 
 How the PocketTTS PyTorch model is converted to a pure CoreML pipeline with zero PyTorch runtime dependency.
 
+Every script here now accepts `--language <id>` (default: `english`). See
+[LANGUAGES.md](./LANGUAGES.md) for the list of supported IDs and the target
+HF repo layout. Outputs are written to `build/<language>/`.
+
 ---
 
 ## Architecture Overview
@@ -274,20 +278,25 @@ The `.python-version` file pins Python 3.10 (required for `pocket_tts` type synt
 
 ## Reproducing the Conversion
 
-Requires PyTorch (one-time only):
+Requires PyTorch (one-time only). All scripts accept `--language <id>`
+(default: `english`). Outputs land in `coreml/build/<language>/`.
 
 ```bash
-# 1. Export constants
-.venv/bin/python coreml/convert_assets/export_constants.py
+# Single language (English), step-by-step
+uv run python coreml/convert_assets/export_constants.py --language english
+uv run python coreml/convert_models/convert/convert_cond_step.py --language english
+uv run python coreml/convert_models/convert/convert_flowlm_step.py --language english
+uv run python coreml/convert_models/convert/convert_flow_decoder_v2.py --language english
+uv run python coreml/convert_models/convert/convert_mimi_decoder.py --language english
+uv run python coreml/convert_assets/pack_constants_bin.py --language english
 
-# 2. Convert models (each creates an .mlpackage)
-.venv/bin/python coreml/convert_models/convert/convert_cond_step.py
-.venv/bin/python coreml/convert_models/convert/convert_flowlm_step.py
-.venv/bin/python coreml/convert_models/convert/convert_flow_decoder.py
-# mimi_decoder requires a custom functional wrapper (see convert_mimi_decoder.py)
+# All upstream-published languages via the orchestrator
+./coreml/convert_all_languages.sh
+# Or a subset
+LANGUAGES="italian spanish" ./coreml/convert_all_languages.sh
 
-# 3. Run generation (no PyTorch needed after conversion)
-.venv/bin/python coreml/generate_coreml_v4.py
+# Upload (user-executed; requires HF write token)
+./coreml/upload_languages.sh
 ```
 
 ---

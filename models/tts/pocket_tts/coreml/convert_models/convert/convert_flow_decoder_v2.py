@@ -1,4 +1,5 @@
 """Convert traceable flow decoder to CoreML."""
+import argparse
 import torch
 import numpy as np
 import coremltools as ct
@@ -10,15 +11,17 @@ _CONVERT_MODELS_DIR = os.path.dirname(_SCRIPT_DIR)
 _COREML_DIR = os.path.dirname(_CONVERT_MODELS_DIR)
 _PROJECT_DIR = os.path.dirname(_COREML_DIR)
 sys.path.insert(0, _PROJECT_DIR)  # for: from pocket_tts import ...
+sys.path.insert(0, _SCRIPT_DIR)  # for: from _language_arg import ...
 sys.path.insert(0, os.path.join(_CONVERT_MODELS_DIR, "traceable"))  # for: from traceable_* import ...
 
+from _language_arg import add_language_arg, build_output_dir
 from traceable_flow_decoder import TraceableFlowDecoder
 
 
-def convert_flow_decoder():
-    print("Loading model...")
+def convert_flow_decoder(language: str):
+    print(f"Loading model (language={language})...")
     from pocket_tts import TTSModel
-    model = TTSModel.load_model(lsd_decode_steps=8)
+    model = TTSModel.load_model(language=language, lsd_decode_steps=8)
     model.eval()
 
     print("Creating traceable flow decoder...")
@@ -48,7 +51,9 @@ def convert_flow_decoder():
         compute_precision=ct.precision.FLOAT32,
     )
 
-    output_path = "flow_decoder.mlpackage"
+    output_dir = build_output_dir(_COREML_DIR, language)
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, "flow_decoder.mlpackage")
     print(f"Saving to {output_path}...")
     mlmodel.save(output_path)
 
@@ -78,4 +83,7 @@ def convert_flow_decoder():
 
 
 if __name__ == "__main__":
-    convert_flow_decoder()
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_language_arg(parser)
+    args = parser.parse_args()
+    convert_flow_decoder(args.language)
