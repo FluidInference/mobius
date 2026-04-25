@@ -25,18 +25,37 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONST_DIR = os.path.join(SCRIPT_DIR, "constants")
 BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
 
-# Decoder step output key names (from CoreML model spec)
-DECODER_LOGITS_KEY = "var_2201"
+# EXPERIMENTAL: Stateful (MLState) decoder path. Off by default.
+#
+# Enable by setting MAGPIE_STATEFUL=1. Kept for reference only — benchmarks
+# (Apple M2, 146-step real loop) showed ~212 ms/step vs ~96 ms/step for the
+# rank-4 production path: 2.2× regression. Stateful graphs run on CPU+GPU
+# only (ANE rejects them); the IO-marshaling savings from collapsing 36 cache
+# tensors don't compensate for losing ANE acceleration. See
+# ``traceable/traceable_decoder_step_stateful.py`` for full rationale.
+STATEFUL = bool(os.environ.get("MAGPIE_STATEFUL", ""))
+
+# Decoder step output key names (from CoreML model spec — rank-4 split-K/V)
+DECODER_LOGITS_KEY = "var_2129"
 DECODER_HIDDEN_KEY = "input"
-# Output cache keys (input keys are cache0..cache11)
-DECODER_CACHE_OUT_KEYS = [
-    "new_cache_1", "new_cache_3", "new_cache_5", "new_cache_7",
-    "new_cache_9", "new_cache_11", "new_cache_13", "new_cache_15",
-    "new_cache_17", "new_cache_19", "new_cache_21", "new_cache",
+
+# Stateful model uses a different logits key (re-traced graph reorders ops).
+DECODER_LOGITS_KEY_STATEFUL = "var_2124"
+# Per-layer K and V output keys (12 layers each).
+# Input keys are cache_k0..cache_k11 / cache_v0..cache_v11 / position0..position11.
+DECODER_CACHE_K_OUT_KEYS = [
+    "new_k_1", "new_k_3", "new_k_5", "new_k_7",
+    "new_k_9", "new_k_11", "new_k_13", "new_k_15",
+    "new_k_17", "new_k_19", "new_k_21", "new_k",
+]
+DECODER_CACHE_V_OUT_KEYS = [
+    "new_v_1", "new_v_3", "new_v_5", "new_v_7",
+    "new_v_9", "new_v_11", "new_v_13", "new_v_15",
+    "new_v_17", "new_v_19", "new_v_21", "new_v",
 ]
 DECODER_POSITION_KEYS = [
-    "var_169", "var_346", "var_523", "var_700", "var_877", "var_1054",
-    "var_1231", "var_1408", "var_1585", "var_1762", "var_1939", "var_2116",
+    "var_169", "var_339", "var_509", "var_679", "var_849", "var_1019",
+    "var_1189", "var_1359", "var_1529", "var_1699", "var_1869", "var_2039",
 ]
 
 # Forbidden token IDs (special tokens that should never be sampled)
@@ -291,10 +310,17 @@ def generate(
         os.path.join(BUILD_DIR, "text_encoder.mlpackage"),
         compute_units=ct.ComputeUnit.CPU_AND_GPU,
     )
-    decoder_step = ct.models.MLModel(
-        os.path.join(BUILD_DIR, "decoder_step.mlpackage"),
-        compute_units=ct.ComputeUnit.CPU_AND_GPU,
-    )
+    if STATEFUL:
+        decoder_step = ct.models.MLModel(
+            os.path.join(BUILD_DIR, "decoder_step_stateful.mlpackage"),
+            # Stateful graphs are not ANE-compatible; CPU+GPU only.
+            compute_units=ct.ComputeUnit.CPU_AND_GPU,
+        )
+    else:
+        decoder_step = ct.models.MLModel(
+            os.path.join(BUILD_DIR, "decoder_step.mlpackage"),
+            compute_units=ct.ComputeUnit.ALL,  # rank-4 split-K/V — ANE compiles for some ops
+        )
     nanocodec = ct.models.MLModel(
         os.path.join(BUILD_DIR, "nanocodec_decoder.mlpackage"),
         compute_units=ct.ComputeUnit.CPU_AND_GPU,
@@ -322,32 +348,59 @@ def generate(
     audio_emb_tables = load_audio_embeddings(constants)
     lt_weights = load_local_transformer()
 
-    # 5. Initialize KV caches (conditional)
-    def make_caches():
-        c, p = {}, {}
-        for i in range(n_layers):
-            c[f"cache{i}"] = np.zeros((2, 1, max_seq_len, sa_n_heads, d_head), dtype=np.float32)
-            p[f"position{i}"] = np.array([0.0], dtype=np.float32)
-        return c, p
+    # 5. Initialize KV caches.
+    # Stateful path: caches live on the model's MLState; we just track a
+    # per-stream scalar position. Non-stateful path: explicit numpy buffers.
+    if STATEFUL:
+        # State buffers are owned by the CoreML runtime — we just need a
+        # position counter per stream. Use a 1-element list so the closure
+        # can mutate it. Alias to ``caches``/``positions`` so the prefill +
+        # generation call sites work unchanged for both code paths.
+        caches = decoder_step.make_state()
+        positions = [0]
+        if use_cfg:
+            uncond_caches = decoder_step.make_state()
+            uncond_positions = [0]
+    else:
+        def make_caches():
+            c, p = {}, {}
+            for i in range(n_layers):
+                c[f"cache_k{i}"] = np.zeros((1, max_seq_len, sa_n_heads, d_head), dtype=np.float32)
+                c[f"cache_v{i}"] = np.zeros((1, max_seq_len, sa_n_heads, d_head), dtype=np.float32)
+                p[f"position{i}"] = np.array([0.0], dtype=np.float32)
+            return c, p
 
-    caches, positions = make_caches()
-    if use_cfg:
-        uncond_caches, uncond_positions = make_caches()
+        caches, positions = make_caches()
+        if use_cfg:
+            uncond_caches, uncond_positions = make_caches()
 
-    def run_decoder_step(audio_embed_np, enc_out_np, mask_np, cache_dict, pos_dict):
-        step_inputs = {
-            "audio_embed": audio_embed_np.astype(np.float32),
-            "encoder_output": enc_out_np.astype(np.float32),
-            "encoder_mask": mask_np[np.newaxis, :].astype(np.float32),
-        }
-        step_inputs.update(cache_dict)
-        step_inputs.update(pos_dict)
-        step_out = decoder_step.predict(step_inputs)
-        for i in range(n_layers):
-            # Output cache keys differ from input keys after scatter-based cache rewrite
-            cache_dict[f"cache{i}"] = step_out[DECODER_CACHE_OUT_KEYS[i]]
-            pos_dict[f"position{i}"] = step_out[DECODER_POSITION_KEYS[i]]
-        return step_out[DECODER_HIDDEN_KEY]  # (1, 1, d_model) — decoder hidden
+    if STATEFUL:
+        def run_decoder_step(audio_embed_np, enc_out_np, mask_np, state, pos_box):
+            step_inputs = {
+                "audio_embed": audio_embed_np.astype(np.float32),
+                "encoder_output": enc_out_np.astype(np.float32),
+                "encoder_mask": mask_np[np.newaxis, :].astype(np.float32),
+                "position": np.array([pos_box[0]], dtype=np.int32),
+            }
+            step_out = decoder_step.predict(step_inputs, state=state)
+            pos_box[0] += 1
+            return step_out[DECODER_HIDDEN_KEY]  # (1, 1, d_model)
+    else:
+        def run_decoder_step(audio_embed_np, enc_out_np, mask_np, cache_dict, pos_dict):
+            step_inputs = {
+                "audio_embed": audio_embed_np.astype(np.float32),
+                "encoder_output": enc_out_np.astype(np.float32),
+                "encoder_mask": mask_np[np.newaxis, :].astype(np.float32),
+            }
+            step_inputs.update(cache_dict)
+            step_inputs.update(pos_dict)
+            step_out = decoder_step.predict(step_inputs)
+            for i in range(n_layers):
+                # Output cache keys differ from input keys due to torch trace renaming.
+                cache_dict[f"cache_k{i}"] = step_out[DECODER_CACHE_K_OUT_KEYS[i]]
+                cache_dict[f"cache_v{i}"] = step_out[DECODER_CACHE_V_OUT_KEYS[i]]
+                pos_dict[f"position{i}"] = step_out[DECODER_POSITION_KEYS[i]]
+            return step_out[DECODER_HIDDEN_KEY]  # (1, 1, d_model) — decoder hidden
 
     # 6. Prefill context
     # Conditional path: real speaker context + real encoder output
@@ -361,7 +414,8 @@ def generate(
             run_decoder_step(uncond_ctx_token, uncond_encoder_output, uncond_text_mask, uncond_caches, uncond_positions)
         if (t + 1) % 50 == 0:
             print(f"  Prefilled {t + 1}/{T_ctx}")
-    print(f"  Prefill done. Position: {positions['position0'][0]:.0f}")
+    final_pos = positions[0] if STATEFUL else float(positions['position0'][0])
+    print(f"  Prefill done. Position: {final_pos:.0f}")
 
     # 7. Autoregressive generation with local transformer
     print(f"\nGenerating (max {max_steps} steps)...")
