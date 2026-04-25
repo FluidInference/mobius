@@ -42,8 +42,24 @@ def _walk_operations(block: Any) -> list[Any]:
     return ops
 
 
-def get_compute_plan(model_path: Path, compute_units: str) -> dict:
+DEFAULT_LOAD_TIMEOUT_S = 120.0
+
+
+def get_compute_plan(
+    model_path: Path,
+    compute_units: str,
+    load_timeout_s: float = DEFAULT_LOAD_TIMEOUT_S,
+) -> dict:
     """Load compute plan for a model with given compute units.
+
+    Args:
+        model_path: Path to the compiled .mlmodelc.
+        compute_units: One of the keys in ``COMPUTE_UNITS``.
+        load_timeout_s: Max seconds to wait for ``MLComputePlan.loadContentsOfURL``
+            to invoke its completion handler. Large graphs (≳1500 ops) can take
+            tens of seconds to analyze; the previous hard-coded 30s would
+            silently false-fail with "unknown error" when the load merely needed
+            more time.
 
     Returns dict with summary and per-operation breakdown.
     """
@@ -64,10 +80,15 @@ def get_compute_plan(model_path: Path, compute_units: str) -> dict:
     CoreML.MLComputePlan.loadContentsOfURL_configuration_completionHandler_(
         url, config, completion
     )
-    event.wait(timeout=30)
+    completed = event.wait(timeout=load_timeout_s)
     plan = result_holder.get("plan")
     error = result_holder.get("error")
 
+    if not completed:
+        raise RuntimeError(
+            f"Failed to load compute plan: timeout after {load_timeout_s:.0f}s "
+            f"(graph may be too large; pass --plan-timeout to extend)"
+        )
     if error is not None or plan is None:
         err_msg = str(error) if error else "unknown error"
         raise RuntimeError(f"Failed to load compute plan: {err_msg}")

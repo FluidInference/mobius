@@ -13,7 +13,7 @@ from typing import Optional
 
 import typer
 
-from .compute_plan import COMPUTE_UNITS, get_compute_plan
+from .compute_plan import COMPUTE_UNITS, DEFAULT_LOAD_TIMEOUT_S, get_compute_plan
 from .fallback import analyze_fallback
 from .latency import measure_cold_compile, measure_latency
 from .metadata import get_model_metadata
@@ -85,6 +85,15 @@ def bench(
         False, "--json", help="Output JSON instead of table"
     ),
     iterations: int = typer.Option(10, "--iterations", "-n", help="Number of timed iterations"),
+    plan_timeout: float = typer.Option(
+        DEFAULT_LOAD_TIMEOUT_S,
+        "--plan-timeout",
+        help=(
+            "Max seconds to wait for MLComputePlan to load per compute_units "
+            "config. Increase for graphs with >1500 ops if you see 'Failed to "
+            "load compute plan: timeout' errors."
+        ),
+    ),
     debug: bool = typer.Option(False, "--debug", help="Print progress to stderr"),
 ) -> None:
     """Profile CoreML model compute device assignments and latency."""
@@ -108,7 +117,7 @@ def bench(
         all_fb = []
         for model in models:
             _log(f"Analyzing fallback for {model.name}...")
-            fb = analyze_fallback(model, cu)
+            fb = analyze_fallback(model, cu, load_timeout_s=plan_timeout)
             all_fb.append({
                 "model_path": str(model),
                 "model_name": model.stem,
@@ -142,7 +151,7 @@ def bench(
         for unit_config in unit_configs:
             _log(f"  compute_units={unit_config}")
 
-            result = get_compute_plan(model, unit_config)
+            result = get_compute_plan(model, unit_config, load_timeout_s=plan_timeout)
 
             if detailed:
                 detail = get_detailed_profile(model, unit_config)

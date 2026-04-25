@@ -10,13 +10,20 @@ from .compute_plan import COMPUTE_UNITS, get_compute_plan
 from .private_profiler import get_detailed_profile
 
 
-def analyze_fallback(model_path: Path, compute_units: str = "cpu_and_neural_engine") -> dict:
+def analyze_fallback(
+    model_path: Path,
+    compute_units: str = "cpu_and_neural_engine",
+    load_timeout_s: float | None = None,
+) -> dict:
     """Analyze which ops fall back to CPU and why.
 
     Returns a fallback_summary dict with grouped reasons.
     """
     # Get public compute plan for device assignments
-    plan = get_compute_plan(model_path, compute_units)
+    plan_kwargs: dict[str, Any] = {}
+    if load_timeout_s is not None:
+        plan_kwargs["load_timeout_s"] = load_timeout_s
+    plan = get_compute_plan(model_path, compute_units, **plan_kwargs)
 
     # Get private profiler data for validation messages
     detail = get_detailed_profile(model_path, compute_units)
