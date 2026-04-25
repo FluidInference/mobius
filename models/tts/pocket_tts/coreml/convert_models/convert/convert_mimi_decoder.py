@@ -222,10 +222,13 @@ def strip_zero_length_io(mlpackage_path):
 
 
 def convert(language: str, compute_precision: str = "fp16", compute_units: str = "ALL"):
-    # NOTE: Mimi codec weights are shared across all languages. We still accept
-    # a --language flag so the orchestrator can run this per language for
-    # isolated `build/<lang>/` directories; the resulting mlpackage is
-    # byte-identical across languages.
+    # NOTE: Mimi codec weights are PER-LANGUAGE — upstream ships distinct
+    # `decoder_transformer` weights inside each `languages/<lang>/model.safetensors`
+    # even though the codec architecture is identical (Trial 14, see TRIALS.md).
+    # `decoder_transformer.self_attn.in_proj.weight` differs by abs_max≈1.92
+    # between English and Italian; reusing one mimi.mlpackage everywhere
+    # degrades 5 of 6 non-English packs to gibberish. The --language flag is
+    # required so each pack gets its own traced mlpackage.
     print(f"Loading PocketTTS model (language={language})...")
     from pocket_tts import TTSModel
     model = TTSModel.load_model(language=language, lsd_decode_steps=8)
