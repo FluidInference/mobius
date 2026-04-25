@@ -496,7 +496,14 @@ def generate_v4(
         if inp.name == "latent":
             continue
         shape = tuple(int(d) for d in inp.type.multiArrayType.shape)
-        coreml_mimi_state[inp.name] = np.zeros(shape, dtype=np.float32)
+        # `*_first` boolean flags must start at 1.0 so the streaming convs take
+        # the cold-start replicate-padding path (see traceable_mimi_decoder.py
+        # `_functional_streaming_conv1d_forward`: `previous = where(first, init,
+        # previous)`). All other state tensors are zero-initialized.
+        if inp.name.endswith("_first"):
+            coreml_mimi_state[inp.name] = np.ones(shape, dtype=np.float32)
+        else:
+            coreml_mimi_state[inp.name] = np.zeros(shape, dtype=np.float32)
         mimi_input_order.append(inp.name)
     # Output positional order: [audio, state0, state1, ..., state23].
     mimi_output_names = [out.name for out in mimi_spec.description.output]
