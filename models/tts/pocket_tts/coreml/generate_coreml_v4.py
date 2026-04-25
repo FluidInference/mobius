@@ -255,34 +255,6 @@ def resolve_asset_dirs(language: str | None) -> tuple[str, str]:
     base = build_output_dir(SCRIPT_DIR, language)
     return os.path.join(base, "constants"), base
 
-# Backbone model output key names (mapped from step model outputs)
-# Conditioning step model output key names
-COND_CACHE_KEYS = [
-    "new_cache_1_internal_tensor_assign_2",
-    "new_cache_3_internal_tensor_assign_2",
-    "new_cache_5_internal_tensor_assign_2",
-    "new_cache_7_internal_tensor_assign_2",
-    "new_cache_9_internal_tensor_assign_2",
-    "new_cache_internal_tensor_assign_2",
-]
-COND_POS_KEYS = [
-    "var_445", "var_864", "var_1283", "var_1702", "var_2121", "var_2365",
-]
-
-# Generation step model output key names
-STEP_CACHE_KEYS = [
-    "new_cache_1_internal_tensor_assign_2",
-    "new_cache_3_internal_tensor_assign_2",
-    "new_cache_5_internal_tensor_assign_2",
-    "new_cache_7_internal_tensor_assign_2",
-    "new_cache_9_internal_tensor_assign_2",
-    "new_cache_internal_tensor_assign_2",
-]
-STEP_POS_KEYS = [
-    "var_458", "var_877", "var_1296", "var_1715", "var_2134", "var_2553",
-]
-
-
 def prepare_text_prompt(text: str):
     """Normalize text for TTS (pure string ops, no PyTorch)."""
     text = text.strip()
@@ -367,16 +339,11 @@ def generate_v4(
     else:
         print(f"Voice KV cache (v2) from: {voice_v2_path}")
 
-    # 5. Load constants
+    # 5. Load constants. The v2 traced mimi_decoder bakes denormalize +
+    # quantizer projection internally and accepts a raw [1, 32] latent, so
+    # the legacy emb_mean / emb_std / quantizer_weight / mimi_init_state
+    # files are no longer consumed.
     bos_emb = np.load(os.path.join(const_dir, "bos_emb.npy"))
-    # The shared English `mimi_decoder.mlpackage` expects `latent: [1, 512, 1]`
-    # (post-quantization) so we apply standardize + quantizer projection in
-    # Python using the per-language constants exported by export_constants.py.
-    emb_mean = np.load(os.path.join(const_dir, "emb_mean.npy"))       # [32]
-    emb_std = np.load(os.path.join(const_dir, "emb_std.npy"))         # [32]
-    quantizer_weight = np.load(os.path.join(const_dir, "quantizer_weight.npy"))  # [512, 32, 1]
-    quantizer_W = quantizer_weight.squeeze(-1).astype(np.float32)     # [512, 32]
-    mimi_state_npz = dict(np.load(os.path.join(const_dir, "mimi_init_state.npz")))
 
     # 6. Load CoreML models — per-model compute-unit strategy (profiled M-series, FP16):
     #
@@ -536,7 +503,6 @@ def generate_v4(
     assert len(mimi_output_names) == 1 + len(mimi_input_order), (
         f"mimi output count {len(mimi_output_names)} != 1 + state inputs {len(mimi_input_order)}"
     )
-    _ = mimi_state_npz  # no longer used for initialization (kept for diagnostics)
 
     for step in range(max_gen_len):
         # Step model
@@ -593,7 +559,6 @@ def generate_v4(
         # Mimi decode. v2 traced decoder takes a raw [1, 32] latent and bakes
         # in denormalize + quantize projection internally, so feed `latent`
         # straight in (no numpy-side standardize/quantizer).
-        _ = (emb_mean, emb_std, quantizer_W)  # retained above for flow_decoder only
         mimi_inputs = {'latent': latent.astype(np.float32), **coreml_mimi_state}
         _t0 = time.time()
         mimi_out = coreml_mimi.predict(mimi_inputs)

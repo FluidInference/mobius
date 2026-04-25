@@ -37,11 +37,11 @@ DEFAULT_LANGUAGES=(
 )
 
 # IMPORTANT: mimi_decoder weights are PER-LANGUAGE, not shared.
-# Trial 14 (see TRIALS.md) disproved the earlier "shared mimi" assumption.
-# Per-language `parity_mimi.py` showed `decoder_transformer.self_attn.in_proj.weight`
-# differs by abs_max≈1.92 between English and Italian, and using English's
-# mimi.mlpackage everywhere degraded all 5 non-English langs (1/6 verify pass).
-# Tracing mimi per-language (via the loop below) yields 6/6 verify pass.
+# Trial 14 (see TRIALS.md) disproved the earlier "shared mimi" assumption:
+# `decoder_transformer.self_attn.in_proj.weight` differs by abs_max≈1.92
+# between English and Italian, and using English's mimi.mlpackage everywhere
+# degraded all 5 non-English langs (1/6 verify pass). Tracing mimi per-language
+# (via the loop below) yields 6/6 verify pass.
 
 if [[ -n "${LANGUAGES:-}" ]]; then
     # shellcheck disable=SC2206

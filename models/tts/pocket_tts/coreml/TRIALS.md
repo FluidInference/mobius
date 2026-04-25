@@ -194,7 +194,13 @@ and the slot index modulo `capacity`. Sliding-window mask uses the model's
 re-ran the same 3.68 s text — audio now matches upstream quality
 end-to-end for English long-form (user-confirmed `verify_long_fixed.wav`).
 
-### Trial 13 — Per-language regression after the wrap fix (open)
+### Trial 13 — Per-language regression after the wrap fix (superseded by Trial 14)
+
+> **Status:** the "modulo-wrap CoreML conversion drift" hypothesis below was
+> a red herring. Trial 14 traced the regression to per-language Mimi weights
+> (the assumption of a "shared codec" was wrong upstream). The diagnostic
+> ladder and "Next steps" subsection here are kept for historical context;
+> they do not represent open work.
 
 After redistributing the patched `mimi_decoder.mlpackage` to every
 `build/<lang>/`:
