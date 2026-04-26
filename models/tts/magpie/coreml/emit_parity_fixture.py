@@ -40,7 +40,8 @@ import soundfile as sf
 # Re-use everything from the main script so we never drift from the reference.
 from generate_coreml import (  # noqa: E402
     BUILD_DIR,
-    DECODER_CACHE_OUT_KEYS,
+    DECODER_CACHE_K_OUT_KEYS,
+    DECODER_CACHE_V_OUT_KEYS,
     DECODER_HIDDEN_KEY,
     DECODER_POSITION_KEYS,
     _tokenize_text,
@@ -56,8 +57,11 @@ from generate_coreml import (  # noqa: E402
 def _make_caches(n_layers: int, max_seq_len: int, n_heads: int, d_head: int):
     c, p = {}, {}
     for i in range(n_layers):
-        c[f"cache{i}"] = np.zeros(
-            (2, 1, max_seq_len, n_heads, d_head), dtype=np.float32
+        c[f"cache_k{i}"] = np.zeros(
+            (1, max_seq_len, n_heads, d_head), dtype=np.float32
+        )
+        c[f"cache_v{i}"] = np.zeros(
+            (1, max_seq_len, n_heads, d_head), dtype=np.float32
         )
         p[f"position{i}"] = np.array([0.0], dtype=np.float32)
     return c, p
@@ -163,7 +167,8 @@ def emit_full_fixture(
         inputs.update(pos_dict)
         out = decoder_step.predict(inputs)
         for i in range(n_layers):
-            cache_dict[f"cache{i}"] = out[DECODER_CACHE_OUT_KEYS[i]]
+            cache_dict[f"cache_k{i}"] = out[DECODER_CACHE_K_OUT_KEYS[i]]
+            cache_dict[f"cache_v{i}"] = out[DECODER_CACHE_V_OUT_KEYS[i]]
             pos_dict[f"position{i}"] = out[DECODER_POSITION_KEYS[i]]
         return np.asarray(out[DECODER_HIDDEN_KEY], dtype=np.float32)
 
@@ -240,26 +245,20 @@ def emit_full_fixture(
         audio = audio / peak * 0.9
 
     # --- 8. Pack fixture ---
+    # NPZ contains tensors only. The Swift `NpyReader` rejects 0-D shapes,
+    # `<U…` string dtypes, and bool dtype, so all scalar/string metadata is
+    # written to a sidecar JSON next to the .npz.
     fixture: dict[str, Any] = {
-        # Config
-        "text": np.array(text),
-        "speakerIndex": np.int32(speaker),
-        "languageCode": np.array(language),
-        "seed": np.int32(seed),
-        "useCfg": np.bool_(use_cfg),
-        "cfgScale": np.float32(cfg_scale),
-        "temperature": np.float32(temperature),
-        "topk": np.int32(topk),
-        "sampleRate": np.int32(sample_rate),
-        "minFrames": np.int32(min_frames),
         # Stage 1: tokenizer
         "textTokens": text_tokens.astype(np.int32),
         "textTokensPadded": text_tokens_padded.astype(np.int32),
         "textMask": text_mask.astype(np.float32),
         # Stage 2: text encoder
         "encoderOutput": encoder_output.astype(np.float32),
-        # Stage 3: post-prefill caches
-        **{f"prefillCache{i}": prefill_caches[f"cache{i}"].astype(np.float32)
+        # Stage 3: post-prefill caches (rank-4 split-K/V)
+        **{f"prefillCacheK{i}": prefill_caches[f"cache_k{i}"].astype(np.float32)
+           for i in range(n_layers)},
+        **{f"prefillCacheV{i}": prefill_caches[f"cache_v{i}"].astype(np.float32)
            for i in range(n_layers)},
         **{f"prefillPosition{i}": prefill_positions[f"position{i}"].astype(np.float32)
            for i in range(n_layers)},
@@ -269,11 +268,31 @@ def emit_full_fixture(
         "predictedCodes": predicted_codes_full.astype(np.int32),
         # Stage 5: audio
         "audioPcm": audio.astype(np.float32),
-        "audioSamples": np.int32(len(audio)),
-        "genTimeSeconds": np.float32(gen_time),
     }
 
     np.savez_compressed(output_path, **fixture)
+
+    # Sidecar metadata JSON (next to the .npz with the same basename).
+    meta = {
+        "text": text,
+        "speakerIndex": int(speaker),
+        "languageCode": language,
+        "seed": int(seed),
+        "useCfg": bool(use_cfg),
+        "cfgScale": float(cfg_scale),
+        "temperature": float(temperature),
+        "topk": int(topk),
+        "sampleRate": int(sample_rate),
+        "minFrames": int(min_frames),
+        "audioSamples": int(len(audio)),
+        "genTimeSeconds": float(gen_time),
+        "frames": int(predicted_codes_full.shape[1]),
+        "tokens": int(T_text),
+    }
+    meta_path = os.path.splitext(output_path)[0] + ".meta.json"
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2, ensure_ascii=False)
+    print(f"  metadata sidecar → {meta_path}")
 
     duration = len(audio) / sample_rate if sample_rate > 0 else 0.0
     rtf = gen_time / duration if duration > 0 else math.inf
