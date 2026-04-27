@@ -113,13 +113,17 @@ This directory does **not** push to HF. After conversion, compile the
 `.mlpackage`s into `.mlmodelc`s and stage them locally:
 
 ```bash
-mkdir -p build/laishere-kokoro-hf
+mkdir -p build/laishere-kokoro-hf/ANE
 for mlp in build/laishere-kokoro/Kokoro*.mlpackage; do
-    xcrun coremlcompiler compile "$mlp" build/laishere-kokoro-hf/
+    xcrun coremlcompiler compile "$mlp" build/laishere-kokoro-hf/ANE/
 done
-cp build/laishere-kokoro/{vocab.json,af_heart.bin,LICENSE} build/laishere-kokoro-hf/
-# Then user uploads to FluidInference/kokoro-laishere-coreml themselves:
-#   huggingface-cli upload FluidInference/kokoro-laishere-coreml ./build/laishere-kokoro-hf/ .
+cp -R build/laishere-kokoro/Kokoro*.mlpackage build/laishere-kokoro-hf/ANE/
+cp build/laishere-kokoro/{vocab.json,af_heart.bin} build/laishere-kokoro-hf/ANE/
+
+# This variant lives under the existing kokoro repo as the `ANE/` subdirectory
+# (sibling to the single-graph export). Upload:
+#   huggingface-cli upload FluidInference/kokoro-82m-coreml \
+#       ./build/laishere-kokoro-hf/ANE/ ANE/
 ```
 
 ## License
