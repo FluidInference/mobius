@@ -1,0 +1,21 @@
+[project]
+name = "kokoro-laishere-coreml"
+version = "0.1.0"
+description = "Kokoro TTS → 7-stage CoreML conversion (fp16+int8pal, ANE-optimized) — vendored from laishere/kokoro-coreml (MIT)"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "kokoro>=0.9.4",
+    "coremltools==9.0",
+    "numpy",
+    "scipy",
+    "soundfile",
+    "torch",
+    "huggingface_hub",
+]
+
+# NOTE: coremltools 9.0 ships an arm64 macOS wheel with the native libs
+# (libcoremlpython.so, libmilstoragepython.so) needed for BlobWriter / BlobStorage.
+# `uv sync` may fall back to the pure-python sdist (Tag: py3-none-any), which
+# breaks `convert.convert(...)` with `RuntimeError: BlobWriter not loaded`.
+# Workaround after `uv sync`:
+#     uv pip install --reinstall coremltools==9.0
