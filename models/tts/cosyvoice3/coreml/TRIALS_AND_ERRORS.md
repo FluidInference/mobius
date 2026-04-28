@@ -44,7 +44,6 @@ Convert the real HiFT vocoder directly and fix the actual blockers
 Resolution: commit `1bb5e3e feat(tts/cosyvoice3): pivot from MB-MelGAN
 sandbox to direct CoreML pipeline` — 117 files, +7351/−15292. Local
 residue (`mbmelgan_*/`, `fargan_source/`, etc.) added to `.gitignore`.
-One diagnostic script retained: `verify/count_ops_mbmelgan.py`.
 
 ---
 
@@ -999,6 +998,77 @@ shadow.
 4. Audit `ANEAdaLayerNormZero`: `(1 + scale) * norm` with
    `scale ∈ [-1, +1]` is fine, but larger modulation ranges (which the
    fp32 path shrugs off) hit fp16 at 2-layer cascades.
+
+---
+
+## Findings preserved from removed exploratory scripts
+
+A batch of one-shot debug / probe / parity scripts and the abandoned ANE
+BC1S port were removed from the tree (recoverable via `git log`). One
+non-trivial finding was **not** previously captured:
+
+### Phase 3 NaN root cause is SDPA `QK⊤` overflow, not fused `layer_norm`
+
+Phase 3 above attributed the Flow fp16 NaN to the fused `layer_norm` MIL
+op (which can't be reached by op-type-based fp32 pinning). That is a
+contributing factor but **not the primary trigger**. The `nan_probe.py`
+shadow-fp32 hooks localized the actual blowup to
+`F.scaled_dot_product_attention`: the intermediate `QK⊤ * scale` tensor
+exceeds fp16 max (65504) in **9 of 22 DiT blocks**, peaking at **~1.6M
+at block 17**. coremltools lowers SDPA to
+`matmul → mul(scale) → add(mask) → softmax → matmul`; the `QK⊤` matmul
+output materializes in ambient (fp16) precision, so even with `softmax`
+pinned to fp32 it receives already-saturated `+inf` inputs → NaN.
+
+Practical consequence: a future fp16 Flow attempt should pin
+`{matmul, select, where}` to fp32 (decompose SDPA so the QK⊤/softmax/PV
+core casts up explicitly) **before** worrying about layer_norm. The
+removed `convert-flow.py --fp32-sdpa` path implemented exactly this and
+brought parity from `NaN` to a finite drift, but couldn't be combined
+with the ANE-port BC1S rewrite, which itself failed the audio
+intelligibility gate (Stage 4 above).
+
+### Other findings — already captured above; scripts removed as one-shots
+
+- HiFT op-count audit (`count_ops_hift.py`, `count_ops_hift_decode.py`):
+  Phase 0 table — HiFT decode = 1,174 ops, full = 1,380 ops vs PR #42's
+  fabricated 705,848.
+- Sinegen `cumsum + sin` precision (`test_cumsum_precision.py`):
+  Phase 1 — wrap phase mod-2π before `sin`; CoreML vecLib FP32 `sin`
+  diverges on large arguments.
+- HiFT determinism (`test_determinism.py`): Phase 5 — Flow/HiFT
+  run-to-run max\|Δ\| = 0.0; the residual 0.52 drift was fixture
+  staleness, not non-determinism.
+- HiFT decode/source per-stage parity (`test_source_*`,
+  `test_decode_only_coreml.py`, `test_intermediate_parity.py`,
+  `test_fold_*`): all converged at the int16 floor; covered by Phase 5.
+- Upstream `forward_one_step` mask audit (`debug_llm_*`): Phase 2 —
+  HF's length-1 attention_mask zeros past tokens; routed around via
+  our `Qwen2Prefill`/`Qwen2Decode` re-implementation.
+
+### ANE BC1S port artifacts
+
+`compare-flow-ane.py`, `src/ane_attention.py`, `src/ane_layernorm.py`,
+`src/ane_layers.py`, `src/conv_pos_ane.py`, `src/dit_ane.py`,
+`src/flow_coreml_ane.py`, `src/state_dict_port.py`,
+and the matching `convert-flow.py --ane-port / --unfuse-ln / --fp32-sdpa`
+flags were removed. Reasons documented above (Stage 4 / `conv_pos_embed`
+CPU island sections):
+
+1. The BC1S rewrite's mel dynamic range collapsed by ~7 dB on the parity
+   fixture (range `[-10.094, -0.825]` vs reference `[-12.443, 5.157]`,
+   MAE 2.582), yielding audio unintelligible to both CTC-ZH and Qwen3
+   ASR. NaN-free but silent.
+2. `conv_pos_embed`'s `Conv1d(1024, 1024, k=31, groups=16)` is rejected
+   by ANEF on a `kernel_size × in_channels` weight-bandwidth basis,
+   independent of group count or activation choice. Dense `groups=1`
+   with block-diagonal weight (Option L) compiled but stayed CPU-evicted
+   at 16× FLOPs → wall-time regression.
+
+To resume the port: `git log --diff-filter=D --follow` the deleted
+files, plus the four "what would unblock the port" items in Stage 4
+(per-block fp32-shadow range probe, RoPE sin/cos audit, `ANEAttention`
+softmax scaling audit, `ANEAdaLayerNormZero` modulation-range audit).
 
 ---
 

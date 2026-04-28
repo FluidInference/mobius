@@ -104,25 +104,12 @@ than a NaN blowup. Stage 1's NaN probe was skipped because Stage 0
 produced no NaN; a **range** probe (not a NaN probe) is the first
 next step to pin the regressing block.
 
-Debugging artifacts kept for follow-up:
-
-```
-src/
-├── ane_attention.py       ANEAttention (manual SDPA, einsum-based)
-├── ane_layernorm.py       ANEUnfusedLayerNorm (axis-1 BC1S) + patch helper
-├── ane_layers.py          ANELinear (Conv2d 1x1), ANEGELU, ANEFeedForward, ANERotaryEmbedding
-├── conv_pos_ane.py        Attempts (A, C, L) to break the 77-op conv_pos_embed CPU island
-├── dit_ane.py             ANEDiTBlock, ANEAdaLayerNormZero(Final), ANEDiT top-level
-├── flow_coreml_ane.py     FlowCoreML mirror with ANEDiT replacing flow.decoder.estimator
-├── state_dict_port.py     Linear→Conv2d + LN affine reshape + rename map
-└── nan_probe.py           Binary-search and shadow-fp32 block bisection helpers
-
-build/
-├── flow-ane-fp16-n250/    Original ANE-port build
-└── flow-ane-n250/         Symlink shim for verify/test_coreml_e2e_fp16.py --flow-precision ane
-
-compare-flow-ane.py        Per-block fp32 parity between host DiT and ANE port
-```
+The ANE-port artifacts (`src/ane_*.py`, `src/dit_ane.py`,
+`src/flow_coreml_ane.py`, `src/state_dict_port.py`, `src/nan_probe.py`,
+`compare-flow-ane.py`, `convert-flow.py --ane-port / --unfuse-ln /
+--fp32-sdpa`) were removed; the salient findings are preserved in
+TRIALS_AND_ERRORS.md ("Findings preserved from removed exploratory
+scripts"). Recover the code via `git log --diff-filter=D --follow`.
 
 Swift side, the `runHiFT` dtype branch (`fullMel.dataType` → fp16/fp32)
 was kept — it's a no-op for the shipping fp32 Flow and makes the path
@@ -155,12 +142,6 @@ cd mobius/models/tts/cosyvoice3/coreml
 
 # End-to-end Python parity (shipping config)
 uv run python verify/test_coreml_e2e_fp16.py --flow-precision fp16
-
-# End-to-end with the kept ANE Flow (reproduces the silence defect)
-uv run python verify/test_coreml_e2e_fp16.py --flow-precision ane --compute-units CPU_AND_NE
-
-# Per-block ANE-port parity (fp32 host vs ANE port on random input)
-uv run python compare-flow-ane.py
 
 # Swift end-to-end
 cd ../../../../FluidAudio
