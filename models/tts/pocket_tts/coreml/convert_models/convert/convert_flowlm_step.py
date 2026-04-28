@@ -24,7 +24,73 @@ from _language_arg import (
 from traceable_flowlm_step import TraceableFlowLMStep
 
 
-def convert_flowlm_step(language: str, compute_precision: str = "fp16", compute_units: str = "ALL"):
+def _apply_int8_to_wrapper(step_model, num_layers: int):
+    """Apply Kyutai-recipe-equivalent int8 weight quantization to the traceable wrapper.
+
+    Mirrors the *layer selection* of `pocket_tts.quantization.apply_dynamic_int8(
+    flow_lm, {"attention", "ffn"})` (upstream PR kyutai-labs/pocket-tts#147),
+    but uses `coremltools.optimize.torch.quantization.PostTrainingQuantizer`
+    instead of `torch.ao.quantize_dynamic`. CoreML cannot consume
+    `quantized::linear_dynamic` ops (ct.convert raises NotImplementedError),
+    so we fall back to weight-only int8 PTQ (per-channel symmetric) on the
+    same set of linears the upstream recipe quantizes.
+
+    Why operate on the wrapper, not the upstream flow_lm: `TraceableFlowLMStep
+    .from_flowlm()` rebuilds fresh `nn.Linear` modules and copies weights via
+    `.weight.data.copy_(...)`. Quantizing the upstream `flow_lm` would not
+    propagate to the traced graph.
+
+    Quantized (4 linears per transformer layer, weight-only int8, per-channel):
+        attn{i}_in_proj  : 3072x1024
+        attn{i}_out_proj : 1024x1024
+        linear{i}_1      : 4096x1024 (FFN expand)
+        linear{i}_2      : 1024x4096 (FFN contract)
+
+    Left at fp32 (CRITICAL -- matches upstream "attention" + "ffn" config):
+        input_linear : 32x1024
+        out_eos      : 1024x1   -- EOS regression head; quantizing this
+                                   collapses the EOS dynamic range and
+                                   breaks termination (the v1 v2 bug).
+        out_norm, norm{i}_1, norm{i}_2 : LayerNorms (untouched by recipe)
+    """
+    from coremltools.optimize.torch.quantization import (
+        PostTrainingQuantizer,
+        PostTrainingQuantizerConfig,
+        ModulePostTrainingQuantizerConfig,
+    )
+
+    body_linear_names = []
+    for i in range(num_layers):
+        body_linear_names.extend([
+            f"attn{i}_in_proj",
+            f"attn{i}_out_proj",
+            f"linear{i}_1",
+            f"linear{i}_2",
+        ])
+
+    body_cfg = ModulePostTrainingQuantizerConfig(
+        weight_dtype="int8",
+        granularity="per_channel",
+        quantization_scheme="symmetric",
+    )
+    # global_config=None means "do not quantize anything by default" -- only
+    # modules explicitly named in module_name_configs get touched. This keeps
+    # input_linear, out_eos, and all norms at fp32.
+    ptq_config = PostTrainingQuantizerConfig(
+        global_config=None,
+        module_name_configs={name: body_cfg for name in body_linear_names},
+    )
+    quantizer = PostTrainingQuantizer(step_model, ptq_config)
+    quantized_model = quantizer.compress(inplace=False)
+    return quantized_model
+
+
+def convert_flowlm_step(
+    language: str,
+    compute_precision: str = "fp16",
+    compute_units: str = "ALL",
+    int8: bool = False,
+):
     print(f"Loading model (language={language})...")
     from pocket_tts import TTSModel
     model = TTSModel.load_model(language=language, lsd_decode_steps=8)
@@ -36,6 +102,16 @@ def convert_flowlm_step(language: str, compute_precision: str = "fp16", compute_
     step_model.eval()
     num_layers = step_model.num_layers
     print(f"num_layers={num_layers}")
+
+    if int8:
+        print(
+            f"Applying coremltools PTQ int8 (per-channel symmetric, weight-only) "
+            f"to attn+FFN linears ({num_layers} layers x 4 linears) -- pre-trace, "
+            f"matches upstream pocket_tts.quantization.apply_dynamic_int8 "
+            f"selection but skips out_eos/input_linear..."
+        )
+        step_model = _apply_int8_to_wrapper(step_model, num_layers)
+        step_model.eval()
 
     print("Creating example inputs...")
     B = 1
@@ -95,8 +171,11 @@ def convert_flowlm_step(language: str, compute_precision: str = "fp16", compute_
 
     output_dir = build_output_dir(_COREML_DIR, language)
     os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, "flowlm_step.mlpackage")
-    print(f"Saving to {output_path} (precision={compute_precision})...")
+    # int8 builds are saved as `flowlm_stepv2.mlpackage` to match the HF
+    # naming under `FluidInference/pocket-tts-coreml/v2/<lang>/`.
+    out_basename = "flowlm_stepv2.mlpackage" if int8 else "flowlm_step.mlpackage"
+    output_path = os.path.join(output_dir, out_basename)
+    print(f"Saving to {output_path} (precision={compute_precision}, int8={int8})...")
     mlmodel.save(output_path)
 
     # Test
@@ -135,5 +214,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     add_language_arg(parser)
     add_compute_args(parser)
+    parser.add_argument(
+        "--int8",
+        action="store_true",
+        help=(
+            "Apply torch.ao dynamic int8 quantization to attention + FFN "
+            "linears in the FlowLM transformer (per kyutai-labs/pocket-tts#147 "
+            "RECOMMENDED_CONFIG). Quantization is applied PRE-trace so the "
+            "scale/zero-point dequant happens dynamically at runtime; "
+            "input_linear and out_eos stay at fp32. Saves to "
+            "flowlm_stepv2.mlpackage."
+        ),
+    )
     args = parser.parse_args()
-    convert_flowlm_step(args.language, args.compute_precision, args.compute_units)
+    convert_flowlm_step(
+        args.language, args.compute_precision, args.compute_units, int8=args.int8
+    )

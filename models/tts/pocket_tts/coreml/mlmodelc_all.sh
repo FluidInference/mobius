@@ -47,6 +47,16 @@ MLPACKAGES=(
     mimi_decoder.mlpackage
 )
 
+# Optional int8 variant of flowlm_step (kyutai-labs/pocket-tts#147 recipe:
+# torch.ao-style dynamic quant on attn + FFN linears, fp32 elsewhere).
+# Only present in build dirs where convert_flowlm_step.py was invoked with
+# --int8. Compiled here when the .mlpackage exists so upload_languages.sh
+# can ship the .mlmodelc form. cond_step / flow_decoder / mimi_decoder are
+# NOT in this list because the upstream recipe doesn't quantize them.
+OPTIONAL_MLPACKAGES=(
+    flowlm_stepv2.mlpackage
+)
+
 if [[ -n "${LANGUAGES:-}" ]]; then
     # shellcheck disable=SC2206
     TARGETS=(${LANGUAGES})
@@ -117,7 +127,16 @@ for lang in "${TARGETS[@]}"; do
     echo "Language: $lang"
     echo "=============================================================="
 
-    for pkg_name in "${MLPACKAGES[@]}"; do
+    # Build the per-language list: required packages always, optional ones
+    # only when the .mlpackage actually exists in this build dir.
+    LANG_PACKAGES=("${MLPACKAGES[@]}")
+    for opt_pkg in "${OPTIONAL_MLPACKAGES[@]}"; do
+        if [[ -d "$BUILD_DIR/$opt_pkg" ]]; then
+            LANG_PACKAGES+=("$opt_pkg")
+        fi
+    done
+
+    for pkg_name in "${LANG_PACKAGES[@]}"; do
         total=$((total + 1))
         pkg_path="$BUILD_DIR/$pkg_name"
         out_path="$BUILD_DIR/$(basename "$pkg_name" .mlpackage).mlmodelc"

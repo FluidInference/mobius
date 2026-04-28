@@ -205,6 +205,26 @@ for lang in "${TARGETS[@]}"; do
             "languages/$lang/$artifact" \
             "Add $lang/$artifact"
     done < <(artifacts_for_lang)
+
+    # Optional flowlm_stepv2 (kyutai-labs/pocket-tts#147 selective int8
+    # via coremltools.optimize.torch PostTrainingQuantizer on attn+FFN
+    # body linears; out_eos / input_linear / cond_step / flow_decoder /
+    # mimi_decoder stay fp32). Only present when convert_flowlm_step.py
+    # was run with --int8 for this language. Set SKIP_INT8=1 to opt out.
+    # Lives under `v2/<lang>/` to match the existing HF tree.
+    if [[ -z "${SKIP_INT8:-}" ]]; then
+        for ext in mlpackage mlmodelc; do
+            if [[ "$ext" == "mlpackage" && -n "${SKIP_MLPACKAGE:-}" ]]; then continue; fi
+            if [[ "$ext" == "mlmodelc"  && -n "${SKIP_MLMODELC:-}"  ]]; then continue; fi
+            local_v2="$src/flowlm_stepv2.$ext"
+            if [[ -e "$local_v2" ]]; then
+                upload_path \
+                    "$local_v2" \
+                    "v2/$lang/flowlm_stepv2.$ext" \
+                    "Add v2/$lang/flowlm_stepv2.$ext (selective int8 attn+FFN, fp32 EOS head)"
+            fi
+        done
+    fi
 done
 
 # Optional root-level mimi refresh (Trial-14 fix for legacy clients)
