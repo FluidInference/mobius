@@ -4,7 +4,8 @@ How the PocketTTS PyTorch model is converted to a pure CoreML pipeline with zero
 
 Every script here now accepts `--language <id>` (default: `english`). See
 [LANGUAGES.md](./LANGUAGES.md) for the list of supported IDs and the target
-HF repo layout. Outputs are written to `build/<language>/`.
+HF repo layout. Outputs are written to `build/<language>/`. The int8
+variant of the FlowLM step model is documented in [PRECISION.md](./PRECISION.md).
 
 ---
 
