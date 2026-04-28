@@ -225,7 +225,17 @@ def emit_full_fixture(
 
     gen_time = time.time() - gen_start
 
-    predicted_codes_full = np.stack(per_step_codes, axis=1)  # (8, N)
+    # The EOS frame is a stop signal, not audio content — exclude it from the
+    # codec input. `per_step_codes` retains the full trace (incl. EOS) for
+    # parity checks; `predicted_codes_full` is what NanoCodec actually sees.
+    last_is_eos = (
+        len(per_step_codes) > 0
+        and bool(np.any(per_step_codes[-1] == audio_eos_id))
+    )
+    codec_codes = per_step_codes[:-1] if last_is_eos else per_step_codes
+    if not codec_codes:
+        raise RuntimeError("model emitted EOS before any audio frame")
+    predicted_codes_full = np.stack(codec_codes, axis=1)  # (8, N)
 
     # --- 7. NanoCodec decode ---
     max_frames = 256

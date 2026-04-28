@@ -75,6 +75,7 @@ PER_LANGUAGE_TOKENIZER_FILES = {
     "english": [
         "english_phoneme_token2id.json",
         "english_phoneme_phoneme_dict.json",
+        "english_phoneme_heteronyms.json",
     ],
     "spanish": [
         "spanish_phoneme_token2id.json",
@@ -101,6 +102,7 @@ PER_LANGUAGE_TOKENIZER_FILES = {
     ],
     "mandarin": [
         "mandarin_phoneme_token2id.json",
+        "mandarin_phoneme_phoneme_dict.json",
         "mandarin_phoneme_pinyin_dict.json",
         "mandarin_phoneme_tone_dict.json",
         "mandarin_phoneme_ascii_letter_dict.json",

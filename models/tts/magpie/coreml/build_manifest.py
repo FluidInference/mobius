@@ -126,16 +126,19 @@ MODEL_IO: dict[str, dict[str, Any]] = {
         "outputs": [
             {"name": "hidden_states", "dtype": "fp16", "shape": [1, 110, 768]},
             {
-                "name": "cache_*",
+                "name": "cache_k{i} / cache_v{i}",
                 "dtype": "fp16",
-                "shape": [2, 1, 512, 12, 64],
-                "count": 12,
-                "note": "12 KV-cache outputs for the 12 decoder layers",
+                "shape": [1, 512, 12, 64],
+                "count": 24,
+                "note": (
+                    "12 K + 12 V cache outputs for the 12 decoder layers "
+                    "(rank-4 split-K/V layout)"
+                ),
             },
             {
-                "name": "position_*",
-                "dtype": "int32",
-                "shape": [],
+                "name": "position{i}",
+                "dtype": "fp32",
+                "shape": [1],
                 "count": 12,
                 "note": "scalar position counter per layer",
             },
@@ -143,26 +146,64 @@ MODEL_IO: dict[str, dict[str, Any]] = {
     },
     "decoder_step": {
         "inputs": [
-            {"name": "input", "dtype": "fp16", "shape": [1, 1, 768]},
+            {"name": "audio_embed", "dtype": "fp16", "shape": [1, 1, 768]},
             {"name": "encoder_output", "dtype": "fp16", "shape": [1, 256, 768]},
             {"name": "encoder_mask", "dtype": "fp16", "shape": [1, 256]},
             {
-                "name": "cache_*",
+                "name": "cache_k{i}",
                 "dtype": "fp16",
-                "shape": [2, 1, 512, 12, 64],
+                "shape": [1, 512, 12, 64],
                 "count": 12,
+                "note": "rank-4 split-K cache per layer (i=0..11)",
             },
-            {"name": "position_*", "dtype": "int32", "shape": [], "count": 12},
+            {
+                "name": "cache_v{i}",
+                "dtype": "fp16",
+                "shape": [1, 512, 12, 64],
+                "count": 12,
+                "note": "rank-4 split-V cache per layer (i=0..11)",
+            },
+            {"name": "position{i}", "dtype": "fp32", "shape": [1], "count": 12},
         ],
         "outputs": [
             {
-                "name": "var_2201",
+                "name": "input",
+                "dtype": "fp16",
+                "shape": [1, 1, 768],
+                "note": "decoder hidden state (consumed by LocalTransformer)",
+            },
+            {
+                "name": "var_2129",
                 "dtype": "fp16",
                 "shape": [1, 1, 16192],
-                "note": "logits, reshape to (1, 1, 8, 2024) for 8 codebooks",
+                "note": (
+                    "logits, reshape to (1, 1, 8, 2024) for 8 codebooks "
+                    "(stateful variant uses var_2124 instead — see "
+                    "DECODER_LOGITS_KEY_STATEFUL in generate_coreml.py)"
+                ),
             },
-            {"name": "new_cache_*", "dtype": "fp16", "shape": [2, 1, 512, 12, 64], "count": 12},
-            {"name": "var_*", "dtype": "int32", "shape": [], "count": 12, "note": "advanced positions"},
+            {
+                "name": "new_k* / new_v*",
+                "dtype": "fp16",
+                "shape": [1, 512, 12, 64],
+                "count": 24,
+                "note": (
+                    "12 K + 12 V outputs per step with non-uniform names "
+                    "(new_k_1..new_k_21, new_k; new_v_1..new_v_21, new_v) — "
+                    "see DECODER_CACHE_K_OUT_KEYS / DECODER_CACHE_V_OUT_KEYS in "
+                    "generate_coreml.py for the canonical mapping per layer"
+                ),
+            },
+            {
+                "name": "var_169 / var_339 / ... / var_2039",
+                "dtype": "fp32",
+                "shape": [1],
+                "count": 12,
+                "note": (
+                    "advanced position counters per layer — see "
+                    "DECODER_POSITION_KEYS in generate_coreml.py"
+                ),
+            },
         ],
     },
     "nanocodec_decoder": {
@@ -224,8 +265,9 @@ LOCAL_TRANSFORMER_NPY = [
 
 # ---------- per-language tokenizer files --------------------------------------
 
-# Mirrors MagpieLanguage in the Swift port. Languages with no entries use
-# ByT5 byte-level tokenization (algorithmic, no lookup files).
+# Mirrors MagpieLanguage in the Swift port. Must agree with
+# PER_LANGUAGE_TOKENIZER_FILES in prepare_hf_upload.py — every entry here
+# is sha256'd against the staged hf-upload/ tree.
 
 LANGUAGE_FILES: dict[str, dict[str, Any]] = {
     "english": {
@@ -270,9 +312,26 @@ LANGUAGE_FILES: dict[str, dict[str, Any]] = {
             "tokenizer/mandarin_jieba_dict.json",
         ],
     },
-    "french": {"tokenizer_kind": "byt5", "files": []},
-    "italian": {"tokenizer_kind": "byt5", "files": []},
-    "vietnamese": {"tokenizer_kind": "byt5", "files": []},
+    "french": {
+        "tokenizer_kind": "char",
+        "files": [
+            "tokenizer/french_chartokenizer_token2id.json",
+        ],
+    },
+    "italian": {
+        "tokenizer_kind": "phoneme",
+        "files": [
+            "tokenizer/italian_phoneme_token2id.json",
+            "tokenizer/italian_phoneme_phoneme_dict.json",
+        ],
+    },
+    "vietnamese": {
+        "tokenizer_kind": "phoneme",
+        "files": [
+            "tokenizer/vietnamese_phoneme_token2id.json",
+            "tokenizer/vietnamese_phoneme_phoneme_dict.json",
+        ],
+    },
 }
 
 
