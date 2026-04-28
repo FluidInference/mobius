@@ -22,10 +22,10 @@ class TraceableFlowLMStep(nn.Module):
     Use this after text/voice conditioning is already in the KV cache.
     """
 
-    def __init__(self, max_seq_len: int = 200):
+    def __init__(self, num_layers: int = 6, max_seq_len: int = 200):
         super().__init__()
 
-        self.num_layers = 6
+        self.num_layers = num_layers
         self.embed_dim = 1024
         self.num_heads = 16
         self.head_dim = 64
@@ -59,7 +59,8 @@ class TraceableFlowLMStep(nn.Module):
     @classmethod
     def from_flowlm(cls, flow_lm_model, max_seq_len: int = 200) -> "TraceableFlowLMStep":
         """Create traceable step model from original FlowLM model."""
-        wrapper = cls(max_seq_len)
+        num_layers = len(flow_lm_model.transformer.layers)
+        wrapper = cls(num_layers=num_layers, max_seq_len=max_seq_len)
 
         # Copy input linear
         wrapper.input_linear.weight.data.copy_(flow_lm_model.input_linear.weight.data)
@@ -215,25 +216,23 @@ class TraceableFlowLMStep(nn.Module):
         self,
         sequence: torch.Tensor,  # [B, T, 32] input latents
         bos_emb: torch.Tensor,  # [32] BOS embedding
-        cache0: torch.Tensor, position0: torch.Tensor,
-        cache1: torch.Tensor, position1: torch.Tensor,
-        cache2: torch.Tensor, position2: torch.Tensor,
-        cache3: torch.Tensor, position3: torch.Tensor,
-        cache4: torch.Tensor, position4: torch.Tensor,
-        cache5: torch.Tensor, position5: torch.Tensor,
+        *cache_and_positions: torch.Tensor,
     ):
         """Forward pass for step generation.
+
+        `cache_and_positions` is interleaved: (cache0, position0, cache1, position1, ...).
+        Length must be 2*num_layers.
 
         Args:
             sequence: [B, T, 32] input latents (NaN for BOS)
             bos_emb: [32] BOS embedding
-            cache0-5: [2, B, max_seq_len, 16, 64] KV caches (pre-filled with text/voice)
-            position0-5: [B] current positions
+            cacheN: [2, B, max_seq_len, 16, 64] KV caches (pre-filled with text/voice)
+            positionN: [B] current positions
 
         Returns:
             transformer_out: [B, T, 1024]
             is_eos: [B, T, 1]
-            new_cache0-5, new_position0-5
+            then interleaved (new_cacheN, new_positionN) for each layer.
         """
         # Replace NaN values with BOS embedding
         sequence = torch.where(torch.isnan(sequence), bos_emb, sequence)
@@ -241,8 +240,8 @@ class TraceableFlowLMStep(nn.Module):
         # Project input (NO text concatenation - text is already in KV cache)
         x = self.input_linear(sequence)  # [B, T, 1024]
 
-        caches = [cache0, cache1, cache2, cache3, cache4, cache5]
-        positions = [position0, position1, position2, position3, position4, position5]
+        caches = list(cache_and_positions[0::2])
+        positions = list(cache_and_positions[1::2])
         new_caches = []
         new_positions = []
 
@@ -271,16 +270,12 @@ class TraceableFlowLMStep(nn.Module):
         x = self.out_norm(x)
         is_eos = self.out_eos(x)
 
-        return (
-            x,
-            is_eos,
-            new_caches[0], new_positions[0],
-            new_caches[1], new_positions[1],
-            new_caches[2], new_positions[2],
-            new_caches[3], new_positions[3],
-            new_caches[4], new_positions[4],
-            new_caches[5], new_positions[5],
-        )
+        # Interleave outputs: (new_cache0, new_pos0, new_cache1, new_pos1, ...)
+        tail = []
+        for nc, np_ in zip(new_caches, new_positions):
+            tail.append(nc)
+            tail.append(np_)
+        return tuple([x, is_eos] + tail)
 
 
 def test_traceable_step():

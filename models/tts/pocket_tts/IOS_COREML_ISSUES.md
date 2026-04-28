@@ -4,6 +4,117 @@ Document of issues encountered while bringing PocketTTS CoreML models to iOS.
 
 ---
 
+## ANE Dispatch Status Summary
+
+Final compute-unit assignment for the 4 PocketTTS inference models, with the
+share of pipeline wall-time each accounts for and the share of that wall-time
+that actually reaches the Apple Neural Engine.
+
+| Model | Final dispatch | Calls per audio frame | % of pipeline wall-time | % of wall-time on ANE | ANE attempts | Outcome |
+|---|---|---|---|---|---|---|
+| `cond_step.mlmodelc` | `.cpuAndGPU` | ~0.1 (once per chunk prefill) | <0.1% | **0%** | Tried `.all`; tripped MPSGraph rank-5 / zero-shape assert on the `(2,1,512,16,64)` KV cache during prefill | ❌ Forced off ANE |
+| `flowlm_step.mlmodelc` | `.all` | ~12.5 | ~10% | ~70-90% (matmul/attn on ANE; softmax + lm_head spill to CPU) | Initial direct convert worked. ANE 1.97× faster than GPU on this layer | ✅ Kept on ANE |
+| `flow_decoder.mlmodelc` | `.all` | ~100 (8 LSD steps × 12.5 frames) | ~3% | ~80-100% (tiny MLP + Euler step, fully ANE-friendly) | Initial direct convert worked | ✅ Kept on ANE |
+| `mimi_decoder.mlmodelc` | `.cpuOnly` | ~12.5 | ~10% | **0%** | 3 distinct failures: (1) zero-length tensor Espresso crash, (2) fp16 precision compounding → audible beeping, (3) 64-byte stride misalign segfault | ❌ Forced off ANE |
+| `mimi_encoder.mlmodelc` (voice cloning, optional) | `.cpuAndGPU` | once per voice | n/a (offline) | **0%** | Not attempted for ANE — same streaming-state architecture as decoder | ❌ Not on ANE |
+
+**Pipeline-level ANE utilization**: of the ~23% of wall-time spent in CoreML
+inference (the rest is Swift glue, audio post-processing, and disk I/O), only
+the `flowlm_step` + `flow_decoder` portion (~13% of total) actually touches the
+ANE. That's roughly **~10% of total pipeline wall-time on ANE, ~90% on CPU/GPU**.
+
+The architectural ceiling is set by `mimi_decoder`: as long as the streaming
+codec uses fp16 state feedback across 23 tensors at 12.5 Hz, the audio decode
+path is locked to CPU.
+
+---
+
+## ANE Failure Detail Per Model
+
+### `cond_step` — MPSGraph rank-5 / zero-shape assert
+
+| Aspect | Detail |
+|---|---|
+| Symptom | MPSGraph internal assertion when ANE partitioner tries to fold prefill into an ANE block |
+| Root cause | KV cache shape `(2, 1, 512, 16, 64)` — rank 5, leading `2` is k/v stack. ANE's compiler hits a rank-planner edge case |
+| Op replacement attempted? | No |
+| Why no fix attempted | Call frequency is ~0.1/frame → <0.1% of wall-time. Even a 10× ANE speedup saves nothing measurable. Splitting `(2,1,...)` into separate k/v tensors would force a matching rewrite in `flowlm_step` (which consumes the stacked layout) for zero gain |
+| Workaround | `.cpuAndGPU` — robust, no behavior change |
+| Public match | Partial — rank-5 is documented as a legacy CoreML constraint; MPSGraph ANE access is undocumented and unreliable |
+
+### `flowlm_step` — ✅ ANE WIN (no rewrite needed)
+
+| Aspect | Detail |
+|---|---|
+| Why it works | Stateless feed-forward step, no per-frame state accumulation. Float16 drift is bounded to a single matmul stack |
+| Dispatch | matmul/attention runs on ANE; softmax + lm_head fall back to CPU (ANE has limited softmax support) |
+| Measured speedup | 1.97× faster on ANE than GPU |
+| Pipeline impact | This is **the** hot model. The ANE win here drives end-to-end RTFx |
+
+### `flow_decoder` — ✅ ANE WIN (trivial)
+
+| Aspect | Detail |
+|---|---|
+| Why it works | Tiny model: `(1,1024) + (1,32) + 2 scalars → (1,32)`. Pure MLP + Euler integration. No state |
+| Dispatch | Fully ANE-eligible |
+| Pipeline impact | Called 8× per output frame at LSD step. Small absolute time but high call frequency — ANE keeps it cheap |
+
+### `mimi_decoder` — ❌ ANE FAIL (3 distinct failure modes)
+
+#### Failure A: Zero-length tensor Espresso crash
+
+| Aspect | Detail |
+|---|---|
+| Symptom | `EXC_BAD_ACCESS (KERN_INVALID_ADDRESS at 0x0...18)` in `Espresso::blob_cpu::__copy_to_host` on `com.apple.CoreMLBatchProcessingQueue` |
+| Root cause | 3 state tensors with zero-length dim from `StreamingConv1d(kernel_size=1)` layers: `res0_conv1_prev` `[1,128,0]`, `res1_conv1_prev` `[1,64,0]`, `res2_conv1_prev` `[1,32,0]` |
+| Op replacement attempted? | Yes, two iterations |
+| Iteration 1 | MIL-level strip of 3 zero-length inputs/outputs + 3 identity ops (`strip_zero_length_io` in `convert_mimi_decoder.py:166-221`). Worked for `neuralNetwork` format |
+| Iteration 2 (mlProgram regression) | Spec-strip causes `"Model and main function must have same number of inputs and states"` because the MIL function still references them. Skipped at line 313-318 |
+| Final fix | Swift-side: NULL-buffer sentinel allocates empty `MLMultiArray` with the zero-length shape via the schema discovery path |
+| Public match | ✅ Documented community workaround pattern: "avoid empty/degenerate tensor shapes in the converted model" |
+
+#### Failure B: fp16 precision compounding → beeping artifact
+
+| Aspect | Detail |
+|---|---|
+| Symptom | Audible periodic beeping/buzzing in synthesized audio when `compute_units = .all` |
+| Diagnosis ladder | (1) original vs MIL-stripped models: bit-identical in Python — model not at fault. (2) Python CoreML `CPU_AND_GPU`: no beeping. (3) Swift CoreML `.all` (ANE active): beeping reproducible |
+| Root cause | 23 streaming state tensors feed back every 80ms (`convtr*_partial`, `upsample_partial`, attention KV caches). ANE's fp16 quantization perturbations (~1e-3 per frame) compound across 75 frames/sec into audible artifacts |
+| Op replacement attempted? | No |
+| Why no fix attempted | The "non-ANE-friendly op" is **the entire streaming feedback topology**, not a specific op. Fixes would require: per-op fp32 precision overrides (not exposed by CoreML), or restructuring Mimi to non-streaming (doesn't exist), or int8 quantization with proper scaling on the feedback path (huge engineering, no upstream support) |
+| Final fix | `.cpuOnly` — CPU computes in fp32 implicitly. Bonus: CPU is 1.74× faster than GPU on this small streaming-conv model |
+| Public match | ✅ Apple's official guidance: "Streaming/stateful CoreML models with many feedback tensors should avoid the ANE." Confirmed by Mish activation issue (coremltools#2359) and MatAnyone alpha-matte drift |
+
+#### Failure C: 64-byte stride misalignment segfault
+
+| Aspect | Detail |
+|---|---|
+| Symptom | Hard segfault (no recoverable error) when ANE picks up some state tensors |
+| Root cause | ANE requires last-axis tile strides aligned to 64 bytes. Mimi's residual stack uses channel dims `[32, 64, 128, 256, 512]`. The 32-channel (`32 × 2 = 64 bytes`) and 64-channel layers sit *exactly* on the boundary; some intermediate transposed-conv outputs drop below 32 channels and misalign |
+| Op replacement attempted? | No |
+| Why no fix attempted | Padding every state tensor's channel dim to a multiple of 32 (= 64 bytes ÷ 2 for fp16) cascades through the residual stack and changes the model contract. Failure B already disqualifies ANE, so this fix has no payoff |
+| Public match | ✅ Documented Apple ML research: "the last axis of an ANE buffer is not packed; it must be contiguous and aligned to 64 bytes." Recent Apple Dev Forums report: stateful mlprogram fails on ANE if state tensor width is not a multiple of 32 |
+
+---
+
+## v2 Conversion Effort — Net ANE Impact: 0%
+
+The v2 round of conversion edits (FP32 IO declarations, anonymous outputs to
+break SSA aliasing, semantic output renaming, NULL-buffer sentinel) was **not
+ANE-related**. It was IO-contract plumbing for an `"Invalid heap allocated
+handle"` MLE5 binder error that:
+
+- Has **no public footprint** (zero indexed search results for the exact string)
+- Was likely solvable on the Swift side via `MLShapedArray<Float16>` or fp16
+  `dataPointer` reads, not by regenerating mlpackages
+- Produced **no perf win** in benchmarks (v1 RTFx ≈ 0.10×, v2 RTFx ≈ 0.07-0.09×)
+
+The v2 work has residual value for converting the 9 new language packs (which
+have no prior CoreML conversions to regress against), but did not move the
+ANE utilization needle on English.
+
+---
+
 ## 1. Zero-Length Tensor Crash (Espresso / mimi_decoder)
 
 **Status**: Fixed

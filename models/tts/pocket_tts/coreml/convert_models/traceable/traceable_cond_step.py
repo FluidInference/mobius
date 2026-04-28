@@ -24,9 +24,9 @@ class TraceableCondStep(nn.Module):
     Output: updated KV caches and positions
     """
 
-    def __init__(self, max_seq_len: int = 200):
+    def __init__(self, num_layers: int = 6, max_seq_len: int = 200):
         super().__init__()
-        self.num_layers = 6
+        self.num_layers = num_layers
         self.embed_dim = 1024
         self.num_heads = 16
         self.head_dim = 64
@@ -45,7 +45,8 @@ class TraceableCondStep(nn.Module):
 
     @classmethod
     def from_flowlm(cls, flow_lm_model, max_seq_len: int = 200) -> "TraceableCondStep":
-        wrapper = cls(max_seq_len)
+        num_layers = len(flow_lm_model.transformer.layers)
+        wrapper = cls(num_layers=num_layers, max_seq_len=max_seq_len)
 
         # Copy transformer layers (same weights as step model, no input_linear)
         for i, layer in enumerate(flow_lm_model.transformer.layers):
@@ -191,22 +192,20 @@ class TraceableCondStep(nn.Module):
     def forward(
         self,
         conditioning: torch.Tensor,  # [B, 1, 1024] pre-embedded conditioning token
-        cache0: torch.Tensor, position0: torch.Tensor,
-        cache1: torch.Tensor, position1: torch.Tensor,
-        cache2: torch.Tensor, position2: torch.Tensor,
-        cache3: torch.Tensor, position3: torch.Tensor,
-        cache4: torch.Tensor, position4: torch.Tensor,
-        cache5: torch.Tensor, position5: torch.Tensor,
+        *cache_and_positions: torch.Tensor,
     ):
         """Process one conditioning token through transformer.
+
+        `cache_and_positions` is interleaved: (cache0, position0, cache1, position1, ...).
+        Length must be 2*num_layers.
 
         No input_linear (conditioning is already 1024d).
         No BOS handling. No EOS output.
         """
         x = conditioning  # [B, 1, 1024]
 
-        caches = [cache0, cache1, cache2, cache3, cache4, cache5]
-        positions = [position0, position1, position2, position3, position4, position5]
+        caches = list(cache_and_positions[0::2])
+        positions = list(cache_and_positions[1::2])
         new_caches = []
         new_positions = []
 
@@ -230,14 +229,12 @@ class TraceableCondStep(nn.Module):
             new_caches.append(new_cache)
             new_positions.append(new_pos)
 
-        return (
-            new_caches[0], new_positions[0],
-            new_caches[1], new_positions[1],
-            new_caches[2], new_positions[2],
-            new_caches[3], new_positions[3],
-            new_caches[4], new_positions[4],
-            new_caches[5], new_positions[5],
-        )
+        # Interleave outputs: (new_cache0, new_pos0, new_cache1, new_pos1, ...)
+        outputs = []
+        for nc, np_ in zip(new_caches, new_positions):
+            outputs.append(nc)
+            outputs.append(np_)
+        return tuple(outputs)
 
 
 if __name__ == "__main__":

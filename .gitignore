@@ -10,3 +10,21 @@ __pycache__
 
 # Large numpy arrays (exported constants - regenerate via export_constants.py)
 *.npy
+
+# PyTorch model weights (download from HuggingFace)
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+
+# ONNX models
+*.onnx
+
+# PocketTTS multi-language build output (~33 GB; staged for HF upload only)
+models/tts/pocket_tts/coreml/v2/
+models/tts/pocket_tts/coreml/build
+models/tts/pocket_tts/coreml/build/
+
+# PocketTTS upstream source pulled by uv (not part of this repo)
+models/tts/pocket_tts/pocket_tts/

@@ -30,6 +30,7 @@ coreml = ["coremltools>=8.0"]
 
 [dependency-groups]
 dev = [
+    "coremltools>=9.0",
     "coverage>=7.6.12",
     "line-profiler>=5.0.0",
     "pytest>=9.0.2",
