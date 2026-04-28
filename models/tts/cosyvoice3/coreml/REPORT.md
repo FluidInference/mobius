@@ -72,16 +72,17 @@ Per-model parity vs PyTorch fp32 reference:
 | Script | Produces | Notes |
 |---|---|---|
 | `convert-llm.py` | LLM-Prefill + LLM-Decode (stateful) | Selective fp32 pins (`pow/reduce_mean/rsqrt/softmax`) for RMSNorm stability |
-| `convert-flow.py` | Flow-N250-fp16 | Default path is cpuAndGPU fp16; `--ane-port` path is experimental (see ANE port section) |
+| `convert-flow.py` | Flow-N250-fp16 | Default path is cpuAndGPU fp16 |
 | `convert-coreml.py` | HiFT-T500-fp16 | Folded weight-norm, iSTFT stays on ANE |
-| `convert-campplus.py` | CAMPPlus speaker embed | Python-side only (not in shipping pipeline — prompt embeddings pre-extracted per voice) |
-| `convert-speech-tokenizer.py` | SpeechTokenizerV3 | Python-side only (CoreML version had 44/87 token drift from MIL argmax instability) |
 | `export-embeddings.py` | Runtime embedding tables | Qwen2 + speech_embedding safetensors |
+| `compare-models.py` | — | HiFT mlpackage parity oracle (vs `ref-T*.pt`) |
 
-CAMPPlus and SpeechTokenizerV3 were intentionally dropped from the
-shipping Swift pipeline: they run server-side once per voice, not per
-synthesis. Their outputs (speaker embedding, prompt speech tokens) are
-baked into the per-voice safetensors bundle.
+CAMPPlus and SpeechTokenizerV3 are intentionally Python-side only: they
+run server-side once per voice, not per synthesis. Their outputs
+(speaker embedding, prompt speech tokens) are baked into the per-voice
+safetensors bundle. The CoreML conversion attempts (CAMPPlus parity ok,
+SpeechTokenizerV3 had 44/87 VQ-argmin drift) were removed; findings
+preserved in `TRIALS_AND_ERRORS.md`.
 
 ## Flow ANE port — attempted and reverted
 

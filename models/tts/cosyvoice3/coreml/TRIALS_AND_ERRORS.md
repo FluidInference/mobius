@@ -1046,6 +1046,52 @@ intelligibility gate (Stage 4 above).
   HF's length-1 attention_mask zeros past tokens; routed around via
   our `Qwen2Prefill`/`Qwen2Decode` re-implementation.
 
+### Phase 4 follow-up: SpeechTokenizerV3 44/87 drift root cause is VQ `argmin`
+
+Phase 4 documents the 44/87 token mismatch as "treated as tolerable".
+The mechanism (captured from `convert-speech-tokenizer.py`'s docstring,
+script removed) is a vector-quantizer head that does
+`(x - codebook)**2 → reduce_sum → argmin`. Even with `softmax`,
+`reduce_mean`, `pow`, and `rsqrt` pinned to fp32, the `sub`/`reduce_sum`
+pair on the encoder output × codebook distance accumulates fp16
+rounding error large enough to flip `argmin` to a neighboring code,
+which is why the script's `_make_precision` extends the pin set to
+`{pow, reduce_mean, rsqrt, softmax, reduce_sum, sub}`. The drift is
+consistent with VQ neighbor-flips (off-by-one tokens), not a
+catastrophic divergence — which is why the runtime path (Python ORT
+fp32, server-side once per voice) sidesteps it entirely.
+
+### Phase 4 follow-up: ONNX-to-CoreML monkey-patches needed for both ONNX models
+
+Phase 1's "op-not-implemented chain" was solved by rewriting the HiFT
+wrapper. CAMPPlus and SpeechTokenizerV3 came in as opaque ONNX, so the
+fix instead lives in the conversion script preamble (also captured
+before deleting both scripts):
+
+- **CAMPPlus**: `onnx2torch` emits `torch.prod` for ONNX `ReduceProd`
+  used in shape math. Worked around with a `@register_torch_op def prod`
+  that lowers to `mb.reduce_prod` with the (axis, keep_dims) pulled out
+  of the torch IR.
+- **SpeechTokenizerV3**: needs `@register_torch_op` shims for
+  `greater_equal` and `less_equal`, plus an `onnx2torch._CONVERTER_REGISTRY`
+  alias entry: `OperationDescription("GreaterOrEqual", v=12)` reused
+  for `v=13/14/15/16` (ONNX opset 16 ships `GreaterOrEqual` v16 but
+  `onnx2torch` only registers v12).
+
+These three patches are the prerequisite for re-running the
+ONNX → onnx2torch → torch.jit.trace → coremltools pipeline for either
+model. They are *not* needed for the LLM/Flow/HiFT path (no ONNX hop).
+
+### Phase 3 / 11 follow-up: Flow per-(variant, compute-unit) bench can hang
+
+`bench_flow_one.py` was a standalone single-row variant of `bench_flow.py`
+specifically because in-process iteration over `(fp32, fp16, fp16v2) ×
+(cpuOnly, cpuAndGPU, cpuAndNE, all)` could hang on certain rows
+(notably fp16 × all on macOS 26.x), losing already-collected data from
+prior rows. Per-row spawn with an external timeout was the workflow
+fix. The shipping decision (`Flow-N250-fp32` on `cpuAndGPU` for Swift)
+is in REPORT.md; the row-by-row matrix isn't worth re-running.
+
 ### ANE BC1S port artifacts
 
 `compare-flow-ane.py`, `src/ane_attention.py`, `src/ane_layernorm.py`,
