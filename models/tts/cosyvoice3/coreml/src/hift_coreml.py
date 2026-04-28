@@ -101,7 +101,7 @@ class HiFTCoreML(nn.Module):
             num_valid_frames: (1,) int32 — real mel frames before padding
         Returns:
             audio: (B, T*480) — full padded audio
-            audio_length_samples: (1,) int32 — num_valid_frames * hop_len
+            audio_length_samples: (1,) int32 — num_valid_frames * hop_len * upsample_total
         """
         # F0 prediction in FP32 (upstream uses FP64; ANE doesn't support FP64).
         f0 = self.gen.f0_predictor(mel, finalize=True)  # (B, T)

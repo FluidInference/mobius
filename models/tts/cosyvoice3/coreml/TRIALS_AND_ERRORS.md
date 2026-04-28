@@ -12,8 +12,11 @@ Conventions used below:
 - Numbers without a unit are (MAE, max\|Δ\|, SNR in dB, cosine sim, ms)
   depending on context.
 - File paths are absolute unless otherwise noted.
-- Shipping config: `LLM-Prefill-T256-M768-fp16`, `LLM-Decode-M768-fp16`,
-  `Flow-N250-fp32`, `HiFT-T500-fp16`, `embeddings-runtime-fp32.safetensors`.
+- Shipping config: `LLM-Prefill-T256-M768-fp16`,
+  `LLM-Decode-M768-fp16-stateful`, `Flow-N250-fp16`, `HiFT-T500-fp16`,
+  `embeddings-runtime-fp32.safetensors`. Phase 3 below captures the
+  earlier `Flow-N250-fp32` era and the fp16 NaN dead-ends; Phase 3
+  "Resurrection" notes when fp16 became shippable.
 
 ---
 
@@ -283,12 +286,26 @@ End-to-end comparison:
 > pin layer_norm (fused op) to fp32 too — but layer_norm appears 500+
 > times in the DiT graph, which mostly negates the ANE benefit."*
 
-**Shipping**: `Flow-N250-fp32` (fp16 abandoned). Canonical comment in
-`CosyVoice3Models.swift`:
+**Then-shipping**: `Flow-N250-fp32`. fp16 was abandoned at this point —
+the Swift `CosyVoice3Models.swift` comment captured the verdict:
 
 ```
 /// - Flow-N250-fp32 (fp16 causes NaN; fused 'layer_norm' cannot be pinned)
 ```
+
+### Resurrection — fp16 becomes the shipping artifact
+
+The Phase 3 NaN finding above did not stick. The current shipping artifact
+in `build/upload/cosyvoice3-coreml/` is `Flow-N250-fp16` (cpuAndGPU,
+fp16 dtype, mel MAE 4.7e-02 vs fp32 reference, no NaN on the shipping
+fixture). `convert-flow.py --fp16` reproduces it with
+`FP32_OPS = {pow, reduce_mean, rsqrt, softmax, layer_norm, gelu}`. Why
+the earlier "fp16 v2 (+ layer_norm + gelu)" still NaN'd while the
+current run does not is **not pinned down here** — candidates include
+fixture differences (synthetic vs the shipping `zero_shot_prompt`),
+coremltools version drift, or stride/dtype changes in the wrapper. The
+empirical state is what `manifest.json` declares. The historical narrative
+above is preserved as the trail of attempts.
 
 ### Compute-unit quirk
 
@@ -301,20 +318,24 @@ Not the root cause — the real culprit was an MLMultiArray stride bug
 (Phase 5).
 
 **Shipping**: Flow Python side = `CPU_ONLY`; Swift Flow = `.cpuAndGPU`
-(not ANE — GPU compensates for ANE-blocked fp32 throughput).
+on the fp16 artifact (not ANE — the ANE-port BC1S rewrite was attempted
+and reverted, see REPORT.md "Flow ANE port — attempted and reverted").
 
 ### End-to-end matrix
+
+Phase 3 matrix (historical — **not the current shipping config**):
 
 | Config | parity | e2e | ASR |
 |---|---|---|---|
 | Flow fp32 + HiFT fp32 | exact | ~50 s (CPU) | correct |
-| **Flow fp32 + HiFT fp16** (shipping) | corr 1.0 | passes | correct |
+| Flow fp32 + HiFT fp16 (then-shipping) | corr 1.0 | passes | correct |
 | Flow fp16v1 + HiFT fp16 | NaN | 11.7 s | empty |
 | Flow fp16v2 + HiFT fp16 | NaN | 20.4 s | empty |
 | all fp16 | NaN | corr 0.71 | empty |
 
-Related commits: `b31d1e3` (fp16 NaN captured), `baf565d`
-(fp16v2 with layer_norm+gelu pinned).
+Current shipping = **Flow fp16 + HiFT fp16** (see "Resurrection" above
+and REPORT.md). Related commits: `b31d1e3` (fp16 NaN captured),
+`baf565d` (fp16v2 with layer_norm+gelu pinned).
 
 ---
 

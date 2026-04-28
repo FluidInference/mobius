@@ -72,7 +72,7 @@ Per-model parity vs PyTorch fp32 reference:
 | Script | Produces | Notes |
 |---|---|---|
 | `convert-llm.py` | LLM-Prefill + LLM-Decode (stateful) | Selective fp32 pins (`pow/reduce_mean/rsqrt/softmax`) for RMSNorm stability |
-| `convert-flow.py` | Flow-N250-fp16 | Default path is cpuAndGPU fp16 |
+| `convert-flow.py` | Flow-N250-fp{16,32} | Pass `--fp16` for the shipping cpuAndGPU fp16 build (default is fp32 reference) |
 | `convert-coreml.py` | HiFT-T500-fp16 | Folded weight-norm, iSTFT stays on ANE |
 | `export-embeddings.py` | Runtime embedding tables | Qwen2 + speech_embedding safetensors |
 | `compare-models.py` | — | HiFT mlpackage parity oracle (vs `ref-T*.pt`) |

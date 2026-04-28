@@ -39,12 +39,12 @@ def _make_precision(fp16: bool):
     """FP16 everywhere except numerically sensitive ops.
 
     Flow has RMSNorm / LayerNorm + softmax attention inside the DiT blocks.
-    Pinning {pow, reduce_mean, rsqrt, softmax, layer_norm, gelu} to fp32
-    is necessary but **not sufficient** — the QK^T matmul output saturates
-    in fp16 in 9 of 22 DiT blocks (peak ~1.6M at block 17), producing NaN
-    even with `softmax` pinned. See TRIALS_AND_ERRORS.md Phase 3 + the
-    "Findings preserved from removed exploratory scripts" section.
-    Shipping config is `Flow-N250-fp32`.
+    Pins {pow, reduce_mean, rsqrt, softmax, layer_norm, gelu} to fp32. The
+    shipping artifact is `Flow-N250-fp16` (mel MAE 4.7e-02 vs fp32 ref,
+    no NaN on the shipping fixture); pass `--fp16` to produce it. The
+    fp32 default of this helper exists for parity oracles and debugging.
+    See TRIALS_AND_ERRORS.md Phase 3 for the full fp16 history including
+    earlier NaN dead-ends.
     """
     if not fp16:
         return ct.precision.FLOAT32
