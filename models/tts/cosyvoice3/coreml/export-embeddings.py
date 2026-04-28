@@ -108,7 +108,7 @@ def main() -> None:
                 "speech_embedding[prompt_speech_ids]"
                 "], dim=1)"
             ),
-            "stop_tokens": [6561, 6762],
+            "stop_tokens": [6561, 6761],
             "sos": 6561,
             "task_id": 6563,
             "endofprompt": 151646,

@@ -5,8 +5,8 @@ __pycache__/
 *.egg-info/
 venv_*/
 
-# Dependencies (lockfile regenerated from pyproject.toml)
-uv.lock
+# uv.lock is intentionally tracked (matches other models/*/coreml/ targets)
+# for reproducible dependency resolution.
 
 # Logs
 *.log

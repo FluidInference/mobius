@@ -95,6 +95,10 @@ class SineGen2CoreML(nn.Module):
             scale_factor=self.upsample_scale,
             mode="nearest",
         ).transpose(1, 2)
+        # Wrap phase modulo 2π so the argument to sin() stays in [0, 2π),
+        # avoiding CoreML FP32 sin() precision drift on large arguments
+        # (cumsum * upsample_scale can reach ~7.5e5 rad for 5s audio).
+        phase_up = phase_up % (2.0 * np.pi)
         return torch.sin(phase_up)
 
     def forward(self, f0: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:

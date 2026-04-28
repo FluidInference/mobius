@@ -52,9 +52,11 @@ def main():
     gen = build_gen()
     wrapper = HiFTCoreML(gen).eval()
 
+    num_valid_frames = torch.tensor([T], dtype=torch.int32)
+
     print("PyTorch forward...")
     with torch.no_grad():
-        audio_torch = wrapper(mel)
+        audio_torch, _ = wrapper(mel, num_valid_frames)
     print(f"  torch range: [{audio_torch.min().item():.4f}, {audio_torch.max().item():.4f}]")
 
     print(f"Loading mlpackage {args.mlpackage}...")
@@ -62,8 +64,8 @@ def main():
     mlmodel = ct.models.MLModel(args.mlpackage, compute_units=cu)
 
     print("CoreML predict...")
-    out = mlmodel.predict({"mel": mel.numpy()})
-    audio_ml = out[list(out.keys())[0]]
+    out = mlmodel.predict({"mel": mel.numpy(), "num_valid_frames": num_valid_frames.numpy()})
+    audio_ml = out["audio"]
     print(f"  coreml range: [{audio_ml.min():.4f}, {audio_ml.max():.4f}]")
 
     a_t = audio_torch.numpy().flatten()

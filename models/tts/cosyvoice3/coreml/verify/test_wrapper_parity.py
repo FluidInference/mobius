@@ -46,7 +46,7 @@ def main():
         s_fp32 = s_fp32.transpose(1, 2)
         audio_ref_fp32, _ = m_ref2.decode(x=mel, s=s_fp32, finalize=True), None
 
-        audio_wrap = wrapper(mel)
+        audio_wrap, _ = wrapper(mel, torch.tensor([mel.shape[-1]], dtype=torch.int32))
 
     L = min(audio_ref.shape[-1], audio_wrap.shape[-1], audio_ref_fp32.shape[-1])
     a_ref = audio_ref[..., :L]

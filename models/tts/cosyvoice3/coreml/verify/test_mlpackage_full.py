@@ -41,12 +41,13 @@ def main():
     raw = torch.randn(1, 80, 250) * 0.3
     mel = torch.cumsum(raw, dim=-1) * 0.05 + torch.linspace(-2.0, -6.0, 80).view(1, 80, 1)
 
+    num_valid_frames = torch.tensor([mel.shape[-1]], dtype=torch.int32)
     with torch.no_grad():
-        audio_t = wrapper(mel)
+        audio_t, _ = wrapper(mel, num_valid_frames)
     a_t = audio_t.numpy().flatten()
 
-    out = ml.predict({"mel": mel.numpy()})
-    a_m = list(out.values())[0].flatten()
+    out = ml.predict({"mel": mel.numpy(), "num_valid_frames": num_valid_frames.numpy()})
+    a_m = out["audio"].flatten()
 
     L = min(a_t.size, a_m.size)
     a_t = a_t[:L]

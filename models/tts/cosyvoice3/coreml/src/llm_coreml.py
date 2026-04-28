@@ -38,6 +38,27 @@ def _build_rope_inv_freq(head_dim: int, rope_theta: float) -> torch.Tensor:
     )
 
 
+def _resolve_rope_theta(cfg) -> float:
+    """Resolve RoPE base across transformers versions.
+
+    Older Qwen2Config exposes ``rope_theta`` directly. Newer versions move it
+    into ``rope_parameters`` (sometimes under the key ``"rope_theta"``,
+    sometimes ``"base"``), and ``rope_parameters`` itself can be ``None``,
+    so a plain ``hasattr`` check is not enough.
+    """
+    direct = getattr(cfg, "rope_theta", None)
+    if direct is not None:
+        return float(direct)
+    params = getattr(cfg, "rope_parameters", None)
+    if isinstance(params, dict):
+        for key in ("rope_theta", "base"):
+            if key in params and params[key] is not None:
+                return float(params[key])
+    raise AttributeError(
+        "Config exposes neither rope_theta nor rope_parameters['rope_theta'/'base']"
+    )
+
+
 def _rope_cos_sin(positions: torch.Tensor, inv_freq: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
     """Compute cos/sin for the given integer ``positions``.
 
@@ -276,7 +297,7 @@ class Qwen2Prefill(nn.Module):
         self.num_kv_heads = cfg.num_key_value_heads
         self.head_dim     = cfg.hidden_size // cfg.num_attention_heads
         self.hidden_size  = cfg.hidden_size
-        self.rope_theta   = cfg.rope_parameters["rope_theta"] if hasattr(cfg, "rope_parameters") else cfg.rope_theta
+        self.rope_theta   = _resolve_rope_theta(cfg)
         self.max_len      = max_len
         self.t_prefill    = t_prefill
 
@@ -381,7 +402,7 @@ class Qwen2DecodeStateful(nn.Module):
         self.num_kv_heads = cfg.num_key_value_heads
         self.head_dim     = cfg.hidden_size // cfg.num_attention_heads
         self.hidden_size  = cfg.hidden_size
-        self.rope_theta   = cfg.rope_parameters["rope_theta"] if hasattr(cfg, "rope_parameters") else cfg.rope_theta
+        self.rope_theta   = _resolve_rope_theta(cfg)
         self.max_len      = max_len
 
         self.register_buffer(
@@ -480,7 +501,7 @@ class Qwen2Decode(nn.Module):
         self.num_kv_heads = cfg.num_key_value_heads
         self.head_dim     = cfg.hidden_size // cfg.num_attention_heads
         self.hidden_size  = cfg.hidden_size
-        self.rope_theta   = cfg.rope_parameters["rope_theta"] if hasattr(cfg, "rope_parameters") else cfg.rope_theta
+        self.rope_theta   = _resolve_rope_theta(cfg)
         self.max_len      = max_len
 
         self.register_buffer(
