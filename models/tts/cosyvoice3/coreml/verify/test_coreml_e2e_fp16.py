@@ -1,9 +1,9 @@
 """End-to-end CoreML TTS test using the larger fp16 buckets.
 
-Differences from test_coreml_e2e.py:
+Shipping config buckets:
   * Flow  : build/flow-fp16-n250/Flow-N250-fp16.mlpackage    (N_total=250 → 500 mel)
   * HiFT  : build/hift-fp16-t500/HiFT-T500-fp16.mlpackage    (500 mel → 10 s audio)
-  * LLM   : unchanged (already fp16, M=768)
+  * LLM   : fp16, M=768
 
 Usage:
     uv run python verify/test_coreml_e2e_fp16.py \
