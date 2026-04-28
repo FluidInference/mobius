@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+venv_*/
+
+# uv.lock is intentionally tracked (matches other models/*/coreml/ targets)
+# for reproducible dependency resolution.
+
+# Logs
+*.log
+
+# Generated audio
+*.wav
+
+# Compiled / packaged CoreML artifacts (regenerate from conversion scripts)
+*.mlmodelc/
+*.mlpackage/
+
+# Conversion output tree (large; contains mlpackages, safetensors, fixtures, refs)
+build/
+
+# Downloaded upstream CosyVoice3 checkpoints (multi-GB; fetched from HF / ModelScope)
+cosyvoice3_dl/
+cosyvoice_repo/
+cosyvoice_dl/
+CosyVoiceSwift/
+ParallelWaveGAN/
+fargan_source/
+
+# Legacy MB-MelGAN sandboxes (removed from repo; ignore any local residue)
+mbmelgan_training_data/
+mbmelgan_quickstart/
+mbmelgan_pretrained/
+mbmelgan_quality_test/
+mbmelgan_standalone_test/
+pretrained_models/
+precision_test/
+rangedim_test/
+rangedim_quickstart_test/
+compiled/
+converted/
+decoder_layers/
+
+# Swift app scratch (imported via symlink from FluidAudio during development)
+swift/
+
+# Stray tool output files (e.g. `sample <pid> > -`)
+/-
+
+# Upstream clones that the verify/ scripts pull in-place
+verify/CosyVoice/
+verify/cosyvoice_dl/
+verify/out/
