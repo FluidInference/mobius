@@ -1,0 +1,13 @@
+# Generated artifacts — do not commit. License posture: local-only.
+coreml/*.mlpackage/
+coreml/*.mlmodelc/
+checkpoints/
+reference_audio/
+
+# Upstream code is vendored locally for tracing; do not redistribute via this repo.
+vendor/
+
+__pycache__/
+.uv/
+.venv/
+*.pyc
