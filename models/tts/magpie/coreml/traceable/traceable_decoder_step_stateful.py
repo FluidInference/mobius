@@ -1,36 +1,50 @@
-"""Traceable decoder step wrapper for CoreML conversion (rank-4 ANE-friendly).
+"""EXPERIMENTAL — DO NOT USE IN PRODUCTION.
 
-Each layer's KV cache is split into separate rank-4 K and V tensors so the ANE
-backend can compile the model. The previous rank-5 single-tensor cache
-``(2, B, max_seq, H, D)`` was rejected by ``ANECompile`` and forced the model
-onto the GPU at ~64 ms/step.
+Stateful (MLState) variant of ``traceable_decoder_step.py``. Kept as a
+documented dead-end so future agents don't repeat the experiment.
 
-Key changes vs. the original:
-  * Per-layer state is ``(cache_k, cache_v, position)`` — three rank-4/scalar
-    tensors instead of one rank-5 plus a scalar.
-  * Causal mask ``-1e9`` -> ``-3e4`` (fp16 max is ±65504; ``-1e9`` overflows
-    to ``-inf`` and the ANE compiler tends to reject out-of-range constants).
-  * Cross-attention's memory mask is added (instead of ``masked_fill``) using
-    the same fp16-safe constant so the cross-attn step is also ANE-friendly.
+Benchmark result (Apple M2, macOS 26.5, 146-step real loop):
+  rank-4 production (this file's non-stateful sibling): ~96 ms/step (97.3% ANE)
+  this stateful variant (CPU_AND_GPU only):            ~212 ms/step
+  → 2.2× regression. Rejected.
 
-Each step:
-1. Embed one audio token + receive encoder output.
-2. Run 12 decoder layers (causal self-attn + cross-attn + FFN).
-3. Return logits for next token + updated K/V/positions per layer.
+Why it loses for Magpie (vs CosyVoice3 where MLState gave ~3× speedup):
+  Magpie's rank-4 decoder_step already lands 97.3% of cost on ANE. MLState
+  graphs are ANE-incompatible, so they force CPU_AND_GPU. The IO-marshaling
+  savings from collapsing 39 inputs / 38 outputs to 4 / 2 are dwarfed by the
+  loss of ANE acceleration.
+
+Variant of ``traceable_decoder_step.py`` that uses CoreML ``MLState`` (stateful
+buffers) instead of passing 36 KV+position tensors through the model interface
+on every step.
+
+Differences vs. ``traceable_decoder_step.TraceableDecoderStep``:
+  * Per-layer K and V caches are ``register_buffer``-ed (24 buffers total) and
+    mutated in place via slice assignment.
+  * Forward signature shrinks to 4 inputs: (audio_embed, encoder_output,
+    encoder_mask, position). Position is a single shared scalar — all layers
+    advance in lockstep so we don't statefy 12 copies of it.
+  * Outputs shrink to 2: (logits, decoder_hidden). Cache updates are side
+    effects on the state buffers.
+  * Cross-attention path and fp16-safe ``MASK_NEG`` constant are unchanged.
 """
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
-# fp16 max is ±65504; use a safely-representable negative value for masked
-# softmax positions. -3e4 stays well within fp16 range and gives ~exp(-30000)
-# ≈ 0 after softmax so behaviour is numerically identical to -1e9.
+# fp16 max is ±65504; -3e4 is safely representable and gives ~exp(-30000) ≈ 0
+# after softmax. Identical numerical behaviour to -1e9 without the overflow.
 MASK_NEG = -3.0e4
 
 
-class TraceableCausalSelfAttention(nn.Module):
-    """Single-step causal self-attention with rank-4 split K/V cache."""
+class StatefulCausalSelfAttention(nn.Module):
+    """Single-step causal self-attention with state-buffer K/V caches.
+
+    The K and V caches are owned by the parent ``StatefulDecoderLayer`` (so all
+    buffers live on a single module for clean ``ct.StateType`` registration).
+    This module receives the buffers by reference and mutates them in place.
+    """
 
     def __init__(self, d_model, n_heads, d_head=None):
         super().__init__()
@@ -40,53 +54,54 @@ class TraceableCausalSelfAttention(nn.Module):
         self.qkv_proj = nn.Linear(d_model, 3 * n_heads * self.d_head, bias=False)
         self.o_proj = nn.Linear(n_heads * self.d_head, d_model, bias=False)
 
-    def forward(self, x, kv_k, kv_v, position):
+    def forward(self, x, k_cache, v_cache, position):
         """
         x:        (B, 1, d_model)
-        kv_k:     (B, max_seq, H, D)
-        kv_v:     (B, max_seq, H, D)
-        position: (1,)
+        k_cache:  (B, max_seq, H, D)  — mutated in place
+        v_cache:  (B, max_seq, H, D)  — mutated in place
+        position: (1,) scalar — current write index (also used for causal mask)
         """
-        B, T, _ = x.shape  # T = 1 (single step)
-        max_seq = kv_k.shape[1]
+        B, T, _ = x.shape  # T = 1
+        max_seq = k_cache.shape[1]
 
         qkv = self.qkv_proj(x)
         qkv = qkv.view(B, T, 3, self.n_heads, self.d_head)
         q, k, v = qkv[:, :, 0], qkv[:, :, 1], qkv[:, :, 2]  # each (B, 1, H, D)
 
-        # One-hot write mask along ``max_seq`` (rank-4 broadcast).
-        # Use arange/equal compare instead of ``one_hot[pos_idx] = 1.0`` so the
-        # graph lowers to elementwise ops (no ``scatter_nd`` — ANE rejects it).
-        positions_range = torch.arange(max_seq, dtype=x.dtype, device=x.device)
-        mask = (positions_range == position).to(x.dtype).view(1, max_seq, 1, 1)
+        # In-place slice write — pure indexed_update (no scatter_nd).
+        # Cast position to int via clamp for use as a slice bound.
+        pos_int = position.to(torch.int32)
+        # Slice bounds need to be Python ints during tracing; we materialize via
+        # ``.item()``-equivalent through a 1-element tensor. CoreML's tracer will
+        # capture the dynamic write index as a runtime variable.
+        start = pos_int[0]
+        end = start + 1
 
-        # Broadcast new (B, 1, H, D) → (B, max_seq, H, D); then blend with old cache.
-        k_new = k.expand(B, max_seq, self.n_heads, self.d_head)
-        v_new = v.expand(B, max_seq, self.n_heads, self.d_head)
-        new_k = kv_k * (1.0 - mask) + k_new * mask
-        new_v = kv_v * (1.0 - mask) + v_new * mask
+        # Cast new K/V to match buffer dtype (fp16 for the converted graph).
+        k_cache[:, start:end, :, :] = k.to(k_cache.dtype)
+        v_cache[:, start:end, :, :] = v.to(v_cache.dtype)
+
+        # Reshape for batched matmul.
+        q4 = q.transpose(1, 2)                    # (B, H, 1, D)
+        k4 = k_cache.permute(0, 2, 1, 3)          # (B, H, max_seq, D)
+        v4 = v_cache.permute(0, 2, 1, 3)          # (B, H, max_seq, D)
 
         # Causal mask: keep positions ≤ current `position`, drop the rest.
+        positions_range = torch.arange(max_seq, dtype=x.dtype, device=x.device)
         causal_mask = (positions_range <= position).to(x.dtype).view(1, 1, 1, max_seq)
 
-        q4 = q.transpose(1, 2)            # (B, H, 1, D)
-        k4 = new_k.permute(0, 2, 1, 3)    # (B, H, max_seq, D)
-        v4 = new_v.permute(0, 2, 1, 3)    # (B, H, max_seq, D)
-
-        attn = torch.matmul(q4, k4.transpose(-2, -1)) * self.scale
+        attn = torch.matmul(q4, k4.to(x.dtype).transpose(-2, -1)) * self.scale
         attn = attn + (1.0 - causal_mask) * MASK_NEG
         attn = F.softmax(attn, dim=-1)
-        out = torch.matmul(attn, v4)      # (B, H, 1, D)
+        out = torch.matmul(attn, v4.to(x.dtype))  # (B, H, 1, D)
 
         out = out.transpose(1, 2).reshape(B, 1, -1)
         out = self.o_proj(out)
-
-        new_position = position + 1.0
-        return out, new_k, new_v, new_position
+        return out
 
 
-class TraceableCrossAttention(nn.Module):
-    """Cross-attention to encoder output (non-causal, full attention)."""
+class StatefulCrossAttention(nn.Module):
+    """Cross-attention to encoder output (non-causal, stateless)."""
 
     def __init__(self, d_model, n_heads, d_memory, d_head=None):
         super().__init__()
@@ -106,10 +121,8 @@ class TraceableCrossAttention(nn.Module):
         k, v = kv[:, :, 0].transpose(1, 2), kv[:, :, 1].transpose(1, 2)
 
         attn = torch.matmul(q, k.transpose(-2, -1)) * self.scale
-
         if memory_mask is not None:
-            # Add fp16-safe penalty instead of `masked_fill(-inf)` for ANE.
-            mem_mask_f = memory_mask.to(x.dtype).unsqueeze(1).unsqueeze(2)  # (B, 1, 1, T_m)
+            mem_mask_f = memory_mask.to(x.dtype).unsqueeze(1).unsqueeze(2)
             attn = attn + (1.0 - mem_mask_f) * MASK_NEG
 
         attn = F.softmax(attn, dim=-1)
@@ -118,9 +131,7 @@ class TraceableCrossAttention(nn.Module):
         return self.o_proj(out)
 
 
-class TraceableFFN(nn.Module):
-    """Position-wise feed-forward for decoder (kernel_size=1 ⇒ matmul + GELU)."""
-
+class StatefulFFN(nn.Module):
     def __init__(self, d_model, d_ffn, kernel_size=1):
         super().__init__()
         self.conv1 = nn.Conv1d(d_model, d_ffn, kernel_size, padding=0, bias=False)
@@ -134,29 +145,47 @@ class TraceableFFN(nn.Module):
         return x.transpose(1, 2)
 
 
-class TraceableDecoderLayer(nn.Module):
-    """Single decoder transformer layer with self-attn, cross-attn, and FFN."""
+class StatefulDecoderLayer(nn.Module):
+    """One decoder layer; owns its k_cache / v_cache as registered buffers."""
 
-    def __init__(self, d_model, d_ffn, sa_n_heads, xa_n_heads, xa_d_memory,
-                 kernel_size=1, xa_d_head=None):
+    def __init__(self, layer_idx, d_model, d_ffn, sa_n_heads, xa_n_heads, xa_d_memory,
+                 max_seq_len, kernel_size=1, xa_d_head=None):
         super().__init__()
+        self.layer_idx = layer_idx
+        self.d_head = d_model // sa_n_heads
+        self.n_heads = sa_n_heads
+
         self.norm_sa = nn.LayerNorm(d_model, bias=False)
-        self.self_attn = TraceableCausalSelfAttention(d_model, sa_n_heads)
+        self.self_attn = StatefulCausalSelfAttention(d_model, sa_n_heads)
 
         self.has_xattn = xa_n_heads is not None
         if self.has_xattn:
             self.norm_xa_query = nn.LayerNorm(d_model, bias=False)
             self.norm_xa_memory = nn.LayerNorm(xa_d_memory, bias=False)
-            self.cross_attn = TraceableCrossAttention(d_model, xa_n_heads, xa_d_memory, xa_d_head)
+            self.cross_attn = StatefulCrossAttention(d_model, xa_n_heads, xa_d_memory, xa_d_head)
 
         self.norm_ff = nn.LayerNorm(d_model, bias=False)
-        self.ffn = TraceableFFN(d_model, d_ffn, kernel_size)
+        self.ffn = StatefulFFN(d_model, d_ffn, kernel_size)
 
-    def forward(self, x, kv_k, kv_v, position, encoder_output=None, encoder_mask=None):
-        # Self-attention.
+        # Register cache buffers (fp16 to match converted-graph precision).
+        # Persistent=False so they don't appear in state_dict and won't trip
+        # weight-load checks.
+        self.register_buffer(
+            "k_cache",
+            torch.zeros(1, max_seq_len, sa_n_heads, self.d_head, dtype=torch.float16),
+            persistent=False,
+        )
+        self.register_buffer(
+            "v_cache",
+            torch.zeros(1, max_seq_len, sa_n_heads, self.d_head, dtype=torch.float16),
+            persistent=False,
+        )
+
+    def forward(self, x, position, encoder_output=None, encoder_mask=None):
+        # Self-attention (mutates self.k_cache / self.v_cache in place).
         residual = x
         x_norm = self.norm_sa(x)
-        sa_out, new_k, new_v, new_position = self.self_attn(x_norm, kv_k, kv_v, position)
+        sa_out = self.self_attn(x_norm, self.k_cache, self.v_cache, position)
         x = residual + sa_out
 
         # Cross-attention.
@@ -172,15 +201,26 @@ class TraceableDecoderLayer(nn.Module):
         x = self.norm_ff(x)
         x = self.ffn(x)
         x = residual + x
+        return x
 
-        return x, new_k, new_v, new_position
 
+class StatefulDecoderStep(nn.Module):
+    """Stateful single-step decoder. K/V caches live as buffers on each layer.
 
-class TraceableDecoderStep(nn.Module):
-    """Complete single-step decoder with rank-4 split K/V caches.
+    Forward inputs (4):
+        audio_embed:    (B, 1, d_model)
+        encoder_output: (B, T_enc, d_model)
+        encoder_mask:   (B, T_enc) bool
+        position:       (1,) scalar — write index for this step (shared across layers)
 
-    For each of ``n_layers`` decoder layers the model takes THREE state tensors
-    (``cache_k``, ``cache_v``, ``position``) and returns three updated outputs.
+    Forward outputs (2):
+        logits:         (B, 1, num_codebooks * tokens_per_codebook * frame_stack)
+        decoder_hidden: (B, 1, d_model)
+
+    State (24 buffers; named ``k_cache_{i}``, ``v_cache_{i}`` for i in 0..n-1
+    after ``flatten_state_buffers`` is called):
+        k_cache_{i}: (1, max_seq, H, D) fp16
+        v_cache_{i}: (1, max_seq, H, D) fp16
     """
 
     def __init__(self, n_layers, d_model, d_ffn, sa_n_heads, xa_n_heads, xa_d_memory,
@@ -196,66 +236,62 @@ class TraceableDecoderStep(nn.Module):
         self.num_tokens_per_codebook = num_tokens_per_codebook
         self.frame_stacking_factor = frame_stacking_factor
         self.d_head = d_model // sa_n_heads
+        self.sa_n_heads = sa_n_heads
 
         if use_pos_emb:
             self.position_embeddings = nn.Embedding(max_pos, d_model)
 
         self.layers = nn.ModuleList([
-            TraceableDecoderLayer(
-                d_model, d_ffn, sa_n_heads, xa_n_heads, xa_d_memory, kernel_size, xa_d_head
+            StatefulDecoderLayer(
+                i, d_model, d_ffn, sa_n_heads, xa_n_heads, xa_d_memory,
+                max_seq_len, kernel_size, xa_d_head,
             )
-            for _ in range(n_layers)
+            for i in range(n_layers)
         ])
 
-        self.norm_out = nn.Identity()  # may be replaced by a LayerNorm in `from_magpie`
+        self.norm_out = nn.Identity()
         self.final_proj = nn.Linear(
             d_model, num_codebooks * num_tokens_per_codebook * frame_stacking_factor)
 
-    def forward(self, audio_embed, encoder_output, encoder_mask,
-                # 12 layers × (cache_k, cache_v, position) = 36 flat state args.
-                ck0, cv0, p0, ck1, cv1, p1, ck2, cv2, p2,
-                ck3, cv3, p3, ck4, cv4, p4, ck5, cv5, p5,
-                ck6, cv6, p6, ck7, cv7, p7, ck8, cv8, p8,
-                ck9, cv9, p9, ck10, cv10, p10, ck11, cv11, p11):
-        """
-        Args:
-            audio_embed:      (B, 1, d_model)
-            encoder_output:   (B, T_enc, d_model)
-            encoder_mask:     (B, T_enc) bool
-            ck{i}, cv{i}:     (B, max_seq, H, D) per layer
-            p{i}:             (1,) scalar position per layer
+        # Promote per-layer buffers to top-level names so coremltools can pick
+        # them up via ``ct.StateType(name="k_cache_{i}")``.
+        self.flatten_state_buffers()
 
-        Returns flat tuple:
-            logits, decoder_hidden,
-            new_ck0, new_cv0, new_p0, …, new_ck11, new_cv11, new_p11
-        """
-        cks = [ck0, ck1, ck2, ck3, ck4, ck5, ck6, ck7, ck8, ck9, ck10, ck11]
-        cvs = [cv0, cv1, cv2, cv3, cv4, cv5, cv6, cv7, cv8, cv9, cv10, cv11]
-        ps = [p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11]
+    def flatten_state_buffers(self):
+        """Re-register each layer's k_cache / v_cache as top-level buffers.
 
+        coremltools' ``ct.StateType(name=...)`` matches the buffer name on the
+        traced module. Layer-nested buffers come through as
+        ``layers.{i}.k_cache``; we mirror them at the top level under the
+        flatter ``k_cache_{i}`` / ``v_cache_{i}`` names that downstream code
+        (and other mobius converters) expect.
+        """
+        for i, layer in enumerate(self.layers):
+            self.register_buffer(f"k_cache_{i}", layer.k_cache, persistent=False)
+            self.register_buffer(f"v_cache_{i}", layer.v_cache, persistent=False)
+
+    def reset_state(self):
+        """Zero all KV caches in place (host side, before make_state)."""
+        for layer in self.layers:
+            layer.k_cache.zero_()
+            layer.v_cache.zero_()
+
+    def forward(self, audio_embed, encoder_output, encoder_mask, position):
         x = audio_embed
         if self.use_pos_emb:
-            pos_idx = ps[0].to(torch.long)
+            pos_idx = position.to(torch.long)
             x = x + self.position_embeddings(pos_idx).unsqueeze(0)
 
-        new_ks, new_vs, new_ps = [], [], []
-        for i, layer in enumerate(self.layers):
-            x, nk, nv, np_ = layer(
-                x, cks[i], cvs[i], ps[i],
+        for layer in self.layers:
+            x = layer(
+                x, position,
                 encoder_output=encoder_output,
                 encoder_mask=encoder_mask,
             )
-            new_ks.append(nk)
-            new_vs.append(nv)
-            new_ps.append(np_)
 
         decoder_hidden = self.norm_out(x)
         logits = self.final_proj(decoder_hidden)
-
-        outs = [logits, decoder_hidden]
-        for i in range(self.n_layers):
-            outs += [new_ks[i], new_vs[i], new_ps[i]]
-        return tuple(outs)
+        return logits, decoder_hidden
 
     @classmethod
     def from_magpie(cls, model):
@@ -312,4 +348,6 @@ class TraceableDecoderStep(nn.Module):
         wrapper.final_proj.weight.data.copy_(model.final_proj.weight.data)
         wrapper.final_proj.bias.data.copy_(model.final_proj.bias.data)
 
+        # Re-flatten buffers in case eager copies replaced them.
+        wrapper.flatten_state_buffers()
         return wrapper

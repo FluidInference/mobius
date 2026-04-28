@@ -48,20 +48,25 @@ def convert_decoder_step(nemo_path=None, max_seq_len=512, max_text_len=256,
     encoder_output = torch.randn(B, T_enc, d_model)
     encoder_mask = torch.ones(B, T_enc, dtype=torch.bool)
 
-    # Flat cache and position args
-    caches = []
+    # Flat split-K/V cache + position args (rank-4 — ANE-friendly).
+    cache_ks = []
+    cache_vs = []
     positions = []
     for i in range(n_layers):
-        cache = torch.zeros(2, B, max_seq_len, H, D)
+        ck = torch.zeros(B, max_seq_len, H, D)
+        cv = torch.zeros(B, max_seq_len, H, D)
         # Simulate some prefilled context
-        cache[:, :, :10, :, :] = torch.randn(2, B, 10, H, D) * 0.1
-        caches.append(cache)
+        ck[:, :10, :, :] = torch.randn(B, 10, H, D) * 0.1
+        cv[:, :10, :, :] = torch.randn(B, 10, H, D) * 0.1
+        cache_ks.append(ck)
+        cache_vs.append(cv)
         positions.append(torch.tensor([10.0]))
 
-    # Build flat argument tuple
+    # Build flat argument tuple: (audio_embed, encoder_output, encoder_mask,
+    #   ck0, cv0, p0, ck1, cv1, p1, ...).
     example_inputs = (audio_embed, encoder_output, encoder_mask)
     for i in range(n_layers):
-        example_inputs = example_inputs + (caches[i], positions[i])
+        example_inputs = example_inputs + (cache_ks[i], cache_vs[i], positions[i])
 
     # Trace
     print("Tracing model...")
@@ -76,7 +81,8 @@ def convert_decoder_step(nemo_path=None, max_seq_len=512, max_text_len=256,
         ct.TensorType(name="encoder_mask", shape=(1, T_enc), dtype=np.bool_),
     ]
     for i in range(n_layers):
-        inputs.append(ct.TensorType(name=f"cache{i}", shape=(2, 1, max_seq_len, H, D)))
+        inputs.append(ct.TensorType(name=f"cache_k{i}", shape=(1, max_seq_len, H, D)))
+        inputs.append(ct.TensorType(name=f"cache_v{i}", shape=(1, max_seq_len, H, D)))
         inputs.append(ct.TensorType(name=f"position{i}", shape=(1,)))
 
     mlmodel = ct.convert(
@@ -109,7 +115,8 @@ def convert_decoder_step(nemo_path=None, max_seq_len=512, max_text_len=256,
         "encoder_mask": np.ones((1, T_enc), dtype=np.float32),
     }
     for i in range(n_layers):
-        test_inputs[f"cache{i}"] = np.zeros((2, 1, max_seq_len, H, D), dtype=np.float32)
+        test_inputs[f"cache_k{i}"] = np.zeros((1, max_seq_len, H, D), dtype=np.float32)
+        test_inputs[f"cache_v{i}"] = np.zeros((1, max_seq_len, H, D), dtype=np.float32)
         test_inputs[f"position{i}"] = np.array([0.0], dtype=np.float32)
 
     out = coreml_model.predict(test_inputs)
