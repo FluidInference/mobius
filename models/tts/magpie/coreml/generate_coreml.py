@@ -33,7 +33,7 @@ BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
 # only (ANE rejects them); the IO-marshaling savings from collapsing 36 cache
 # tensors don't compensate for losing ANE acceleration. See
 # ``traceable/traceable_decoder_step_stateful.py`` for full rationale.
-STATEFUL = bool(os.environ.get("MAGPIE_STATEFUL", ""))
+STATEFUL = os.environ.get("MAGPIE_STATEFUL", "") == "1"
 
 # Decoder step output key names (from CoreML model spec — rank-4 split-K/V)
 DECODER_LOGITS_KEY = "var_2129"
