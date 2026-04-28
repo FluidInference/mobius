@@ -724,7 +724,7 @@ None of the CosyVoice3 converters touch sklearn.
 |---|---|---|---|---|
 | LLM-Prefill (T=256) | `LLM-Prefill-T256-M768-fp16.mlpackage` | fp16 w/ fp32 pin on `{pow, reduce_mean, rsqrt, softmax}` | ANE | Selective pin avoids Qwen2 RMSNorm overflow; softmax fp32 avoids long-key underflow |
 | LLM-Decode (M=768) | `LLM-Decode-M768-fp16.mlpackage` | fp16 w/ same pinning | ANE | Same as prefill |
-| Flow (N=250) | `Flow-N250-fp32.mlpackage` | fp32 | CPU (Py) / CPU+GPU (Swift) | fp16 NaNs on parity inputs; fused `layer_norm` can't be pinned without pinning 500+ ops |
+| Flow (N=250) | `Flow-N250-fp16.mlpackage` | fp16 w/ fp32 pin on `{pow, reduce_mean, rsqrt, softmax, layer_norm, gelu}` | CPU (Py oracle = fp32) / CPU+GPU (Swift = fp16) | Phase 3 fp16 NaN was eventually unblocked; see "Resurrection" subsection. fp32 still serves as the Python parity oracle |
 | HiFT (T=500) | `HiFT-T500-fp16.mlpackage` | fp16 (f0_predictor FP32, sinegen phase mod-2π) | ANE | fp16 waveform corr ≈ 0.71 is audibly fine; ASR roundtrip clean |
 | Embedding table | `embeddings-runtime-fp32.safetensors` | fp32 | mmap | Must use *post-`.float()`* runtime values, not raw `llm.pt` slice |
 | Speech embedding | `speech_embedding-fp16.safetensors` | fp16 | mmap | 6761×896 custom module, stays bit-exact |
@@ -1110,8 +1110,9 @@ specifically because in-process iteration over `(fp32, fp16, fp16v2) ×
 (cpuOnly, cpuAndGPU, cpuAndNE, all)` could hang on certain rows
 (notably fp16 × all on macOS 26.x), losing already-collected data from
 prior rows. Per-row spawn with an external timeout was the workflow
-fix. The shipping decision (`Flow-N250-fp32` on `cpuAndGPU` for Swift)
-is in REPORT.md; the row-by-row matrix isn't worth re-running.
+fix. The shipping decision (`Flow-N250-fp16` on `cpuAndGPU` for Swift,
+fp32 retained as Python parity oracle) is in REPORT.md; the row-by-row
+matrix isn't worth re-running.
 
 ### ANE BC1S port artifacts
 

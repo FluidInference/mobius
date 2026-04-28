@@ -113,8 +113,8 @@ TRIALS_AND_ERRORS.md ("Findings preserved from removed exploratory
 scripts"). Recover the code via `git log --diff-filter=D --follow`.
 
 Swift side, the `runHiFT` dtype branch (`fullMel.dataType` → fp16/fp32)
-was kept — it's a no-op for the shipping fp32 Flow and makes the path
-future-proof if a correct fp16 ANE Flow ever ships.
+was kept — covers both the shipping fp16 Flow and the fp32 parity-oracle
+path, and stays future-proof if a correct ANE Flow ever ships.
 
 Full debugging trail is in [`TRIALS_AND_ERRORS.md`](./TRIALS_AND_ERRORS.md)
 under **"Stage 4: Swift integration — ATTEMPTED, REVERTED"** (lines 832+).
