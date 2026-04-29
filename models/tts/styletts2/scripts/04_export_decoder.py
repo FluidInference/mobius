@@ -41,6 +41,7 @@ from _styletts2_lib import (  # noqa: E402
     DEFAULT_CHECKPOINT,
     HifiGanDecoderTraceable,
     LibriTTSConfig,
+    install_sinegen_v2_constfold_fix,
     load_inference_modules,
     register_coreml_op_shims,
 )
@@ -77,6 +78,8 @@ def main() -> None:
 
     if args.trace_only:
         largest = max(args.mel_buckets)
+        print(f"[04] installing SineGen v2 constfold fix for T_mel={largest} …")
+        install_sinegen_v2_constfold_fix(largest)
         example_asr = torch.zeros(1, cfg.hidden_dim, largest, dtype=torch.float32)
         example_F0 = torch.zeros(1, largest * 2, dtype=torch.float32)
         example_N = torch.zeros(1, largest * 2, dtype=torch.float32)
@@ -109,6 +112,12 @@ def main() -> None:
     for t_mel in sorted(args.mel_buckets):
         out_path = args.out_dir / f"styletts2_decoder_{t_mel}.mlpackage"
         print(f"[04] === T_mel={t_mel}  →  {out_path.name} ===")
+
+        # Re-bind the SineGen monkey patch with the constant `fracs` index for
+        # this bucket's T_audio. Must happen before trace; idempotent across
+        # calls. See PHASE6_FP16_DECODER.md for the bug it fixes.
+        print(f"[04]   installing SineGen v2 constfold fix for T_mel={t_mel} …")
+        install_sinegen_v2_constfold_fix(t_mel)
 
         example_asr = torch.zeros(1, cfg.hidden_dim, t_mel, dtype=torch.float32)
         example_F0 = torch.zeros(1, t_mel * 2, dtype=torch.float32)

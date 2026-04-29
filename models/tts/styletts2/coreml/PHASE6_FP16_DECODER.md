@@ -1,10 +1,11 @@
 # Phase 6 — Robotic CoreML decoder: SineGen op-translation bugs in coremltools
 
-**Status:** ✅ fixed and verified end-to-end. v2 export with constant-folded
-fracs index produces clean audio in the full pipeline (`22_coreml_fixed_v2_full.wav`).
-All five mel buckets {256, 512, 1024, 2048, 4096} re-exported as
-`styletts2_decoder_<T_mel>_fixed_v2.mlpackage` with PT/CoreML rms parity
-ratio in 0.998–1.000 and max abs diff ≤ 3.3e-2 on random-tensor inputs.
+**Status:** ✅ fp32 fixed and verified end-to-end. fp16 weights produce
+robotic audio and are **not** shipped. v2 export with constant-folded fracs
+index produces clean fp32 audio in the full pipeline
+(`22_coreml_fixed_v2_full.wav`). All five mel buckets {256, 512, 1024, 2048,
+4096} ship as fp32 `styletts2_decoder_<T_mel>.mlpackage` with PT/CoreML rms
+parity ratio in 0.998–1.000 and max abs diff ≤ 3.3e-2 on random-tensor inputs.
 
 This phase supersedes the earlier hypothesis that the leak was stochastic
 SineGen ops baked at trace time. That theory was tested
@@ -257,15 +258,79 @@ bit-identical. Audibly indistinguishable from PT.
 
 ---
 
+## fp16 — investigated, not shipped
+
+Tried `convert_to="mlprogram"` with default fp16 weight precision to halve
+the package size (~50 MB → ~110 MB total across five buckets vs ~250 MB).
+**Result: robotic audio.** Not shipped. fp32 remains canonical.
+
+### Audio regression
+
+Same v2 SineGen patch, same full pipeline, only difference is the
+mlpackage's weight precision. fp16 sounds clearly robotic (verified by
+ear-test on bucket 256 and 512 wavs). RMS energy drops ~10 % vs fp32
+(0.0496 vs 0.0551 on bucket 256), consistent with destructive phase
+scrambling in the harmonic source.
+
+Diagnosis: inside `SineGen._f02sine`, the cumsum-then-multiply chain
+produces `phase_scaled` values up to ~4000 by mid-frame. fp16 precision
+at that magnitude is ~4, much larger than the per-sample phase increment
+(~0.05 rad). After the manual lerp `left * (1-frac) + right * frac`, the
+phase fed to `sin()` is essentially random in fp16. fp32 has no such
+issue (precision ~5e-4 at magnitude 4000).
+
+### Two viable fixes (not pursued)
+
+1. **Mixed precision.** `coremltools.transform.FP16ComputePrecision(op_selector=...)`
+   to leave bulk weights at fp16 but force the SineGen ops (cumsum,
+   multiply, repeat_interleave around the phase chain) to fp32. Kokoro
+   v2 ships exactly this split. Estimated ~120 MB per bucket.
+2. **Phase wrapping in SineGen.** Wrap `phase_scaled` mod 2π before the
+   lerp — sin-equivalent because `sin(phase - 2πN) = sin(phase)`, but
+   keeps phase in `[0, 2π)` where fp16 has plenty of resolution. Compute
+   the lerp delta directly from `rad_down × 2π × upsample_scale` instead
+   of `phase_scaled[i+1] - phase_scaled[i]` to avoid catastrophic
+   cancellation. Tested in `/tmp/styletts2_export_decoder_v3_fp16.py` for
+   bucket 256: rms recovers to 0.0547 (matches fp32 0.0551 within 1 %),
+   numerically clean. Not promoted because shipping fp32 is fine for the
+   current size budget.
+
+### Hung first export attempt — useful for future work
+
+When initially trying fp16 with `compute_units=ct.ComputeUnit.ALL`, the
+export hung at bucket 1024 for 42+ min at 0 % CPU. Stack sample showed:
+
+```
+ct.convert → MLModel(...) ctor → MLE5ProgramLibrary::prepareAndReturnError
+  → MILCompilerForANE::Run → _ANEClient compileModel
+  → XPC waiting on anecompilerservice (synchronous, never returns)
+```
+
+Coremltools instantiates `MLModel` after conversion to verify the program;
+when `.ALL` is in effect that constructor synchronously blocks on the ANE
+daemon while it AOT-compiles the IR program for the ANE. For larger graphs
+(1024+ mel frames) the daemon hangs.
+
+Workaround for any future fp16 / ANE export:
+
+```python
+compute_units=ct.ComputeUnit.CPU_AND_GPU,
+skip_model_load=True,
+```
+
+Bypasses the post-conversion MLModel instantiation. The saved mlpackage is
+**not** locked to CPU+GPU — `compute_units` is a runtime hint, callers can
+still load with `.ALL` later (paying the first-load ANE compile cost
+themselves).
+
+---
+
 ## Open work
 
-1. **Test `.all` compute units + default fp16 precision.** Current v2 mlpackages
-   are `fp32` / `CPU_AND_GPU`. Once user confirms the multi-bucket pipeline
-   sounds clean, re-export with `compute_units=.all` and default fp16 to put
-   the decoder back on ANE. Listening test required — if fp16 introduces any
-   regression we keep fp32.
-2. **Promote v2 into `scripts/04_export_decoder.py`.** Replace the existing
-   `_f02sine_align_corners` shim in `_styletts2_lib.py` with the constant-
-   folded variant so future re-exports go through one canonical path.
-3. **Decide on the v1/`_fixed`/`_det` mlpackages.** Now superseded by `_fixed_v2`;
-   delete or archive once v2 is in production use.
+1. **Decide on the v1 / `_fixed` / `_det` / `_fixed_v2` mlpackages.** The
+   canonical export now writes `styletts2_decoder_<T_mel>.mlpackage` (no
+   suffix) via the promoted v2 patch. Earlier suffixed packages can be
+   archived or deleted once consumers point at the unsuffixed names.
+2. **Optional: revisit fp16** if size becomes a constraint. Two known-good
+   approaches sketched above (mixed precision via op_selector, or v3
+   phase-wrapping in SineGen).

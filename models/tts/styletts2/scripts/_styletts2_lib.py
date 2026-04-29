@@ -70,6 +70,92 @@ def register_coreml_op_shims() -> None:
     register_coreml_op_shims._done = True  # type: ignore[attr-defined]
 
 
+# --- SineGen op-translation fix (decoder export only) -------------------------
+
+# `Modules/hifigan.py::SineGen._f02sine` triggers three coremltools op
+# translation bugs that turn the harmonic source into garbage and produce
+# robotic CoreML audio:
+#
+#   1. `(rad / sr) % 1`    : aten::remainder is mistranslated.
+#   2. `F.interpolate(scale=1/300)` downsample : NaN under fp16 lowering.
+#   3. `F.interpolate(scale=300)`   upsample   : NaN under fp16 lowering.
+#
+# Fix (per-bucket): rewrite `_f02sine` so the modulo becomes `x - floor(x)`,
+# the downsample becomes a stride slice `[..., ::scale, ...]`, and the
+# upsample becomes a manual linear lerp built from `repeat_interleave` and
+# arithmetic — all CoreML-friendly primitives. The lerp's `fracs` index
+# (`(arange(T_audio) % 300) / 300`) is constant-folded at trace time using a
+# Python-int closure so the converter never sees the offending `aten::remainder`
+# in the trace either.
+#
+# This must be re-applied PER BUCKET because `fracs` depends on the bucket's
+# `T_audio = T_mel * 2 * UPSAMPLE_SCALE`. See PHASE6_FP16_DECODER.md.
+
+UPSAMPLE_SCALE = 300
+
+
+def install_sinegen_v2_constfold_fix(t_mel: int) -> None:
+    """Patch `SineGen._f02sine` and `SineGen.forward` for one mel bucket.
+
+    Idempotent across calls — repeated calls re-bind the patch to the new
+    `t_mel`. The original methods are stashed on the class once.
+    """
+    import numpy as _np
+    import torch as _torch
+    from Modules.hifigan import SineGen  # type: ignore
+
+    t_audio = t_mel * 2 * UPSAMPLE_SCALE
+    fracs_np = (
+        _np.arange(t_audio, dtype=_np.float32) % UPSAMPLE_SCALE
+    ) / float(UPSAMPLE_SCALE)
+    fracs_tensor = _torch.from_numpy(
+        fracs_np.reshape(1, t_audio, 1)
+    ).contiguous()
+
+    def _f02sine_constfold(self, f0_values):
+        rad_div = f0_values / self.sampling_rate
+        rad_mod = rad_div - _torch.floor(rad_div)
+        if not self.flag_for_pulse:
+            rad_down = rad_mod[:, ::UPSAMPLE_SCALE, :]
+            phase = _torch.cumsum(rad_down, dim=1) * 2 * float(_np.pi)
+            phase_scaled = phase * self.upsample_scale
+            left = phase_scaled.repeat_interleave(UPSAMPLE_SCALE, dim=1)
+            last = phase_scaled[:, -1:, :]
+            shifted = _torch.cat([phase_scaled[:, 1:, :], last], dim=1)
+            right = shifted.repeat_interleave(UPSAMPLE_SCALE, dim=1)
+            fracs = fracs_tensor.to(phase_scaled.device, phase_scaled.dtype)
+            phase_up = left * (1.0 - fracs) + right * fracs
+            return _torch.sin(phase_up)
+        # Pulse-train branch is never used in inference (flag_for_pulse=False
+        # in Generator). Keep upstream behavior if anyone flips it.
+        return SineGen._f02sine_original(self, f0_values)  # type: ignore[attr-defined]
+
+    def _forward_deterministic(self, f0):
+        # Drop the `rand_ini`/randn noise so the trace is deterministic and
+        # CoreML doesn't bake the sampled noise as a constant. We replace the
+        # noise term with a phase-locked sine of the harmonics — same RMS,
+        # same uv masking, no stochasticity.
+        sg = self
+        harm_mul = _torch.FloatTensor(
+            [[range(1, sg.harmonic_num + 2)]]
+        ).to(f0.device)
+        fn = _torch.multiply(f0, harm_mul)
+        sines = _f02sine_constfold(sg, fn)
+        sine_waves = sines * sg.sine_amp
+        uv = sg._f02uv(f0)
+        noise_amp = uv * sg.noise_std + (1 - uv) * sg.sine_amp / 3
+        noise = noise_amp * _torch.sin(fn * 100.0)
+        sine_waves = sine_waves * uv + noise
+        return sine_waves, uv, noise
+
+    if not hasattr(SineGen, "_f02sine_original"):
+        SineGen._f02sine_original = SineGen._f02sine  # type: ignore[attr-defined]
+    if not hasattr(SineGen, "_forward_original"):
+        SineGen._forward_original = SineGen.forward  # type: ignore[attr-defined]
+    SineGen._f02sine = _f02sine_constfold
+    SineGen.forward = _forward_deterministic
+
+
 # --- Compact LibriTTS config (mirrors Configs/config_libritts.yml) ------------
 
 
@@ -169,40 +255,12 @@ def _build_modules(cfg: LibriTTSConfig):
 
     AttentionBase.forward = _attention_forward_matmul
 
-    # `SineGen._f02sine` (Modules/hifigan.py) uses `F.interpolate(..., mode="linear",
-    # scale_factor=1/300)` which trips coremltools' upsample_linear1d translator
-    # ("recompute_scale_factor=False, align_corners=False with float output size
-    # is not supported"). Set align_corners=True — quality impact is negligible
-    # and CoreML's upsample_bilinear supports this configuration.
-    import numpy as _np
-    from Modules.hifigan import SineGen  # type: ignore
-
-    def _f02sine_align_corners(self, f0_values):
-        rad_values = (f0_values / self.sampling_rate) % 1
-        if not self.flag_for_pulse:
-            rad_values = F.interpolate(
-                rad_values.transpose(1, 2),
-                scale_factor=1.0 / self.upsample_scale,
-                mode="linear",
-                align_corners=True,
-            ).transpose(1, 2)
-            phase = torch.cumsum(rad_values, dim=1) * 2 * _np.pi
-            phase = F.interpolate(
-                phase.transpose(1, 2) * self.upsample_scale,
-                scale_factor=float(self.upsample_scale),
-                mode="linear",
-                align_corners=True,
-            ).transpose(1, 2)
-            sines = torch.sin(phase)
-        else:
-            # Pulse-train branch is never used in inference (flag_for_pulse=False
-            # in Generator). Keep upstream behavior if anyone flips it.
-            sines = SineGen._f02sine_original(self, f0_values)  # type: ignore[attr-defined]
-        return sines
-
-    if not hasattr(SineGen, "_f02sine_original"):
-        SineGen._f02sine_original = SineGen._f02sine  # type: ignore[attr-defined]
-    SineGen._f02sine = _f02sine_align_corners
+    # SineGen op-translation fix is now applied per-bucket from the decoder
+    # export script via `install_sinegen_v2_constfold_fix(t_mel)`. We do NOT
+    # install any default shim here — `_build_modules` is also called by the
+    # text-predictor / diffusion / F0n exports, none of which trace through
+    # SineGen, so they don't need it. See PHASE6_FP16_DECODER.md for the full
+    # diagnosis of the three coremltools op-translation bugs in `_f02sine`.
 
     if cfg.decoder_type == "hifigan":
         from Modules.hifigan import Decoder  # type: ignore
