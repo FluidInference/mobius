@@ -1,4 +1,4 @@
-"""End-to-end with int8 text_predictor + diffusion fixed at bucket=512."""
+"""End-to-end with fp16 text_predictor + diffusion fixed at bucket=512."""
 from __future__ import annotations
 import argparse
 import sys, time
@@ -71,7 +71,7 @@ def main():
     ap.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
     ap.add_argument("--coreml-dir", type=Path, default=COREML_DIR)
     ap.add_argument("--out", type=Path,
-                    default=Path("/tmp/styletts2-e2e/coreml_int8_diff512.wav"))
+                    default=Path("/tmp/styletts2-e2e/coreml_fp16_diff512.wav"))
     ap.add_argument("--baseline-wav", type=Path, default=None,
                     help="Optional fp16 e2e baseline WAV for spectral cosine "
                     "comparison. Typically the output of 99b_e2e_coreml.py.")
@@ -90,7 +90,9 @@ def main():
     print(f"T_tok={T}  tp_bucket={tb}  diff_bucket={DIFF_BUCKET}")
 
     t0 = time.time()
-    tp = ct.models.MLModel(str(args.coreml_dir / f"styletts2_text_predictor_{tb}_int8.mlpackage"), compute_units=ct.ComputeUnit.ALL)
+    # int8 PTQ on text_predictor was dropped before ship (see coreml/PRECISION.md);
+    # the build pipeline produces fp16 .mlpackage only.
+    tp = ct.models.MLModel(str(args.coreml_dir / f"styletts2_text_predictor_{tb}.mlpackage"), compute_units=ct.ComputeUnit.ALL)
     ds = ct.models.MLModel(str(args.coreml_dir / f"styletts2_diffusion_step_{DIFF_BUCKET}.mlpackage"), compute_units=ct.ComputeUnit.CPU_AND_GPU)
     fn = ct.models.MLModel(str(args.coreml_dir / "styletts2_f0n_energy.mlpackage"), compute_units=ct.ComputeUnit.ALL)
     timings["load_models"] = time.time()-t0
@@ -199,7 +201,7 @@ def main():
         mb_ = to_mel(torch.from_numpy(b).float()).numpy()
         la = np.log(ma+1e-5).flatten(); lb = np.log(mb_+1e-5).flatten()
         mc = np.dot(la,lb)/(np.linalg.norm(la)*np.linalg.norm(lb)+1e-9)
-        print(f"\nlog-mel cos(int8+diff512 vs fp16 e2e): {mc:.4f}")
+        print(f"\nlog-mel cos(fp16+diff512 vs baseline): {mc:.4f}")
     elif args.baseline_wav is not None:
         print(f"\n[skip] --baseline-wav not found: {args.baseline_wav}")
 
