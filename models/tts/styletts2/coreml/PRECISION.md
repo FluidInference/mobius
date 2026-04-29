@@ -22,10 +22,13 @@ We ship four stages. Three are fp16, one is selectively int8.
 | `styletts2_text_predictor_{B}.mlpackage` | **selective int8** | ANE          | `B ∈ {32, 64, 128, 256, 512}` token | 1× per utt      |
 | `styletts2_diffusion_step_512.mlpackage` | fp16               | CPU+GPU      | 1 bucket (512)               | 5× per utt       |
 | `styletts2_f0n_energy.mlpackage`        | fp16                | ANE          | dynamic                      | 1× per utt       |
-| `styletts2_decoder_{M}.mlpackage`       | fp16                | CPU+GPU      | `M ∈ {256, 512, 1024, 2048, 4096}` mel | 1× per utt |
+| `styletts2_decoder_{M}.mlpackage`       | **fp32**            | CPU+GPU      | `M ∈ {256, 512, 1024, 2048, 4096}` mel | 1× per utt |
 
-Final on-disk size (LibriTTS checkpoint): **871 MB** (down from 1062 MB
-fp16-everything-all-buckets, −281 MB / −26.5%). Warm RTFx **4.32×** on
+Final on-disk size (LibriTTS checkpoint): **~1.4 GB**. Decoder is fp32
+because fp16 produces robotic audio (the SineGen harmonic source's
+cumsum-then-multiply phase chain saturates fp16 precision; see
+PHASE6_FP16_DECODER.md). Other stages (text_predictor, diffusion_step,
+f0n_energy) ship at int8/fp16 as documented. Warm RTFx **4.32×** on
 M-series Mac. Log-mel cosine vs PyTorch fp32: **0.9687**.
 
 ---
@@ -41,7 +44,7 @@ ANE without graph rejection.
 | text_predictor (5 buckets) | ~178 MB     | yes (−89 MB) | yes  | **int8 + ANE**         |
 | diffusion_step (per bucket) | ~48 MB      | tiny — Mish/AdaIN-1d, mostly conv | no — large attention block falls off ANE  | fp16 + CPU+GPU         |
 | f0n_energy              | ~6 MB        | none — small  | yes  | fp16 + ANE             |
-| decoder (5 buckets)     | ~80 MB each  | conv-heavy, low payoff | no — HiFi-GAN upsampling stalls ANE | fp16 + CPU+GPU |
+| decoder (5 buckets)     | ~210 MB each (fp32) | conv-heavy, low payoff; **fp16 produces robotic audio** (SineGen phase saturation, see PHASE6_FP16_DECODER.md) | no — HiFi-GAN upsampling stalls ANE | **fp32** + CPU+GPU |
 
 This mirrors the PocketTTS rule: "quantize the big GEMM-heavy stage,
 leave conv stacks and small/iterative stages alone."
@@ -167,7 +170,7 @@ best-per-stage → after warmup of every bucket on app launch).
 | text_predictor | input tokens    | 32, 64, 128, 256, 512            | All 5 quantized.                     |
 | diffusion_step | bert_dur frames | **512 only**                     | Pruned 32/64/128/256 (saved 192 MB). |
 | f0n_energy    | dynamic shape   | n/a                              | Single package.                      |
-| decoder       | mel frames      | 256, 512, 1024, 2048, 4096       | All fp16.                            |
+| decoder       | mel frames      | 256, 512, 1024, 2048, 4096       | All fp32 (fp16 → robotic audio; see PHASE6_FP16_DECODER.md). |
 
 The diffusion bucket prune is documented in TRIALS.md Phase 4. The
 short-version: we never observed a per-utterance bert_dur length below
@@ -216,13 +219,13 @@ uv run python scripts/00_fetch_weights.py
 uv run python scripts/01_export_text_predictor.py     # 5 fp16 buckets
 uv run python scripts/02_export_diffusion_step.py     # 1 fp16 bucket (512)
 uv run python scripts/03_export_f0n_energy.py
-uv run python scripts/04_export_decoder.py            # 5 fp16 buckets
+uv run python scripts/04_export_decoder.py            # 5 fp32 buckets
 uv run python scripts/optimize/quantize_text_predictor_int8.py  # fp16 → int8 ×5
 uv run python scripts/99c_e2e_optimized.py            # warm-cache RTFx + log-mel parity
 ```
 
 After `99c_e2e_optimized.py` finishes the `coreml/` directory holds the
 shippable artifacts: 5× int8 text_predictor, 1× fp16 diffusion_step,
-1× fp16 f0n_energy, 5× fp16 decoder. The fp16 text_predictor packages
+1× fp16 f0n_energy, 5× fp32 decoder. The fp16 text_predictor packages
 are kept as build intermediates (gitignored, not shipped) so we can
 re-quantize without re-tracing.

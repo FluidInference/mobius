@@ -140,6 +140,12 @@ def main() -> None:
         # otherwise hangs Apple's anecompilerservice for several minutes per
         # bucket. The mlpackage is still saved correctly; first runtime load
         # in the consumer pays the ANE compile cost once, then it's cached.
+        # compute_precision=FLOAT32 is required: the SineGen harmonic source
+        # accumulates phase via cumsum × 2π × 300, reaching magnitudes ~4000
+        # mid-frame. fp16 precision (~4 at that magnitude) is much larger
+        # than the per-sample phase increment (~0.05 rad), which scrambles
+        # the sin output and produces robotic audio. See PHASE6_FP16_DECODER.md
+        # for the full diagnosis and two viable fp16-stabilization sketches.
         mlmodel = ct.convert(
             traced,
             inputs=[
@@ -151,6 +157,7 @@ def main() -> None:
             outputs=[ct.TensorType(name="waveform")],
             minimum_deployment_target=ct.target.iOS17,
             compute_units=cu,
+            compute_precision=ct.precision.FLOAT32,
             convert_to="mlprogram",
             skip_model_load=True,
         )

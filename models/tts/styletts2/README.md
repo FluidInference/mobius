@@ -13,7 +13,8 @@ chronological conversion log.
 ## Headline numbers
 
 - **RTFx:** 4.32× warm (M-series Mac, 5-step ADPM2 sampler)
-- **On-disk size:** 871 MB (down from 1062 MB unoptimized)
+- **On-disk size:** ~1.4 GB (decoder is fp32; see PHASE6_FP16_DECODER.md for
+  why fp16 produces robotic audio and isn't shipped)
 - **Log-mel cosine vs PyTorch fp32:** 0.9687
 - **Voice-clone fidelity (ECAPA-TDNN cos to ref):** 0.18 — at the model's
   architectural ceiling (PyTorch fp32 itself is 0.29; see TRIALS.md Phase 5)
@@ -53,7 +54,7 @@ without invoking `coremltools.convert` (useful for fast iteration).
 | `styletts2_text_predictor_{B}.mlpackage` | ANE       | **int8** (selective) | `B ∈ {32, 64, 128, 256, 512}` | `tokens (1, T_tok)`                                      | 1× per utt  |
 | `styletts2_diffusion_step_512.mlpackage` | CPU+GPU   | fp16             | 1 (512)                        | `x`, `sigma`, `embedding (bert_dur)`, `features (ref_s)` | ~5× per utt |
 | `styletts2_f0n_energy.mlpackage`         | ANE       | fp16             | dynamic                        | `en (1, 512, T_mel)`, `s (1, 128)`                       | 1× per utt  |
-| `styletts2_decoder_{M}.mlpackage`        | CPU+GPU   | fp16             | `M ∈ {256, 512, 1024, 2048, 4096}` | `asr`, `F0`, `N`, `ref (1, 128)`                  | 1× per utt  |
+| `styletts2_decoder_{M}.mlpackage`        | CPU+GPU   | **fp32**         | `M ∈ {256, 512, 1024, 2048, 4096}` | `asr`, `F0`, `N`, `ref (1, 128)`                  | 1× per utt  |
 
 The diffusion sampler loop (ADPM2 + Karras schedule + CFG) lives in Swift and
 calls `styletts2_diffusion_step_512.mlpackage` `num_steps` (default 5) times
