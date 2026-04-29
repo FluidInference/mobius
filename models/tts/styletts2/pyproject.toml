@@ -1,0 +1,35 @@
+[project]
+name = "styletts2-coreml"
+version = "0.1.0"
+description = "yl4579 StyleTTS2 → CoreML conversion (LibriTTS, HiFi-GAN)"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    # Pin <2.0: coremltools 8.3 trips on numpy>=2 in `np.issubdtype(end, np.integer)`
+    # for slice ops (Var dtype isn't a numpy scalar in numpy 2.x's stricter API).
+    "numpy>=1.24,<2.0",
+    "torch>=2.5.0",
+    "torchaudio>=2.5.0",
+    # Pin <9.0: coremltools 9.0 ships as a pure-python wheel without the
+    # libcoremlpython / libmilstoragepython native extensions, so save() fails
+    # with `BlobWriter not loaded`.
+    "coremltools>=8.0,<9.0",
+    "soundfile>=0.12.0",
+    "scipy>=1.5.0",
+    "huggingface_hub>=0.10",
+    "phonemizer>=3.2.0",
+    # Pin pre-5.0: the masking_utils refactor in 5.x breaks tracing through AlbertModel.
+    "transformers>=4.40,<5.0",
+    "einops>=0.7",
+    "einops-exts>=0.0.4",
+    "munch>=4.0",
+    "pyyaml>=6.0",
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
