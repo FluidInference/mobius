@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import coremltools as ct
 
-PKG = Path("/Users/kikow/brandon/voicelink/mobius-styletts2/models/tts/styletts2/coreml")
+PKG = Path(__file__).resolve().parents[2] / "coreml"
 BUCKETS = (32, 64, 128, 256, 512)
 
 # 5-step ADPM2 = 9 model calls per generation (n*2 - 1)

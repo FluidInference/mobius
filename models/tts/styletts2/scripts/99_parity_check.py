@@ -208,6 +208,10 @@ def pytorch_inference(modules, cfg: LibriTTSConfig, tokens: torch.Tensor,
         "pred_dur": pred_dur.numpy(),
         "s": s.numpy(),
         "ref": ref.numpy(),
+        # Raw ADPM2 sampler output before alpha/beta blending. Used by Stage B
+        # parity to compare CoreML sampler output against the same quantity
+        # in PyTorch (rather than against the post-blend `s` / `ref`).
+        "s_pred_raw": s_pred.numpy(),
         "asr": asr.numpy(),
         "en": en.numpy(),
         "F0": F0_pred.numpy(),
@@ -452,7 +456,11 @@ def main() -> None:
             )
             print(f"[parity]   coreml: {time.time() - t0:.2f}s")
             s_pred_coreml = s_pred_coreml.squeeze(1)
-            pt_s_pred = np.concatenate([ref["ref"], ref["s"]], axis=1)
+            # Compare raw sampler outputs only (pre-blend). The blended
+            # `s` / `ref` mix in the reference style and would conflate
+            # sampler parity with blending arithmetic.
+            pt_s_pred = ref["s_pred_raw"]
+            report("s_pred", pt_s_pred, s_pred_coreml)
             print(f"  s_pred_coreml:  mean={s_pred_coreml.mean():.4f} std={s_pred_coreml.std():.4f}")
             print(f"  s_pred_pytorch: mean={pt_s_pred.mean():.4f} std={pt_s_pred.std():.4f}")
         except Exception as e:  # noqa: BLE001

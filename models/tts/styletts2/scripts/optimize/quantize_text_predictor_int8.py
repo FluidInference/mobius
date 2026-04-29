@@ -8,7 +8,7 @@ from coremltools.optimize.coreml import (
     linear_quantize_weights,
 )
 
-PKG = Path("/Users/kikow/brandon/voicelink/mobius-styletts2/models/tts/styletts2/coreml")
+PKG = Path(__file__).resolve().parents[2] / "coreml"
 
 op_cfg = OpLinearQuantizerConfig(
     mode="LINEAR_SYMMETRIC",

@@ -1,22 +1,20 @@
 """End-to-end with int8 text_predictor + diffusion fixed at bucket=512."""
 from __future__ import annotations
+import argparse
 import sys, time
 from pathlib import Path
 import numpy as np
 import soundfile as sf
 import torch
 
-PKG = Path("/Users/kikow/brandon/voicelink/mobius-styletts2/models/tts/styletts2")
-sys.path.insert(0, str(PKG / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _styletts2_lib import (  # noqa: E402
     DEFAULT_CHECKPOINT, COREML_DIR, load_inference_modules, register_coreml_op_shims,
 )
 register_coreml_op_shims()
 import coremltools as ct  # noqa: E402
 
-TEXT = "The quick brown fox jumps over the lazy dog."
-REF_WAV = Path("/tmp/styletts2-e2e/coreml.wav")
-OUT = Path("/tmp/styletts2-e2e/coreml_int8_diff512.wav")
+DEFAULT_TEXT = "The quick brown fox jumps over the lazy dog."
 ALPHA, BETA, SEED = 0.3, 0.7, 0
 TOK_BUCKETS = (32, 64, 128, 256, 512)
 MEL_BUCKETS = (256, 512, 1024, 2048, 4096)
@@ -66,22 +64,35 @@ def adpm2(pf, noise, sigmas, emb, feat):
     return x
 
 def main():
-    OUT.parent.mkdir(parents=True, exist_ok=True)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--text", default=DEFAULT_TEXT)
+    ap.add_argument("--reference-wav", type=Path, required=True,
+                    help="Reference WAV for the speaker style encoder.")
+    ap.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
+    ap.add_argument("--coreml-dir", type=Path, default=COREML_DIR)
+    ap.add_argument("--out", type=Path,
+                    default=Path("/tmp/styletts2-e2e/coreml_int8_diff512.wav"))
+    ap.add_argument("--baseline-wav", type=Path, default=None,
+                    help="Optional fp16 e2e baseline WAV for spectral cosine "
+                    "comparison. Typically the output of 99b_e2e_coreml.py.")
+    args = ap.parse_args()
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     timings = {}; t_total = time.time()
 
-    t0 = time.time(); modules, cfg = load_inference_modules(DEFAULT_CHECKPOINT)
+    t0 = time.time(); modules, cfg = load_inference_modules(args.checkpoint)
     timings["load_pytorch"] = time.time()-t0
 
     t0 = time.time()
-    tokens = phonemize(TEXT); T = tokens.shape[-1]; tb = pick(T, TOK_BUCKETS)
-    ref_s = compute_ref_s(modules, REF_WAV)
+    tokens = phonemize(args.text); T = tokens.shape[-1]; tb = pick(T, TOK_BUCKETS)
+    ref_s = compute_ref_s(modules, args.reference_wav)
     timings["frontend"] = time.time()-t0
     print(f"T_tok={T}  tp_bucket={tb}  diff_bucket={DIFF_BUCKET}")
 
     t0 = time.time()
-    tp = ct.models.MLModel(str(COREML_DIR / f"styletts2_text_predictor_{tb}_int8.mlpackage"), compute_units=ct.ComputeUnit.ALL)
-    ds = ct.models.MLModel(str(COREML_DIR / f"styletts2_diffusion_step_{DIFF_BUCKET}.mlpackage"), compute_units=ct.ComputeUnit.CPU_ONLY)
-    fn = ct.models.MLModel(str(COREML_DIR / "styletts2_f0n_energy.mlpackage"), compute_units=ct.ComputeUnit.ALL)
+    tp = ct.models.MLModel(str(args.coreml_dir / f"styletts2_text_predictor_{tb}_int8.mlpackage"), compute_units=ct.ComputeUnit.ALL)
+    ds = ct.models.MLModel(str(args.coreml_dir / f"styletts2_diffusion_step_{DIFF_BUCKET}.mlpackage"), compute_units=ct.ComputeUnit.CPU_AND_GPU)
+    fn = ct.models.MLModel(str(args.coreml_dir / "styletts2_f0n_energy.mlpackage"), compute_units=ct.ComputeUnit.ALL)
     timings["load_models"] = time.time()-t0
 
     # warmup
@@ -142,7 +153,7 @@ def main():
     timings["C"] = time.time()-t0
 
     t0 = time.time()
-    decoder = ct.models.MLModel(str(COREML_DIR / f"styletts2_decoder_{mb}.mlpackage"), compute_units=ct.ComputeUnit.CPU_ONLY)
+    decoder = ct.models.MLModel(str(args.coreml_dir / f"styletts2_decoder_{mb}.mlpackage"), compute_units=ct.ComputeUnit.CPU_AND_GPU)
     timings["D_load"] = time.time()-t0
 
     # warmup decoder
@@ -164,7 +175,7 @@ def main():
 
     wav = D["waveform"].squeeze()[:Tm*600]
     if wav.shape[-1] > 50: wav = wav[...,:-50]
-    sf.write(str(OUT), wav, 24000)
+    sf.write(str(args.out), wav, 24000)
 
     timings["total"] = time.time()-t_total
     audio = len(wav)/24000.0
@@ -175,17 +186,22 @@ def main():
     print(f"  audio            {audio*1000:8.1f} ms")
     print(f"  RTFx             {audio/inf:8.2f}×")
 
-    # Spectral comparison vs fp16 e2e baseline
-    import torchaudio as ta
-    fp16_wav, _ = sf.read("/tmp/styletts2-e2e/coreml_optimal.wav")
-    n = min(len(wav), len(fp16_wav))
-    a = wav[:n].astype(np.float64); b = fp16_wav[:n].astype(np.float64)
-    to_mel = ta.transforms.MelSpectrogram(sample_rate=24000, n_mels=80, n_fft=2048, win_length=1200, hop_length=300)
-    ma = to_mel(torch.from_numpy(a).float()).numpy()
-    mb_ = to_mel(torch.from_numpy(b).float()).numpy()
-    la = np.log(ma+1e-5).flatten(); lb = np.log(mb_+1e-5).flatten()
-    mc = np.dot(la,lb)/(np.linalg.norm(la)*np.linalg.norm(lb)+1e-9)
-    print(f"\nlog-mel cos(int8+diff512 vs fp16 e2e): {mc:.4f}")
+    # Optional spectral comparison vs fp16 e2e baseline (e.g. output of
+    # 99b_e2e_coreml.py). Skipped if --baseline-wav is not provided or the
+    # file is missing.
+    if args.baseline_wav is not None and args.baseline_wav.exists():
+        import torchaudio as ta
+        fp16_wav, _ = sf.read(str(args.baseline_wav))
+        n = min(len(wav), len(fp16_wav))
+        a = wav[:n].astype(np.float64); b = fp16_wav[:n].astype(np.float64)
+        to_mel = ta.transforms.MelSpectrogram(sample_rate=24000, n_mels=80, n_fft=2048, win_length=1200, hop_length=300)
+        ma = to_mel(torch.from_numpy(a).float()).numpy()
+        mb_ = to_mel(torch.from_numpy(b).float()).numpy()
+        la = np.log(ma+1e-5).flatten(); lb = np.log(mb_+1e-5).flatten()
+        mc = np.dot(la,lb)/(np.linalg.norm(la)*np.linalg.norm(lb)+1e-9)
+        print(f"\nlog-mel cos(int8+diff512 vs fp16 e2e): {mc:.4f}")
+    elif args.baseline_wav is not None:
+        print(f"\n[skip] --baseline-wav not found: {args.baseline_wav}")
 
 if __name__ == "__main__":
     main()

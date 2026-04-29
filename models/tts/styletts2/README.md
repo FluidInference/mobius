@@ -29,7 +29,10 @@ uv run python scripts/02_export_diffusion_step.py
 uv run python scripts/03_export_f0n_energy.py
 uv run python scripts/04_export_decoder.py
 uv run python scripts/optimize/quantize_text_predictor_int8.py
-uv run python scripts/99c_e2e_optimized.py
+# `99c_e2e_optimized.py` needs a reference WAV (any 24 kHz speech clip; the
+# style encoder is robust to ~5 s of speech). Output goes to
+# /tmp/styletts2-e2e/coreml_int8_diff512.wav by default.
+uv run python scripts/99c_e2e_optimized.py --reference-wav <path/to/ref.wav>
 ```
 
 Each export script accepts `--trace-only` to validate the PyTorch trace
