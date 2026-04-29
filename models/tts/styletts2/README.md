@@ -29,7 +29,6 @@ uv run python scripts/01_export_text_predictor.py
 uv run python scripts/02_export_diffusion_step.py
 uv run python scripts/03_export_f0n_energy.py
 uv run python scripts/04_export_decoder.py
-uv run python scripts/optimize/quantize_text_predictor_int8.py
 # `99c_e2e_optimized.py` needs a reference WAV (any 24 kHz speech clip; the
 # style encoder is robust to ~5 s of speech). Output goes to
 # /tmp/styletts2-e2e/coreml_int8_diff512.wav by default.
@@ -51,7 +50,7 @@ without invoking `coremltools.convert` (useful for fast iteration).
 
 | Package                                  | CU        | Precision        | Buckets                        | Inputs                                                   | Called      |
 |------------------------------------------|-----------|------------------|--------------------------------|----------------------------------------------------------|-------------|
-| `styletts2_text_predictor_{B}.mlpackage` | ANE       | **int8** (selective) | `B ∈ {32, 64, 128, 256, 512}` | `tokens (1, T_tok)`                                      | 1× per utt  |
+| `styletts2_text_predictor_{B}.mlpackage` | ANE       | fp16             | `B ∈ {32, 64, 128, 256, 512}` | `tokens (1, T_tok)`                                      | 1× per utt  |
 | `styletts2_diffusion_step_512.mlpackage` | CPU+GPU   | fp16             | 1 (512)                        | `x`, `sigma`, `embedding (bert_dur)`, `features (ref_s)` | ~5× per utt |
 | `styletts2_f0n_energy.mlpackage`         | ANE       | fp16             | dynamic                        | `en (1, 512, T_mel)`, `s (1, 128)`                       | 1× per utt  |
 | `styletts2_decoder_{M}.mlpackage`        | CPU+GPU   | **fp32**         | `M ∈ {256, 512, 1024, 2048, 4096}` | `asr`, `F0`, `N`, `ref (1, 128)`                  | 1× per utt  |
@@ -66,10 +65,13 @@ fit in the 512 bucket and the cost ladder is non-linear (B=32: 66 ms/step,
 B=512: 152 ms/step), so the 4 smaller buckets were dead weight (192 MB).
 See TRIALS.md Phase 4.
 
-**Why text_predictor int8 but not the others?** It's the only stage with
-≥200 k-element weight tensors that runs at scale across the bucket family.
-Quantizing the iterative diffusion step or the conv-heavy decoder either
-compounds error or produces audible periodic artifacts (TRIALS.md Phase 3).
+**Why fp16 across text_predictor / diffusion / f0n and fp32 only on the
+decoder?** Selective int8 PTQ on text_predictor was tried and dropped
+(see `coreml/PRECISION.md` — ANE has no int8 GEMM, so the only payoff
+is ~3 MB of bandwidth per bucket; not worth the per-bucket validation
+cost). The decoder must be fp32 because SineGen accumulates phase to
+~4000 magnitude and fp16 collapses the sine output to a few discrete
+values (see `coreml/PHASE6_FP16_DECODER.md`).
 
 ## Phonemizer
 
@@ -100,9 +102,9 @@ models/tts/styletts2/
     ├── 04_export_decoder.py          # → HiFi-GAN decoder mlpackage (CPU+GPU)
     ├── 99_parity_check.py            # PyTorch ↔ CoreML cosine check (per stage)
     ├── 99b_e2e_coreml.py             # baseline e2e driver (no quantization)
-    ├── 99c_e2e_optimized.py          # optimized e2e: int8 TP + diff B=512 + warmup
+    ├── 99c_e2e_optimized.py          # optimized e2e: fp16 TP + diff B=512 + warmup
     └── optimize/
-        ├── quantize_text_predictor_int8.py  # fp16 → int8 PTQ for all 5 TP buckets
+        ├── quantize_text_predictor_int8.py  # historical: int8 PTQ recipe (not shipped)
         └── measure_diffusion_buckets.py     # per-bucket warm timing
 ```
 

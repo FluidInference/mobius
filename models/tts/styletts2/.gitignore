@@ -11,3 +11,6 @@ __pycache__/
 .uv/
 .venv/
 *.pyc
+
+# HF upload staging — symlinks into coreml/, do not commit.
+hf-upload/
