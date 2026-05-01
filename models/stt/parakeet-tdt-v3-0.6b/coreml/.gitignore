@@ -1,4 +1,10 @@
 mlpackages/
 parakeet_coreml/
 parakeet_coreml_quantized/
+parakeet_coreml_encoder_only/
+parakeet_coreml_fp32/
 compiled/
+.compiled/
+compute_unit_sweep.json
+fallback.json
+encoder_variants_summary.json

@@ -95,6 +95,65 @@ Quantization plots (ALL)
 - Fused: `plots/quantize/all/fused_quality.png`, `fused_latency.png`, `fused_compression.png`, `fused_size.png`
 - Component breakdown: `plots/quantize/all/all_components_quality.png`, `all_components_latency.png`, `all_components_compression.png`, `all_components_size.png`, `all_components_compile.png`
 
+## Encoder-only int4/int8 sweep
+
+`extra_encoder_variants.py` extends the recipes in `quantize_coreml.py` with five encoder-scoped variants targeting the disk/RTFx/WER trade space. The encoder dominates the v3 model footprint, so quantizing it alone (without touching preprocessor/decoder/joint, which stay fp16) gives most of the size win without further hurting decoding quality.
+
+Variants:
+
+- `enc8bit-palettize` — 8-bit palette on the encoder.
+- `enc-prune+int8` — sparse + int8 linear per-channel.
+- `enc-int4-linear-per-channel` — int4 linear, one scale per output channel. Selected as the FluidAudio v3 default.
+- `enc-int4-linear-per-block-32` — int4 linear, one scale per 32-element block.
+- `enc-prune+int4-block` — sparse + int4 block-wise.
+
+The three int4 variants explicitly bump `spec.specificationVersion = 9` (iOS18 / macOS 15) after the optimize.coreml pass, since int4 weight payloads require the iOS18 runtime.
+
+```
+uv run python extra_encoder_variants.py run \
+  --input-dir parakeet_coreml \
+  --output-root parakeet_coreml_encoder_only
+```
+
+Results — 100-file LibriSpeech `test-clean` subset on M-series, baseline = pre-converted fp16 encoder:
+
+| Variant                            | WER    | RTFx  | Encoder size |
+|------------------------------------|-------:|------:|-------------:|
+| baseline (fp16)                    | 2.64 % | 36.8× | 426 MB       |
+| `enc-prune+int8`                   | 2.57 % | 19.8× | ~340 MB      |
+| **`enc-int4-linear-per-channel`**  | 5.24 % | 49.2× | 285 MB       |
+| `enc-int4-linear-per-block-32`     | 3.95 % | 15.6× | ~310 MB      |
+| `enc-prune+int4-block`             | 3.95 % | 15.9× | ~300 MB      |
+
+Per-channel int4 was chosen as the v3 default for the disk + RTFx wins. Per-block variants trade ~1.3 pt WER for ~3× slower latency due to ANE fallback on the per-block dequantize op.
+
+Production numbers on the full LibriSpeech `test-clean` (2,620 files, M2, `.cpuAndNeuralEngine`, decoder/joint/preprocessor fp16) from FluidAudio:
+
+| Encoder           | On-disk | Avg WER | Avg CER | Overall RTFx | Peak RAM |
+|-------------------|--------:|--------:|--------:|-------------:|---------:|
+| 8-bit palettized  | 425 MB  | 2.64 %  | 1.03 %  | 47.1×        | 153 MB   |
+| int4 linear/ch    | 285 MB  | 3.76 %  | 1.59 %  | 43.1×        | 139 MB   |
+
+The int8 path stays the FluidAudio default; int4 is opt-in via `ParakeetEncoderPrecision.int4` (see `FluidInference/FluidAudio#560`).
+
+### Compute-unit sweep and ANE fallback analysis
+
+Two companion scripts diagnose where each component runs at inference:
+
+- `compute_unit_sweep.py` — drives `tools/coreml-cli` (no `--fallback`) across all four `MLComputeUnits` (`all`, `cpu_only`, `cpu_and_gpu`, `cpu_and_neural_engine`) per component and aggregates latency + device residency into `compute_unit_sweep.json`.
+- `analyze_fallback.py` — runs `coreml-cli --fallback --json` per component, summarizes total/fallback op counts, and groups CPU-fallback ops by reason into `fallback.json`.
+
+Both scripts auto-compile any `.mlpackage` input into `<input_dir>/.compiled/<stem>.mlmodelc` and reuse that cache.
+
+```
+uv run python compute_unit_sweep.py run --input-dir parakeet_coreml
+uv run python analyze_fallback.py run --input-dir parakeet_coreml_encoder_only/enc-int4-linear-per-channel
+```
+
+These were used to confirm the per-channel int4 encoder stays resident on ANE on macOS 15 / iOS 18, which is what makes the 49.2× RTFx win possible.
+
+Full session log of the int4 attempt — tooling, sweep results, production numbers, end-to-end CLI verification, FluidAudio integration, and known bugs in the new scripts — is in [`context/encoder_int4_quantization_notes.md`](./context/encoder_int4_quantization_notes.md).
+
 ## Reproduce the figures
 
 1) Export baseline CoreML packages
