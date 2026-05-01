@@ -177,17 +177,38 @@ def _summarize_fallback(raw: Dict[str, object]) -> Dict[str, object]:
     if not isinstance(fb, dict):
         return summary
 
-    total_ops = fb.get("total_ops") or fb.get("op_count")
-    fallback_ops = fb.get("fallback_ops") or fb.get("cpu_op_count")
+    # coreml-cli emits {"total_ops": int, "cpu_ops": int, "reasons": [{"reason", "count", ...}]}.
+    # Use direct gets (not `or`) so legitimate 0 values aren't treated as falsy.
+    total_ops = fb.get("total_ops")
+    if total_ops is None:
+        total_ops = fb.get("op_count")
+    fallback_ops = fb.get("cpu_ops")
+    if fallback_ops is None:
+        fallback_ops = fb.get("fallback_ops")
+        if fallback_ops is None:
+            fallback_ops = fb.get("cpu_op_count")
     summary["total_ops"] = total_ops
     summary["fallback_ops"] = fallback_ops
     if isinstance(total_ops, (int, float)) and isinstance(fallback_ops, (int, float)) and total_ops:
         summary["fallback_percent"] = round(100.0 * float(fallback_ops) / float(total_ops), 2)
 
     # Try a handful of likely shapes for the per-reason breakdown.
-    reasons = fb.get("by_reason") or fb.get("reasons") or fb.get("groups")
+    reasons = fb.get("reasons")
+    if reasons is None:
+        reasons = fb.get("by_reason")
+    if reasons is None:
+        reasons = fb.get("groups")
     counter: Counter[str] = Counter()
-    if isinstance(reasons, dict):
+    if isinstance(reasons, list):
+        # coreml-cli shape: list of {"reason": str, "count": int, ...}
+        for entry in reasons:
+            if not isinstance(entry, dict):
+                continue
+            reason = entry.get("reason")
+            count = entry.get("count")
+            if isinstance(reason, str) and isinstance(count, (int, float)):
+                counter[reason] += int(count)
+    elif isinstance(reasons, dict):
         for key, value in reasons.items():
             if isinstance(value, (int, float)):
                 counter[str(key)] += int(value)

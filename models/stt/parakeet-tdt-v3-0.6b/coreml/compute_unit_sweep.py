@@ -231,12 +231,13 @@ def run(
 
             # Pretty-print the headline numbers if present.
             try:
+                # coreml-cli shape: {"models": [{"results": [{"latency": {...}, "summary": {...}}]}]}
                 models = result.get("models", []) if isinstance(result, dict) else []
                 if models and isinstance(models[0], dict):
-                    runs = models[0].get("compute_units", [])
+                    runs = models[0].get("results", [])
                     if runs and isinstance(runs[0], dict):
-                        latency = runs[0].get("latency", {})
-                        device = runs[0].get("device_assignment", {})
+                        latency = runs[0].get("latency", {}) or {}
+                        device = runs[0].get("summary", {}) or {}
                         median = latency.get("median_ms")
                         cpu_pct = device.get("cpu_percent")
                         gpu_pct = device.get("gpu_percent")
