@@ -152,6 +152,8 @@ uv run python analyze_fallback.py run --input-dir parakeet_coreml_encoder_only/e
 
 These were used to confirm the per-channel int4 encoder stays resident on ANE on macOS 15 / iOS 18, which is what makes the 49.2× RTFx win possible.
 
+Full session log of the int4 attempt — tooling, sweep results, production numbers, end-to-end CLI verification, FluidAudio integration, and known bugs in the new scripts — is in [`context/encoder_int4_quantization_notes.md`](./context/encoder_int4_quantization_notes.md).
+
 ## Reproduce the figures
 
 1) Export baseline CoreML packages
