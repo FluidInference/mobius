@@ -8,13 +8,16 @@ A comprehensive knowledge repository combining cutting-edge speech processing re
 
 ```
 knowledge/
-├── audio/                          # Speech & audio model research papers
+├── audio/                          # Speech & audio model research papers (deep dives)
 │   ├── AGENTS.md                   # Audio models index (see below)
 │   ├── Canary-Parakeet-Multilingual-ASR/
 │   ├── CoVoST-2-Multilingual-Speech-Translation/
 │   ├── Fast-Conformer-Efficient-Speech-Recognition/
 │   ├── Fast-Conformer-Linearly-Scalable-v6/
 │   └── Token-Duration-Transducer-TDT/
+│
+├── papers/                         # Lightweight reading-list index (all papers)
+│   └── INDEX.md                    # arXiv links + FluidAudio component map
 │
 ├── coreml/                         # CoreML documentation & tooling
 │   ├── AGENTS.md                   # CoreML snapshot index
@@ -24,6 +27,12 @@ knowledge/
 │
 └── AGENTS.md                        # This file
 ```
+
+**Where to start:**
+- For the **complete reading list** (every paper that underpins a
+  shipped FluidAudio component, with arXiv links and a component map):
+  → **[`papers/INDEX.md`](./papers/INDEX.md)**
+- For **deep extracted notes** on a specific paper: → `audio/<Paper-Slug>/index.md`
 
 ---
 

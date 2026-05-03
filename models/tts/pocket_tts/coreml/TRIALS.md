@@ -376,3 +376,142 @@ transcription of each generated wav):
 | 5 | Conditioning order (text-first vs voice-first) | "Third is... Yes." | Swap to voice-first, then text |
 | 6 | Mimi decoder KV cache overflow at frame 16 | Audio robotic after ~2 s | Add modulo wrap + sliding-window mask in traceable wrapper |
 | 7 | Mimi weights assumed shared across languages | Spanish "Gracias.", French "Merci." | Trace `mimi_decoder.mlpackage` per-language (Trial 14) |
+
+---
+
+## Phase 6: Split-Mimi (transformer on ANE + SEANet on GPU)
+
+**Hypothesis:** the monolithic `mimi_decoder.mlmodelc` has the
+upsample-plus-attention transformer block (which CoreML profiling
+showed is ANE-eligible) and the SEANet conv stack (which is GPU/CPU
+only) sharing one model. If we split the codec into:
+
+- `mimi_transformer_no_trig.mlmodelc` — FP16, ~74% ANE-resident
+- `mimi_seanet_fp16.mlmodelc` — FP16 GPU/CPU
+
+and chain them per frame, the transformer block should run on the
+Neural Engine and free the GPU for the boundary upsample / SEANet
+conv path. End-to-end synthesis should get faster.
+
+The split conversion ran clean: trace-time parity vs the monolithic
+mimi was bit-exact in FP32 and within 0.1 dB MSE in FP16 on a
+3 s utterance. CoreML compile + load succeeded; an end-to-end WAV
+generated through Swift sounded indistinguishable from the
+monolithic path.
+
+### Trial 15 — A/B latency benchmark on M2 (debug build, host clock)
+
+A per-stage timer was added to the Swift `StreamingGenerator`
+(`prefill`, `flowlm`, `flowdec`, `mimi`) to isolate just the mimi
+delta from the rest of the pipeline. Both modes ran from the same
+process with two warmup iterations and five timed iterations,
+**interleaved** (mono, split, mono, split, …) to cancel out drift
+and thermal effects. Same 14-word sentence, same voice (`alba`),
+same seed. Apple M2, 16 GB, macOS 26.5, AsyncIO actor.
+
+```
+mode    n  frames  prefill ms     flowlm ms/f   flowdec ms/f   mimi ms/f      total ms        RTFx
+mono    5  97      762  ± 243     22.15 ± 2.10  12.73 ± 2.56   24.50 ± 1.59   6533 ±  957     1.20
+split   5  98      953  ± 238     26.17 ± 8.50  17.16 ± 7.36   24.72 ± 6.83   7531 ± 1936     1.04
+```
+
+**Headline:** the mimi step itself is statistically indistinguishable
+between the two pipelines — mono 24.50 ms/f vs split 24.72 ms/f
+(Δ = -0.21 ms/f, -0.9%, well within ±1σ). The expected
+ANE-on-transformer win does not appear at the mimi stage.
+
+End-to-end is a regression: -13% RTFx (1.20× → 1.04×), +15.3% on
+the per-chunk inner loop.
+
+### Why the split path regressed
+
+1. **Boundary tensor round-trip.** The transformer's last hidden
+   state `[1, 512, 16]` has to leave one MLModel and re-enter
+   another every frame. Two `MLModel.predict` calls (≈ two ANE/GPU
+   submits) per frame replace the single submit on the monolithic
+   path. The boundary copy itself is small but the dispatch overhead
+   is paid twice.
+
+2. **State plumbing.** Mimi's 26-tensor streaming state is
+   partitioned 7 + 19 across the two stages. Each frame copies
+   stage-1 outputs out, slices, copies stage-2 inputs in, then
+   merges back into the unified `MimiState`. This is pure Swift
+   overhead the monolithic path doesn't pay.
+
+3. **Cross-stage scheduler contention.** The split path's per-stage
+   variance is 4-5× higher across **all** stages — including the
+   flow-LM and flow-decoder stages we did not touch (split flowlm
+   σ=8.5 ms/f vs mono σ=2.1 ms/f). One bad iteration spiked
+   total_ms +60% and dragged every stage with it. The signature
+   matches ANE submit stalling the GPU queue while the GPU was
+   mid-kernel on flow-decode / SEANet.
+
+4. **Residency cost.** Two mlmodelc compiled + loaded vs one →
+   prefill is +25% (953 vs 762 ms). Minor, but consistently in the
+   wrong direction.
+
+The transformer-on-ANE bet only pays off if `(ANE compute saved)`
+exceeds `(boundary copy + state plumbing + cross-stage scheduling
+overhead)`. On a 14-word M2 run, it does not — the savings are
+zero or negative.
+
+### Methodology notes (what to repeat for a re-test)
+
+- Build was `swift build` (debug). Release was attempted but
+  `AppLogger` only emits to `os_log` in release, so the per-stage
+  ms/f line is unreachable from stdout/stderr. A relative
+  comparison in debug is still valid because Swift overhead is
+  paid by both modes equally.
+- AppLogger's `os_log`-only behaviour in release is the reason
+  the StageTimings line is grep-able only in debug.
+- Interleaving (mono, split, mono, split…) matters. A sequential
+  layout (5× mono then 5× split) gave wildly different aggregates
+  in earlier runs because the second batch always paid lower
+  thermal / cache-cold cost.
+- Two warmup iterations were enough for ANE compile to stabilize.
+  More warmup did not change the medians.
+- Variance-control: drop the highest- and lowest-`total_ms` per
+  mode and the regression magnitude shrinks slightly but never
+  reverses sign.
+
+### What would change the result
+
+Not pursued in this round, but the levers exist:
+
+- **Pipeline composite model.** Wrap transformer → SEANet inside
+  one `MLModel` (CoreML pipeline / composite), letting CoreML
+  keep the boundary tensor on-device and submit one combined
+  graph. This eliminates the round-trip but reintroduces the
+  monolithic compile-time problem — the whole point of the split
+  was to make the transformer sub-graph tractable for ANE
+  placement, which the composite hides again.
+- **Explicit compute-unit pinning.** Force the transformer to
+  `.cpuAndNeuralEngine` and SEANet to `.cpuAndGPU` via
+  `MLModelConfiguration.computeUnits` instead of `.all`. This
+  was not tested. The default `.all` may be over-eagerly placing
+  SEANet ops on ANE-or-CPU and stalling.
+- **Bigger workload.** ~95 frames is short; ANE dispatch cost
+  amortizes more on longer utterances. A 50-word paragraph A/B
+  may flip the sign.
+- **Release build with stdout logging.** Adding a stderr fallback
+  to AppLogger would make release-mode per-stage timing reachable.
+  Swift overhead may be hiding a real ANE win that survives in
+  release.
+
+### Recommendation
+
+**Do not ship the split path.** Keep `mimi_decoder.mlmodelc`
+(monolithic) as the default. The split mlpackage pair has been
+validated for parity and can stay in the conversion repo as a
+reference / future-experiment artifact, but the runtime cost on
+M2 is a net loss. Re-evaluate if either (a) we move to a composite
+pipeline model, (b) we ship release-mode per-stage timing and
+remeasure, or (c) we test on a chip where ANE bandwidth dominates
+GPU dispatch overhead more strongly than M2.
+
+### Status
+
+**Trial 15: regression — split path shelved.** Building blocks
+(conversion scripts, parity scripts, RoPE precomputation,
+schema discovery, Swift scaffolding) remain available for future
+re-test if any of the levers above are pulled.
