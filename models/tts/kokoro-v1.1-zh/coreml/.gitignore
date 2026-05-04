@@ -1,0 +1,7 @@
+# Build outputs (mlpackage/mlmodelc + dumped vocab/voice pack/benchmark data)
+build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
