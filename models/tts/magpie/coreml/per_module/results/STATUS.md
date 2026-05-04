@@ -13,7 +13,7 @@ Production CoreML pipeline benchmarked via `fluidaudiocli magpie bench`.
 |---|---|---|---|
 | `text_encoder` | 94–99 % | clean | — |
 | `decoder_prefill` | 94–99 % | clean | — |
-| `decoder_step` | **99 %** | falls back | per-step ANECCompile recompile under varying `position` |
+| `decoder_step` | **99 %** | (was pinned `.cpuAndGPU`) | runtime fixed in Phase D — see below |
 | `nanocodec_decoder` | **0 %** (1149 ops) | all CPU | `ANECCompile() FAILED` whole-graph |
 
 Numbers: 47.4 ms/decoder step, 0.44× RTFx end-to-end, 23.49 s nanocodec
@@ -132,6 +132,52 @@ Replacement plan (deferred until chunked nanocodec lands ANE):
 3. Range reduction with `sin²(y + π) = sin²(y)` then Taylor5 over a
    smaller domain (ANE compatibility of `mod` is unverified).
 
+## Phase D — decoder_step ANE pin (done)
+
+Hypothesis going in: `decoder_step.mlmodelc` was pinned to `.cpuAndGPU`
+in `MagpieModelStore.swift` with a comment claiming
+`MILCompilerForANE error: ANECCompile() FAILED` from rank-4 split-K/V
+scatter. Phase A had already shown rank-4 KV write lands 100 % ANE in
+isolation — contradicting the comment. Phase D verifies the production
+model.
+
+### Static profile (M2, macOS 26.5)
+
+`coreml-cli ~/.cache/fluidaudio/Models/magpie-tts/decoder_step.mlmodelc`:
+
+| Compute Unit | ANE % | Median predict (ms) |
+|---|---|---|
+| `.cpuOnly` | 0 % | 19.6 |
+| `.cpuAndGPU` (then-current pin) | 0 % | 22.5 |
+| `.all` | 97.3 % | 17.3 |
+| `.cpuAndNeuralEngine` | **97.3 %** | **15.2** |
+
+Cold compile 58 ms — no `ANECCompile() FAILED`. Eight CPU-fallback ops:
+4 int32 dtype rejections (`cast`, `add`, `select`), 2 schedulable casts,
+1 `greater_equal` (unresolved input), 1 `gather` (unsupported index
+type). Total estimated CPU runtime ~0.14 ms.
+
+The stale comment no longer holds — the model compiles cleanly on ANE.
+
+### End-to-end bench (M2, "Hello world. … Apple Silicon with the Swift port.", seed=42, John, en)
+
+| Pin | decoder_step ms/step | synth wall | RTFx | Codes | Audio | EOS |
+|---|---|---|---|---|---|---|
+| `.cpuAndGPU` | 36.1 ms | 30.98 s | 0.62× | 651 | 19.23 s | **`false`** (no EOS, hit step cap) |
+| `.cpuAndNeuralEngine` | **23.9 ms** | **9.25 s** | **1.21×** | 234 | 11.20 s | **`true`** (clean) |
+
+Wall-clock is **~2× faster on ANE** *and* the AR loop terminates on EOS
+instead of running out the maxStep budget with tail garbage. Reproducible
+deterministically across 5 runs (codes=234 every run on ANE).
+
+### Fix
+
+`Sources/FluidAudio/TTS/Magpie/Assets/MagpieModelStore.swift`: replaced
+the `gpuConfig` (`.cpuAndGPU`) with `aneConfig` (`.cpuAndNeuralEngine`)
+for `decoder_step`, kept `.cpuOnly` honored when the manager is
+explicitly requested as CPU-only. Comment rewritten with the actual
+numbers.
+
 ## Pending
 
 ### Phase C v2 — chunked nanocodec
@@ -146,18 +192,6 @@ Replacement plan (deferred until chunked nanocodec lands ANE):
 2. Verify SNR > 30 dB against chunked sin² reference.
 3. Re-convert nanocodec with the better Snake; verify ANE residency
    unchanged.
-
-### Phase D — decoder_step runtime recompile
-Static analysis says 99 % ANE, runtime says CPU. Hypotheses:
-- Per-step recompile churn under varying `position` (ANE caches on
-  tensor values, not just shapes).
-- Float dtype of `position` triggering recompile.
-- Stateful program replacement bug.
-1. Reproduce in isolation by running `decoder_step.mlmodelc` 100× with
-   varying `position` and instrumenting `MLComputePlan` per call.
-2. Try int32 `position` (despite user's earlier rejection of int32, this
-   is a measurement only, no integration).
-3. Try fixed `position=0` to confirm shape-vs-value cache hypothesis.
 
 ### Phase D — fused AR step
 Merge `decoder_step + final_proj + local_transformer + 8 heads` into one
