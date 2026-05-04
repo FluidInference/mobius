@@ -19,6 +19,17 @@ Production CoreML pipeline benchmarked via `fluidaudiocli magpie bench`.
 Numbers: 47.4 ms/decoder step, 0.44× RTFx end-to-end, 23.49 s nanocodec
 per sentence.
 
+### Final production state (post-Phase F)
+
+| Component | Compute | Median predict | ANE % | Source build |
+|---|---|---|---|---|
+| `text_encoder` | ANE | 12.32 ms | 98.1 | fp16 |
+| `decoder_prefill` | ANE | 17.55 ms | 93.9 | fp16 |
+| `decoder_step` | ANE | 17.0 ms | 97.3 | fp16 (Phase D pinned `.cpuAndNeuralEngine`) |
+| `nanocodec_decoder_t24` | **CPU only** | 142.51 ms / 24-frame call | 0 | **fp32** (Phase F: fp16 audibly noisy) |
+
+End-to-end RTFx ~1.3× median; AR loop terminates on EOS deterministically.
+
 ## Phase A — Per-module ANE diagnostics (done)
 
 `per_module/analyze.py` converts ~14 isolated nn.Modules and reports static
@@ -294,6 +305,105 @@ stationary signal that matches the AR loop's near-silent first frame.
 | Chunked, edge-replicate | **0.0003** ← current |
 
 User-confirmed audibly clean.
+
+## Phase F — nanocodec noise isolation (done; full fp32 required)
+
+Phase C v2 step 6 already established that fp16 weight quantization, not
+the Snake approximation, is the audible noise source. Phase F is the
+exhaustive sweep that asked: **is there a smaller fp32 island inside
+nanocodec that retains audibility while keeping the rest fp16?** Answer:
+no. Full fp32 is required.
+
+### Phase F.1 — mono fp32 vs fp16 audibility A/B (done)
+
+Built `nanocodec_decoder_mono_fp32.mlpackage` (T=256 single-call, fp32
+weights) via `convert_nanocodec.py --max-frames 256 --precision fp32`
+and ran `/tmp/mono_fp16_vs_fp32.py`: 4-way A/B with PyTorch sin² gold,
+PyTorch Taylor5 (in-place patched, fp32), CoreML T=256 fp16, CoreML
+T=256 fp32.
+
+Random-token AR sample, T=72 codes (~3.3 s):
+
+| Comparison | SNR (dB) | Interpretation |
+|---|---|---|
+| PyTorch sin²        vs PyTorch Taylor5  | 15.39 | Snake approximation alone |
+| PyTorch sin²        vs CoreML fp32      | 15.39 | Same — CoreML conversion bit-exact at fp32 |
+| PyTorch Taylor5     vs CoreML fp32      | **117.59** | CoreML fp32 = bit-exact PyTorch Taylor5 |
+| PyTorch Taylor5     vs CoreML fp16      | **26.80** | Entire fp16 quantization budget |
+
+Audibility (user-confirmed): PyTorch Taylor5 and CoreML fp32 both clean;
+CoreML fp16 noisy. Confirms fp16 weight quantization is the sole audible
+defect. Snake approximation is acoustically transparent despite 15 dB
+SNR floor (structural phase offset, not noise).
+
+### Phase F.2 — mixed-precision sweep by op_type (done; no island works)
+
+`/tmp/mixed_precision_sweep.py` builds 3 variants via
+`coremltools.converters.mil.mil.passes.defs.quantization.FP16ComputePrecision(op_selector=…)`:
+
+- `v_convs_fp32` — `op.op_type in ("conv", "conv_transpose")` kept fp32, rest fp16
+- `v_acts_fp32` — convs fp16, all activations (mul/add/clip/tanh) fp32
+- `v_snake_fp32` — clip + Snake-scoped mul/add fp32, rest fp16
+
+Decoded against the same AR-emitted codes as F.1:
+
+| Variant            | SNR vs sin² | SNR vs fp32 | Pred(s) | Size(MB) |
+|---|---|---|---|---|
+| v_full_fp32        | 18.48 | **211.22** | 1.81 | 121.0 |
+| v_full_fp16        | 16.65 | 27.43 | 0.72 | 60.9 |
+| v_convs_fp32       | 18.46 | 48.05 | 1.54 | **121.1** |
+| v_acts_fp32        | 16.72 | 27.76 | 2.31 | 60.9 |
+| v_snake_fp32       | 16.65 | 27.43 | 1.73 | 60.9 |
+
+User audibility: `v_full_fp32` clean; **all four other variants** —
+including `v_convs_fp32` at 48 dB SNR — audibly noisy. The 48 dB →
+27 dB gap is the same kind of noise, just less of it; even 48 dB SNR
+isn't clean enough perceptually. Convs hold most of the noise budget
+but activations contribute too. No op-type island works.
+
+### Phase F.2b — per-location sweep (blocked by coremltools)
+
+`/tmp/mixed_precision_sweep_b.py` attempted scope-string filtering on
+`op.scopes["TORCHSCRIPT_MODULE_NAME"]` to keep specific HiFi-GAN
+locations fp32:
+
+- `v_last2_fp32` — `up_sample_conv_layers.{3,4}` + `res_layers.{3,4}` + post head fp32
+- `v_output_head_fp32` — only `post_conv` + `out_activation` fp32
+- `v_embeddings_fp32` — only `pre_conv` + FSQ dequantization fp32
+
+Result — all three came out **bit-identical to v_full_fp16** (60.9 MB,
+SNR vs fp32 = 26.80 dB). Logging the matched scopes returned an empty
+counter: `op.scopes` is **not populated** when `FP16ComputePrecision`'s
+`op_selector` runs in this coremltools version (8.x). The selector
+fires on bare ops with op_type but no Torch scope metadata, so any
+scope-substring test trivially returns "convert to fp16".
+
+Per-location filtering at the op_selector level is unavailable. The
+only path to per-stage precision control is post-conversion MIL graph
+rewriting, which is out of scope for this project.
+
+### Conclusion
+
+| Approach | Result |
+|---|---|
+| Whole-graph fp32 | clean (current production) |
+| op_type filter (convs only fp32) | audibly noisy at 48 dB SNR |
+| op_type filter (activations / Snake only fp32) | identical to fp16 |
+| scope filter (per-stage / per-location) | not supported by coremltools op_selector |
+
+**Production stays on `nanocodec_decoder_t24_fp32.mlpackage`** (full
+fp32 weights, CPU-only, ~1.3× RTFx). The only remaining ANE-recovery
+path on nanocodec would be model-level retraining or QAT — out of
+scope. Phase F closed.
+
+### Files
+
+`/tmp/mono_fp16_vs_fp32.py` — F.1 4-way A/B harness.
+`/tmp/mixed_precision_sweep.py` — F.2 op_type sweep (3 variants).
+`/tmp/mixed_precision_sweep_b.py` — F.2b scope-filter attempt (3 variants).
+`build/nanocodec_decoder_mono_fp32.mlpackage` — T=256 mono fp32 reference.
+`build/nanocodec_decoder_mono_v_{convs,acts,snake}_fp32.mlpackage` — F.2 artifacts.
+`build/nanocodec_decoder_mono_v_{last2,output_head,embeddings}_fp32.mlpackage` — F.2b artifacts.
 
 ## Pending
 
