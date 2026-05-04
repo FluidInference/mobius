@@ -15,4 +15,5 @@ dependencies = [
     "huggingface_hub>=0.24",
     "requests>=2.32",
     "tqdm>=4.66",
+    "scikit-learn>=1.4",  # required by coremltools palettize-weights kmeans
 ]

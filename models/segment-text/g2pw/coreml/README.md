@@ -102,6 +102,41 @@ Feeds 15 traditional-Chinese sentences exercising 行 / 長 / 重 / 都 /
 覺 in disambiguating contexts and asserts top-1 picks the correct
 bopomofo label per case. All 15 should land at confidence ≈ 1.000.
 
+## Quantize
+
+The baseline is fp16 (`compute_precision=FLOAT16` in convert-coreml.py).
+Use `quantize.py` to emit smaller variants from the fp16 baseline:
+
+```bash
+# int8 linear per-channel (recommended): 2.0x shrink, near-lossless
+uv run python quantize.py --mode linear-per-channel --out-dir ./build/g2pw-int8
+
+# 6-bit kmeans palette: 2.7x shrink, slight drift
+uv run python quantize.py --mode palettize-6bit --out-dir ./build/g2pw-pal6
+
+# 4-bit kmeans palette: 4.0x shrink, larger drift
+uv run python quantize.py --mode palettize-4bit --out-dir ./build/g2pw-pal4
+```
+
+Measured on this checkpoint:
+
+| variant                 | size  | shrink | synthetic argmax vs ONNX | max diff | real polyphone* |
+|-------------------------|-------|--------|--------------------------|----------|-----------------|
+| fp16 (baseline)         | 303 MB| 1.0x   | match                    | 1.2e-2   | 15/15           |
+| int8 linear per-channel | 152 MB| 2.0x   | match                    | 2.0e-2   | 15/15           |
+| 6-bit kmeans palette    | 114 MB| 2.7x   | **flip**                 | 7.0e-2   | 15/15           |
+| 4-bit kmeans palette    |  76 MB| 4.0x   | match                    | 1.7e-1   | 15/15           |
+
+\* `test_real.py` 15-case suite. Real polyphone decisions hit confidence
+≈ 1.000 against alternatives at ≈ 0.000, so even the 4-bit drift never
+flips the chosen label. The 6-bit synthetic argmax flip is on a
+random-`phoneme_mask` batch where competing labels sit very close — a
+worst case that doesn't occur in production text.
+
+**Recommendation**: int8 linear per-channel (`g2pw-int8`) is the
+default ship target — half the size, no observed regressions on either
+the synthetic or real-world batches.
+
 ## Profile
 
 From `mobius/tools/coreml-cli/`:
@@ -116,11 +151,15 @@ land on CPU more than expected.
 
 ## Upload
 
-After validation passes, upload `build/g2pw/` to HuggingFace as
-`FluidInference/g2pw-coreml`. The Swift integration in
+After validation passes, upload `build/g2pw-int8/` to HuggingFace as
+`FluidInference/g2pw-coreml` (the recommended ship variant — 152 MB,
+no accuracy regression). The Swift integration in
 `Sources/FluidAudio/TTS/KokoroAne/G2P/Mandarin/` will fetch it via
 `KokoroAneResourceDownloader.ensureG2pwModel(...)` (separate PR — see
 issue #572 item 1).
+
+For folks who want the fp16 baseline (e.g. for re-quantization
+experiments), upload `build/g2pw/` alongside under a `fp16/` subdir.
 
 ## License & attribution
 
