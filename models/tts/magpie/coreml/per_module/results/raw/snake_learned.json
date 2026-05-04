@@ -1,0 +1,60 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M2",
+    "ram": "16GB",
+    "os_version": "macOS 26.5",
+    "timestamp": "2026-05-04T16:35:05.590862+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/Users/kikow/brandon/voicelink/FluidAudio/mobius/models/tts/magpie/coreml/per_module/build/compiled/snake_learned/snake_learned.mlmodelc",
+      "model_name": "snake_learned",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 4,
+        "ane_ops": 0,
+        "gpu_ops": 0,
+        "cpu_ops": 4,
+        "ane_percent": 0.0,
+        "reasons": [
+          {
+            "reason": "ANE supported but scheduler chose CPU",
+            "count": 2,
+            "estimated_cpu_runtime_ms": 0.0108,
+            "op_types": {
+              "ios17.cast": 1,
+              "ios17.pow": 1
+            },
+            "ops": [
+              "x_to_fp16",
+              "var_12_cast_fp16"
+            ]
+          },
+          {
+            "reason": "This platform doesn't support Neuron ZinIrNeuronType::kSin (aka ZinIrNonLinearSin)",
+            "count": 1,
+            "estimated_cpu_runtime_ms": 0.0043,
+            "op_types": {
+              "ios17.sin": 1
+            },
+            "ops": [
+              "var_10_cast_fp16"
+            ]
+          },
+          {
+            "reason": "ANE not available for this op",
+            "count": 1,
+            "estimated_cpu_runtime_ms": 0,
+            "op_types": {
+              "ios17.add": 1
+            },
+            "ops": [
+              "y"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

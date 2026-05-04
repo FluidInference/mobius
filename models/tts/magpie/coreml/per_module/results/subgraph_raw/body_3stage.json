@@ -1,0 +1,41 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M2",
+    "ram": "16GB",
+    "os_version": "macOS 26.5",
+    "timestamp": "2026-05-04T17:52:39.419788+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/Users/kikow/brandon/voicelink/FluidAudio/mobius/models/tts/magpie/coreml/per_module/build/subgraph_compiled/body_3stage/body_3stage.mlmodelc",
+      "model_name": "body_3stage",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 604,
+        "ane_ops": 598,
+        "gpu_ops": 0,
+        "cpu_ops": 6,
+        "ane_percent": 99.0,
+        "reasons": [
+          {
+            "reason": "Error: Dilated convolution cannot be lowered since all possible space-to-batch implementations exceeded the L2 DMA buffer size",
+            "count": 6,
+            "estimated_cpu_runtime_ms": 0.3881,
+            "op_types": {
+              "ios17.conv": 6
+            },
+            "ops": [
+              "x_23_cast_fp16",
+              "x_33_cast_fp16",
+              "x_57_cast_fp16",
+              "x_67_cast_fp16",
+              "x_91_cast_fp16",
+              "x_cast_fp16"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

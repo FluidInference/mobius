@@ -1,0 +1,24 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M2",
+    "ram": "16GB",
+    "os_version": "macOS 26.5",
+    "timestamp": "2026-05-04T16:57:58.495327+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/Users/kikow/brandon/voicelink/FluidAudio/mobius/models/tts/magpie/coreml/per_module/build/compiled/snake_taylor5_clipped_block/snake_taylor5_clipped_block.mlmodelc",
+      "model_name": "snake_taylor5_clipped_block",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 13,
+        "ane_ops": 13,
+        "gpu_ops": 0,
+        "cpu_ops": 0,
+        "ane_percent": 100.0,
+        "reasons": []
+      }
+    }
+  ]
+}

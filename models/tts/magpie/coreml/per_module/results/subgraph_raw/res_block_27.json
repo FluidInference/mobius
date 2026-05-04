@@ -1,0 +1,74 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M2",
+    "ram": "16GB",
+    "os_version": "macOS 26.5",
+    "timestamp": "2026-05-04T17:52:02.553466+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/Users/kikow/brandon/voicelink/FluidAudio/mobius/models/tts/magpie/coreml/per_module/build/subgraph_compiled/res_block_27/res_block_27.mlmodelc",
+      "model_name": "res_block_27",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 24,
+        "ane_ops": 0,
+        "gpu_ops": 0,
+        "cpu_ops": 24,
+        "ane_percent": 0.0,
+        "reasons": [
+          {
+            "reason": "ANE supported but scheduler chose CPU",
+            "count": 23,
+            "estimated_cpu_runtime_ms": 0.1475,
+            "op_types": {
+              "ios17.mul": 12,
+              "ios17.add": 4,
+              "ios17.clip": 2,
+              "ios17.sub": 2,
+              "ios17.conv": 2,
+              "ios17.cast": 1
+            },
+            "ops": [
+              "x_to_fp16",
+              "clip_0_cast_fp16",
+              "y2_1_cast_fp16",
+              "y4_1_cast_fp16",
+              "y6_1_cast_fp16",
+              "_inversed_16_cast_fp16",
+              "var_17_cast_fp16",
+              "var_19_cast_fp16",
+              "_inversed_21_cast_fp16",
+              "sin2_1_cast_fp16",
+              "input_1_cast_fp16",
+              "x_cast_fp16",
+              "clip_1_cast_fp16",
+              "y2_cast_fp16",
+              "y4_cast_fp16",
+              "y6_cast_fp16",
+              "_inversed_48_cast_fp16",
+              "var_49_cast_fp16",
+              "var_51_cast_fp16",
+              "_inversed_53_cast_fp16",
+              "sin2_cast_fp16",
+              "input_cast_fp16",
+              "y_cast_fp16"
+            ]
+          },
+          {
+            "reason": "ANE not available for this op",
+            "count": 1,
+            "estimated_cpu_runtime_ms": 0,
+            "op_types": {
+              "ios17.add": 1
+            },
+            "ops": [
+              "y"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

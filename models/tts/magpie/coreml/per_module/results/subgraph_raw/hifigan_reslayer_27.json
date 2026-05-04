@@ -1,0 +1,76 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M2",
+    "ram": "16GB",
+    "os_version": "macOS 26.5",
+    "timestamp": "2026-05-04T17:52:11.333824+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/Users/kikow/brandon/voicelink/FluidAudio/mobius/models/tts/magpie/coreml/per_module/build/subgraph_compiled/hifigan_reslayer_27/hifigan_reslayer_27.mlmodelc",
+      "model_name": "hifigan_reslayer_27",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 191,
+        "ane_ops": 174,
+        "gpu_ops": 0,
+        "cpu_ops": 17,
+        "ane_percent": 91.1,
+        "reasons": [
+          {
+            "reason": "ANE supported but scheduler chose CPU",
+            "count": 14,
+            "estimated_cpu_runtime_ms": 0.0983,
+            "op_types": {
+              "ios17.mul": 6,
+              "ios17.add": 5,
+              "ios17.clip": 1,
+              "ios17.sub": 1,
+              "ios17.conv": 1
+            },
+            "ops": [
+              "clip_17_cast_fp16",
+              "y2_cast_fp16",
+              "y4_cast_fp16",
+              "y6_cast_fp16",
+              "_inversed_530_cast_fp16",
+              "var_531_cast_fp16",
+              "var_533_cast_fp16",
+              "_inversed_535_cast_fp16",
+              "sin2_cast_fp16",
+              "input_cast_fp16",
+              "y_cast_fp16",
+              "var_548_cast_fp16",
+              "var_553_cast_fp16",
+              "var_555_cast_fp16"
+            ]
+          },
+          {
+            "reason": "Error: Dilated convolution cannot be lowered since all possible space-to-batch implementations exceeded the L2 DMA buffer size",
+            "count": 2,
+            "estimated_cpu_runtime_ms": 0.0139,
+            "op_types": {
+              "ios17.conv": 2
+            },
+            "ops": [
+              "x_21_cast_fp16",
+              "x_cast_fp16"
+            ]
+          },
+          {
+            "reason": "ANE not available for this op",
+            "count": 1,
+            "estimated_cpu_runtime_ms": 0,
+            "op_types": {
+              "ios17.mul": 1
+            },
+            "ops": [
+              "y"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

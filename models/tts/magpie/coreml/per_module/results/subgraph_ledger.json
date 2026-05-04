@@ -1,0 +1,264 @@
+{
+  "runs": [
+    {
+      "ane_percent": 0.0,
+      "total_ops": 1019,
+      "ane_ops": 0,
+      "cpu_ops": 1019,
+      "top_rejections": [
+        [
+          "ANE not available for this op",
+          1019,
+          {
+            "ios17.mul": 521,
+            "ios17.add": 227,
+            "ios17.conv": 92,
+            "ios17.clip": 86,
+            "ios17.sub": 86,
+            "ios17.conv_transpose": 5,
+            "ios17.cast": 1,
+            "ios17.tanh": 1
+          }
+        ]
+      ],
+      "name": "full_decoder",
+      "notes": "pre_conv + 5 stages + post (input_dim=432, T=256)",
+      "input_shape": [
+        1,
+        432,
+        256
+      ],
+      "timings_s": {
+        "convert": 1677.86,
+        "compile": 0.54,
+        "fallback": 570.59
+      }
+    },
+    {
+      "ane_percent": 0.0,
+      "total_ops": 1006,
+      "ane_ops": 0,
+      "cpu_ops": 1006,
+      "top_rejections": [
+        [
+          "ANE not available for this op",
+          1006,
+          {
+            "ios17.mul": 515,
+            "ios17.add": 225,
+            "ios17.conv": 90,
+            "ios17.clip": 85,
+            "ios17.sub": 85,
+            "ios17.conv_transpose": 5,
+            "ios17.cast": 1
+          }
+        ]
+      ],
+      "name": "body_5stage_T32",
+      "notes": "body_5stage with input T=32  (output T=16384).",
+      "input_shape": [
+        1,
+        864,
+        32
+      ],
+      "timings_s": {
+        "convert": 34.4,
+        "compile": 0.42,
+        "fallback": 49.73
+      }
+    },
+    {
+      "ane_percent": 0.0,
+      "total_ops": 1006,
+      "ane_ops": 0,
+      "cpu_ops": 1006,
+      "top_rejections": [
+        [
+          "ANE not available for this op",
+          1006,
+          {
+            "ios17.mul": 515,
+            "ios17.add": 225,
+            "ios17.conv": 90,
+            "ios17.clip": 85,
+            "ios17.sub": 85,
+            "ios17.conv_transpose": 5,
+            "ios17.cast": 1
+          }
+        ]
+      ],
+      "name": "body_5stage_T64",
+      "notes": "body_5stage with input T=64  (output T=32768).",
+      "input_shape": [
+        1,
+        864,
+        64
+      ],
+      "timings_s": {
+        "convert": 60.29,
+        "compile": 0.46,
+        "fallback": 490.49
+      }
+    },
+    {
+      "ane_percent": 0.0,
+      "total_ops": 1006,
+      "ane_ops": 0,
+      "cpu_ops": 1006,
+      "top_rejections": [
+        [
+          "ANE not available for this op",
+          1006,
+          {
+            "ios17.mul": 515,
+            "ios17.add": 225,
+            "ios17.conv": 90,
+            "ios17.clip": 85,
+            "ios17.sub": 85,
+            "ios17.conv_transpose": 5,
+            "ios17.cast": 1
+          }
+        ]
+      ],
+      "name": "body_5stage_T128",
+      "notes": "body_5stage with input T=128 (output T=65536).",
+      "input_shape": [
+        1,
+        864,
+        128
+      ],
+      "timings_s": {
+        "convert": 132.51,
+        "compile": 0.76,
+        "fallback": 203.31
+      }
+    },
+    {
+      "ane_percent": 99.0,
+      "total_ops": 1019,
+      "ane_ops": 1009,
+      "cpu_ops": 10,
+      "top_rejections": [
+        [
+          "Error: Dilated convolution cannot be lowered since all possible space-to-batch implementations exceeded the L2 DMA buffer size",
+          10,
+          {
+            "ios17.conv": 10
+          }
+        ]
+      ],
+      "name": "full_decoder_T8",
+      "notes": "full_decoder with input T=8 (output T=2048). If 99% ANE, failure is purely memory.",
+      "input_shape": [
+        1,
+        432,
+        8
+      ],
+      "timings_s": {
+        "convert": 23.56,
+        "compile": 0.42,
+        "fallback": 14.43
+      }
+    },
+    {
+      "ane_percent": 98.8,
+      "total_ops": 1006,
+      "ane_ops": 994,
+      "cpu_ops": 12,
+      "top_rejections": [
+        [
+          "Error: Dilated convolution cannot be lowered since all possible space-to-batch implementations exceeded the L2 DMA buffer size",
+          10,
+          {
+            "ios17.conv": 10
+          }
+        ],
+        [
+          "Tensor dimensions N1D1C27H1W16386 are not within supported range, N[1-65536]D[1-16384]C[1-65536]H[1-16384]W[1-16384].",
+          2,
+          {
+            "ios17.conv": 2
+          }
+        ]
+      ],
+      "name": "body_5stage_T16",
+      "notes": "body_5stage with input T=16 (output T=8192).",
+      "input_shape": [
+        1,
+        864,
+        16
+      ],
+      "timings_s": {
+        "convert": 28.98,
+        "compile": 0.41,
+        "fallback": 18.54
+      }
+    },
+    {
+      "ane_percent": 0.0,
+      "total_ops": 1006,
+      "ane_ops": 0,
+      "cpu_ops": 1006,
+      "top_rejections": [
+        [
+          "ANE not available for this op",
+          1006,
+          {
+            "ios17.mul": 515,
+            "ios17.add": 225,
+            "ios17.conv": 90,
+            "ios17.clip": 85,
+            "ios17.sub": 85,
+            "ios17.conv_transpose": 5,
+            "ios17.cast": 1
+          }
+        ]
+      ],
+      "name": "body_5stage_T20",
+      "notes": "body_5stage with input T=20 (output T=10240).",
+      "input_shape": [
+        1,
+        864,
+        20
+      ],
+      "timings_s": {
+        "convert": 28.2,
+        "compile": 0.42,
+        "fallback": 53.62
+      }
+    },
+    {
+      "ane_percent": 0.0,
+      "total_ops": 1006,
+      "ane_ops": 0,
+      "cpu_ops": 1006,
+      "top_rejections": [
+        [
+          "ANE not available for this op",
+          1006,
+          {
+            "ios17.mul": 515,
+            "ios17.add": 225,
+            "ios17.conv": 90,
+            "ios17.clip": 85,
+            "ios17.sub": 85,
+            "ios17.conv_transpose": 5,
+            "ios17.cast": 1
+          }
+        ]
+      ],
+      "name": "body_5stage_T24",
+      "notes": "body_5stage with input T=24 (output T=12288).",
+      "input_shape": [
+        1,
+        864,
+        24
+      ],
+      "timings_s": {
+        "convert": 30.22,
+        "compile": 0.43,
+        "fallback": 51.44
+      }
+    }
+  ]
+}

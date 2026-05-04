@@ -1,0 +1,64 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M2",
+    "ram": "16GB",
+    "os_version": "macOS 26.5",
+    "timestamp": "2026-05-04T16:35:10.138209+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/Users/kikow/brandon/voicelink/FluidAudio/mobius/models/tts/magpie/coreml/per_module/build/compiled/kv_write_rank3_onehot/kv_write_rank3_onehot.mlmodelc",
+      "model_name": "kv_write_rank3_onehot",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 15,
+        "ane_ops": 0,
+        "gpu_ops": 0,
+        "cpu_ops": 15,
+        "ane_percent": 0.0,
+        "reasons": [
+          {
+            "reason": "ANE supported but scheduler chose CPU",
+            "count": 13,
+            "estimated_cpu_runtime_ms": 0.2152,
+            "op_types": {
+              "ios17.cast": 6,
+              "ios17.mul": 4,
+              "ios17.equal": 1,
+              "ios17.reshape": 1,
+              "ios17.sub": 1
+            },
+            "ops": [
+              "position_to_fp16",
+              "var_12_cast_fp16",
+              "var_12_cast_fp16_to_fp16",
+              "mask_cast_fp16",
+              "var_24_cast_fp16",
+              "kv_k_to_fp16",
+              "var_25_cast_fp16",
+              "k_new_to_fp16",
+              "var_26_cast_fp16",
+              "kv_v_to_fp16",
+              "var_32_cast_fp16",
+              "v_new_to_fp16",
+              "var_33_cast_fp16"
+            ]
+          },
+          {
+            "reason": "ANE not available for this op",
+            "count": 2,
+            "estimated_cpu_runtime_ms": 0,
+            "op_types": {
+              "ios17.add": 2
+            },
+            "ops": [
+              "new_k",
+              "new_v"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
