@@ -1,0 +1,7 @@
+# Build outputs (mlpackage + copied side files)
+build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/

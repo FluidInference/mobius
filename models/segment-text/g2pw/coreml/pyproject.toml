@@ -1,0 +1,18 @@
+[project]
+name = "g2pw-coreml"
+version = "0.1.0"
+requires-python = ">=3.10,<3.13"
+description = "g2pW (BERT-based Mandarin polyphone disambiguation) → CoreML conversion"
+readme = "README.md"
+dependencies = [
+    "numpy>=1.26,<2.0",
+    "torch>=2.4.0",
+    "transformers>=4.40.0",
+    "coremltools>=8.0",
+    "onnx>=1.16",
+    "onnxruntime>=1.17",
+    "onnx2torch>=1.5.15",
+    "huggingface_hub>=0.24",
+    "requests>=2.32",
+    "tqdm>=4.66",
+]
