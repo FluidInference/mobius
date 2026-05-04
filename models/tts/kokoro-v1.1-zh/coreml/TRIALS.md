@@ -586,16 +586,6 @@ SineGen drift propagating into atan2's discontinuity. A pure relative threshold 
 CoreML's HF band power is now within **0.01 dB** of the PyTorch reference on `zm_009` and
 within **0.11 dB** on `zf_001`. The audible noise is gone.
 
-### Reference audio (in-tree at `docs/audio/`)
-
-- `docs/audio/before_fix_zm009.wav` — broken Noise stage (audible HF noise on the male voice)
-- `docs/audio/after_fix_zm009.wav` — fixed Noise stage (HF matches PyTorch within 0.01 dB)
-- `docs/audio/pytorch_ref_zm009.wav` — PyTorch teacher reference
-- `docs/audio/after_fix_zf001.wav` — sanity check on the female voice
-
-All 24 kHz mono float32. The `zm_009` triplet uses prompt `"你好世界，今天天气很好。"` so the
-residual is purely the noise-stage delta. Click any file in the GitHub PR diff to download.
-
 ### Outstanding
 
 - `x_source_0` still has 5.7% conversion drift vs the PyTorch trace (down from 39.7%). Source:
