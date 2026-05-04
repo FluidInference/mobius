@@ -91,6 +91,17 @@ uv run python test.py --coreml-dir ./build/g2pw
 
 Asserts the output prob vector sums to ~1.
 
+Real-world polyphone disambiguation (downloads `bert-base-chinese`
+tokenizer on first run):
+
+```bash
+uv run python test_real.py --coreml-dir ./build/g2pw
+```
+
+Feeds 15 traditional-Chinese sentences exercising 行 / 長 / 重 / 都 /
+覺 in disambiguating contexts and asserts top-1 picks the correct
+bopomofo label per case. All 15 should land at confidence ≈ 1.000.
+
 ## Profile
 
 From `mobius/tools/coreml-cli/`:
@@ -125,4 +136,11 @@ shipping downstream.
 - Fixed `seq_len=512`. Sentences that exceed 510 BERT WordPieces (after
   CLS / SEP) must be windowed in the caller (matches upstream behaviour).
 - `compute_precision=FLOAT16` — drop to `FLOAT32` if you observe
-  argmax flips on long-tail labels.
+  argmax flips on long-tail labels. fp16 round-trip empirically lands at
+  max diff ~1.2e-2 on the seeded parity batch, well under the
+  ~0.5 confidence margin typical of polyphone decisions.
+- **Trained on traditional Chinese**: `POLYPHONIC_CHARS.txt` contains
+  3582 traditional-Hanzi entries with 1305 bopomofo labels. Simplified
+  characters that don't share their glyph with traditional (e.g. 长 vs
+  長, 觉 vs 覺) won't be in `chars` and must be converted (e.g. via
+  OpenCC) before invoking the model.
