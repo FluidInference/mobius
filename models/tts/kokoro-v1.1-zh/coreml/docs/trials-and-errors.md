@@ -5,7 +5,7 @@ ANE scheduler / coremltools issue.
 
 ## coremltools 9.0 sdist fallback (BlobWriter not loaded)
 
-**Symptom**: `convert-coreml.py` fails midway through stage 1 with
+**Symptom**: `scripts/convert-coreml.py` fails midway through stage 1 with
 `RuntimeError: BlobWriter not loaded`.
 
 **Cause**: `uv sync` resolved coremltools to the pure-python sdist
@@ -50,7 +50,7 @@ GPU and paying the dispatch tax. For Prosody/Noise/Tail, the opposite was
 true — `ALL` was faster because parts of those graphs simply can't run on
 ANE.
 
-The per-stage assignment in `convert-coreml.py` and the Swift `KokoroLaiModelStore`
+The per-stage assignment in `scripts/convert-coreml.py` and the Swift `KokoroLaiModelStore`
 is the empirical optimum found by laishere; do not "simplify" by setting all
 stages to one value.
 
@@ -80,19 +80,19 @@ typical TTS chunking practice.
 
 `torch.jit.trace` on weight_norm'd LSTMs produces a graph that silently uses
 the unnormalized weights, breaking parity. Run `_remove_weight_norm(model.x)`
-before tracing — see `convert-coreml.py:485`.
+before tracing — see `scripts/convert-coreml.py:485`.
 
 ## Don't trace with dropout layers active
 
 Same issue — dropout layers in train mode get baked into the traced graph as
 random masks. Replace with `nn.Identity()` after `model.eval()`. See the
-loop at `convert-coreml.py:595`.
+loop at `scripts/convert-coreml.py:595`.
 
 ## CpuOnly tracing (mobius rule)
 
 mobius's `Documentation/ModelConversion.md` requires tracing with
 `device='cpu'` to avoid `torch.jit.trace` baking in MPS-specific ops. Already
-honored — no `.to('mps')` calls in `convert-coreml.py`. The
+honored — no `.to('mps')` calls in `scripts/convert-coreml.py`. The
 `PYTORCH_ENABLE_MPS_FALLBACK=1` env var is a belt-and-suspenders: if any
 upstream Kokoro op tries to use MPS at trace time, it falls back to CPU
 instead of failing.

@@ -1,6 +1,6 @@
 # Shape bounds reference
 
-All RangeDim bounds in `convert-coreml.py` derive from a single
+All RangeDim bounds in `scripts/convert-coreml.py` derive from a single
 `--max-frames` (default 2000), via `compute_shape_bounds`:
 
 ```python
@@ -34,8 +34,8 @@ All RangeDim bounds in `convert-coreml.py` derive from a single
 * **Audio cap**: 1,200,000 samples = 50 s @ 24 kHz.
 
 If a sentence's `T_a` (computable after PostAlbert) exceeds `max_T_a`, the
-benchmark/inference scripts must skip or chunk it. `convert-coreml.py` and
-`benchmark.py` both probe `T_a` after PostAlbert and abort that sentence
+benchmark/inference scripts must skip or chunk it. `scripts/convert-coreml.py` and
+`scripts/benchmark.py` both probe `T_a` after PostAlbert and abort that sentence
 gracefully if it exceeds `max_T_a`.
 
 ## Voice pack indexing

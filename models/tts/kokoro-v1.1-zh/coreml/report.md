@@ -37,8 +37,8 @@ Side findings:
 
 ## Top suspect investigated this round: `_cos_resblock1_forward`
 
-Located at `convert-coreml.py:46–57`, monkey-patched onto `AdaINResBlock1`
-inside the Vocoder's decoder generator (`convert-coreml.py:816`). Comment
+Located at `scripts/convert-coreml.py:46–57`, monkey-patched onto `AdaINResBlock1`
+inside the Vocoder's decoder generator (`scripts/convert-coreml.py:816`). Comment
 claims a `sin² → cos` identity rewrite for ANE speed.
 
 ### Side-by-side diff
@@ -61,7 +61,7 @@ def forward(self, x, s):
     return x
 ```
 
-**Replacement `_cos_resblock1_forward`** (`convert-coreml.py:46–57`)
+**Replacement `_cos_resblock1_forward`** (`scripts/convert-coreml.py:46–57`)
 
 ```python
 def _cos_resblock1_forward(self, x, s):
@@ -164,7 +164,7 @@ Branching rules:
 - `~/.cache/fluidaudio/Models/kokoro-82m-coreml/ANE-zh/`: all 5 trainable
   stages currently pure fp32. `.int8.mlmodelc.bak` and `.fp16.mlmodelc.bak`
   preserved next to each `.mlmodelc` for rollback.
-- `convert-coreml.py`: `--no-palettize` flag added; all 5 stages set to
+- `scripts/convert-coreml.py`: `--no-palettize` flag added; all 5 stages set to
   `compute_precision=ct.precision.FLOAT32` with fp32 I/O dtypes; Vocoder
   dispatch changed `CPU_AND_NE → ALL`. `_cos_resblock1_forward` left in
   place pending iSTFT escalation result.
@@ -186,7 +186,7 @@ The divergence is **independent of compute-unit dispatch** (CPU_ONLY,
 CPU_AND_NE, CPU_AND_GPU, ALL all return identical drift to within 0.04
 percentage points). It is also **not** the missing `rand_ini` random initial
 phase — disabling rand_ini in the PyTorch reference still leaves the same
-44% gap. The defect is in how `CoreMLSineGenV2` (`convert-coreml.py:369-397`)
+44% gap. The defect is in how `CoreMLSineGenV2` (`scripts/convert-coreml.py:369-397`)
 or its STFT chain compiles to CoreML MIL ops at fp32.
 
 ---
@@ -197,7 +197,7 @@ Test setup: `zm_009` voice, prompt `"你好世界，今天天气很好。"` (35 
 T_a = 139, x_pre shape `(1, 128, 16681)`, audio length 83 400 samples = 3.475 s).
 All CoreML stages loaded with `compute_units=ALL`, fp32 I/O.
 
-### Step 1 — iSTFT/Tail comparison (`tail_compare.py`)
+### Step 1 — iSTFT/Tail comparison (`scripts/tail_compare.py`)
 
 Three reconstructions on the **same** PyTorch x_pre:
 
@@ -223,7 +223,7 @@ bin.
 
 **Tail is NOT the noise source.**
 
-### Step 2 — Vocoder x_pre comparison (`vocoder_xpre_diff.py`)
+### Step 2 — Vocoder x_pre comparison (`scripts/vocoder_xpre_diff.py`)
 
 Feed the same PyTorch (asr / F0 / N / style_timbre / noise_sources) into
 `KokoroVocoder.mlpackage` and compare its `x_pre` against the PyTorch x_pre:
@@ -254,7 +254,7 @@ Audio reconstructed by feeding both x_pre tensors into `KokoroTail`:
 
 **Vocoder is NOT the noise source.**
 
-### Step 3 — Per-stage chain swap (`per_stage_diff.py`)
+### Step 3 — Per-stage chain swap (`scripts/per_stage_diff.py`)
 
 Five reconstructions, each substituting one more CoreML stage, all
 descaled by ×1.5 to land on the same magnitude:
@@ -277,7 +277,7 @@ Noise sources themselves:
 > we substitute the CoreML noise sources for PyTorch's. `x_source_0` is
 > the dominant contributor (44% rel-rms, vs 7% for `x_source_1`).
 
-### Step 4 — Compute-unit sweep on KokoroNoise (`probe_noise.py`)
+### Step 4 — Compute-unit sweep on KokoroNoise (`scripts/probe_noise.py`)
 
 | compute units  | x_source_0 rel | x_source_0 corr | x_source_1 rel | x_source_1 corr |
 |----------------|----------------|------------------|----------------|------------------|
@@ -307,7 +307,7 @@ PyTorch with rand_ini):
 > Broad-spectrum drift — every channel is wrong by ~50% on average, with
 > long-tail outliers up to 188%. Not a localised op problem.
 
-### Step 6 — Sub-stage probe inside the noise pipeline (`probe_noise.py` step 3)
+### Step 6 — Sub-stage probe inside the noise pipeline (`scripts/probe_noise.py` step 3)
 
 Run the upstream PyTorch SineGen vs the **CoreMLSineGenV2 formulation
 re-implemented in pure PyTorch** (no CoreML), tracking divergence at each
@@ -363,7 +363,7 @@ rand_ini, single test waveform):
 ## Verdict
 
 `KokoroNoise.mlpackage` is the noise source. The defect is in the conversion
-of `CoreMLSineGenV2` (`convert-coreml.py:369-397`) — most likely the
+of `CoreMLSineGenV2` (`scripts/convert-coreml.py:369-397`) — most likely the
 chained `cumsum → multiply-by-300 → linear-interpolate → sin` reaching
 phase magnitudes ~39 000 rad where fp32 precision is insufficient. CoreML
 and PyTorch handle this regime differently, even at FLOAT32 compute, even
@@ -401,20 +401,20 @@ wrong suspects. The Tail and Vocoder are bit-equivalent to PyTorch (corr
    has the same 44% noise-graph drift; both should benefit equally.
 
 4. **Re-run end-to-end with the fixed Noise stage.** Use
-   `compare-models.py` and listen to `zm_009` and `zf_001` outputs at
+   `scripts/compare-models.py` and listen to `zm_009` and `zf_001` outputs at
    the >10 kHz band. Expect HF residual to drop from −90 dB toward the
    −150 dB floor that the Tail and Vocoder already achieve.
 
 ## Diagnostic scripts added (in `models/tts/kokoro-v1.1-zh/coreml/`)
 
-- `tail_compare.py` — three-way iSTFT comparison (torch.istft, CustomSTFT,
+- `scripts/tail_compare.py` — three-way iSTFT comparison (torch.istft, CustomSTFT,
   CoreML Tail) on the same x_pre, with HF-band power deltas and audio
   WAV residuals.
-- `vocoder_xpre_diff.py` — feeds PyTorch upstream into CoreML Vocoder and
+- `scripts/vocoder_xpre_diff.py` — feeds PyTorch upstream into CoreML Vocoder and
   diffs x_pre per-channel + per-frame.
-- `per_stage_diff.py` — five-tier stage-swap chain (full PT → ... →
+- `scripts/per_stage_diff.py` — five-tier stage-swap chain (full PT → ... →
   full CoreML) with HF-band tracking.
-- `probe_noise.py` — CU sweep, per-channel divergence, sub-stage probe of
+- `scripts/probe_noise.py` — CU sweep, per-channel divergence, sub-stage probe of
   the noise pipeline in pure PyTorch (formulation vs upstream).
 
 ---
@@ -431,7 +431,7 @@ result by 27× (rel 2.5 × 10⁻²) because dividing-by-2π and floor-subtractin
 introduces its own ULP loss.
 
 The real culprit is **`torch.atan2` semantics at the (imag = 0, real < 0)
-boundary in `CoreMLForwardSTFT`** (`convert-coreml.py:432-441`):
+boundary in `CoreMLForwardSTFT`** (`scripts/convert-coreml.py:432-441`):
 
 - PyTorch's `atan2(0, -1) = +π`; CoreML's MIL `atan2` returns `0`.
 - For real-valued STFT input, the **DC bin always has imag exactly 0**, and
@@ -448,7 +448,7 @@ and applies a correction. `CoreMLForwardSTFT` was missing it.
 ## Fix
 
 Two-line patch to `CoreMLForwardSTFT.transform`
-(`convert-coreml.py:432-456`):
+(`scripts/convert-coreml.py:432-456`):
 
 ```python
 eps = 1e-5
@@ -467,8 +467,8 @@ phase = torch.where(correction_mask,
 
 ## Verification
 
-### Standalone STFT conversion fidelity (`probe_noise_fidelity.py`,
-`probe_sinegen_isolated.py`)
+### Standalone STFT conversion fidelity (`scripts/probe_noise_fidelity.py`,
+`scripts/probe_sinegen_isolated.py`)
 
 | Step                                    | Before fix | After fix    |
 |-----------------------------------------|------------|--------------|
@@ -483,7 +483,7 @@ phase = torch.where(correction_mask,
 deterministic PyTorch trace (`CoreMLFullNoiseModel.forward` run in
 PyTorch).
 
-### End-to-end audio HF band (`per_stage_diff.py`)
+### End-to-end audio HF band (`scripts/per_stage_diff.py`)
 
 | Stage                               | Before fix  | After fix    |
 |-------------------------------------|-------------|--------------|
@@ -500,7 +500,7 @@ PyTorch).
 > CoreML's HF band power is now within 0.01 dB of the PyTorch reference on
 > `zm_009`, and within 0.1 dB on `zf_001`. The audible noise is gone.
 
-### Direct file comparison (`_audio_compare.py`)
+### Direct file comparison (`scripts/_audio_compare.py`)
 
 | Metric                         | Before fix    | After fix      |
 |--------------------------------|---------------|----------------|
@@ -518,7 +518,7 @@ WAVs at `build/audio_compare_zm009/`:
 
 ## Why Round 2 misdiagnosed
 
-The substage probe in Round 2 (`probe_noise.py` step 3) ran the upstream
+The substage probe in Round 2 (`scripts/probe_noise.py` step 3) ran the upstream
 `SineGen` (with `rand_ini`) against the `CoreMLSineGenV2` formulation in
 pure PyTorch. That comparison correctly showed 36% rel-rms drift at the
 SineGen level, but the drift came from **`rand_ini`** alone — both
@@ -529,27 +529,27 @@ fingered the SineGen sin precision. It was the wrong suspect.
 
 The right next probe was conversion fidelity — *trace then run the same
 nn.Module in PyTorch and CoreML*. The `JustSourceSTFT` standalone test
-(`probe_noise_fidelity.py`) immediately exposed `phase rel = 0.79, max|d|
+(`scripts/probe_noise_fidelity.py`) immediately exposed `phase rel = 0.79, max|d|
 = 2π`, pointing at `atan2`.
 
 ## Diagnostic scripts added in Round 3
 
-- `probe_sinegen_isolated.py` — five standalone CoreML models (sin alone;
+- `scripts/probe_sinegen_isolated.py` — five standalone CoreML models (sin alone;
   cumsum+sin; cumsum+wrap+sin; cumsum+interp+sin; cumsum+interp+wrap+sin;
   interpolate alone; phase-only) to find which sub-op of `CoreMLSineGenV2`
   diverges. Verdict: **none of them** — the SineGen pipeline is bit-clean.
-- `probe_noise_fidelity.py` — runs `CoreMLFullNoiseModel.forward` in
+- `scripts/probe_noise_fidelity.py` — runs `CoreMLFullNoiseModel.forward` in
   PyTorch with the patched `CoreMLForwardSTFT`, then converts and runs in
   CoreML. Tracks fidelity at `har_source` (post-tanh-linear), `spec`,
   `phase`, `har`, `x_source_0`, `x_source_1`.
-- `_audio_compare.py` — generates PyTorch teacher reference and computes
+- `scripts/_audio_compare.py` — generates PyTorch teacher reference and computes
   per-band power deltas vs before-fix and after-fix CoreML WAVs.
 
 ## Worktree state
 
-- `convert-coreml.py:432-456` — `CoreMLForwardSTFT.transform` now clips
+- `scripts/convert-coreml.py:432-456` — `CoreMLForwardSTFT.transform` now clips
   near-zero imag and applies the +π correction.
-- `convert-coreml.py:369-397` — `CoreMLSineGenV2` reverted to original
+- `scripts/convert-coreml.py:369-397` — `CoreMLSineGenV2` reverted to original
   (the wrap-before-sin attempt was a dead end).
 - `build/ANE-zh/KokoroNoise.mlpackage` and `.mlmodelc` re-exported with
   the fix (compute_precision = FLOAT32, no palettization).

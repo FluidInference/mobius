@@ -54,7 +54,7 @@ unchanged.
 mlpackage) or `models/tts/kokoro/laishere-coreml/convert-coreml.py`
 (7-stage)?
 
-**Initial misstep**: First scaffold copied `v21.py` → `convert-coreml.py`
+**Initial misstep**: First scaffold copied `v21.py` → `scripts/convert-coreml.py`
 and `kokoro/coreml/pyproject.toml`. Discovered on read-through that v21.py
 emits a single `kokoro_completev21.mlpackage`, not the 7-stage chain that
 ships in `FluidInference/kokoro-82m-coreml/ANE/`.
@@ -66,7 +66,7 @@ and is what FluidAudio's `KokoroAneManager` consumes.
 
 ---
 
-## Trial 2 — Targeted edits to convert-coreml.py
+## Trial 2 — Targeted edits to scripts/convert-coreml.py
 
 Three edit points beyond docstring/usage updates:
 
@@ -115,10 +115,10 @@ unchanged.
 | Script                  | Edits                                                                 |
 |-------------------------|-----------------------------------------------------------------------|
 | `pyproject.toml`        | Added `misaki[zh]>=0.9.4` (pulls jieba + pypinyin); renamed project.  |
-| `inference.py`          | Default `--voice zf_001`, `--lang z`, `--repo-id hexgrad/Kokoro-82M-v1.1-zh`. Threads repo_id through KModel construction. |
-| `compare-models.py`     | Replaced `--phonemes` default with `--text` driver that runs misaki[zh] G2P internally. Default voice/lang/repo_id swapped. |
-| `benchmark.py`          | Replaced 6 English passages with 6 Mandarin passages (varied tones, punctuation, length). G2P helper kept identical (already language-agnostic via `pipe.g2p`). Default voice/lang/repo_id swapped. |
-| `dump-benchmark-data.py`| Loops over `--voices zf_001 zm_009` (default), pulls `vocab.json` from v1.1-zh repo (178 entries). Adds `repo_id` field to benchmark_data.json. |
+| `scripts/inference.py`          | Default `--voice zf_001`, `--lang z`, `--repo-id hexgrad/Kokoro-82M-v1.1-zh`. Threads repo_id through KModel construction. |
+| `scripts/compare-models.py`     | Replaced `--phonemes` default with `--text` driver that runs misaki[zh] G2P internally. Default voice/lang/repo_id swapped. |
+| `scripts/benchmark.py`          | Replaced 6 English passages with 6 Mandarin passages (varied tones, punctuation, length). G2P helper kept identical (already language-agnostic via `pipe.g2p`). Default voice/lang/repo_id swapped. |
+| `scripts/dump-benchmark-data.py`| Loops over `--voices zf_001 zm_009` (default), pulls `vocab.json` from v1.1-zh repo (178 entries). Adds `repo_id` field to benchmark_data.json. |
 
 ---
 
@@ -128,7 +128,7 @@ Run on this machine (Darwin 25.5.0, Apple Silicon):
 
 ```bash
 PYTORCH_ENABLE_MPS_FALLBACK=1 \
-uv run python convert-coreml.py --output-dir build/kokoro-v1.1-zh
+uv run python scripts/convert-coreml.py --output-dir build/kokoro-v1.1-zh
 ```
 
 ### Issues hit during the run (all resolved)
@@ -151,7 +151,7 @@ uv run python convert-coreml.py --output-dir build/kokoro-v1.1-zh
    raises `ModuleNotFoundError: No module named 'sklearn'`. Stages 1–4
    completed without it because palettization runs only in stages 5/6/7
    in the laishere chain (per `kmeans_palettize` calls in
-   `convert-coreml.py`). Fix: `uv pip install scikit-learn`.
+   `scripts/convert-coreml.py`). Fix: `uv pip install scikit-learn`.
    coremltools 9.0 prints a "scikit-learn 1.8 is not supported, max
    tested 1.5.1" warning but the kmeans path still works.
 
@@ -179,7 +179,7 @@ uv run python convert-coreml.py --output-dir build/kokoro-v1.1-zh
 [E2E] corr=-0.139578, mel_corr=0.997730, chain=333.1ms
 ```
 
-### Parity (compare-models.py)
+### Parity (scripts/compare-models.py)
 
 ```
 phonemes (34): 'ㄐ阴1ㄊ言1ㄊ言1ㄑㄧ4/ㄓㄣ1/ㄏㄠ3, 阳2ㄍ王1ㄇ应2ㄇㄟ4.'
@@ -192,7 +192,7 @@ The waveform-corr threshold is not met. Mel correlation is close to but
 below the 0.99 threshold. The pattern (high mel, near-zero waveform) is
 characteristic of fp16 iSTFT vocoders: small phase differences cause the
 sample-by-sample correlation to collapse while spectral content is
-preserved. The same pattern shows in `convert-coreml.py`'s own E2E line
+preserved. The same pattern shows in `scripts/convert-coreml.py`'s own E2E line
 (mel=0.998, corr=-0.14). Audio sample (`build/.../sample-zf001.wav`)
 sounds like correct Mandarin; ASR-based CER verification is the proper
 quality check (TODO Trial 5).
@@ -250,9 +250,9 @@ run lands.
 
 2. **Mandarin phoneme density**: each Hanzi expands to ~2-3 phonemes
    (Bopomofo letters + tone digit), so a single 50-character sentence can
-   approach `T_enc=200`. The 6th passage in `benchmark.py` is sized to
+   approach `T_enc=200`. The 6th passage in `scripts/benchmark.py` is sized to
    land near the 510-phoneme cap; if it trips the `T_a > MAX_FRAMES` skip
-   in `benchmark.py`, shorten it.
+   in `scripts/benchmark.py`, shorten it.
 
 3. **`coremltools 9.0` sdist fallback** (inherited from v1.0): `uv sync`
    may resolve the pure-python wheel and break `BlobWriter`. README
@@ -273,8 +273,8 @@ weeks of investigation across three "rounds" follow. The actual fix is two lines
 but only the elimination history makes that clear, so the dead ends are documented in full.
 
 Every numerical result below is reproducible from the diagnostic scripts checked in alongside
-this file (`tail_compare.py`, `vocoder_xpre_diff.py`, `per_stage_diff.py`, `probe_noise.py`,
-`probe_noise_fidelity.py`, `probe_sinegen_isolated.py`).
+this file (`scripts/tail_compare.py`, `scripts/vocoder_xpre_diff.py`, `scripts/per_stage_diff.py`, `scripts/probe_noise.py`,
+`scripts/probe_noise_fidelity.py`, `scripts/probe_sinegen_isolated.py`).
 
 ---
 
@@ -307,7 +307,7 @@ compute precision, not boundary precision, not dispatch.
 
 ## Trial 7 — Round 2: Snake1D cos-rewrite investigation (eliminated)
 
-**Hypothesis**: `_cos_resblock1_forward` (`convert-coreml.py:46-57`) is monkey-patched onto
+**Hypothesis**: `_cos_resblock1_forward` (`scripts/convert-coreml.py:46-57`) is monkey-patched onto
 `AdaINResBlock1` for ANE-friendly Snake activation. Maybe the fp16 cos has catastrophic
 cancellation when α·xt is small.
 
@@ -344,7 +344,7 @@ iSTFT`), then run two parallel "tails" on the same `x_pre`:
 
 If they diverge, the iSTFT/conv_post stage is the culprit. If they match, the noise is upstream.
 
-### 8a. Tail comparison (`tail_compare.py`, voice `zm_009`)
+### 8a. Tail comparison (`scripts/tail_compare.py`, voice `zm_009`)
 
 Three reconstructions on the same x_pre:
 
@@ -364,7 +364,7 @@ for CoreML). It misses the DC/Nyquist non-doubling correction, so it is mis-scal
 
 **Tail is NOT the noise source.**
 
-### 8b. Vocoder x_pre comparison (`vocoder_xpre_diff.py`)
+### 8b. Vocoder x_pre comparison (`scripts/vocoder_xpre_diff.py`)
 
 Feed identical PyTorch upstream into `KokoroVocoder.mlpackage` and diff its `x_pre`:
 
@@ -377,7 +377,7 @@ Feed identical PyTorch upstream into `KokoroVocoder.mlpackage` and diff its `x_p
 
 **Vocoder is NOT the noise source either.**
 
-### 8c. Five-tier stage swap (`per_stage_diff.py`)
+### 8c. Five-tier stage swap (`scripts/per_stage_diff.py`)
 
 Walk the chain, substituting one CoreML stage at a time, all descaled by ×1.5:
 
@@ -399,7 +399,7 @@ sources for PyTorch's. Per-source numbers:
 **`KokoroNoise.mlpackage` is the noise source.** `x_source_0` is the dominant contributor
 (44% rel-rms, vs 7% for `x_source_1`).
 
-### 8d. Compute-unit sweep on KokoroNoise (`probe_noise.py`)
+### 8d. Compute-unit sweep on KokoroNoise (`scripts/probe_noise.py`)
 
 | compute units  | x_source_0 rel | x_source_0 corr |
 |----------------|-----------------|------------------|
@@ -423,10 +423,10 @@ keeping the sin argument in `[0, 2π)`.
 
 ### Result
 
-Re-exported `KokoroNoise` with the wrap. `per_stage_diff.py` showed **identical** divergence to
+Re-exported `KokoroNoise` with the wrap. `scripts/per_stage_diff.py` showed **identical** divergence to
 the unfixed version (44% rel-rms, -90.18 dB HF residual). Wrapping made no end-to-end difference.
 
-### `probe_sinegen_isolated.py` — six standalone CoreML models
+### `scripts/probe_sinegen_isolated.py` — six standalone CoreML models
 
 To diagnose, traced six standalone graphs that each contain a different sub-step of the SineGen
 pipeline, compared PyTorch vs CoreML on identical fp32 input:
@@ -446,7 +446,7 @@ pipeline, compared PyTorch vs CoreML on identical fp32 input:
 > at the fp32 precision floor for a 22 000-rad sin. M2 and M4 (the wrap variants) are **27×
 > worse** because the `floor()/subtract` ULP loss exceeds the gain from bounded sin.
 
-**The Round 2 hypothesis was wrong.** The 36% rel-rms drift `probe_noise.py` reported at the
+**The Round 2 hypothesis was wrong.** The 36% rel-rms drift `scripts/probe_noise.py` reported at the
 SineGen level was **`rand_ini` randomness** (the upstream SineGen adds a per-harmonic uniform-
 random initial phase that the deterministic CoreML graph cannot reproduce), not graph drift.
 
@@ -460,7 +460,7 @@ The wrap-before-sin attempt is **reverted** in this PR. The real fix is downstre
 compare CoreML to its own *PyTorch trace source* — the `nn.Module` we converted from. If those
 two diverge, the bug is in the CoreML conversion itself.
 
-### `probe_noise_fidelity.py` — conversion fidelity test
+### `scripts/probe_noise_fidelity.py` — conversion fidelity test
 
 Run `CoreMLFullNoiseModel.forward` in pure PyTorch with the same fp32 inputs the CoreML model
 receives, then diff:
@@ -511,7 +511,7 @@ phase[correction_mask] = torch.pi  # ONNX returns -pi, PyTorch returns +pi
 
 ## Trial 11 — The fix
 
-`convert-coreml.py:432-456`:
+`scripts/convert-coreml.py:432-456`:
 
 ```python
 def transform(self, waveform):

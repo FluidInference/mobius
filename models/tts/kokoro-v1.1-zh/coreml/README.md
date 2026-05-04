@@ -28,7 +28,7 @@ passed via `--output-dir`:
 | 7     | `KokoroTail.mlpackage`          | fp32                  | `ALL`         |
 |       | `vocab.json`                    | 171-entry Bopomofo+IPA+digit→token id map | — |
 |       | `zf_001.bin` / `zm_009.bin`     | voice packs `[510, 256]` flat fp32    | — |
-|       | `benchmark_data.json`           | precomputed phoneme cases for benchmark.py | — |
+|       | `benchmark_data.json`           | precomputed phoneme cases for scripts/benchmark.py | — |
 |       | `ref.wav` / `test.wav`          | parity validation pair (24 kHz mono)  | — |
 
 The 7-stage shape bounds, op-translation patches, and per-stage compute-unit
@@ -73,7 +73,7 @@ ls .venv/lib/python3.11/site-packages/coremltools/libcoremlpython.so   # must ex
 
 ```bash
 PYTORCH_ENABLE_MPS_FALLBACK=1 \
-uv run python convert-coreml.py --output-dir build/kokoro-v1.1-zh
+uv run python scripts/convert-coreml.py --output-dir build/kokoro-v1.1-zh
 ```
 
 The script downloads `hexgrad/Kokoro-82M-v1.1-zh` on first run, runs
@@ -87,7 +87,7 @@ reuses existing mlpackages on disk for the E2E chain check.
 ## Validate parity
 
 ```bash
-uv run python compare-models.py --models-dir build/kokoro-v1.1-zh \
+uv run python scripts/compare-models.py --models-dir build/kokoro-v1.1-zh \
     --text "今天天气真好，阳光明媚。" --voice zf_001 \
     --save-ref /tmp/ref.wav --save-coreml /tmp/cm.wav
 ```
@@ -99,14 +99,14 @@ standard, matches the v1.0 English chain).
 
 ```bash
 # Mandarin text → WAV (uses misaki[zh] G2P)
-uv run python inference.py --models-dir build/kokoro-v1.1-zh \
+uv run python scripts/inference.py --models-dir build/kokoro-v1.1-zh \
     --text "你好世界" --voice zf_001 --output /tmp/zf_001.wav
 
-uv run python inference.py --models-dir build/kokoro-v1.1-zh \
+uv run python scripts/inference.py --models-dir build/kokoro-v1.1-zh \
     --text "你好世界" --voice zm_009 --output /tmp/zm_009.wav
 
 # Pre-computed Bopomofo+digit phonemes → WAV (skips G2P, matches iOS app flow)
-uv run python inference.py --models-dir build/kokoro-v1.1-zh \
+uv run python scripts/inference.py --models-dir build/kokoro-v1.1-zh \
     --phonemes "ㄋㄧˇㄏㄠˇ" --voice zf_001 --output /tmp/hello.wav
 ```
 
@@ -124,11 +124,11 @@ bundle small:
 
 Upstream provides the full 96-voice set (49 `zf_*` + 47 `zm_*` + 3 EN). To
 regenerate the bin files for additional voices, edit `DEFAULT_VOICES` in
-`dump-benchmark-data.py` (or pass `--voices zf_001 zm_009 zf_002 …`) and
+`scripts/dump-benchmark-data.py` (or pass `--voices zf_001 zm_009 zf_002 …`) and
 re-run.
 
 ```bash
-uv run python dump-benchmark-data.py --output-dir build/kokoro-v1.1-zh \
+uv run python scripts/dump-benchmark-data.py --output-dir build/kokoro-v1.1-zh \
     --voices zf_001 zm_009
 ```
 
@@ -136,10 +136,10 @@ uv run python dump-benchmark-data.py --output-dir build/kokoro-v1.1-zh \
 
 ```bash
 # Seed precomputed phonemes + voice packs first (one time, after editing TEXTS)
-uv run python dump-benchmark-data.py --output-dir build/kokoro-v1.1-zh
+uv run python scripts/dump-benchmark-data.py --output-dir build/kokoro-v1.1-zh
 
 # Latency: per-stage median + chain time + speedup, over a 6-sentence Mandarin corpus
-uv run python benchmark.py --models-dir build/kokoro-v1.1-zh --voice zf_001
+uv run python scripts/benchmark.py --models-dir build/kokoro-v1.1-zh --voice zf_001
 ```
 
 ## Shape bounds
@@ -147,7 +147,7 @@ uv run python benchmark.py --models-dir build/kokoro-v1.1-zh --voice zf_001
 Inherited verbatim from the v1.0 chain — see [`docs/shape-bounds.md`](docs/shape-bounds.md).
 Mandarin phoneme strings tend to be denser per character than English (each
 Hanzi typically expands to ~2 Bopomofo + 1 tone digit), so a single sentence
-fills `T_enc` faster — keep an eye on the `T_a` probe in benchmark.py for
+fills `T_enc` faster — keep an eye on the `T_a` probe in scripts/benchmark.py for
 the long-passage case.
 
 | Symbol           | Meaning                          | Default upper bound |
