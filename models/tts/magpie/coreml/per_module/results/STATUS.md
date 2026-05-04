@@ -96,15 +96,7 @@ Topology, Snake replacement, weight_norm folding, kernel-7 pre_conv,
 post-act, post-conv, and tanh are **NOT** the trigger. Activation tensor
 size is.
 
-### Fix path (Phase C v2 — pending)
-
-Convert `nanocodec_decoder.mlmodelc` with **fixed input shape
-`(1, 432, 16)`** (T_in ≤ 16 codec tokens, T_out = 8192 audio samples per
-call). Update Swift `MagpieSynthesizer` to slide a 16-token window over
-the codec output sequence and stitch the 8192-sample output chunks. For
-a typical 100-token sentence: ~7 sequential codec calls instead of one
-batched call. Each call should be ~99 % ANE-resident (the 10 dilated
-convs out of 1006 fall back to CPU regardless of chunk size).
+### Fix path (Phase C v2 — done; see section below)
 
 ## Phase C+ — Audio parity (done)
 
@@ -178,24 +170,150 @@ for `decoder_step`, kept `.cpuOnly` honored when the manager is
 explicitly requested as CPU-only. Comment rewritten with the actual
 numbers.
 
+## Phase C v2 — chunked nanocodec (done; M2)
+
+`convert_nanocodec.py` already accepts `--max-frames N`. Built T_in ∈
+{8, 16, 24, 32} and ran `per_module/chunked_parity.py` to measure
+audio-level SNR for the stitched output vs the single-call reference.
+
+### Latency (cpu_and_neural_engine, 10-iter median)
+
+| T_in | Output samples | ANE % | Median predict (ms) | Notes |
+|------|----------------|-------|---------------------|-------|
+| 8 | 8192 | 88.4 % | 14.87 | 10 dilated convs CPU |
+| 16 | 16384 | 71.5 % | 32.37 | + 2 ops over W=16384 |
+| 24 | 24576 | 43.4 % | 38.41 | dilated convs + post stages CPU |
+| 32 | 32768 | 0 % (CPU) | 215.86 | `ANECCompile() FAILED` whole-graph |
+
+### Audio parity (random tokens, seed=42, T=256)
+
+`[A] = PyTorch sin² vs CoreML T=256 single-call` (Taylor5 floor)
+`[B] = PyTorch sin² vs stitched`
+`[C] = CoreML T=256 single-call vs stitched` (pure chunking artifact)
+
+| T_in | stride | overlap | [A] dB | [B] dB | [C] dB |
+|------|--------|---------|--------|--------|--------|
+| 8 | 8 | 0 | 11.56 | **−1.38** ✗ | **−1.44** ✗ |
+| 16 | 8 | 8 | 11.56 | 5.40 | 5.67 |
+| 24 | 8 | 16 | 11.56 | 8.74 | **11.46** ✓ |
+| 32 | 8 | 24 | 11.56 | 8.79 | 11.70 |
+| 32 | 16 | 16 | 11.56 | 8.76 | 11.62 |
+
+Receptive field at the codec input level is **16 frames**; beyond that
+[C] is at the Taylor5 noise floor and adding more left-context only buys
++0.2 dB. Larger stride is fine as long as overlap stays ≥ 16.
+
+### Operating point
+
+**T_in = 24, stride = 8, overlap = 16 frames** (16384 leading samples
+discarded per call, 8192 fresh samples kept).
+
+| Workload | Per-call | 240-frame wall | RTFx codec only |
+|----------|----------|----------------|-----------------|
+| Phase 0 (T=256, all-CPU) | n/a | ~8.76 s | ~1.27× |
+| Phase C v2 (T=24, 30× ANE) | 38.41 ms | **~1.15 s** | **~9.6×** |
+
+~7.6× speedup on the codec stage. Chunking error [C]=11.46 dB now ≈
+Taylor5 floor [A]=11.56 dB, so Snake quality is the remaining
+bottleneck (Phase C+).
+
+### Files
+
+`per_module/chunked_parity.py` — parity sweep harness (parameterized by
+`--t-in` and `--stride`).
+`build/nanocodec_decoder_t{8,16,24,32}.mlpackage` — converted artifacts.
+`compiled/build/nanocodec_decoder_t{8,16,24,32}.mlmodelc` — ready for
+ANE warmup.
+`per_module/results/chunked_*.npy` — saved waveforms for inspection.
+
+## Phase C v2 step 5 — Swift chunked-inference wrapper (done)
+
+`Sources/FluidAudio/TTS/Magpie/Pipeline/Synthesize/MagpieNanocodec.swift`
+auto-detects T_in from the model description and slides a 24-frame
+window with stride 8 over the codec sequence, discarding the leading
+16384 samples of each call. `MagpieModelStore.swift` prefers
+`nanocodec_decoder_t24.mlmodelc` and falls back to the monolithic
+`nanocodec_decoder.mlmodelc` if absent. Asset manifest in
+`MagpieResourceDownloader` updated.
+
+## Phase C v2 step 6 — fp32 weights (audio fidelity, done)
+
+The fp16-converted T=24 build was audibly noisy on voiced segments —
+silence-RMS metrics hid it (quiet-window noise floor only ~3.5 dB above
+PyTorch reference) but A/B listening against PyTorch sin² made the
+speech-correlated quantization noise obvious.
+
+Diagnosis: `compute_precision=ct.precision.FLOAT16` in `convert_nanocodec.py`
+quantizes all 96 Snake stages and 5 upsample stages to fp16 weights.
+PyTorch Taylor5Clipped (Snake monkey-patched, otherwise fp32) sounds
+pitch-perfect; CoreML Taylor5 with fp16 weights sounds noisy. Snake
+approximation is innocent — fp16 weight quantization is the cause.
+
+Fix: `convert_nanocodec.py` parameterized with `--precision {fp32,fp16}`,
+default `fp32`. ANE is fp16-only, so fp32 forces CPU.
+
+| Build | Compute | Quiet-RMS noise floor |
+|---|---|---|
+| PyTorch sin² (gold) | CPU fp32 | −77.4 dBFS |
+| T=24 chunked, fp32 weights | CPU | **−73.6 dBFS** ← current |
+| T=24 chunked, fp16 weights | CPU | −73.9 dBFS (audibly noisy) |
+| T=24 chunked, fp16 weights | ANE | −66.8 dBFS (audibly noisy) |
+
+| Build | Nanocodec wall (M2, ~11 s utterance) | RTFx end-to-end |
+|---|---|---|
+| T=256 mono, fp16 weights, CPU | ~8.76 s | ~0.62× |
+| T=24 chunked, fp16 weights, ANE | ~2.28 s | ~1.21× (noisy) |
+| T=24 chunked, fp16 weights, CPU | ~2.22 s | ~2.25× (noisy) |
+| T=24 chunked, fp32 weights, CPU | 8.5–9.7 s | **~1.34× median** ← current |
+
+fp32 trades ~4× codec throughput for fidelity; pipeline stays real-time.
+
+`MagpieModelStore.swift` pins nanocodec to `.cpuOnly` regardless of the
+caller-provided `computeUnits` (matches fp32-weight requirement).
+
+## Phase C v2 step 7 — edge-replication padding (start-of-utterance pop, done)
+
+The chunked path produced a sharp click in the first ~30 ms of every
+utterance. Numerical: chunked wav peak in first 10 ms = 0.6359 vs mono's
+0.0009 (~700× louder).
+
+Cause: zero-padding the first call's left context with code 0. Code 0
+is a real codebook entry, not silence — the codec was never trained to
+see it as a stationary 16-frame prefix, so the dilated convs fire a
+transient at t=0.
+
+Fix: `MagpieNanocodec.swift` clamps out-of-range source indices to
+`[0, T-1]` and replicates `row[0]` (first call's left context) and
+`row[T-1]` (last call's right context). The dilated convs see a
+stationary signal that matches the AR loop's near-silent first frame.
+
+| Variant | Peak in first 10 ms |
+|---|---|
+| Mono CPU (no chunking) | 0.0009 |
+| Chunked, zero-pad | 0.6359 |
+| Chunked, edge-replicate | **0.0003** ← current |
+
+User-confirmed audibly clean.
+
 ## Pending
 
-### Phase C v2 — chunked nanocodec
-1. Rewrite `convert_nanocodec.py` for fixed input shape `(1, 432, 16)`.
-2. Re-convert + verify ≥99 % ANE residency via `coreml-cli --fallback`.
-3. Update Swift `MagpieSynthesizer` to slide a T=16 window with
-   appropriate overlap (HiFi-GAN receptive field ≈ k·dilation per layer).
-4. Re-run `magpie bench`, compare to Phase 0 baseline.
-
-### Phase C+ — better Snake replacement
+### Phase C+ — better Snake replacement (deferred)
 1. Implement LUT-via-conv Snake.
 2. Verify SNR > 30 dB against chunked sin² reference.
 3. Re-convert nanocodec with the better Snake; verify ANE residency
    unchanged.
 
-### Phase D — fused AR step
+(Deferred — current Taylor5Clipped + fp32 + edge-pad sounds clean to
+the ear despite ~17 dB SNR vs PyTorch sin². SNR is dominated by
+structural Snake-approximation phase offset, not audible noise.)
+
+### Phase D fusion — fused AR step
 Merge `decoder_step + final_proj + local_transformer + 8 heads` into one
 mlmodelc to eliminate per-call dispatch overhead. Update Swift port.
+
+### Phase E — HuggingFace upload
+Upload `nanocodec_decoder_t24.mlmodelc` (fp32 build) to the FluidAudio
+HF assets repo. User-managed.
 
 ## Files
 
