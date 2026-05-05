@@ -23,6 +23,7 @@ dependencies = [
     "einops-exts>=0.0.4",
     "munch>=4.0",
     "pyyaml>=6.0",
+    "scikit-learn>=1.7.2",
 ]
 
 [tool.uv.sources]
