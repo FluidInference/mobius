@@ -26,31 +26,32 @@ per sentence.
 | `text_encoder` | ANE | 12.32 ms | 98.1 | fp16 |
 | `decoder_prefill` | ANE | 17.55 ms | 93.9 | fp16 |
 | `decoder_step` | ANE | 17.0 ms | 97.3 | fp16 (Phase D pinned `.cpuAndNeuralEngine`) |
-| `nanocodec_decoder_t24_v2` (default) | **CPU only** | 142.51 ms / 24-frame call | 0 | **fp32** (Phase F: fp16 audibly noisy) |
-| `nanocodec_decoder_t24` (opt-in) | CPU+ANE | 38.4 ms / 24-frame call | ~43 | fp16 (audibly noisy on voiced speech) |
+| `nanocodec_decoder_v3` (default) | **CPU only** | 142.51 ms / 24-frame call | 0 | **fp32** (Phase F: fp16 audibly noisy) |
+| `nanocodec_decoder_v2` (opt-in) | CPU+ANE | 38.4 ms / 24-frame call | ~43 | fp16 (audibly noisy on voiced speech) |
 
 End-to-end RTFx ~1.3× median on the fp32 default; AR loop terminates on
 EOS deterministically.
 
-### Nanocodec t24 build naming
+### Nanocodec build naming (v1 / v2 / v3)
 
-Two t24 builds ship side-by-side; both share the same I/O contract
+Three builds in the asset repo. v2 and v3 share an I/O contract
 (24-frame input / 24576 audio samples per call) so `MagpieNanocodec`
-auto-dispatches by shape.
+auto-dispatches by shape; v1 has the legacy T=256 monolithic shape.
 
-| File on disk | Precision | Selector |
-|---|---|---|
-| `nanocodec_decoder_t24_v2.mlmodelc` | fp32 | `MagpieNanocodecPrecision.fp32` (default) |
-| `nanocodec_decoder_t24.mlmodelc` | fp16 | `MagpieNanocodecPrecision.fp16` (opt-in) |
+| File on disk | Precision | Shape | Selector | Status |
+|---|---|---|---|---|
+| `nanocodec_decoder_v3.mlmodelc` | fp32 | T_in=24 chunked | `MagpieNanocodecPrecision.fp32` (default) | clean |
+| `nanocodec_decoder_v2.mlmodelc` | fp16 | T_in=24 chunked | `MagpieNanocodecPrecision.fp16` (opt-in) | audibly noisy |
+| `nanocodec_decoder.mlmodelc`    | fp16 | T=256 monolithic | (legacy fallback) | audibly noisy + slow |
 
-`MagpieModelStore.init(..., nanocodecPrecision:)` selects which to load;
-if the requested precision is missing, it falls back to the other t24
-build with a warning, then to the monolithic CPU-only `nanocodec_decoder.mlmodelc`.
+`MagpieModelStore.init(..., nanocodecPrecision:)` selects which chunked
+build to load; if the requested precision is missing, it falls back to
+the other chunked build with a warning, then to the legacy monolithic
+v1 (`nanocodec_decoder.mlmodelc`).
 
-The v2 suffix records the post-Phase F switch from fp16-default to
-fp32-default. Older docs and trial scripts may still reference the
-intermediate `nanocodec_decoder_t24_fp32.mlpackage` build name; the
-on-disk artifact has been renamed to `_v2`.
+History: v2/v3 superseded an intermediate `_t24` / `_t24_v2` /
+`_t24_fp32` naming during Phase F triage. Older trial scripts may still
+reference those names; current artifacts are `_v2` / `_v3`.
 
 ## Phase A — Per-module ANE diagnostics (done)
 
@@ -265,11 +266,11 @@ ANE warmup.
 auto-detects T_in from the model description and slides a 24-frame
 window with stride 8 over the codec sequence, discarding the leading
 16384 samples of each call. `MagpieModelStore.swift` selects between
-`nanocodec_decoder_t24_v2.mlmodelc` (fp32, default) and
-`nanocodec_decoder_t24.mlmodelc` (fp16, opt-in) via
-`MagpieNanocodecPrecision`, falling back to the monolithic
-`nanocodec_decoder.mlmodelc` if neither t24 build is present. Asset
-manifest in `MagpieResourceDownloader` updated.
+`nanocodec_decoder_v3.mlmodelc` (fp32, default) and
+`nanocodec_decoder_v2.mlmodelc` (fp16, opt-in) via
+`MagpieNanocodecPrecision`, falling back to the legacy monolithic
+`nanocodec_decoder.mlmodelc` (v1) if neither chunked build is present.
+Asset manifest in `MagpieResourceDownloader` updated.
 
 ## Phase C v2 step 6 — fp32 weights (audio fidelity, done)
 
@@ -415,13 +416,13 @@ rewriting, which is out of scope for this project.
 | op_type filter (activations / Snake only fp32) | identical to fp16 |
 | scope filter (per-stage / per-location) | not supported by coremltools op_selector |
 
-**Production default stays on `nanocodec_decoder_t24_v2.mlpackage`**
-(full fp32 weights, CPU-only, ~1.3× RTFx; renamed from the intermediate
-`_fp32` artifact). The fp16 build remains shipped as
-`nanocodec_decoder_t24.mlpackage` for the opt-in
-`MagpieNanocodecPrecision.fp16` selector. The only remaining ANE-recovery
-path on a clean-sounding nanocodec would be model-level retraining or
-QAT — out of scope. Phase F closed.
+**Production default stays on `nanocodec_decoder_v3.mlpackage`** (full
+fp32 weights, CPU-only, ~1.3× RTFx; renamed during the v1/v2/v3
+versioning pass from the intermediate `_t24_v2` / `_fp32` artifact).
+The fp16 chunked build remains shipped as `nanocodec_decoder_v2.mlpackage`
+for the opt-in `MagpieNanocodecPrecision.fp16` selector. The only
+remaining ANE-recovery path on a clean-sounding nanocodec would be
+model-level retraining or QAT — out of scope. Phase F closed.
 
 ### Files
 
@@ -449,13 +450,17 @@ Merge `decoder_step + final_proj + local_transformer + 8 heads` into one
 mlmodelc to eliminate per-call dispatch overhead. Update Swift port.
 
 ### Phase E — HuggingFace upload
-Upload both t24 builds to the FluidAudio HF assets repo. User-managed.
+Upload both chunked builds to the FluidAudio HF assets repo. User-managed.
 
-- `nanocodec_decoder_t24_v2.mlmodelc` (fp32, default, audibly clean)
-- `nanocodec_decoder_t24.mlmodelc` (fp16, opt-in, fast/ANE, audibly noisy)
+- `nanocodec_decoder_v3.mlmodelc` (fp32, default, audibly clean)
+- `nanocodec_decoder_v2.mlmodelc` (fp16, opt-in, fast/ANE, audibly noisy)
 
 Both share the same I/O contract; the runtime selector lives in
-`MagpieModelStore` (`MagpieNanocodecPrecision`).
+`MagpieModelStore` (`MagpieNanocodecPrecision`). The legacy
+`nanocodec_decoder.mlpackage` (v1, fp16 monolithic) currently deployed
+on HF stays in place as a fallback for older checkouts but is
+superseded by v3 in the `requiredModels` manifest, so fresh installs
+fetch v3 instead.
 
 ## Files
 
