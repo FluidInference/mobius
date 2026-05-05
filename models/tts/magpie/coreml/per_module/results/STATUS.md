@@ -451,9 +451,11 @@ mlmodelc to eliminate per-call dispatch overhead. Update Swift port.
 
 ### Phase E — HuggingFace upload
 Upload both chunked builds to the FluidAudio HF assets repo. User-managed.
+Ship both the source `.mlpackage` (for re-compile / inspection) and the
+compiled `.mlmodelc` (consumed at runtime by `MagpieModelStore`):
 
-- `nanocodec_decoder_v3.mlmodelc` (fp32, default, audibly clean)
-- `nanocodec_decoder_v2.mlmodelc` (fp16, opt-in, fast/ANE, audibly noisy)
+- `nanocodec_decoder_v3.mlpackage` + `nanocodec_decoder_v3.mlmodelc` (fp32, default, audibly clean)
+- `nanocodec_decoder_v2.mlpackage` + `nanocodec_decoder_v2.mlmodelc` (fp16, opt-in, fast/ANE, audibly noisy)
 
 Both share the same I/O contract; the runtime selector lives in
 `MagpieModelStore` (`MagpieNanocodecPrecision`). The legacy
