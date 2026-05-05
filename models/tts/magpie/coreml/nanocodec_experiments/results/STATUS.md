@@ -55,7 +55,7 @@ reference those names; current artifacts are `_v2` / `_v3`.
 
 ## Phase A — Per-module ANE diagnostics (done)
 
-`per_module/analyze.py` converts ~14 isolated nn.Modules and reports static
+`nanocodec_experiments/analyze.py` converts ~14 isolated nn.Modules and reports static
 ANE residency.
 
 Confirmed:
@@ -101,7 +101,7 @@ Snake fix was necessary but not sufficient. Whole-graph compile failed.
 
 ## Phase C+ — Subgraph probe / threshold finding (done; root cause)
 
-`per_module/nano_subgraph_probe.py` builds synthetic HiFi-GAN-style
+`nanocodec_experiments/nano_subgraph_probe.py` builds synthetic HiFi-GAN-style
 decoders progressively from a single ResBlock up through the full 5-stage
 decoder, holding topology constant while varying the input time dim.
 
@@ -134,7 +134,7 @@ size is.
 
 ## Phase C+ — Audio parity (done)
 
-`per_module/audio_parity.py` and `snake_parity.py`. Random codec tokens,
+`nanocodec_experiments/audio_parity.py` and `snake_parity.py`. Random codec tokens,
 seed=42, T=256:
 
 | Metric | Value |
@@ -207,7 +207,7 @@ numbers.
 ## Phase C v2 — chunked nanocodec (done; M2)
 
 `convert_nanocodec.py` already accepts `--max-frames N`. Built T_in ∈
-{8, 16, 24, 32} and ran `per_module/chunked_parity.py` to measure
+{8, 16, 24, 32} and ran `nanocodec_experiments/chunked_parity.py` to measure
 audio-level SNR for the stitched output vs the single-call reference.
 
 ### Latency (cpu_and_neural_engine, 10-iter median)
@@ -253,12 +253,12 @@ bottleneck (Phase C+).
 
 ### Files
 
-`per_module/chunked_parity.py` — parity sweep harness (parameterized by
+`nanocodec_experiments/chunked_parity.py` — parity sweep harness (parameterized by
 `--t-in` and `--stride`).
 `build/nanocodec_decoder_t{8,16,24,32}.mlpackage` — converted artifacts.
 `compiled/build/nanocodec_decoder_t{8,16,24,32}.mlmodelc` — ready for
 ANE warmup.
-`per_module/results/chunked_*.npy` — saved waveforms for inspection.
+`nanocodec_experiments/results/chunked_*.npy` — saved waveforms for inspection.
 
 ## Phase C v2 step 5 — Swift chunked-inference wrapper (done)
 
@@ -467,7 +467,7 @@ fetch v3 instead.
 ## Files
 
 ```
-per_module/
+nanocodec_experiments/
 ├── __init__.py
 ├── modules.py                # diagnostic nn.Module wrappers (Snake variants, KV cache, weight_norm)
 ├── analyze.py                # Phase A driver: per-module conversion + ANE coverage
@@ -490,10 +490,10 @@ cd mobius/models/tts/magpie/coreml
 uv sync
 
 # Phase A (per-module ANE diagnostics)
-uv run python per_module/analyze.py
-cat per_module/results/ledger.json
+uv run python nanocodec_experiments/analyze.py
+cat nanocodec_experiments/results/ledger.json
 
 # Phase C+ (subgraph threshold probe)
-uv run python per_module/nano_subgraph_probe.py
-cat per_module/results/subgraph_ledger.json
+uv run python nanocodec_experiments/nano_subgraph_probe.py
+cat nanocodec_experiments/results/subgraph_ledger.json
 ```

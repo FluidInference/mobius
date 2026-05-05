@@ -27,8 +27,8 @@ trace time) using Taylor5Clipped Snake activation. We keep convolution
 weights random — we only care about static graph topology / ANE plan.
 
 Run:
-    uv run python per_module/nano_subgraph_probe.py
-    uv run python per_module/nano_subgraph_probe.py --only stage_27 body_2stage
+    uv run python nanocodec_experiments/nano_subgraph_probe.py
+    uv run python nanocodec_experiments/nano_subgraph_probe.py --only stage_27 body_2stage
 """
 from __future__ import annotations
 

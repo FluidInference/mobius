@@ -10,10 +10,10 @@ about for chunking correctness — it isolates the chunking artifact from the
 Taylor5Clipped Snake approximation error.
 
 Run (default T_in=16, stride=8, overlap=8):
-  uv run --extra nemo python per_module/chunked_parity.py
+  uv run --extra nemo python nanocodec_experiments/chunked_parity.py
 
 Sweep operating points:
-  uv run --extra nemo python per_module/chunked_parity.py --t-in 24 --stride 8
+  uv run --extra nemo python nanocodec_experiments/chunked_parity.py --t-in 24 --stride 8
 
 `overlap` is implied as `t_in - stride`. Each call left-pads `overlap`
 codec frames with zeros at sequence start, then discards

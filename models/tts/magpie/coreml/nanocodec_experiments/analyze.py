@@ -9,8 +9,8 @@ Results are aggregated to results/ledger.json with per-spec ANE %, total ops,
 CPU ops, top rejection reasons, and the path to the raw fallback JSON.
 
 Run:
-    uv run python per_module/analyze.py
-    uv run python per_module/analyze.py --only snake_learned snake_poly_taylor
+    uv run python nanocodec_experiments/analyze.py
+    uv run python nanocodec_experiments/analyze.py --only snake_learned snake_poly_taylor
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ import numpy as np
 import torch
 import coremltools as ct
 
-from per_module import modules as mods
+from nanocodec_experiments import modules as mods
 
 
 HERE = Path(__file__).resolve().parent

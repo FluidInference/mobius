@@ -10,7 +10,7 @@ Codec activations after LayerNorm typically have α·x ∈ roughly [-2, 2]. A fe
 extreme values can exceed that, so we also sweep [-π, π] for full picture.
 
 Run:
-    uv run python per_module/snake_parity.py
+    uv run python nanocodec_experiments/snake_parity.py
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ import math
 
 import torch
 
-from per_module import modules as mods
+from nanocodec_experiments import modules as mods
 
 
 def snake_reference(x: torch.Tensor, alpha: torch.Tensor) -> torch.Tensor:

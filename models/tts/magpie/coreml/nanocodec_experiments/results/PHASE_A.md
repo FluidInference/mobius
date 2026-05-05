@@ -146,7 +146,7 @@ output range was sane (`[-0.54, 0.71]`).
 
 ## Phase C+ subgraph probe — ANE compile threshold pinned
 
-`per_module/nano_subgraph_probe.py` builds synthetic HiFi-GAN-style decoders
+`nanocodec_experiments/nano_subgraph_probe.py` builds synthetic HiFi-GAN-style decoders
 (Taylor5Clipped Snake, weight_norm-free Conv1d, dilations 1/3/5, kernels
 3/7/11) progressively from a single ResBlock up through the full 5-stage
 decoder, holding topology constant while varying the input time dimension.
@@ -276,10 +276,10 @@ ANE.
 
 ```bash
 cd mobius/models/tts/magpie/coreml
-uv run python per_module/analyze.py
+uv run python nanocodec_experiments/analyze.py
 # Or selectively:
-uv run python per_module/analyze.py --only snake_learned_block snake_poly_taylor_block
-cat per_module/results/ledger.json
+uv run python nanocodec_experiments/analyze.py --only snake_learned_block snake_poly_taylor_block
+cat nanocodec_experiments/results/ledger.json
 ```
 
-Raw fallback JSON for each spec is in `per_module/results/raw/<name>.json`.
+Raw fallback JSON for each spec is in `nanocodec_experiments/results/raw/<name>.json`.
