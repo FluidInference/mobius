@@ -89,7 +89,7 @@ class SnakeTaylor5(nn.Module):
 class SnakeTaylor7(nn.Module):
     """7th-order Taylor expansion of Snake.
 
-    Snake(x) ≈ x + α·x² − (α³/3)·x⁴ + (2α⁵/45)·x⁶ − (α⁷·8/315)·x⁸
+    Snake(x) ≈ x + α·x² − (α³/3)·x⁴ + (2α⁵/45)·x⁶ − (α⁷/315)·x⁸
 
     Extra term over Taylor5; better near the edges of the operating range.
     """
@@ -112,7 +112,7 @@ class SnakeTaylor7(nn.Module):
             + a * x2
             - (a3 / 3.0) * x4
             + (2.0 * a5 / 45.0) * x6
-            - (8.0 * a7 / 315.0) * x8
+            - (a7 / 315.0) * x8
         )
 
 
