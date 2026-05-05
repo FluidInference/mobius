@@ -10,6 +10,7 @@ dependencies = [
     "soundfile>=0.12.0",
     "scipy>=1.5.0",
     "huggingface_hub>=0.10",
+    "psutil>=7.2.2",
 ]
 
 [project.optional-dependencies]

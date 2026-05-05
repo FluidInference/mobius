@@ -255,6 +255,7 @@ def convert_nanocodec(
     max_frames=256,
     output_path="build/nanocodec_decoder.mlpackage",
     precision="fp32",
+    palettize=False,
 ):
     # Load model
     print("Loading MagpieTTS model...")
@@ -346,6 +347,19 @@ def convert_nanocodec(
         minimum_deployment_target=ct.target.iOS17,
     )
 
+    if palettize:
+        # 8-bit kmeans weight palettization. compute_precision is unchanged
+        # (fp32 stays fp32 at runtime — weights dequantize to it). Same
+        # pattern Kokoro Noise uses for the fp32+int8pal preset. Cuts
+        # mlpackage size ~4×; audibility tested separately.
+        import coremltools.optimize.coreml as cto
+
+        print("Palettizing weights (8-bit kmeans)...")
+        pal_config = cto.OptimizationConfig(
+            global_config=cto.OpPalettizerConfig(mode="kmeans", nbits=8)
+        )
+        mlmodel = cto.palettize_weights(mlmodel, pal_config)
+
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     mlmodel.save(output_path)
     print(f"Saved to {output_path}")
@@ -382,5 +396,18 @@ if __name__ == "__main__":
         "fp16 weight-quantization noise on the CPU path. fp16 is required "
         "for ANE residency but adds audible speech-correlated artifacts.",
     )
+    parser.add_argument(
+        "--palettize",
+        action="store_true",
+        help="Apply 8-bit kmeans weight palettization after convert. "
+        "Cuts file size ~4× without changing compute precision. Match "
+        "Kokoro Noise's fp32+int8pal preset.",
+    )
     args = parser.parse_args()
-    convert_nanocodec(args.nemo_path, args.max_frames, args.output, args.precision)
+    convert_nanocodec(
+        args.nemo_path,
+        args.max_frames,
+        args.output,
+        args.precision,
+        args.palettize,
+    )
