@@ -1,5 +1,15 @@
 # StyleTTS2 → CoreML Conversion Plan
 
+> **Status note (May 2026):** This plan documents the original 4-graph
+> CoreML port that powered the legacy `Sources/FluidAudio/TTS/StyleTTS2/`
+> backend. The backend has since been frozen — see
+> `coreml/TRIALS.md` Phase 4 (Trial 35). New work targets the 7-graph
+> StyleTTS2-ANE re-cut (`Sources/FluidAudio/TTS/StyleTTS2Ane/`).
+> This file is preserved as historical reference — none of the
+> per-stage shapes, bucket bounds, or stage splits below apply to
+> the ANE re-cut, which mirrors Kokoro-ANE's Albert / PostAlbert /
+> Alignment / DiffusionStep / Prosody / Noise / Vocoder layout.
+
 ## 1. Inference flow we are reproducing
 
 Source: `Demo/Inference_LibriTTS.ipynb` in [yl4579/StyleTTS2](https://github.com/yl4579/StyleTTS2).

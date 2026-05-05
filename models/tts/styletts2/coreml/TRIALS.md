@@ -295,6 +295,202 @@ conversion artifacts.
 
 ---
 
+## Phase 4: Named-voice catalog + strategic ANE commitment
+
+After the legacy 4-graph CoreML port was working end-to-end, the
+priority shifted to (a) shipping a curated set of voices with
+predictable quality, and (b) deciding whether to invest in the
+parallel `StyleTTS2Ane` 7-graph re-cut or stay on the legacy backend.
+
+Source corpus: `yl4579/StyleTTS2-LibriTTS/reference_audio.zip` — 17
+official author-curated reference clips. Goal: dump them once into
+on-disk `ref_s_*.bin` blobs (256 fp32 LE), publish under
+`FluidInference/StyleTTS-2-coreml/voices/`, and resolve them in Swift
+by name (`vinay`, `gavin`, …) instead of an absolute path.
+
+### Trial 26 — ref_s.bin byte layout (naming inversion)
+**Approach:** Dump `predictor_encoder(mel)` and `style_encoder(mel)`
+side-by-side into a 256-fp32 blob. Two valid concat orders:
+`[ref_p, ref_s]` (prosody first) vs `[ref_s, ref_p]` (acoustic first).
+**Result:** FluidAudio's on-disk format is `[ref_p, ref_s]` — prosody
+first, acoustic second. The Swift accessors `voice.acoustic` (first
+128) and `voice.prosody` (last 128) are **inverted from upstream
+nomenclature**: `voice.acoustic` is actually fed to the
+text_predictor + f0n_energy (prosody branch), and `voice.prosody`
+goes to the decoder (acoustic branch). The byte layout is the source
+of truth — the Swift property names are legacy.
+
+The in-Python parity helper `99_parity_check.compute_ref_s` uses the
+opposite order (`[ref_s, ref_p]`) for sanity-checking against
+upstream PyTorch — that ordering is **not** the on-disk format.
+Documented in the script header so future agents don't shuffle bytes.
+
+### Trial 27 — `06_dump_ref_s.py` import-name mismatch
+**Symptom:** `ImportError: cannot import name 'load_modules' from
+'_styletts2_lib'` on first run.
+**Root cause:** The library function was renamed
+`load_inference_modules` during an earlier refactor; the dumper was
+written against memory of the old name.
+**Fix:** s/`load_modules`/`load_inference_modules`/. No public-API
+churn — this was self-contained.
+
+### Trial 28 — librosa is optional in some envs
+**Symptom:** `ModuleNotFoundError: librosa` in stripped UV environments.
+**Fix:** Loader chain — librosa preferred (matches training-time
+pipeline), then `soundfile` + manual resample, then `scipy.io.wavfile`
+fallback. Only the librosa path is guaranteed bit-exact to upstream;
+the fallbacks deviate by ≤1e-6 in mel space which is below the model's
+own noise floor.
+
+### Trial 29 — Yinghao collapses on CoreML, Gavin survives
+**Approach:** A/B-test all 17 voices through the CoreML ANE pipeline
+vs the PyTorch reference using `99_e2e_validate.py` (log-mel cosine,
+F0 corr, RMS, ASR transcript).
+**Result:**
+- **Yinghao** (author voice, used as default in upstream demos):
+  log-mel cos 0.9556, F0 0.9935, RMS PT −30.20 dBFS / CoreML
+  −30.51 dBFS — but ASR transcripts diverge catastrophically. PyTorch
+  produces `"A new word from the style T DS two Any pipeline."`,
+  CoreML produces `"Yeah."`. Audible: PT speaks the phrase, CoreML
+  emits a single syllable then silence.
+- **Gavin** (author voice): log-mel cos 0.9627, F0 0.9938, RMS PT
+  −32.61 dBFS / CoreML −32.91 dBFS. ASR PT `"Hello word from the
+  style TDS to any pipeline."`, CoreML `"And no word from the style
+  TDS to any pipeline."` — first word swapped but otherwise
+  intelligible. Usable.
+- **Vinay** (chosen as catalog default): cleanest CoreML output,
+  matches PT cleanly. Promoted to `defaultVoiceID`.
+- **Nima**: clean CoreML, comparable to Vinay.
+
+**Diagnosis:** Yinghao's `ref_s` vector lives in a region of style
+space the **int8-palettized vocoder** can't represent. The legacy
+4-graph port's quantization hits a sharp regression on this specific
+voice. PT-side parity is fine, so the conversion graph is correct;
+the lossy step is post-hoc weight palettization, not the trace.
+
+**Fix:** None at the legacy-backend level — would require a fp16 or
+fp32 vocoder fallback per-voice, which the 4-graph cannot do without
+re-export. **Catalog still ships Yinghao** (it's an author voice, has
+documentation value, and works on PT-side callers); production
+recommendation is Vinay/Gavin/Nima only.
+
+This regression was the dispositive datum for going all-in on the
+StyleTTS2-ANE re-cut: the 7-graph design separates the SineGen
+(fp32) and the vocoder body (fp16 + cos-Snake), and the Vocoder
+graph's per-stage compute-unit selection lets us keep the regressing
+ops on `cpuAndGPU` if needed.
+
+### Trial 30 — DownloadUtils pattern walker for voices/ subdir
+**Approach:** Want `DownloadUtils.downloadRepo(.styleTts2, …)` to
+fetch the new `voices/` directory from HF without touching the
+generic walker.
+**Result:** Works by registration only. The walker logic is
+`itemPath.hasPrefix($0) || $0.hasPrefix(itemPath + "/")` against each
+entry in `ModelNames.getRequiredModelNames(...)`. Adding `"voices"`
+to `StyleTTS2.requiredModels` produces the pattern `"voices/"` which
+matches both the directory walk and the per-file include test.
+**Fix:** Single-line addition to `ModelNames.swift`, post-download
+verification loop in `StyleTTS2ResourceDownloader.swift`. No
+`DownloadUtils.swift` change.
+
+### Trial 31 — Swift `\", \"` escape in interpolation expression
+**Symptom:** `error: extraneous '"' in literal` during build of
+`StyleTTS2VoiceStyle+Named.swift`.
+**Root cause:** Wrote
+`"\(StyleTTS2VoicePresets.allIDs.joined(separator: \", \"))"`. Inside
+`\(…)` the parser is in expression context, not string context — the
+backslash-escapes are wrong.
+**Fix:** Drop the backslashes: `joined(separator: ", ")`. Generic
+Swift footgun — the inner string is already a string literal at the
+surrounding level.
+
+### Trial 32 — Multi-line bash command rejection
+**Symptom:** `(eval):1: permission denied:` when running the
+validator with backslash-newline continuation:
+```
+cd /path/to/scripts && \
+  PHONEMIZER_ESPEAK_LIBRARY=/opt/homebrew/lib/libespeak-ng.dylib \
+  ./.venv/bin/python 99_e2e_validate.py …
+```
+**Root cause:** Shell parser quirk inside the agent's tool harness.
+The line-continuation form is read but not re-joined cleanly; the
+shell ends up trying to execute the second line as a standalone
+command, which has no `+x` bit.
+**Fix:** Single-line invocation — `cd <dir> && ENV=val
+./.venv/bin/python script.py …`. Trivial but cost a debugging cycle.
+
+### Trial 33 — Author's stance on CoreML
+**Investigation:** Did yl4579 (Aaron Yinghao Li, StyleTTS2 author)
+ever publicly address CoreML / ANE deployment?
+**Findings:** No direct engagement. Three relevant issue threads:
+- **#39 "Portability? (iOS, etc.)"** — author recommends PyTorch
+  Mobile / LibTorch.
+- **#117 "Is it possible to make onnx model support?"** — *"I'm not
+  familiar with Onnx so it probably needs to be done by someone more
+  familiar with this."*
+- **#114 "Mac (Metal) support?"** — defers to community contributors
+  (`@fakerybakery`).
+
+**Implication:** All Apple-platform deployment work is community-
+driven. Upstream will not weigh in on Yinghao's int8 collapse, the
+EnumeratedShapes E5RT bug, BiLSTM ANE compatibility, or any other
+platform-specific issue we hit. We own these problems.
+
+### Trial 34 — Community consensus on voice quality
+**Investigation:** What do downstream users say about StyleTTS2 audio
+quality, and where does it lose vs commercial baselines?
+**Findings (paraphrased from HN, llama.cpp #4138, dagshub deep-dive,
+2026 open-source TTS roundups):**
+- Praise: "comparable to ElevenLabs" is the standard framing.
+  Official CMOS listening study found samples statistically
+  indistinguishable from human recordings on LJSpeech.
+- Strengths: prosody on long-form English narration. Speed/quality
+  ratio. Renders Tortoise obsolete.
+- Weaknesses: voice-cloning fidelity (#1 complaint, behind ElevenLabs
+  and XTTSv2), multilingual (English-only at top quality),
+  phonemizer artifacts from espeak ("strange annunciations"),
+  hyper-expressiveness misfires.
+- Architectural validation: Kokoro is built on the StyleTTS2
+  architecture, sits #2 on TTS Arena (just behind ElevenLabs) at 82M
+  params.
+
+**Implication for our port:** The community's #1 complaint (voice
+cloning) is not our problem — we ship 17 author-curated voices, no
+clone path. The community's #2 complaint (multilingual) is tracked
+separately. Our actual operational risks are (i) phonemizer artifacts
+(we use espeak too, future work) and (ii) the int8-palettization
+regression seen on Yinghao. Both are real but bounded.
+
+### Trial 35 — Strategic decision: commit to StyleTTS2-ANE, deprecate legacy
+**Context:** The plan in `PLAN.md` proposed a **parallel** backend —
+keep legacy 4-graph alive, ship `StyleTTS2Ane` alongside, A/B
+benchmark, then maybe deprecate. After Trial 29 (Yinghao collapse)
+and the broader ANE economics, the user's call is to drop the
+parallel-backend path and treat the 7-graph ANE re-cut as the
+canonical StyleTTS2 backend going forward.
+**Rationale:**
+- Legacy 4-graph cannot be made ANE-resident without the re-cut
+  (BiLSTM, EnumeratedShapes E5RT, attention einsum, Snake activation
+  — all blockers documented in `PLAN.md`).
+- Legacy can't fix the int8 collapse without per-voice fp fallback,
+  which the 4-graph design doesn't allow.
+- Maintaining two backends doubles the test/CI/HF-upload surface for
+  no real upside once ANE lands.
+- Kokoro-ANE (the architectural cousin) already proved the 7-graph
+  pattern at production quality.
+
+**Action items (going forward):**
+- New work targets `Sources/FluidAudio/TTS/StyleTTS2Ane/` only.
+- The voice-catalog wiring (FluidAudio#583) sits under the legacy
+  `Sources/FluidAudio/TTS/StyleTTS2/` namespace today; once the ANE
+  manager lands, the catalog moves with it (the catalog itself is
+  backend-agnostic — it's just `id → ref_s.bin`).
+- Legacy 4-graph artifacts on HF stay published until the ANE bundle
+  ships; after that, mark them deprecated in the README. Don't
+  delete — older app builds may still pull them.
+
+---
+
 ## Summary of key bugs
 
 | Bug                                       | Symptom                                   | Fix                                                           |
@@ -311,3 +507,9 @@ conversion artifacts.
 | GE2E noise-floor on synthetic TTS         | False high-drift signal (0.84 looks bad)  | Use ECAPA-TDNN; threshold-aware                               |
 | `torchaudio.load` missing `torchcodec`    | `ModuleNotFoundError`                     | Use `soundfile` + manual resample                             |
 | "Robotic" voice quality complaint         | Audibly stiff prosody                     | Architectural — PyTorch fp32 ceiling cos(REF,PT)=0.29         |
+| `ref_s.bin` byte-layout naming inversion  | Swift `voice.acoustic` is actually prosody| On-disk `[ref_p, ref_s]` is canonical; Swift names are legacy |
+| `06_dump_ref_s.py` import name            | `ImportError: load_modules`               | Renamed to `load_inference_modules` after lib refactor        |
+| Yinghao voice collapses on CoreML         | log-mel cos 0.95 but ASR → "Yeah."        | int8 vocoder palettization regression; ship Vinay/Gavin/Nima  |
+| `voices/` not fetched by HF downloader    | Walker skipped the new subdir             | Add `"voices"` to `StyleTTS2.requiredModels` (single-line fix)|
+| Swift `\", \"` in `\(…)` interpolation    | `extraneous '"' in literal` build error   | Drop backslashes inside expression context: `joined(", ")`    |
+| Multi-line bash continuation in tool harness | `(eval):1: permission denied:`           | Collapse to single-line `cd <dir> && ENV=val python …`        |
