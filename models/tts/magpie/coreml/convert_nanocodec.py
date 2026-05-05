@@ -19,9 +19,39 @@ import numpy as np
 import coremltools as ct
 
 
+_SNAKE_HALF_PI = 1.5707963267948966  # π/2
+
+
 def _snake_plain(x, alpha):
-    """Plain PyTorch snake activation: x + (1/alpha) * sin^2(alpha * x)."""
-    return x + (1.0 / (alpha + 1e-9)) * torch.sin(alpha * x).pow(2)
+    """ANE-compatible Snake replacement: clamped 5th-order Taylor of sin².
+
+    Original: x + (1/α)·sin²(α·x)
+    Approx:   y = clamp(α·x, -π/2, π/2)
+              x + (1/α) · (y² − y⁴/3 + 2y⁶/45)
+
+    Why: ANE on Apple Silicon rejects ios17.sin (kSin not supported). Per
+    Phase A diagnostics in per_module/results/PHASE_A.md, Conv1d→Snake→Conv1d
+    lands 0% ANE; Conv1d→Taylor5Clipped→Conv1d lands 100% ANE.
+
+    Why clamp first: the unclamped Taylor5 polynomial grows as α⁵·x⁶, while
+    sin²(α·x) is bounded by 1. Without clamping, trained α values up to ~5
+    multiplied by codec activations up to ~3 give α·x ≳ 10 where the
+    polynomial diverges by orders of magnitude, propagating as NaN/inf
+    through the 96 Snake instances of nanocodec (observed during conversion).
+
+    Parity (per per_module/snake_parity.py against original sin² form):
+        codec α·x ∈ [-2, 2]:  max_abs = 0.28
+        moderate [-π/2, π/2]: max_abs = 0.11
+        wide [-π, π]:         max_abs = 1.10  (bounded; pure Taylor5 ≈ 20.1)
+
+    Audio parity is measured against a PyTorch reference render in Phase C.
+    """
+    ax = torch.clamp(alpha * x, -_SNAKE_HALF_PI, _SNAKE_HALF_PI)
+    y2 = ax * ax
+    y4 = y2 * y2
+    y6 = y4 * y2
+    sin2 = y2 - y4 / 3.0 + 2.0 * y6 / 45.0
+    return x + sin2 / (alpha + 1e-9)
 
 
 class TraceableSnake(nn.Module):
@@ -220,7 +250,12 @@ class TraceableNanoCodecDecoder(nn.Module):
         return audio
 
 
-def convert_nanocodec(nemo_path=None, max_frames=256, output_path="build/nanocodec_decoder.mlpackage"):
+def convert_nanocodec(
+    nemo_path=None,
+    max_frames=256,
+    output_path="build/nanocodec_decoder.mlpackage",
+    precision="fp32",
+):
     # Load model
     print("Loading MagpieTTS model...")
     from nemo.collections.tts.models import MagpieTTSModel
@@ -280,8 +315,24 @@ def convert_nanocodec(nemo_path=None, max_frames=256, output_path="build/nanocod
         diff = (ref_out - traced_out).abs().max().item()
         print(f"Trace verification - max diff: {diff:.6e}")
 
-    # Convert to CoreML
-    print("Converting to CoreML...")
+    # Convert to CoreML.
+    #
+    # Precision matters here. fp16 weights save ~50 % mlpackage size and
+    # are required for ANE residency, but the 96 Snake activations + 5
+    # transposed-conv upsamples in the HiFi-GAN stack accumulate fp16
+    # rounding error into a speech-correlated noise floor that is audible
+    # against voiced speech (verified Phase C v2 isolation: same Snake
+    # in PyTorch fp32 = pitch-perfect; same Snake in CoreML fp16 = noisy).
+    # Default to fp32 so the production CPU-only path (cf.
+    # MagpieModelStore) renders cleanly. Pass precision="fp16" only when
+    # specifically targeting ANE — and expect audible artifacts.
+    if precision == "fp16":
+        cprec = ct.precision.FLOAT16
+    elif precision == "fp32":
+        cprec = ct.precision.FLOAT32
+    else:
+        raise ValueError(f"precision must be 'fp32' or 'fp16', got {precision!r}")
+    print(f"Converting to CoreML (compute_precision={precision})...")
     mlmodel = ct.convert(
         traced,
         inputs=[
@@ -291,7 +342,7 @@ def convert_nanocodec(nemo_path=None, max_frames=256, output_path="build/nanocod
             ct.TensorType(name="audio", dtype=np.float32),
         ],
         convert_to="mlprogram",
-        compute_precision=ct.precision.FLOAT16,
+        compute_precision=cprec,
         minimum_deployment_target=ct.target.iOS17,
     )
 
@@ -322,5 +373,14 @@ if __name__ == "__main__":
     parser.add_argument("--nemo-path", type=str, default=None)
     parser.add_argument("--max-frames", type=int, default=256)
     parser.add_argument("--output", type=str, default="build/nanocodec_decoder.mlpackage")
+    parser.add_argument(
+        "--precision",
+        type=str,
+        default="fp32",
+        choices=["fp32", "fp16"],
+        help="compute_precision for ct.convert. fp32 (default) avoids the "
+        "fp16 weight-quantization noise on the CPU path. fp16 is required "
+        "for ANE residency but adds audible speech-correlated artifacts.",
+    )
     args = parser.parse_args()
-    convert_nanocodec(args.nemo_path, args.max_frames, args.output)
+    convert_nanocodec(args.nemo_path, args.max_frames, args.output, args.precision)

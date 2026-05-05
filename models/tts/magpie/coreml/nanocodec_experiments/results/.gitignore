@@ -1,0 +1,9 @@
+# Per-module / subgraph diagnostic JSONs are reproducible from
+# `analyze.py` and `nano_subgraph_probe.py`. The ledgers and raw/
+# trees can blow up to 10k+ lines each and are not the source of
+# truth — `STATUS.md` and `PHASE_A.md` are. Re-run the scripts to
+# regenerate them locally.
+ledger.json
+subgraph_ledger.json
+raw/
+subgraph_raw/
