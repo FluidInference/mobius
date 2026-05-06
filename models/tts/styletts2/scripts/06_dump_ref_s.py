@@ -1,19 +1,14 @@
 """Dump 256-fp32 ref_s.bin voice blobs from reference WAV(s).
 
 Output format (matches `StyleTTS2VoiceStyle.load`):
-  256 little-endian float32, 1024 bytes total. Layout:
-    [0:128]   predictor_encoder(mel)   — prosody / duration branch
-    [128:256] style_encoder(mel)       — acoustic / decoder branch
+  256 little-endian float32, 1024 bytes total. Layout (yl4579 convention):
+    [0:128]   style_encoder(mel)       — acoustic / decoder branch
+    [128:256] predictor_encoder(mel)   — prosody  / duration branch
 
-Note: the FluidAudio Swift accessors `voice.acoustic` (first 128) and
-`voice.prosody` (last 128) have historically inverted names: the first 128
-floats are actually the **prosody** branch (fed to text_predictor +
-f0n_energy), and the last 128 are the **acoustic** branch (fed to decoder).
-The byte layout is the source of truth — the property names are legacy.
-
-The `99_parity_check.compute_ref_s` helper uses the opposite concat order
-(`[ref_s, ref_p]`) for in-Python parity sanity checks against upstream
-PyTorch — that ordering is **not** the on-disk voice format.
+This matches `compute_style` in upstream `yl4579/StyleTTS2`
+(`Demo/Inference_LibriTTS.ipynb`): `torch.cat([ref_s, ref_p], dim=-1)`.
+The FluidAudio Swift accessors `voice.acoustic` (first 128) and
+`voice.prosody` (last 128) line up directly with the on-disk halves.
 
 Usage:
   # Single WAV
@@ -86,7 +81,7 @@ def _build_mel():
 
 
 def extract_ref_s(modules, wav_path: Path, mel_transform) -> tuple[np.ndarray, float]:
-    """Compute the 256-fp32 [ref_p, ref_s] blob for a single WAV.
+    """Compute the 256-fp32 [ref_s, ref_p] blob for a single WAV.
 
     Returns (blob, duration_seconds).
     """
@@ -100,8 +95,8 @@ def extract_ref_s(modules, wav_path: Path, mel_transform) -> tuple[np.ndarray, f
         ref_s = modules["style_encoder"](mel.unsqueeze(1))      # (1, 128) acoustic
         ref_p = modules["predictor_encoder"](mel.unsqueeze(1))  # (1, 128) prosody
 
-    # On-disk layout: prosody first, acoustic second.
-    blob = torch.cat([ref_p, ref_s], dim=1).squeeze(0).numpy().astype(np.float32)
+    # On-disk layout (yl4579 convention): acoustic first, prosody second.
+    blob = torch.cat([ref_s, ref_p], dim=1).squeeze(0).numpy().astype(np.float32)
     if blob.shape != (256,):
         raise RuntimeError(f"unexpected blob shape {blob.shape} for {wav_path}")
     return blob, duration

@@ -7,15 +7,21 @@ The SineGen `_f02sine` constant-fold patch (`install_sinegen_v2_constfold_fix`)
 must be re-applied per T_a because `fracs` is precomputed per bucket. We
 export at MAX_T_A for a single graph; the host pads F0_curve to MAX_T_A.
 
-Input:
-  F0_curve [1, MAX_T_A * 2]    fp32  (Prosody output T_a*2 — predictor.F0 upsamples)
+Inputs:
+  F0_curve [1, MAX_T_A * 2]                              fp32
+  noise    [1, MAX_T_A * 2 * UPSAMPLE_SCALE, harm+1]     fp32  (broadband
+                                                                 Gaussian, host-generated)
 
 Outputs:
-  sine_waves [1, MAX_T_A * 2 * UPSAMPLE_SCALE, harm+1]  fp32
-  uv         [1, MAX_T_A * 2, 1]                        fp32
+  sine_waves [1, MAX_T_A * 2 * UPSAMPLE_SCALE, harm+1]   fp32
+  uv         [1, MAX_T_A * 2 * UPSAMPLE_SCALE, 1]        fp32
 
 `harm+1` = `harmonic_num + 1` per upstream HiFi-GAN (default = 8 in the
 LibriTTS config).
+
+Noise is a runtime input rather than baked-in `randn` so each utterance gets
+real broadband noise (vs. the previous `sin(fn*100)` workaround which aliased
+and starved unvoiced fricatives). See `NoiseTraceable.forward` docstring.
 """
 
 from __future__ import annotations
@@ -63,15 +69,22 @@ def main() -> None:
     # Prosody emits F0 at T_a*2 (predictor.F0[0] has upsample=True).
     F0_e = torch.zeros(1, args.max_T_a * 2, dtype=torch.float32)
 
-    print(f"[06-ane] sanity forward (static T_a={args.max_T_a}) …")
+    # Broadband Gaussian noise example — the host supplies the real tensor at
+    # predict-time. Shape mirrors SineGen's internal `(1, T_audio, harm+1)`.
+    harm = modules["decoder"].generator.m_source.l_sin_gen.harmonic_num
+    from _styletts2_ane_lib import UPSAMPLE_SCALE  # noqa: E402
+    T_audio = args.max_T_a * 2 * UPSAMPLE_SCALE
+    noise_e = torch.randn(1, T_audio, harm + 1, dtype=torch.float32)
+
+    print(f"[06-ane] sanity forward (static T_a={args.max_T_a}, T_audio={T_audio}) …")
     with torch.no_grad():
-        sine_waves, uv = wrapper(F0_e)
+        sine_waves, uv = wrapper(F0_e, noise_e)
     print(f"[06-ane]   sine_waves: {tuple(sine_waves.shape)} {sine_waves.dtype}")
     print(f"[06-ane]   uv:         {tuple(uv.shape)} {uv.dtype}")
 
     print("[06-ane] tracing …")
     with torch.no_grad():
-        traced = torch.jit.trace(wrapper, (F0_e,), strict=False)
+        traced = torch.jit.trace(wrapper, (F0_e, noise_e), strict=False)
 
     if args.trace_only:
         print("[06-ane] --trace-only: skipping CoreML convert.")
@@ -85,6 +98,7 @@ def main() -> None:
         traced,
         inputs=[
             ct.TensorType(name="F0_curve", shape=(1, args.max_T_a * 2), dtype=np.float32),
+            ct.TensorType(name="noise", shape=(1, T_audio, harm + 1), dtype=np.float32),
         ],
         outputs=[
             ct.TensorType(name="sine_waves"),

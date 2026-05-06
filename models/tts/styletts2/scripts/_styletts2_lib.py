@@ -132,21 +132,29 @@ def install_sinegen_v2_constfold_fix(t_mel: int) -> None:
 
     def _forward_deterministic(self, f0):
         # Drop the `rand_ini`/randn noise so the trace is deterministic and
-        # CoreML doesn't bake the sampled noise as a constant. We replace the
-        # noise term with a phase-locked sine of the harmonics — same RMS,
-        # same uv masking, no stochasticity.
+        # CoreML doesn't bake the sampled noise as a constant.
+        #
+        # We do NOT mix any noise here — the host (Swift / Python validator)
+        # supplies a runtime noise tensor and the consumer (NoiseTraceable)
+        # mixes it with `noise_amp`. The earlier `sin(fn * 100.0)` replacement
+        # was a perceptual-quality bug: it aliased above Nyquist for any
+        # non-trivial F0 and went to numerical zero in unvoiced regions
+        # (where `fn = f0 * harm_mul = 0`), starving fricatives of excitation.
         sg = self
         harm_mul = _torch.FloatTensor(
             [[range(1, sg.harmonic_num + 2)]]
         ).to(f0.device)
         fn = _torch.multiply(f0, harm_mul)
         sines = _f02sine_constfold(sg, fn)
-        sine_waves = sines * sg.sine_amp
-        uv = sg._f02uv(f0)
-        noise_amp = uv * sg.noise_std + (1 - uv) * sg.sine_amp / 3
-        noise = noise_amp * _torch.sin(fn * 100.0)
-        sine_waves = sine_waves * uv + noise
-        return sine_waves, uv, noise
+        sine_waves_h = sines * sg.sine_amp                            # (1, T_audio, harm+1)
+        uv = sg._f02uv(f0)                                            # (1, T_audio, 1)
+        noise_amp = uv * sg.noise_std + (1 - uv) * sg.sine_amp / 3    # (1, T_audio, 1)
+        sine_waves_voiced = sine_waves_h * uv                         # voiced harmonics only
+        # Returns (voiced_harmonics, uv_mask, noise_amplitude). The caller is
+        # expected to compute `sine_waves = voiced_harmonics + noise_amp * noise`
+        # where `noise` is a host-supplied broadband signal of shape
+        # (1, T_audio, harm+1).
+        return sine_waves_voiced, uv, noise_amp
 
     if not hasattr(SineGen, "_f02sine_original"):
         SineGen._f02sine_original = SineGen._f02sine  # type: ignore[attr-defined]

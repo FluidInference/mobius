@@ -290,6 +290,7 @@ class PostBertTraceable(nn.Module):
       bert_dur [1, T_tok, bert_dim]
       tokens   [1, T_tok] int64
       style    [1, style_dim*2]  — concatenated [acoustic | prosody] ref_s
+                                   (yl4579 convention: style_encoder | predictor_encoder)
 
     Outputs:
       t_en             [1, hidden_dim, T_tok]
@@ -298,8 +299,8 @@ class PostBertTraceable(nn.Module):
       fixed_embedding  [1, T_tok, bert_dim]   (for CFG uncond)
 
     Note: ProsodyPredictor uses style_dim*2 (acoustic + prosody concat). The
-    DurationEncoder consumes `style[:, :style_dim]` (prosody half) — same as
-    the legacy text predictor.
+    DurationEncoder consumes `style[:, style_dim:]` (prosody half = second
+    half under yl4579 convention) — same as the legacy text predictor.
     """
 
     def __init__(self, modules: dict, cfg: LibriTTSConfig):
@@ -321,9 +322,10 @@ class PostBertTraceable(nn.Module):
         tokens: torch.Tensor,
         style: torch.Tensor,
     ):
-        # Prosody half of ref_s is [:, :style_dim]; the second half is the
-        # acoustic style consumed only by F0Ntrain and the decoder.
-        s_pros = style[:, : self.style_dim]
+        # yl4579 convention: ref_s = [acoustic | prosody]. Prosody half is
+        # [:, style_dim:]; the first half is the acoustic style consumed only
+        # by F0Ntrain and the decoder.
+        s_pros = style[:, self.style_dim:]
 
         t_en = self.text_encoder(tokens)                      # (1, h, T)
         d_en = self.bert_encoder(bert_dur).transpose(-1, -2)  # (1, h, T)
@@ -489,11 +491,12 @@ class NoiseTraceable(nn.Module):
     avoid `aten::remainder` and `F.interpolate` op-translation bugs (see the
     detailed comment block in `_styletts2_lib.install_sinegen_v2_constfold_fix`).
 
-    Input:
-      F0_curve  [1, T_a*2]    (from Prosody — F0Ntrain upsamples by 2)
+    Inputs:
+      F0_curve  [1, T_a*2]                            (from Prosody — F0Ntrain upsamples by 2)
+      noise     [1, T_a*2*UPSAMPLE_SCALE, harm+1]     (broadband Gaussian noise, host-generated)
 
     Output:
-      sine_waves  [1, T_audio_chunk, harmonic_num + 1]
+      sine_waves  [1, T_audio_chunk, harmonic_num + 1]   (voiced_harmonics + noise_amp * noise)
       uv          [1, T_audio_chunk, 1]
 
     `T_audio_chunk = T_a * 2 * UPSAMPLE_SCALE` where the leading `2` is the
@@ -502,6 +505,17 @@ class NoiseTraceable(nn.Module):
     The constant-fold lerp pre-bakes `fracs` for this T_audio_chunk; the
     export script must call `install_sinegen_v2_constfold_fix(t_mel=T_a)`
     before tracing this stage.
+
+    Why the noise is a runtime input (not baked-in `randn`):
+      * `torch.randn_like(...)` would be sampled once at trace time and frozen
+        as a constant in the .mlpackage — every utterance would get the same
+        noise pattern.
+      * The previous workaround `noise = noise_amp * sin(fn * 100.0)` aliased
+        above Nyquist and went to zero in unvoiced regions, producing the
+        "raspy / weak fricatives" perceptual artifact.
+      * Passing noise as a runtime tensor preserves both determinism (the
+        host can seed) and broadband stochasticity (real white noise, not a
+        phase-locked sine).
 
     Compute units = `.all` (CPU+GPU+ANE) but in practice runs CPU/GPU because
     cumsum on a long sequence in fp16 saturates phase. This matches Kokoro's
@@ -517,14 +531,20 @@ class NoiseTraceable(nn.Module):
         self.f0_upsamp = decoder.generator.f0_upsamp
         self.l_sin_gen = decoder.generator.m_source.l_sin_gen
 
-    def forward(self, F0_curve: torch.Tensor):
+    def forward(self, F0_curve: torch.Tensor, noise: torch.Tensor):
         # Mirror upstream `Generator.forward`:
         #   f0 = self.f0_upsamp(f0[:, None]).transpose(1, 2)
         #   har_source, _, uv = self.m_source(f0)
-        # We expose sine_waves + uv directly — the harmonic linear+tanh head
-        # lives in the Vocoder graph (Stage 7) for ANE residency.
-        f0 = self.f0_upsamp(F0_curve[:, None]).transpose(1, 2)  # (1, T_a*2*UPSAMPLE_SCALE, 1)
-        sine_waves, uv, _noise = self.l_sin_gen(f0)
+        # The patched SineGen.forward (`_forward_deterministic`) returns:
+        #   - sine_waves_voiced: clean harmonics already gated by uv
+        #   - uv:                voicing mask
+        #   - noise_amp:         per-sample noise amplitude (handles voiced
+        #                        breathiness vs unvoiced fricative levels)
+        # We mix the host-supplied broadband `noise` here so the export is
+        # deterministic but the synthesised excitation is real noise.
+        f0 = self.f0_upsamp(F0_curve[:, None]).transpose(1, 2)  # (1, T_audio, 1)
+        sine_waves_voiced, uv, noise_amp = self.l_sin_gen(f0)
+        sine_waves = sine_waves_voiced + noise_amp * noise      # (1, T_audio, harm+1)
         return sine_waves, uv
 
 

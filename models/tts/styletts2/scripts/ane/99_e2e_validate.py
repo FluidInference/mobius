@@ -117,7 +117,15 @@ def cosine_2d(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-12))
 
 
-def synth_pytorch_reference(modules, cfg, ref_s: np.ndarray, tokens: np.ndarray, n_diff_steps: int = 5):
+def synth_pytorch_reference(
+    modules,
+    cfg,
+    ref_s: np.ndarray,
+    tokens: np.ndarray,
+    n_diff_steps: int = 5,
+    alpha: float = 0.3,
+    beta: float = 0.7,
+):
     """Synthesize a PyTorch-only reference using the legacy `_styletts2_lib`
     traceables wired together with a tiny ADPM2 sampler. This is the parity
     target for the CoreML pipeline.
@@ -131,9 +139,9 @@ def synth_pytorch_reference(modules, cfg, ref_s: np.ndarray, tokens: np.ndarray,
         TextPredictorTraceable,
     )
 
-    style = torch.from_numpy(ref_s).float().unsqueeze(0)        # (1, 256)
-    s_pros = style[:, : cfg.style_dim]
-    s_acoustic = style[:, cfg.style_dim:]
+    style = torch.from_numpy(ref_s).float().unsqueeze(0)        # (1, 256) yl4579: [acoustic | prosody]
+    s_acoustic = style[:, : cfg.style_dim]
+    s_pros = style[:, cfg.style_dim:]
     tok = torch.from_numpy(tokens).long().unsqueeze(0)           # (1, T_tok)
 
     text_pred = TextPredictorTraceable(modules).eval()
@@ -149,24 +157,59 @@ def synth_pytorch_reference(modules, cfg, ref_s: np.ndarray, tokens: np.ndarray,
         pred_dur_log = _pred_dur_log
         pred_dur = torch.sigmoid(pred_dur_log).sum(-1).round().clamp(min=1).long()  # (1, T_tok)
 
-        # Diffusion: run the existing model-agnostic ADPM2 here for reference.
-        # We use a fixed-noise seed for determinism.
+        # Diffusion: ADPM2 + Karras schedule, matching the production Swift
+        # sampler at `Sources/FluidAudio/TTS/StyleTTS2/Pipeline/StyleTTS2Sampler.swift`.
+        # rho=9.0, sigma_min=0.0001, sigma_max=3.0, init x = noise * sigmas[0].
         torch.manual_seed(0)
-        x = torch.randn(1, 1, cfg.style_dim * 2)
-        # Karras sigmas (5 steps).
-        sigmas = torch.linspace(1.0, 0.0001, n_diff_steps + 1)
+        noise = torch.randn(1, 1, cfg.style_dim * 2)
+
+        rho = 9.0
+        sigma_min = 0.0001
+        sigma_max = 3.0
+        rho_inv = 1.0 / rho
+        min_inv = sigma_min ** rho_inv
+        max_inv = sigma_max ** rho_inv
+        sigmas_list: list[float] = []
         for i in range(n_diff_steps):
-            sigma = sigmas[i].view(1)
-            d_pred = diff_step(x, sigma, bert_dur, style)
-            sigma_next = sigmas[i + 1].view(1, 1, 1)
-            x = d_pred + (x - d_pred) * (sigma_next / sigma.view(1, 1, 1))
+            t = 0.0 if n_diff_steps == 1 else i / (n_diff_steps - 1)
+            inv = max_inv + t * (min_inv - max_inv)
+            sigmas_list.append(float(inv ** rho))
+        sigmas_list.append(0.0)
+
+        # NOTE: avoid the variable name `d` here — it shadows the prosody
+        # feature tensor from `text_pred(...)` above, which is consumed
+        # below as `d.transpose(-1, -2) @ align`.
+        x = noise * sigmas_list[0]
+        for i in range(len(sigmas_list) - 1):
+            s = sigmas_list[i]
+            s_next = sigmas_list[i + 1]
+            if s_next == 0.0:
+                denoised = diff_step(x, torch.tensor([s], dtype=torch.float32), bert_dur, style)
+                deriv = (x - denoised) / s
+                x = x + deriv * (s_next - s)
+                continue
+            s_mid = math.exp((math.log(s) + math.log(s_next)) / 2.0)
+            denoised = diff_step(x, torch.tensor([s], dtype=torch.float32), bert_dur, style)
+            deriv = (x - denoised) / s
+            x_mid = x + deriv * (s_mid - s)
+            denoised_mid = diff_step(x_mid, torch.tensor([s_mid], dtype=torch.float32), bert_dur, style)
+            deriv_mid = (x_mid - denoised_mid) / s_mid
+            x = x + deriv_mid * (s_next - s)
         ref_s_pred = x.squeeze(1)                                # (1, 256)
 
-        # Replace style with the predicted style (StyleTTS2 inference reality).
-        # Decoder consumes only the acoustic half (ref_s[:, style_dim:]); ProsodyPredictor.F0Ntrain
-        # consumes only the prosody half (ref_s[:, :style_dim]).
-        s_pred_pros = ref_s_pred[:, : cfg.style_dim]
-        s_pred_acoustic = ref_s_pred[:, cfg.style_dim:]
+        # Half-ordering matches the legacy `99b_e2e_coreml.py:200-203`: the
+        # diffusion sampler emits `[acoustic | prosody]`, same as the on-disk
+        # ref_s (yl4579 convention: first 128 = acoustic for HiFi-GAN
+        # decoder, last 128 = prosody for F0NEnergy). The mix from
+        # `StyleTTS2Synthesizer.swift:180-181` blends sampler-predicted
+        # with disk-original on each half independently:
+        #     out = weight * predicted + (1 - weight) * original
+        # with alpha=0.3 (acoustic) and beta=0.7 (prosody).
+        s_orig_acoustic = style[:, : cfg.style_dim]                 # (1, 128)
+        s_orig_pros = style[:, cfg.style_dim:]                      # (1, 128)
+        s_pred_acoustic = alpha * ref_s_pred[:, : cfg.style_dim] + (1.0 - alpha) * s_orig_acoustic
+        s_pred_pros = beta * ref_s_pred[:, cfg.style_dim:] + (1.0 - beta) * s_orig_pros
+        ref_s_mixed = torch.cat([s_pred_acoustic, s_pred_pros], dim=-1)  # (1, 256), [acou | pros]
 
         # Alignment (simple repeat_interleave for the reference).
         T_a = int(pred_dur.sum().item())
@@ -188,7 +231,7 @@ def synth_pytorch_reference(modules, cfg, ref_s: np.ndarray, tokens: np.ndarray,
         N.squeeze(0).numpy().astype(np.float32),
         en.squeeze(0).numpy().astype(np.float32),
         asr.squeeze(0).numpy().astype(np.float32),
-        ref_s_pred.squeeze(0).numpy().astype(np.float32),
+        ref_s_mixed.squeeze(0).numpy().astype(np.float32),
         pred_dur.squeeze(0).numpy().astype(np.float32),
         bert_dur.numpy().astype(np.float32),
     )
@@ -250,8 +293,12 @@ def synth_coreml_pipeline(
     style_pred_np = ref_s_pred if ref_s_pred is not None else ref_s
     style_pred = torch.from_numpy(style_pred_np).float().unsqueeze(0)   # (1, 256)
     tok = torch.from_numpy(tokens).long().unsqueeze(0)
-    s_pros_pred = style_pred[:, : cfg.style_dim]
-    s_acoustic_pred = style_pred[:, cfg.style_dim:]
+    # `style_pred` is in `[acoustic | prosody]` layout — same as the on-disk
+    # ref_s (yl4579 convention) and the sampler output (per
+    # `99b_e2e_coreml.py:200-201`). First 128 = acoustic for HiFi-GAN
+    # decoder, last 128 = prosody for F0NEnergy.
+    s_acoustic_pred = style_pred[:, : cfg.style_dim]
+    s_pros_pred = style_pred[:, cfg.style_dim:]
 
     # Try to load all 6 mlpackages up front so we report a single status line.
     mlmodels: dict = {}
@@ -366,22 +413,35 @@ def synth_coreml_pipeline(
         install_sinegen_v2_constfold_fix(t_mel=T_a)
 
         # ----- Stage 6: Noise -----
+        # Stage 6 now consumes a host-supplied broadband noise tensor so the
+        # graph can be deterministic at trace-time without sacrificing real
+        # noise excitation at predict-time. Seed the RNG so the validator
+        # remains reproducible across runs.
         print("[99-ane] Stage 6: Noise.predict …", flush=True)
+        harm = modules["decoder"].generator.m_source.l_sin_gen.harmonic_num
+        rng = np.random.default_rng(0)
         if "noise" in mlmodels:
             # Static at MAX_T_A — pad F0 to MAX_T_A*2.
             F0_padded = F0_full  # already at MAX_T_A*2 from Stage 5 mlpackage
             if F0_padded.shape[-1] != MAX_T_A * 2:
                 F0_padded = torch.zeros(1, MAX_T_A * 2, dtype=torch.float32)
                 F0_padded[:, : F0_act.shape[-1]] = F0_act
+            T_audio_full = MAX_T_A * 2 * UPSAMPLE_SCALE
+            noise_padded = rng.standard_normal((1, T_audio_full, harm + 1)).astype(np.float32)
             out = mlmodels["noise"].predict({
                 "F0_curve": F0_padded.numpy().astype(np.float32),
+                "noise": noise_padded,
             })
             sine_full = torch.from_numpy(out["sine_waves"].astype(np.float32))
             # sine_waves is (1, MAX_T_A*2*UPSAMPLE_SCALE, harm+1).
             sine_act = sine_full[:, : T_a * 2 * UPSAMPLE_SCALE, :]
         else:
             noise_pt = NoiseTraceable(modules["decoder"]).eval()
-            sine_act, _uv = noise_pt(F0_act)
+            T_audio_act = T_a * 2 * UPSAMPLE_SCALE
+            noise_act = torch.from_numpy(
+                rng.standard_normal((1, T_audio_act, harm + 1)).astype(np.float32)
+            )
+            sine_act, _uv = noise_pt(F0_act, noise_act)
         print("[99-ane]   Noise done.", flush=True)
 
         # ----- Stage 7: Vocoder -----
@@ -456,6 +516,17 @@ def main() -> None:
 
     # Tokens: simplest viable path — call the same upstream phonemizer the
     # legacy 99b_e2e_coreml.py uses. We import lazily to avoid a hard dep.
+    # On Apple Silicon with Homebrew, phonemizer can't auto-find libespeak-ng;
+    # nudge it to the standard brew location before importing.
+    import os as _os
+    if "PHONEMIZER_ESPEAK_LIBRARY" not in _os.environ:
+        for _candidate in (
+            "/opt/homebrew/lib/libespeak-ng.dylib",  # Apple Silicon Homebrew
+            "/usr/local/lib/libespeak-ng.dylib",     # Intel Homebrew
+        ):
+            if Path(_candidate).exists():
+                _os.environ["PHONEMIZER_ESPEAK_LIBRARY"] = _candidate
+                break
     try:
         sys.path.insert(0, str(THIS_DIR.parent))
         from _styletts2_lib import VENDOR_DIR  # noqa: E402
