@@ -21,3 +21,8 @@ reference_audio/
 .uv/
 __pycache__/
 *.pyc
+
+# CoreML conversion artifacts (built locally; do not commit)
+coreml/packages/*.mlpackage
+coreml/packages/*.mlmodelc
+coreml/packages/*.mlmodel
