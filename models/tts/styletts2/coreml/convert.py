@@ -154,19 +154,37 @@ def _trace_module(
 def _ct_inputs_for_stage(stage: str, example_inputs: tuple) -> list:
     """Build the coremltools input descriptor list matching the trace inputs.
 
-    First cut: fixed shapes from the trace example. RangeDim promotions
-    happen per-stage as parity is established and documented in trials.md.
+    Token-axis (T_text) and frame-axis (T_frames) dimensions are promoted
+    to `ct.RangeDim` so the converted models accept any sentence length
+    without padding. This avoids LSTM bidirectional contamination on the
+    token axis (text_encoder / duration_predictor's pack_padded_sequence
+    is dropped during tracing) and decoder convolution / AdaIN
+    contamination on the frame axis when zero-padding the time axis.
+
+    Bounds are generous (1..512 tokens, 1..2048 frames) to cover all
+    plausible LibriTTS-style sentences. The default in `ct.Shape(default=)`
+    is the trace shape so CoreML's optimizer can specialise.
     """
     import coremltools as ct  # local import so importing convert.py is cheap
+
+    T_TOKEN = ct.RangeDim(lower_bound=1, upper_bound=512, default=57)
+    T_FRAME = ct.RangeDim(lower_bound=1, upper_bound=2048, default=147)
+    F0_LEN = ct.RangeDim(lower_bound=2, upper_bound=4096, default=294)        # = 2 * T_FRAME
+    HAR_LEN = ct.RangeDim(lower_bound=300, upper_bound=614400, default=44100)  # = 300 * T_FRAME
 
     descs = []
     if stage == "text_encoder":
         tokens, lengths, mask = example_inputs
-        descs.append(ct.TensorType(name="tokens", shape=tuple(tokens.shape), dtype=np.int32))
+        descs.append(ct.TensorType(name="tokens", shape=ct.Shape(shape=(1, T_TOKEN)), dtype=np.int32))
         descs.append(ct.TensorType(name="input_lengths", shape=tuple(lengths.shape), dtype=np.int32))
         # text_mask is consumed multiplicatively in the wrapper, so fp32 IO is fine.
-        descs.append(ct.TensorType(name="text_mask", shape=tuple(mask.shape), dtype=np.float32))
+        descs.append(ct.TensorType(name="text_mask", shape=ct.Shape(shape=(1, T_TOKEN)), dtype=np.float32))
     elif stage == "bert":
+        # HF Albert's MIL graph contains shape ops that the CPU MLProgram
+        # backend rejects under RangeDim ("data-dependent shapes were
+        # disabled"). Keep T fixed and let the caller pad tokens to 57 —
+        # BERT respects attention_mask so contamination at real positions
+        # is bounded and small.
         tokens, attn = example_inputs
         descs.append(ct.TensorType(name="tokens", shape=tuple(tokens.shape), dtype=np.int32))
         descs.append(ct.TensorType(name="attention_mask", shape=tuple(attn.shape), dtype=np.int32))
@@ -175,21 +193,37 @@ def _ct_inputs_for_stage(stage: str, example_inputs: tuple) -> list:
         descs.append(ct.TensorType(name="mel", shape=tuple(mel_4d.shape), dtype=np.float32))
     elif stage == "duration_predictor":
         d_en, s, mask = example_inputs
-        descs.append(ct.TensorType(name="d_en", shape=tuple(d_en.shape), dtype=np.float32))
+        descs.append(
+            ct.TensorType(name="d_en", shape=ct.Shape(shape=(1, d_en.shape[1], T_TOKEN)), dtype=np.float32)
+        )
         descs.append(ct.TensorType(name="s", shape=tuple(s.shape), dtype=np.float32))
-        descs.append(ct.TensorType(name="text_mask", shape=tuple(mask.shape), dtype=np.float32))
+        descs.append(ct.TensorType(name="text_mask", shape=ct.Shape(shape=(1, T_TOKEN)), dtype=np.float32))
     elif stage == "f0n_predictor":
         en, s = example_inputs
-        descs.append(ct.TensorType(name="en", shape=tuple(en.shape), dtype=np.float32))
+        descs.append(
+            ct.TensorType(name="en", shape=ct.Shape(shape=(1, en.shape[1], T_FRAME)), dtype=np.float32)
+        )
         descs.append(ct.TensorType(name="s", shape=tuple(s.shape), dtype=np.float32))
     elif stage == "decoder":
         asr, f0, n, ref, har = example_inputs
-        descs.append(ct.TensorType(name="asr", shape=tuple(asr.shape), dtype=np.float32))
-        descs.append(ct.TensorType(name="f0", shape=tuple(f0.shape), dtype=np.float32))
-        descs.append(ct.TensorType(name="n", shape=tuple(n.shape), dtype=np.float32))
+        descs.append(
+            ct.TensorType(name="asr", shape=ct.Shape(shape=(1, asr.shape[1], T_FRAME)), dtype=np.float32)
+        )
+        descs.append(ct.TensorType(name="f0", shape=ct.Shape(shape=(1, F0_LEN)), dtype=np.float32))
+        descs.append(ct.TensorType(name="n", shape=ct.Shape(shape=(1, F0_LEN)), dtype=np.float32))
         descs.append(ct.TensorType(name="ref", shape=tuple(ref.shape), dtype=np.float32))
-        descs.append(ct.TensorType(name="har_source", shape=tuple(har.shape), dtype=np.float32))
+        descs.append(
+            ct.TensorType(
+                name="har_source", shape=ct.Shape(shape=(1, 1, HAR_LEN)), dtype=np.float32
+            )
+        )
     elif stage == "diffusion_unet":
+        # As with bert, the U-Net's cross-attention over the token axis
+        # produces a shape op MLProgram CPU can't satisfy at runtime when
+        # T is RangeDim. Keep fixed; rely on padded BERT output. The
+        # padded positions in `embedding` are near-zero (BERT respects
+        # attention_mask) so the U-Net's attention to them perturbs
+        # `s_pred` only slightly.
         x_noisy, sigma, embedding, features = example_inputs
         descs.append(ct.TensorType(name="x_noisy", shape=tuple(x_noisy.shape), dtype=np.float32))
         descs.append(ct.TensorType(name="sigma", shape=tuple(sigma.shape), dtype=np.float32))

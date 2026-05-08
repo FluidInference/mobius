@@ -20,9 +20,37 @@ Usage:
         --text "StyleTTS 2 is a text to speech model." \
         --output out_coreml.wav
 
-Note: stages were traced with fixed shapes from the default sentence
-(57 tokens → 147 frames → 88200 samples). To synthesize a different
-sentence, RangeDim promotion is required (see trials.md Open work).
+Shape strategy:
+
+  * `text_encoder`, `duration_predictor`, `f0n_predictor` are converted
+    with `ct.RangeDim` on the variable axis (token T or frame F) and
+    run at native length. This avoids LSTM bidirectional contamination
+    on the token axis (their wrappers drop `pack_padded_sequence` for
+    trace).
+  * `bert` and `diffusion_unet` keep a fixed token axis of 57. HF Albert
+    and the cross-attention diffusion U-Net both produce shape ops that
+    coremltools' MLProgram backend rejects under RangeDim
+    ("data-dependent shapes were disabled"). Tokens are padded to 57 for
+    these two stages; BERT respects `attention_mask` so contamination at
+    real positions is bounded.
+  * `decoder` (HiFi-GAN) runs **eager PyTorch** at native frame length.
+    Two reasons it isn't CoreML:
+      - Frame-axis zero-padding fundamentally contaminates real frames
+        through the snake-activation residual stack and AdaIN convs
+        (verified at "core employees" / "core email" output drift).
+      - With `T_FRAME` promoted to `ct.RangeDim`, the decoder MIL graph
+        has internal shape constants baked at trace time that the CPU
+        MLProgram backend rejects at runtime ("Invalid blob shape:
+        Data-dependent shapes were disabled: input_13 [1, ?, ?] vs
+        [1, 57, ?]"). The trace shape leaks through `torch.zeros_like`
+        / shape-derived constants in the source-filter / AdaIN paths.
+    Running the decoder eagerly at native frames gives bit-identical
+    HiFi-GAN output and avoids the ~14ms HiFi-GAN x300-upsample CoreML
+    speedup; that's an acceptable trade-off until the wrapper can be
+    rewritten free of shape-baked constants.
+
+Sentences must phonemize to ≤ 57 tokens until BERT / diffusion get
+RangeDim support.
 """
 
 from __future__ import annotations
@@ -179,7 +207,7 @@ def main() -> int:
     parser.add_argument(
         "--text",
         default="StyleTTS 2 is a text to speech model.",
-        help="Must produce 57 tokens until RangeDim promotion lands.",
+        help="Any sentence that phonemizes to ≤ 57 tokens.",
     )
     parser.add_argument(
         "--reference",
@@ -239,45 +267,86 @@ def main() -> int:
     diffusion_unet = _load_stage("diffusion_unet", cu)
     duration_predictor = _load_stage("duration_predictor", cu)
     f0n_predictor = _load_stage("f0n_predictor", cu)
-    decoder = _load_stage("decoder", cu)
     print(f"  coreml load: {time.perf_counter() - t0:.2f}s")
+
+    # Decoder is eager (see module docstring). Apply the same
+    # weight_norm / dropout / generator patches DecoderWrapper applies,
+    # so the eager decoder here matches the reference output exactly.
+    from coreml.wrappers import (  # noqa: E402
+        _patch_generator_use_har,
+        _remove_weight_norm_recursive,
+        _strip_dropout,
+    )
+
+    eager_decoder = eager_model.decoder
+    _strip_dropout(eager_decoder)
+    _remove_weight_norm_recursive(eager_decoder)
+    _patch_generator_use_har(eager_decoder.generator)
+    eager_decoder.eval()
 
     # ------ Stage 1: phonemize + tokenize (Python) ------
     from nltk.tokenize import word_tokenize
+
+    # bert / diffusion_unet keep a fixed token axis (see module docstring).
+    BERT_TOKENS = 57
+    HOP = 300  # 24 kHz × 12.5 ms
 
     text = args.text.strip()
     ps = espeak.phonemize([text])
     ps = " ".join(word_tokenize(ps[0]))
     token_ids = cleaner(ps)
     token_ids.insert(0, 0)
-    tokens = torch.LongTensor(token_ids).unsqueeze(0)   # [1, T]
-    input_lengths = torch.LongTensor([tokens.shape[-1]])
-    text_mask = run_inference.length_to_mask(input_lengths)
-    n_tokens = tokens.shape[-1]
-    print(f"\nText:    {text!r}")
-    print(f"Tokens:  {n_tokens}")
 
-    # ------ Stage 2: text_encoder (CoreML) ------
+    real_n = len(token_ids)
+    if real_n > BERT_TOKENS:
+        raise ValueError(
+            f"text produced {real_n} tokens, exceeds bert/diffusion fixed axis "
+            f"of {BERT_TOKENS}; shorten the sentence or RangeDim those stages."
+        )
+
+    # Native-length tokens for the RangeDim stages.
+    tokens_native = torch.LongTensor(token_ids).unsqueeze(0)        # [1, real_n]
+    input_lengths = torch.LongTensor([real_n])
+    text_mask_native = run_inference.length_to_mask(input_lengths)  # [1, real_n], all False
+
+    # Padded tokens for the fixed-axis stages (bert + diffusion_unet).
+    tokens_padded_ids = list(token_ids) + [0] * (BERT_TOKENS - real_n)
+    tokens_padded = torch.LongTensor(tokens_padded_ids).unsqueeze(0)
+    pad_cols = BERT_TOKENS - real_n
+    text_mask_padded = torch.cat(
+        [
+            text_mask_native,
+            torch.ones(1, pad_cols, dtype=text_mask_native.dtype),
+        ],
+        dim=-1,
+    ) if pad_cols > 0 else text_mask_native
+    print(f"\nText:    {text!r}")
+    print(f"Tokens:  {real_n} (bert/diffusion padded to {BERT_TOKENS})")
+
+    # ------ Stage 2: text_encoder (CoreML, RangeDim T) ------
     t0 = time.perf_counter()
     feed = {
-        "tokens": tokens.numpy().astype(np.int32),
+        "tokens": tokens_native.numpy().astype(np.int32),
         "input_lengths": input_lengths.numpy().astype(np.int32),
-        "text_mask": text_mask.numpy().astype(np.float32),
+        "text_mask": text_mask_native.numpy().astype(np.float32),
     }
     (t_en_np,) = _predict(text_encoder, feed)
     print(f"text_encoder:       {time.perf_counter() - t0:.3f}s  out={t_en_np.shape}")
 
-    # ------ Stage 3: bert + bert_encoder (CoreML) ------
+    # ------ Stage 3: bert + bert_encoder (CoreML, fixed T=57) ------
     t0 = time.perf_counter()
     feed = {
-        "tokens": tokens.numpy().astype(np.int32),
-        "attention_mask": (~text_mask).int().numpy().astype(np.int32),
+        "tokens": tokens_padded.numpy().astype(np.int32),
+        "attention_mask": (~text_mask_padded).int().numpy().astype(np.int32),
     }
-    bert_dur_np, d_en_np = _predict(bert, feed)
+    bert_dur_np, d_en_np_padded = _predict(bert, feed)
     print(
         f"bert+encoder:       {time.perf_counter() - t0:.3f}s  "
-        f"bert_dur={bert_dur_np.shape}  d_en={d_en_np.shape}"
+        f"bert_dur={bert_dur_np.shape}  d_en={d_en_np_padded.shape}"
     )
+    # d_en is fed to duration_predictor (RangeDim T). Slice padded
+    # positions off so the LSTM only sees real-token features.
+    d_en_np = d_en_np_padded[:, :, :real_n].astype(np.float32)
 
     # ------ Stage 4: ref_encoder (CoreML, uses reference mel) ------
     mel_4d = _compute_mel_4d(args.reference)
@@ -313,28 +382,28 @@ def main() -> int:
         f"({args.diffusion_steps} steps × 2 dispatches)"
     )
 
-    # ------ Stage 6: duration_predictor (CoreML) → alignment ------
+    # ------ Stage 6: duration_predictor (CoreML, RangeDim T) → alignment ------
     t0 = time.perf_counter()
     feed = {
-        "d_en": d_en_np.astype(np.float32),
+        "d_en": d_en_np,
         "s": s.numpy().astype(np.float32),
-        "text_mask": text_mask.float().numpy().astype(np.float32),
+        "text_mask": text_mask_native.float().numpy().astype(np.float32),
     }
     d_np, duration_logits_np = _predict(duration_predictor, feed)
     duration = torch.sigmoid(torch.from_numpy(duration_logits_np)).sum(axis=-1)
     pred_dur = torch.round(duration.squeeze()).clamp(min=1)
-    pred_aln_trg = _build_pred_aln_trg(pred_dur, n_tokens)
-    n_frames = int(pred_dur.sum().item())
+    real_frames = int(pred_dur.sum().item())
+    pred_aln_trg = _build_pred_aln_trg(pred_dur, real_n)  # [real_n, real_frames]
     print(
         f"duration_predictor: {time.perf_counter() - t0:.3f}s  "
-        f"pred_aln_trg={tuple(pred_aln_trg.shape)}  frames={n_frames}"
+        f"pred_aln_trg={tuple(pred_aln_trg.shape)}  frames={real_frames}"
     )
 
-    # ------ Stage 7: en/asr build + f0n_predictor (CoreML) ------
-    d = torch.from_numpy(d_np).float()
-    t_en = torch.from_numpy(t_en_np).float()
-    en = d.transpose(-1, -2) @ pred_aln_trg.unsqueeze(0)
-    asr = t_en @ pred_aln_trg.unsqueeze(0)
+    # ------ Stage 7: en/asr build + f0n_predictor (CoreML, RangeDim F) ------
+    d = torch.from_numpy(d_np).float()                   # [1, real_n, 640]
+    t_en = torch.from_numpy(t_en_np).float()             # [1, 512, real_n]
+    en = d.transpose(-1, -2) @ pred_aln_trg.unsqueeze(0)  # [1, 640, real_frames]
+    asr = t_en @ pred_aln_trg.unsqueeze(0)                # [1, 512, real_frames]
     if eager_params.decoder.type == "hifigan":
         en = _hifigan_shift(en)
         asr = _hifigan_shift(asr)
@@ -350,27 +419,39 @@ def main() -> int:
         f"f0={f0_pred_np.shape}  n={n_pred_np.shape}"
     )
 
-    # ------ Stage 8: precompute har_source (CPU) + decoder (CoreML) ------
+    # ------ Stage 8: precompute har_source (CPU) + decoder (eager) ------
     f0_pred = torch.from_numpy(f0_pred_np).float()
     n_pred = torch.from_numpy(n_pred_np).float()
 
     t0 = time.perf_counter()
-    har = precompute_har_source(eager_model.decoder, f0_pred)
+    har = precompute_har_source(eager_decoder, f0_pred)
     print(f"har_source (CPU):   {time.perf_counter() - t0:.3f}s  har={tuple(har.shape)}")
 
     ref_in = ref.squeeze().unsqueeze(0)  # [1, 128]
     t0 = time.perf_counter()
-    feed = {
-        "asr": asr.numpy().astype(np.float32),
-        "f0": f0_pred.numpy().astype(np.float32),
-        "n": n_pred.numpy().astype(np.float32),
-        "ref": ref_in.numpy().astype(np.float32),
-        "har_source": har.numpy().astype(np.float32),
-    }
-    (audio_np,) = _predict(decoder, feed)  # [1, 1, T_audio]
-    print(f"decoder:            {time.perf_counter() - t0:.3f}s  audio={audio_np.shape}")
+    # Inline DecoderWrapper.forward at native frame length. The eager
+    # decoder produces bit-identical HiFi-GAN output without the CoreML
+    # frame-axis padding contamination or RangeDim shape errors.
+    with torch.no_grad():
+        F0 = eager_decoder.F0_conv(f0_pred.unsqueeze(1))
+        N = eager_decoder.N_conv(n_pred.unsqueeze(1))
+        x_dec = torch.cat([asr, F0, N], dim=1)
+        x_dec = eager_decoder.encode(x_dec, ref_in)
+        asr_res = eager_decoder.asr_res(asr)
+        res = True
+        for block in eager_decoder.decode:
+            if res:
+                x_dec = torch.cat([x_dec, asr_res, F0, N], dim=1)
+            x_dec = block(x_dec, ref_in)
+            if block.upsample_type != "none":
+                res = False
+        # Patched Generator.forward signature: (x, s, har_source, f0).
+        audio_t = eager_decoder.generator(x_dec, ref_in, har, f0_pred)
+    audio_np = audio_t.cpu().numpy()
+    print(f"decoder (eager):    {time.perf_counter() - t0:.3f}s  audio={audio_np.shape}")
 
-    # Mirror run_inference's tail trim.
+    # Mirror run_inference's tail trim of 50 samples (no other trim
+    # needed: decoder runs at native frame length now).
     waveform = np.squeeze(audio_np)[..., :-50].astype(np.float32)
     out_path = Path(args.output)
     sf.write(str(out_path), waveform, 24000)
