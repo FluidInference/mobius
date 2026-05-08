@@ -23,3 +23,8 @@ dependencies = [
     "huggingface-hub>=0.20",
     "monotonic-align @ git+https://github.com/resemble-ai/monotonic_align.git",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
