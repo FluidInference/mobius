@@ -16,8 +16,10 @@ All numbers on **Apple M2 / macOS 26.5 / coremltools 9.0** unless noted.
 | #2 int8 weight quant on `decoder_step` | ✗ dead | — | EOS classifier breaks on long inputs |
 | #5 `speakerContextLength` 110→64 | ✗ dead | +1.7 s regression | naive truncation breaks voice cloning |
 | #7 First-chunk cap 24→16 | ✗ dead | 0 ms | no win, UX regression |
-| #4 AR loop unroll (N=2 / N=8) | ⏸ deferred | est. −75 to −150 ms | trace work not yet done |
-| #10 NanoCodec investigation | ⏸ pending | unknown ceiling | **182 ms (22% TTFA)** — biggest unprofiled term |
+| #10a NanoCodec v4 (palette) | ✗ dead | — | slower than v3 across all policies on M2 |
+| #10b NanoCodec split first call | ✗ dead | — | first call still required, second-chunk gap problem |
+| #10c NanoCodec mixed-precision | ✗ dead | — | Phase F.2 sweep — fp32 weights required for clean audio |
+| #4 AR loop unroll (N=2 / N=8) | ⏸ deferred | est. −75 to −150 ms | trace work not yet done — **next** |
 | #8 QAT/calibration int8 via NeMo | ⏸ deferred | est. −400 ms | multi-day project, highest ceiling |
 
 **Net stack**: ~830 ms warm TTFA on M2 (Levers #1 + #3 active).
@@ -259,41 +261,89 @@ work. **Highest ceiling, highest cost.** Theoretical TTFA floor ~300 ms on M2.
 Wire `text_encoder → decoder_prefill` into a single mlpackage. Saves one
 Swift dispatch per synth (~1-2 ms). Doesn't help the AR loop. Not worth it.
 
-### Trial 10 — NanoCodec investigation ⏸ NOT YET TRIED
+### Trial 10 — NanoCodec investigation ✗ DEAD-END (all paths)
 
-**Newly identified as 2nd-largest single TTFA contributor (182 ms / 22%)
-after full-pipeline profiling.** Currently runs 100% CPU because v3 is fp32
-(ANE is fp16-only).
+NanoCodec at 182 ms / 22% of TTFA looked like a target after Trial 4
+profiling identified it as the 2nd-largest single term. Three paths
+investigated; all closed.
 
-Cheap experiments to try:
+#### Trial 10a — NanoCodec v4 (palette-quantized fp32) ✗ DEAD
 
-1. **Profile v4 (`nanocodec_decoder_v4.mlmodelc`, fp32 + 8-bit palette)** —
-   not yet downloaded/measured. May have different per-call overhead.
-2. **Split first NanoCodec call** — decode 8 frames first → emit, then decode
-   16 more in parallel with AR for chunk 2. Could overlap NanoCodec with
-   later AR work; needs `MagpieSynthesizer` plumbing.
-3. **Re-audit fp16 v2** — documented as "audibly noisy on voiced speech" but
-   ANE-resident at ~43%. If v2 quality is acceptable for first-chunk only
-   (with v3 for subsequent chunks), could save ~150 ms TTFA at known
-   quality cost.
+`coreml-cli` profile, M2 release, `compiled/build/v4/nanocodec_decoder_v4.mlmodelc`:
 
-Effort: a few hours each. Worth doing before Trial 4 because the win is
-plausibly larger and the work is shorter.
+| Variant | `.all` | `.cpuOnly` | `.cpuAndGPU` | `.cpuAndNeuralEngine` | ANE % | Audibility |
+|---|---|---|---|---|---|---|
+| v2 (fp16) | 86 ms | 60.8 ms | 133 ms | **38.96 ms** | 43.4% | **noisy on voiced speech** |
+| v3 (fp32, current) | 337 ms | **182 ms** | 318 ms | (CPU forced) | 0% | clean ✓ |
+| v3_int8pal | 305 ms | 233 ms | 316 ms | 170 ms | 0% | (untested) |
+| v4 (palette) | **307 ms** | 518 ms | 322 ms | 447 ms | 0% | (untested) |
+
+v4 is **slower than v3 on every compute-unit policy** on M2. Palette
+quantization shrinks the model (~31 MB vs ~120 MB) but adds dequant
+overhead per CPU op without unlocking ANE (still fp32 compute precision
+end-to-end). v3_int8pal is the only marginal speedup (~12 ms vs v3 on
+`.cpuAndNeuralEngine`) but likely re-introduces the same fp16 noise
+budget Phase F.2 already proved is audibly broken — would need an A/B
+listening test to confirm.
+
+#### Trial 10b — Split first NanoCodec call ✗ DEAD
+
+Hypothesis: emit first audio after 8-12 codec frames instead of 24,
+overlapping later NanoCodec calls with chunk-2 AR work. Reading
+`MagpieNanocodec.swift:23` and `nanocodec_experiments/results/STATUS.md`
+Phase C v2 chunked-parity:
+
+```
+T_in=8  → SNR -1.38 dB  (FAILS)
+T_in=16 → SNR  5.40 dB  (FAILS)
+T_in=24 → SNR 11.46 dB  ≈ Taylor5 floor (CLEAN, current)
+```
+
+The model's input window is fixed at T=24; you can't shrink it without
+re-training. Lowering `streamingFirstChunkCap` below 24 codec frames
+would still trigger one NanoCodec call (~182 ms), so wins are limited
+to AR loop savings (~157-235 ms TTFA). But:
+
+1. **First NanoCodec call would right-edge-replicate** for caps below 24.
+   Phase C v2 step 7 only validated **left-edge** replication for
+   utterance start. Right-edge is an audio-quality regression risk.
+2. **Steady-state UX worse** — at cap=8 the first chunk produces only
+   ~372 ms of audio, while chunk 2's AR loop (cap=24's worth) takes
+   ~470 ms. Audible gap right after the first audio pop.
+
+Net: theoretical −235 ms TTFA at the cost of (a) untested audio
+quality, (b) structurally worse playback continuity. Not worth shipping.
+
+#### Trial 10c — NanoCodec ANE / mixed-precision ✗ DEAD (Phase F)
+
+Already exhausted in `nanocodec_experiments/results/STATUS.md` Phase F:
+
+| Approach | Result |
+|---|---|
+| Whole-graph fp32 | clean (current production) |
+| op_type filter (convs only fp32) | audibly noisy at 48 dB SNR |
+| op_type filter (activations / Snake only fp32) | identical to fp16 |
+| scope filter (per-stage / per-location) | not supported by coremltools op_selector |
+
+The only remaining path to clean ANE-resident NanoCodec is **model-level
+retraining or QAT** — out of scope. Production stays on v3 fp32 CPU.
+
+**Trial 10 closed.** AR unroll (Trial 4) is now the highest-confidence
+remaining lever.
 
 ---
 
-## Lever ranking (post-profiling)
+## Lever ranking (post-Trial 10 closure)
 
-Updated priority order based on the 2026-05-08 full-pipeline profiling:
+Updated priority order after NanoCodec investigation closed:
 
 | Rank | Lever | Est. TTFA win | Effort | Risk |
 |---|---|---|---|---|
-| 1 | #10a NanoCodec v4 profiling | unknown, plausibly 0-50 ms | 1 hr | low |
-| 2 | #10b Split first NanoCodec call | up to ~90 ms | half-day | low |
-| 3 | #4 AR unroll N=2 pre-flight | 75-100 ms | 4-6 hr | moderate |
-| 4 | #10c fp16 NanoCodec for first chunk only | up to ~150 ms | half-day | quality risk |
-| 5 | #4 AR unroll N=8 (post N=2 success) | 130-160 ms | 1-2 days | high |
-| 6 | #8 QAT int8 via NeMo | ~400 ms | multi-day | very high |
+| 1 | #4 AR unroll N=2 pre-flight | 75-100 ms | 4-6 hr | moderate (ANE residency) |
+| 2 | #4 AR unroll N=4/N=8 (post N=2 success) | 100-160 ms | 1-2 days | high (graph size) |
+| 3 | v3_int8pal A/B listening test | 12 ms (if clean) | 30 min | quality risk |
+| 4 | Cache-aware encoder warmup | one-shot first-call | 2-3 hr | low |
+| 5 | #8 QAT int8 via NeMo | ~400 ms | multi-day | very high |
 
 ---
 
@@ -304,10 +354,12 @@ Updated priority order based on the 2026-05-08 full-pipeline profiling:
 | Pre-tuning baseline | ~2 525 ms |
 | + chunker tweak (#1) | ~1 547 ms |
 | + LT fusion (#3) | **~830 ms** ← current |
-| + AR unroll N=2 (#4) | ~755 ms |
-| + NanoCodec optimization (#10) | ~705 ms (rough) |
-| + AR unroll N=8 + nano opts | ~600 ms (best plausible) |
+| + AR unroll N=2 (#4) | ~735 ms (est.) |
+| + AR unroll N=8 (#4) | ~670 ms (est., best plausible without retraining) |
 | + QAT int8 (#8) | ~300 ms (theoretical floor) |
+
+**NanoCodec floor confirmed at 182 ms** (22% of TTFA). Cannot be reduced
+without re-training; full fp32 is required for clean audio output.
 
 For comparison: **Kokoro TTFA < 100 ms** (parallel non-AR, ~20× RTFx). Any
 amount of optimization on a 357M autoregressive transformer with 21.5 fps
