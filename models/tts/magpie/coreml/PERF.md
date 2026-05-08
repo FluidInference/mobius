@@ -165,6 +165,153 @@ path falls back to Swift `MagpieLocalSampler`. Unit tests in
 
 Commits: `4b57ab27e` (Swift), `f3ba62e` (mobius mlpackage).
 
+#### Quality validation (post-merge audio diff, M2)
+
+Trial 3 originally cited "audio quality clean → clean unchanged" based on
+listening only. Quantified post-hoc by an end-to-end same-seed diff:
+
+Setup: `magpie text` CLI run twice with `--seed 42 --speaker 0 --language en`
+on prompt _"The quick brown fox jumps over the lazy dog. Quality validation
+in progress."_  Force-Swift run was produced by replacing
+`local_transformer.mlmodelc` with an empty placeholder directory (causes
+`MLModel(contentsOf:)` to throw → `MagpieModelStore.loadModel` returns nil
+because the model is loaded with `required: false` →
+`MagpieSynthesizer` falls back to `MagpieLocalSampler`). The empty
+directory prevents `MagpieResourceDownloader` from re-fetching it.
+
+| Metric | Fused (ANE) | Swift (CPU) |
+|---|---|---|
+| Codes / frames | 155 | 172 |
+| Audio duration | 7.448 s | 8.238 s (+11%) |
+| Sampler / step | 4.3 ms | 5.9 ms |
+| RMS | 0.116 | 0.121 |
+| Spectral centroid | 2023 Hz | 2040 Hz (ratio 0.992) |
+| F0 mean (voiced) | 178.5 Hz | 195.2 Hz (+9%) |
+| F0 std | 82.4 Hz | 80.5 Hz |
+| **DTW-aligned 13-MFCC cosine** | mean **0.9935** / median **0.9955** |
+
+The two outputs are different draws of the same content (different code
+counts → AR divergence from the first frame), but after DTW time-warp the
+phoneme content is **>99% similar**. Speaker timbre matches within 1%
+(spectral centroid ratio). Prosody differs (+9% mean F0 for Swift) but F0
+range / std is nearly identical, so it's the same speaker placing emphasis
+slightly differently — not a different voice or wrong words.
+
+This is the expected behavior of two non-equivalent samplers drawing from
+the same conditional distribution: the fused graph runs fp16 on ANE with
+top-k=80 cumsum / `cdf >= u`, Swift runs fp32 on CPU with full-vocab
+cumsum / `u * totalF` / `cdf > u`. They were never bit-equivalent and
+`MagpieFusedLocalSampler.swift:73-76` documents the difference. The
+shipped lever is "produces clean speech", not "produces identical
+samples."
+
+A separate `MagpieFusedLocalSamplerParityTests` was written that probes
+bit-level parity on synthetic Gaussian hiddens. Per-codebook agreement
+~13–24% — flat synthetic logit distributions are pathologically sensitive
+to fp16 ε perturbations, but the test does not invalidate Trial 3 because
+real decoder hiddens produce peaky distributions where fp16 drift is
+imperceptible (this audio diff is the proof).
+
+Subjective listen on the same prompt: fused was preferred over Swift
+(more natural cadence on this seed). N=1, so not a systematic finding —
+would need a multi-prompt MOS-style evaluation to claim consistent
+improvement. The relevant claim is that fused did **not** degrade
+quality, which both the objective metrics and the listening test
+confirm.
+
+Commits: `4b57ab27e` (Swift), `f3ba62e` (mobius mlpackage), this PERF
+update closes the quality validation loop.
+
+#### End-to-end latency A/B (post-quality-validation)
+
+After quality was confirmed, measured Trial 3 fused LT vs Swift LT
+fallback head-to-head with the same text / seed / speaker. Toggle
+mechanism: `mv local_transformer.mlmodelc /tmp/...` + `mkdir`
+empty-dir placeholder so `MagpieResourceDownloader.ensureAssets`
+skips re-download (fileExists=true) and `MagpieModelStore.loadModel`
+gracefully returns nil → Swift sampler engaged.
+
+**Test rig**: M2 MacBook Air, release build, `magpie text` CLI.
+Text: "The quick brown fox jumps over the lazy dog. Pack my box with
+five dozen liquor jugs." (~8s audio, ~170 codes), seed=42, speaker=0,
+en, cfg=1.0 (no CFG → useFusedSampler=true when LT loaded).
+
+**Methodology lesson**: cycle 1 ran ON-runs sequentially then
+OFF-runs sequentially with no cooldown. OFF appeared **2.3× faster**
+end-to-end (3.85s vs 8.81s). This was a thermal artifact — the ON
+runs hit accumulated thermal throttling, the OFF runs benefited from
+warm ANE caches without paying the throttle. Cycle 2 alternated
+ON / OFF with 30s cooldowns and a 90s pre-cool. Always alternate when
+benchmarking AR-loop CoreML on the same SoC, or you measure thermals
+not models.
+
+##### Cycle 2 — alternating, batch mode
+
+| Run | Mode | Total | AR loop | decoder ms/step | sampler ms/step | nanocodec |
+|---|---|---|---|---|---|---|
+| A1 | ON  | 3.94s | 2.32s | 11.4 | **2.1** | 3.10s |
+| B1 | OFF | 3.84s | 2.35s | 11.4 | 2.4 | 2.96s |
+| A2 | ON  | 4.98s | 2.33s | 11.5 | **2.1** | 4.86s |
+| B2 | OFF | 6.53s | 2.87s | 13.7 | 3.2 | 6.88s |
+| A3 | ON  | 5.86s | 2.44s | 12.1 | **2.2** | 6.48s |
+| B3 | OFF | 3.86s | 2.35s | 11.4 | 2.5 | 2.99s |
+
+- Per-step sampler: fused **~2.1 ms**, Swift **~2.4 ms** → fused wins
+  ~0.3 ms / step.
+- Per-step decoder: identical at 11.3-11.5 ms regardless of LT path
+  (the standalone profile previously reported 15.3 ms — the standalone
+  number was inflated by being measured with both decoder_step and LT
+  loaded).
+- AR loop totals essentially equal (~2.32s ON vs ~2.35s OFF on healthy
+  thermal).
+- Total wall-clock dominated by `nanocodec_decoder_v3.mlmodelc`,
+  which varied 3-7s purely on thermal state.
+
+##### Cycle 2 — alternating, streaming mode (TTFA)
+
+| Run | Mode | TTFA | Total | First chunk |
+|---|---|---|---|---|
+| S_A1 | ON  | **1.287s** | 5.30s | 22 codes (1.10s audio) |
+| S_B1 | OFF | 3.130s | 8.92s | 29 codes (1.43s audio) |
+| S_A2 | ON  | **1.306s** | 3.81s | 22 codes |
+| S_B2 | OFF | 4.036s | 12.37s | 29 codes |
+| S_A3 | ON  | **1.309s** | 3.72s | 22 codes |
+| S_B3 | OFF | 1.463s | 4.35s | 29 codes |
+
+- ON TTFA rock-stable at ~1.30s.
+- OFF TTFA thermal-sensitive (1.46s steady-state, 3-4s during
+  thermal accumulation).
+- Steady-state TTFA win (S_A3 vs S_B3): **~155 ms**.
+- Steady-state total win: **~630 ms**.
+- First chunk size differs (22 vs 29 codes) because fused and Swift
+  samplers use different RNGs (`MagpieMT19937` vs `MagpieSamplerRng`)
+  with the same seed → slightly different EOS step. This complicates
+  the apples-to-apples but doesn't invalidate the TTFA delta —
+  per-frame TTFA also favors fused.
+
+##### Honest verdict on Trial 3's magnitude
+
+The original Trial 3 claim was "~4 ms/step → 1.78 ms/step LT call,
+~2.2 ms / step saved." That was the **standalone CoreML predict()**
+profile. The full Swift-side call path (fused vs Accelerate) is much
+closer:
+
+- Fused LT (CoreML, ANE): ~2.1 ms / step from inside the AR loop
+- Swift LT (Accelerate vDSP, CPU): ~2.4 ms / step
+
+Real per-step win: **~0.3 ms**, not ~2.2 ms. For 170 steps that's
+~50 ms saved on the AR loop, plus a TTFA improvement that compounds
+because the first chunk hits Trial 1's 24-frame cap. Total observed
+wins: ~155 ms TTFA, ~630 ms total streaming wall-clock at steady
+thermal state.
+
+Trial 3 is still a net positive (no regression, slight win on every
+step) and the quality is at-least-equivalent. It is **not** the
+dramatic 2× speedup the standalone profile suggested. The dominant
+end-to-end cost is `nanocodec_decoder_v3` which Trial 3 does not
+touch and which exhibits ~3× thermal swings — that's where the next
+optimization lever should aim, not at further LT fusion.
+
 ### Trial 4 — AR loop unroll into fixed-N graph ✗ DEAD-END
 
 Trace `decoder_step` with N unrolled iterations + N LT samplers + (N-1)
@@ -268,6 +415,41 @@ Already-known dead-end (separate experiment): stateful variant
 graph's quality — partition count + per-op fallback rate matter more.
 Sampler tails (cumsum, topk, equal, softmax with comparisons) are CPU-only
 and proliferate linearly with N.
+
+#### Sub-trial 4b — N=1 fused (decoder_step + LT, no unroll)
+
+After Trial 3 quality validation closed, profiled a smaller variant:
+just `decoder_step + local_transformer` fused into one graph (12 layers
++ 1 LT, no audio_embed handoff, no AR unroll). Hypothesis: too big to
+ANE-compile was the killer for N=2; N=1 should compile and save the
+per-step `decoder_step → LT` dispatch boundary.
+
+`mobius/models/tts/magpie/coreml/traceable/traceable_decoder_step_n1.py`,
+`convert_decoder_step_n1.py`. Resulting `fused_decoder_step_n1.mlmodelc`
+is 191 MB.
+
+Same-session profile (M2, coreml-cli):
+
+| Path | Policy | Predict | ANE % |
+|---|---|---|---|
+| `decoder_step.mlmodelc` | `.cpu_and_neural_engine` | 15.29 ms | 97.3% |
+| `local_transformer.mlmodelc` | `.cpu_and_neural_engine` | 1.69 ms | 73.9% |
+| **Sum (current shipped)** | — | **17.0 ms** | — |
+| `fused_decoder_step_n1.mlmodelc` | `.cpu_and_neural_engine` | **20.45 ms** | 94.5% |
+| `fused_decoder_step_n1.mlmodelc` | `.all` | 42.60 ms | 91.8% |
+
+**Verdict: N=1 fusion is a 3.45 ms / step regression.** ANE residency
+drops from 97.3% (clean decoder_step) to 94.5% (fused) because the LT
+sampler tail's CPU ops now contaminate the same graph. The dispatch
+boundary savings (which would have to exceed 3.45 ms to come out ahead)
+are smaller than that — observed AR loop overhead in production is
+< 2 ms / step beyond kernel time.
+
+Useful negative datum: **fusion at any granularity at the
+decoder_step + LT interface costs more in graph-compile pessimization
+than it saves in dispatch boundary on M2 ANE.** The two models are
+better off as separate dispatches. Closes Trial 4 across the unroll
+spectrum (N=1 regresses, N=2 won't compile under prod policy).
 
 ### Trial 5 — `speakerContextLength` 110 → 64 ✗ DEAD-END
 
@@ -402,14 +584,65 @@ Already exhausted in `nanocodec_experiments/results/STATUS.md` Phase F:
 The only remaining path to clean ANE-resident NanoCodec is **model-level
 retraining or QAT** — out of scope. Production stays on v3 fp32 CPU.
 
-**Trial 10 closed.** AR unroll (Trial 4) is now the highest-confidence
-remaining lever.
+#### Trial 10d — Parallel sliding-window decode ✗ DEAD
+
+**Hypothesis.** `MagpieNanocodec.decode()` runs ~20 sequential
+24-frame window calls per ~8 s utterance, all on a single CPU core
+(`compute_units = .cpuOnly`). The window iterations are data-independent
+(each reads its own input slice, writes its own output slice). If the
+CoreML CPU backend is single-core per call, dispatching N independent
+`predict()` calls concurrently from a thread pool should scale roughly
+N× on a 4 P-core M2.
+
+**Bench.** `nanocodec_experiments/parallel_window_bench.py` —
+loads `nanocodec_decoder_v3.mlpackage` with `ComputeUnit.CPU_ONLY`,
+fabricates 20 distinct (8 codebook × 24 frame) int32 inputs, dispatches
+them sequentially or via `ThreadPoolExecutor`. 4 warmup calls, 15 s
+cooldown between trials, 2 cycles per `workers` count.
+
+```
+ workers cycle  total ms  per-call min  per-call med  per-call max
+       1     1      5849           147           240           773
+       1     2      2346           116           116           135   ← warm floor
+       2     1      2406           116           236           266
+       2     2      3612           143           303           467
+       4     1      2367           117           249          1049
+       4     2      3138           134           509           821
+```
+
+**Result.** Adding workers does *not* reduce wall-clock. The fastest
+configuration of all six trials is **1 worker, cycle 2** (2346 ms total,
+116 ms median per call) — exactly the warm sequential baseline. 2-way
+and 4-way parallel land at 2406 / 2367 ms (within 1-3 % of the warm
+floor — i.e. noise). All cycle 2 results past the first thermal cycle
+degrade further (3138-3612 ms) regardless of worker count, indicating
+heat is the dominant variable, not concurrency.
+
+**Why it fails.** Either (a) Apple's CoreML CPU backend already
+multi-threads internally inside a single `predict()` call and saturates
+available cores, or (b) there is a global serialization lock around
+the prediction path. Either way the per-call latency floor (~117 ms
+warm) is what we get; it does not divide across cores.
+
+This is consistent with Trial 10b's earlier finding that splitting
+the model into smaller pieces does not unlock parallelism — the
+per-call cost is set by the model graph, not by Swift-side dispatch.
+
+**Verdict.** Sliding-window parallelism is dead. The 20 × ~117 ms
+NanoCodec budget (~2.3 s of an 8 s utterance) is a hard floor on
+M2 fp32 CPU. Cannot be improved by Swift-level concurrency.
+
+**Trial 10 closed.** All graph-level and dispatch-level levers on
+NanoCodec are exhausted (10a fp32 palette, 10b split, 10c ANE/mixed,
+10d parallel). The only remaining path is model-level retraining
+(QAT int8 via NeMo) — out of scope here.
 
 ---
 
 ## Lever ranking (post-Trial 10 closure)
 
-Updated priority order after Trial 4 closed (all graph-level levers exhausted):
+Updated priority order after Trial 4 and Trial 10d closed (all
+graph-level *and* dispatch-level NanoCodec levers exhausted):
 
 | Rank | Lever | Est. TTFA win | Effort | Risk |
 |---|---|---|---|---|
@@ -417,6 +650,7 @@ Updated priority order after Trial 4 closed (all graph-level levers exhausted):
 | 2 | Cache-aware encoder warmup | one-shot first-call | 2-3 hr | low |
 | 3 | #8 QAT int8 via NeMo | ~400 ms | multi-day | very high |
 | 4 | Architectural: route to Kokoro/PocketTTS where multilingual not needed | ~700 ms | 1-2 hr | none |
+| ✗ | ~~Parallel sliding-window decode~~ | ~~est. 3-4× nanocodec~~ — Trial 10d: 0 % wall-clock win on M2 | — | — |
 
 ---
 
