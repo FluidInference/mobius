@@ -19,10 +19,12 @@ All numbers on **Apple M2 / macOS 26.5 / coremltools 9.0** unless noted.
 | #10a NanoCodec v4 (palette) | ✗ dead | — | slower than v3 across all policies on M2 |
 | #10b NanoCodec split first call | ✗ dead | — | first call still required, second-chunk gap problem |
 | #10c NanoCodec mixed-precision | ✗ dead | — | Phase F.2 sweep — fp32 weights required for clean audio |
-| #4 AR loop unroll (N=2 / N=8) | ⏸ deferred | est. −75 to −150 ms | trace work not yet done — **next** |
-| #8 QAT/calibration int8 via NeMo | ⏸ deferred | est. −400 ms | multi-day project, highest ceiling |
+| #4 AR loop unroll N=2 | ✗ dead | +30 ms regression | sampler tail (cumsum/topk/equal/softmax) forces ANE↔CPU thrash; 64.77 ms vs 34.6 ms target |
+| #8 QAT/calibration int8 via NeMo | ⏸ deferred | est. −400 ms | multi-day project, only remaining ceiling lever |
 
-**Net stack**: ~830 ms warm TTFA on M2 (Levers #1 + #3 active).
+**Net stack**: ~830 ms warm TTFA on M2 (Levers #1 + #3 active). All graph-level
+levers exhausted on the Magpie 357M open-weight checkpoint; further wins require
+QAT, model swap, or platform-side improvements.
 
 ---
 
@@ -163,21 +165,21 @@ path falls back to Swift `MagpieLocalSampler`. Unit tests in
 
 Commits: `4b57ab27e` (Swift), `f3ba62e` (mobius mlpackage).
 
-### Trial 4 — AR loop unroll into fixed-N graph ⏸ DEFERRED
+### Trial 4 — AR loop unroll into fixed-N graph ✗ DEAD-END
 
 Trace `decoder_step` with N unrolled iterations + N LT samplers + (N-1)
 audio-embed lookups inside one CoreML graph. Single ANE submission per N
 steps; KV cache stays internal between unrolled steps.
 
-**Updated estimate from Trial 3 + full-pipeline profiling**:
+**Hypothesis (pre-flight rationale)**:
 
 The Trial 3 fused LT graph successfully unrolls **8 × 1-layer LT** at 73.9%
 ANE. By contrast, decoder_step is a **12-layer transformer body**.
 - N=2 unroll → 24 transformer-layer ops + 2 LT + 1 audio-embed → ~5× LT graph size
 - N=8 unroll → 96 transformer-layer ops + 8 LT + 7 audio-embed → ~20× LT graph size
 
-Boundary cost is ~4 ms per dispatch (200 ms Swift overhead / 48 dispatches
-in first chunk). Unroll savings:
+Boundary cost was estimated at ~4 ms per dispatch (200 ms Swift overhead / 48
+dispatches in first chunk). Hypothetical unroll savings:
 
 | N | Dispatches saved | Est. Δ TTFA | ANE compile risk |
 |---|---|---|---|
@@ -186,14 +188,69 @@ in first chunk). Unroll savings:
 | 4 | 42 | −100 to −130 ms | high |
 | 8 | 45 | −130 to −160 ms | very high |
 
-**Pre-flight**: trace N=2 first. If 24-layer fused graph compiles + stays
-> 90% ANE, scale up. If N=2 already drops below ~80% ANE, stop — N=8 hopeless.
+Pre-flight kill criteria: ship if N=2 stays > 90% ANE; abandon if < 80% ANE.
 
-Already-known dead-end: stateful variant (`traceable_decoder_step_stateful.py`)
-forces CPU+GPU via MLState, regresses 2.2×.
+#### Trial 4a — N=2 pre-flight ✗ DEAD
 
-Effort: ~4-6 hours for N=2 (trace + audio-embed bake-in + parity check +
-Swift integration + profiling).
+**Implementation** (`traceable/traceable_decoder_step_n2.py`,
+`convert_decoder_step_n2.py`):
+
+- Reuse `TraceableDecoderStep` for both iterations (parameters shared, KV
+  state passed through)
+- Embed `_FusedLT` (mirrors `FusedLocalTransformer`): 8 unrolled 1-layer LT
+  iterations + per-codebook top-k+CDF sampling
+- Inter-iter audio-embed lookup: `audio_embed_2 = mean_cb (one-hot @
+  audio_emb_full[cb])` — mask-multiply pattern, mirrors Swift `fillAudioEmbed`
+  exactly
+- 38 inputs (audio_embed + enc + mask + 36 KV state + 5 sampler params)
+- 38 outputs (codes_1 + codes_2 + 36 new KV state)
+- Conversion: 35.4 s, mlprogram fp16 iOS17, 215 MB weights
+
+**Profile (M2, coreml-cli)**:
+
+| Compute Unit | CPU | GPU | ANE | Predict |
+|---|---|---|---|---|
+| all | 1.4% | 9.9% | 88.7% | **64.77 ms** |
+| cpu_only | 100.0% | — | — | 26.23 ms |
+| cpu_and_gpu | — | 100.0% | — | 28.64 ms |
+| cpu_and_neural_engine | — | — | — | ANEF compile fails |
+
+**Baseline target to beat**: decoder_step 15.7 ms + LT 1.6 ms = 17.3 ms × 2 =
+**34.6 ms**. N=2 .all is **+30.2 ms regression**.
+
+**Root cause** (`coreml-cli --fallback`): **858 of 2315 ops fall back to CPU
+(37.1%)** despite 88.7% aggregate residency. The doubled sampler tail dominates
+the partition cuts:
+
+- `cumsum × 32`, `topk × 16`, `equal × 38`, `greater_equal × 18`, `softmax × 30`
+- `linear × 92`, `reduce_mean × 56`, `real_div × 42`, `sqrt × 28`, `gelu × 14`
+
+Aggregate ANE residency reads as 88.7% because the CPU ops are individually
+cheap, but the **partition boundary cost dominates wall-clock** — every
+sampler block forces a round-trip through ANE→CPU→ANE. State I/O is also
+huge (12 layers × 2 × 1×512×12×64 fp16 = ~19 MB cache in + ~19 MB cache out
+per call, doubled for the 2 iterations).
+
+The kill threshold of "<80% ANE" turned out to be the wrong metric — even at
+88.7% residency the latency regressed 1.87×. The true gating signal would have
+been per-op fallback rate or partition count.
+
+**Verdict**: lever dead. N=4/N=8 cannot save this — they linearly scale the
+sampler-tail penalty and state I/O. **Do not pursue**.
+
+Files retained for reference (do not delete):
+- `traceable/traceable_decoder_step_n2.py`
+- `convert_decoder_step_n2.py`
+- `build/fused_decoder_step_n2.mlpackage` (215 MB)
+- `compiled/build/fused_decoder_step_n2.mlmodelc` (1.7 MB + weights)
+
+Already-known dead-end (separate experiment): stateful variant
+(`traceable_decoder_step_stateful.py`) forces CPU+GPU via MLState, regresses 2.2×.
+
+**Lesson**: ANE residency percentage is a misleading proxy for an unroll
+graph's quality — partition count + per-op fallback rate matter more.
+Sampler tails (cumsum, topk, equal, softmax with comparisons) are CPU-only
+and proliferate linearly with N.
 
 ### Trial 5 — `speakerContextLength` 110 → 64 ✗ DEAD-END
 
@@ -335,15 +392,14 @@ remaining lever.
 
 ## Lever ranking (post-Trial 10 closure)
 
-Updated priority order after NanoCodec investigation closed:
+Updated priority order after Trial 4 closed (all graph-level levers exhausted):
 
 | Rank | Lever | Est. TTFA win | Effort | Risk |
 |---|---|---|---|---|
-| 1 | #4 AR unroll N=2 pre-flight | 75-100 ms | 4-6 hr | moderate (ANE residency) |
-| 2 | #4 AR unroll N=4/N=8 (post N=2 success) | 100-160 ms | 1-2 days | high (graph size) |
-| 3 | v3_int8pal A/B listening test | 12 ms (if clean) | 30 min | quality risk |
-| 4 | Cache-aware encoder warmup | one-shot first-call | 2-3 hr | low |
-| 5 | #8 QAT int8 via NeMo | ~400 ms | multi-day | very high |
+| 1 | v3_int8pal NanoCodec A/B listening test | 12 ms (if clean) | 30 min | quality risk |
+| 2 | Cache-aware encoder warmup | one-shot first-call | 2-3 hr | low |
+| 3 | #8 QAT int8 via NeMo | ~400 ms | multi-day | very high |
+| 4 | Architectural: route to Kokoro/PocketTTS where multilingual not needed | ~700 ms | 1-2 hr | none |
 
 ---
 
@@ -353,10 +409,9 @@ Updated priority order after NanoCodec investigation closed:
 |---|---|
 | Pre-tuning baseline | ~2 525 ms |
 | + chunker tweak (#1) | ~1 547 ms |
-| + LT fusion (#3) | **~830 ms** ← current |
-| + AR unroll N=2 (#4) | ~735 ms (est.) |
-| + AR unroll N=8 (#4) | ~670 ms (est., best plausible without retraining) |
-| + QAT int8 (#8) | ~300 ms (theoretical floor) |
+| + LT fusion (#3) | **~830 ms** ← current (all graph levers exhausted) |
+| ~~+ AR unroll N=2~~ | ~~est. 735 ms~~ — actual: regresses; lever dead |
+| + QAT int8 (#8) | ~300 ms (theoretical floor — only remaining lever) |
 
 **NanoCodec floor confirmed at 182 ms** (22% of TTFA). Cannot be reduced
 without re-training; full fp32 is required for clean audio output.
