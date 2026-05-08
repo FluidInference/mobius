@@ -112,6 +112,26 @@ models/tts/styletts2/
 * [ ] Tackle `decoder_upsample` dominant cost (≈ 84 % of total):
   Trial 8 ALL placement is bimodal; explore ConvTranspose1d → ConvTranspose2d
   rewrite or weight palettization.
+  * **Trial 10 (done)**: fp32 + fixed shapes (no RangeDim) probed for ANE
+    acceptance. ANE *still* refused — `CPU_AND_NE` ran *slower* than
+    `CPU_ONLY` (ANE-attempt-then-fallback signature). Fixed shape did
+    stabilize `ALL` placement (303 ms spread vs Trial 8's 437 ms
+    bimodality), but fp32 cost was ~5–13× over fp16. Verdict: shape was
+    *not* the blocker — ConvTranspose1d itself is off-limits to ANE on
+    this graph. Details in `coreml/trials.md`.
+  * **Trial 10b (done)**: rewrote all 105 1D convs (101 Conv1d + 4
+    ConvTranspose1d) to Conv2d analogs (`unsqueeze(H=1) → conv2d →
+    squeeze`). Eager bit-equivalent. CoreML latency improved -27 to
+    -45 % vs Trial 10 across all placements (fp32: CPU_ONLY 2937 ms,
+    ALL 1111 ms). **ANE still partially rejects** — `CPU_AND_NE`
+    remained slower than `CPU_ONLY`, so ConvTranspose2d at stride 10 /
+    256→512 ch is also off-limits, OR a non-conv op in the subgraph is
+    the structural blocker. Trial 10b at fp32 still 3.7× slower than
+    fp16 baseline, so not promoted; rewrite *is* sound.
+  * Next: Trial 10c (fp16 + Conv2d) — expected ~210 ms CPU_ONLY,
+    finally beats baseline. Or Trial 10d (drill into MILCompilerForANE
+    log to identify the structural blocker). Or accept and pursue
+    Vocos/iSTFT vocoder swap.
 * [ ] int8 weight palettization on the surviving fp16 stages
   (deferred — fp16 already pays for itself; int8 needs A/B that hasn't been done).
 * [ ] FluidAudio integration as a TTS backend.

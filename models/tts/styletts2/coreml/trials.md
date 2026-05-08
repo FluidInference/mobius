@@ -582,6 +582,185 @@ Default `_STAGE_PRECISION["decoder_upsample"]` stays `"fp16"`.
 4. **Streaming chunked decode.** Doesn't reduce total work, but cuts
    TTFA dramatically.
 
+## Trial 10: `decoder_upsample` fixed-shape fp32 — ANE probe
+
+**Hypothesis.** Trial 8 ALL placement on the iteration_3 RangeDim
+mlpackage was bimodal (322-759 ms warm) — strong signal CoreML's ANE
+planner was *attempting* to place the HiFi-GAN ConvTranspose1d ups
+stack but bailing intermittently on the dynamic time axis. Collapse
+both time axes (`T_FRAME2` 2..4096, `HAR_LEN` 600..1228800) to fixed
+trace-default shapes and re-convert at fp32 (fp32-first principle:
+change one variable at a time when chasing ANE acceptance).
+
+Fixed shapes used: `x_pre [1,512,294]`, `ref [1,128]`,
+`har_source [1,1,88200]` (T_FRAME=147, the trace default).
+
+**Implementation.** New standalone script
+`coreml/trial10_decoder_upsample_fixed.py`:
+* loads `build_runtime()` + `build_wrapper("decoder_upsample", ...)` —
+  same wrapper used by `convert.py`,
+* traces at fixed shapes,
+* `ct.convert(..., compute_precision=FLOAT32, compute_units=ALL,
+  minimum_deployment_target=macOS15)` with no RangeDim,
+* saves `coreml/packages/decoder_upsample_trial10_fp32_fixed.mlpackage`,
+* benches load + warm under three placements (CPU_ONLY, CPU_AND_NE,
+  ALL); 8 timed predicts after 3-iter warmup; parity vs eager wrapper.
+
+**Results — Python `ct.models.MLModel.predict` on M-series Mac.**
+
+| placement   | load    | warm min | med   | avg   | max   | spread  | parity vs eager       |
+|-------------|---------|----------|-------|-------|-------|---------|-----------------------|
+| CPU_ONLY    | 2064 ms | 2818     | 3473  | 4046  | 7480  | 4662 ms | cos=1.000000 max\|Δ\|=1.94e-3 |
+| CPU_AND_NE  | 9507 ms | 5053     | 6502  | 6643  | 10197 | 5144 ms | cos=1.000000 max\|Δ\|=1.94e-3 |
+| ALL         | 5376 ms | 1491     | 1634  | 1607  | 1794  | **303 ms** | cos=1.000000 max\|Δ\|=1.94e-3 |
+
+Reference (current iteration_3 fp16 RangeDim, `iter3-bench` Swift):
+CPU_ONLY warm avg = **304 ms**.
+
+**Findings.**
+
+1. **ANE refused even at fixed shape + fp32.** CPU_AND_NE was *slower*
+   than CPU_ONLY (6.6 s vs 4.0 s avg) — the canonical signature of an
+   ANE attempt that compiles, fails the placement check, falls back,
+   and pays round-trip overhead. This is the same failure mode the
+   int8 palettization trial saw (`MILCompilerForANE error:
+   ANECCompile() FAILED`). Dynamic shape is not the blocker; the
+   ConvTranspose1d ups stack itself is not on ANE's accept list.
+2. **Fixed shape did stabilize the planner.** ALL spread dropped from
+   Trial 8's 322-759 ms (437 ms swing) to 303 ms — single-mode now.
+   Useful data point but not a placement win on its own.
+3. **fp32 cost is prohibitive on this stage.** ALL warm avg 1607 ms is
+   ~5× the fp16 baseline (304 ms); CPU_ONLY is ~13×. HiFi-GAN's
+   ConvTranspose1d ups are bandwidth-bound and there's no fp32
+   ConvTranspose1d Accelerate kernel parity with fp16's tuned path.
+
+**Decision.** Don't promote. Keep iteration_3 fp16 RangeDim CPU_ONLY
+as production for `decoder_upsample`. Trial 10's value is the
+diagnosis: ANE rejects ConvTranspose1d unconditionally on this graph
+under macOS 15 / coremltools 9.
+
+**Next options.**
+
+* **Trial 10b — ConvTranspose1d → ConvTranspose2d rewrite** (H=1
+  unsqueeze, 2D convtranspose, squeeze). ANE has 2D convtranspose
+  kernels; whether the rewrite traces cleanly through HiFi-GAN's
+  weight-norm-stripped generator is the unknown.
+* **Architecture swap** (Vocos / iSTFT vocoder, RingFormer): listed in
+  the int8 palettization trial's "Remaining options" — biggest win,
+  biggest cost (full vocoder retrain).
+* Otherwise: accept that `decoder_upsample` is a permanent CPU stage
+  and look for wins elsewhere (token-axis RangeDim on bert + sampler;
+  `decoder_pre` already on ANE).
+
+**Artifacts.**
+
+* `coreml/trial10_decoder_upsample_fixed.py` — script (gitignored
+  output package).
+* `decoder_upsample_trial10_fp32_fixed.mlpackage` — saved locally;
+  not promoted to `iteration_3/packages/`.
+
+## Trial 10b: `decoder_upsample` Conv1d → Conv2d rewrite, fp32
+
+**Hypothesis.** Trial 10 isolated shape from precision and proved
+shape-was-not-the-blocker. The other half of the ANE-rejection theory
+is that ANE has tuned Conv2d / ConvTranspose2d kernels but no 1D
+variants at all. Substitute every `nn.Conv1d` and `nn.ConvTranspose1d`
+in the HiFi-GAN generator with a drop-in 2D analog — `unsqueeze(2) →
+conv2d → squeeze(2)`, weight `[C_out, C_in/G, K]` → `[C_out, C_in/G,
+1, K]` (a single `unsqueeze(2)` of the same parameter, no
+re-initialization). Generator forward is unchanged: residuals, AdaIN,
+source filter, leaky-ReLU all see the same `(B, C, T)` signature at
+the replacement boundaries; MIL has the chance to fold adjacent
+squeeze/unsqueeze pairs.
+
+**Implementation.** New standalone script
+`coreml/trial10b_decoder_upsample_conv2d.py`:
+* `Conv1dAs2d` / `ConvTranspose1dAs2d` drop-in modules,
+* `_swap_convs_inplace(wrapper)` walks the wrapper's submodule tree
+  and replaces every `Conv1d` (101 instances) and `ConvTranspose1d`
+  (4 instances — the ups stack) after `_remove_weight_norm_recursive`
+  has already run inside the wrapper's `__init__`,
+* eager `1D vs 2D` parity check before tracing — gates with
+  `max|Δ| < 1e-4`,
+* same trace + ct.convert + bench protocol as Trial 10.
+
+**Eager swap parity (gate).**
+
+```
+swapped: Conv1d×101  ConvTranspose1d×4
+swap parity (1D vs 2D): cos=1.000000  max|d|=0.000e+00
+```
+
+Bit-equivalent in eager mode — the rewrite is mathematically a no-op,
+as expected.
+
+**Results — fp32, fixed shapes, M-series Mac.**
+
+| placement   | load    | warm min | med    | avg     | max    | spread  | parity vs eager       |
+|-------------|---------|----------|--------|---------|--------|---------|-----------------------|
+| CPU_ONLY    | 2523 ms | 1676     | 3338   | **2937** | 4163  | 2487 ms | cos=1.000000 max\|Δ\|=1.94e-3 |
+| CPU_AND_NE  | 1838 ms | 2264     | 3300   | **3683** | 5985  | 3720 ms | cos=1.000000 max\|Δ\|=1.94e-3 |
+| ALL         | 2261 ms |  995     | 1077   | **1111** | 1575  |  580 ms | cos=1.000000 max\|Δ\|=1.94e-3 |
+
+**vs Trial 10 (same precision, same shape, 1D convs):**
+
+| placement   | Trial 10 avg | Trial 10b avg | delta |
+|-------------|--------------|---------------|-------|
+| CPU_ONLY    | 4046 ms      | 2937 ms       | **-27 %** |
+| CPU_AND_NE  | 6643 ms      | 3683 ms       | **-45 %** |
+| ALL         | 1607 ms      | 1111 ms       | **-31 %** |
+
+**vs production fp16 RangeDim CPU_ONLY baseline (304 ms warm avg):**
+3.7× slower at best (Trial 10b ALL).
+
+**Findings.**
+
+1. **Conv1d → Conv2d is a real win** across every placement (-27 to
+   -45 %). MIL must be folding the per-op unsqueeze/squeeze pairs
+   (or at minimum running them on a faster fast-path); the rewrite
+   pays for itself even on CPU.
+2. **ANE *still* refuses the ConvTranspose2d ups stack.** CPU_AND_NE
+   (3683 ms) remains slower than CPU_ONLY (2937 ms) — the ANE-attempt-
+   then-fallback signature persists. Either ANE rejects ConvTranspose2d
+   at this kernel/stride/channel scale (256→512 ch, stride 10), or
+   another op in the graph (AdaIN, source filter add, leaky-ReLU
+   pattern, the unsqueeze/squeeze brackets themselves) is the structural
+   blocker that no shape/dimensionality rewrite can fix.
+3. **GPU now contributes meaningfully.** ALL (1111 ms) is 2.6× faster
+   than CPU_ONLY (2937 ms), versus Trial 10 where ALL was only 2.5×
+   faster than CPU_ONLY. The 1D→2D rewrite gave the GPU a fast path
+   it didn't have before.
+4. **Spread regressed on ALL** (303 ms → 580 ms). The planner now has
+   more viable subgraph splits (CPU + GPU + maybe ANE retries) and
+   makes different decisions per call.
+
+**Decision.** Don't promote Trial 10b at fp32 — still 3.7× the fp16
+baseline. But the rewrite itself is sound (bit-equivalent eager,
+universal latency win). Worth a follow-up at **fp16 + Conv2d**: if
+fp16 keeps the 27-31 % rewrite win on CPU_ONLY, that's ~210 ms warm —
+finally beating the iteration_3 baseline. The fp16 cumsum-drift
+concern from `fused_f0n_har_source` doesn't apply here (no audio-rate
+cumsum in the generator; `har_source` is pre-computed input).
+
+**Next options.**
+
+* **Trial 10c — fp16 + Conv2d rewrite.** Same rewrite, fp16
+  precision. Expected: ~200-220 ms warm CPU_ONLY (beats baseline);
+  may or may not unlock ANE. Lowest-risk follow-up.
+* **Trial 10d — drill into ANE rejection.** Capture the exact
+  `MILCompilerForANE` log for Trial 10b to identify the rejecting op
+  (likely the ups-stack ConvTranspose2d at stride 10). Decide
+  whether to tile the ups stack into smaller strides (stride 10 →
+  two stride-√10 stages won't divide evenly; 10 → 5×2 might).
+* **Architecture swap** (Vocos / iSTFT vocoder) — biggest win,
+  biggest cost (full vocoder retrain).
+
+**Artifacts.**
+
+* `coreml/trial10b_decoder_upsample_conv2d.py` — script.
+* `decoder_upsample_trial10b_fp32_conv2d.mlpackage` — saved locally;
+  not promoted.
+
 ## How to run
 
 ```bash
@@ -594,4 +773,10 @@ uv run python coreml/convert.py --stage text_encoder
 # Per-stage parity vs PyTorch
 uv run python coreml/parity.py --stage all
 uv run python coreml/parity.py --stage text_encoder
+
+# Trial 10: decoder_upsample fp32 fixed-shape ANE probe
+uv run python coreml/trial10_decoder_upsample_fixed.py
+
+# Trial 10b: decoder_upsample fp32 + Conv1d→Conv2d rewrite
+uv run python coreml/trial10b_decoder_upsample_conv2d.py
 ```
