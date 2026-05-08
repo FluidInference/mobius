@@ -237,13 +237,15 @@ def _ct_inputs_for_stage(stage: str, example_inputs: tuple) -> list:
     return descs
 
 
-def convert_stage(stage: str, rt: Runtime) -> Path:
+def convert_stage(stage: str, rt: Runtime, *, precision: str = "fp32") -> Path:
     import coremltools as ct
 
     if stage not in STAGE_NAMES:
         raise ValueError(f"unknown stage {stage!r}")
+    if precision not in ("fp32", "fp16"):
+        raise ValueError(f"precision must be fp32 or fp16, got {precision!r}")
 
-    print(f"\n=== {stage} ===")
+    print(f"\n=== {stage} (precision={precision}) ===")
     wrapper = build_wrapper(stage, rt.model)
     example_inputs = stage_example_inputs(stage, rt)
     print("  trace inputs:")
@@ -279,15 +281,19 @@ def convert_stage(stage: str, rt: Runtime) -> Path:
     # 4) Convert.
     t0 = time.time()
     inputs = _ct_inputs_for_stage(stage, example_inputs)
+    ct_precision = (
+        ct.precision.FLOAT16 if precision == "fp16" else ct.precision.FLOAT32
+    )
     mlmodel = ct.convert(
         traced,
         inputs=inputs,
         convert_to="mlprogram",
-        compute_precision=ct.precision.FLOAT32,
+        compute_precision=ct_precision,
         compute_units=ct.ComputeUnit.ALL,
         minimum_deployment_target=ct.target.macOS15,
     )
-    out_path = PACKAGES_DIR / f"{stage}.mlpackage"
+    suffix = "_fp16" if precision == "fp16" else ""
+    out_path = PACKAGES_DIR / f"{stage}{suffix}.mlpackage"
     if out_path.exists():
         import shutil
 
@@ -310,6 +316,12 @@ def main() -> int:
         default=str(HERE / "reference_audio" / "696_92939_000016_000006.wav"),
     )
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--precision",
+        default="fp32",
+        choices=["fp32", "fp16"],
+        help="CoreML compute precision; fp16 saves a `.mlpackage` with `_fp16` suffix.",
+    )
     args = parser.parse_args()
 
     rt = build_runtime(text=args.text, reference=args.reference, seed=args.seed)
@@ -324,7 +336,7 @@ def main() -> int:
     failures: list[tuple[str, str]] = []
     for stage in stages:
         try:
-            convert_stage(stage, rt)
+            convert_stage(stage, rt, precision=args.precision)
         except Exception as e:  # noqa: BLE001
             import traceback
 
