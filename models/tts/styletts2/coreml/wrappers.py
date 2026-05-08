@@ -623,6 +623,97 @@ class DecoderWrapper(nn.Module):
 
 
 # ---------------------------------------------------------------------------
+# Stage 7a — decoder_pre  (AdaIN encode + decode blocks; ANE-friendly)
+# ---------------------------------------------------------------------------
+
+
+class DecoderPreWrapper(nn.Module):
+    """First half of the decoder: F0/N conv + AdaIN encode/decode blocks.
+
+    Splits cleanly off the boundary right before HiFi-GAN's Generator.
+    All ops here are 1D conv + AdaIN (LayerNorm + linear style modulation),
+    which compile to ANE without issue.
+
+    Inputs:
+        asr     [1, hidden, T_F]
+        f0_pred [1, T_F]
+        n_pred  [1, T_F]
+        ref     [1, 128]
+    Output:
+        x_pre   [1, 512, T_F * 2]   (last decode block upsamples 2×)
+    """
+
+    def __init__(self, decoder: nn.Module) -> None:
+        super().__init__()
+        self.decoder = decoder
+        _strip_dropout(self.decoder)
+        _remove_weight_norm_recursive(self.decoder)
+        self.eval()
+
+    def forward(
+        self,
+        asr: torch.Tensor,
+        f0_pred: torch.Tensor,
+        n_pred: torch.Tensor,
+        ref: torch.Tensor,
+    ) -> torch.Tensor:
+        dec = self.decoder
+        F0 = dec.F0_conv(f0_pred.unsqueeze(1))
+        N = dec.N_conv(n_pred.unsqueeze(1))
+        x = torch.cat([asr, F0, N], dim=1)
+        ref_in = ref.squeeze(0).unsqueeze(0)
+        x = dec.encode(x, ref_in)
+        asr_res = dec.asr_res(asr)
+        res = True
+        for block in dec.decode:
+            if res:
+                x = torch.cat([x, asr_res, F0, N], dim=1)
+            x = block(x, ref_in)
+            if block.upsample_type != "none":
+                res = False
+        return x  # [1, 512, T_F * 2]
+
+
+# ---------------------------------------------------------------------------
+# Stage 7b — decoder_upsample  (HiFi-GAN Generator; CPU)
+# ---------------------------------------------------------------------------
+
+
+class DecoderUpsampleWrapper(nn.Module):
+    """HiFi-GAN Generator only. Takes the AdaIN-decoded x_pre and the
+    pre-computed har_source and produces 24kHz waveform.
+
+    Inputs:
+        x_pre       [1, 512, T_F * 2]
+        ref         [1, 128]
+        har_source  [1, 1, T_F * 300]
+    Output:
+        wav         [1, 1, T_F * 300]
+    """
+
+    def __init__(self, decoder: nn.Module) -> None:
+        super().__init__()
+        self.generator = decoder.generator
+        _strip_dropout(self.generator)
+        _remove_weight_norm_recursive(self.generator)
+        _patch_generator_use_har(self.generator)
+        self.eval()
+
+    def forward(
+        self,
+        x_pre: torch.Tensor,
+        ref: torch.Tensor,
+        har_source: torch.Tensor,
+    ) -> torch.Tensor:
+        ref_in = ref.squeeze(0).unsqueeze(0)
+        # Patched Generator.forward signature is (x, s, har_source, _f0_unused).
+        # The fourth arg is ignored after _patch_generator_use_har, but the
+        # trace still requires a real tensor — pass a tiny placeholder.
+        f0_unused = torch.zeros(1, 1, dtype=x_pre.dtype, device=x_pre.device)
+        return self.generator(x_pre, ref_in, har_source, f0_unused)
+
+
+# ---------------------------------------------------------------------------
 # Stage 8 — har_source (SineGen + SourceModuleHnNSF, deterministic)
 # ---------------------------------------------------------------------------
 
@@ -720,6 +811,8 @@ STAGE_NAMES: Tuple[str, ...] = (
     "duration_predictor",
     "f0n_predictor",
     "har_source",
+    "decoder_pre",
+    "decoder_upsample",
     "decoder",
 )
 
@@ -740,6 +833,10 @@ def build_wrapper(stage: str, model) -> nn.Module:
         return F0NPredictorWrapper(model.predictor)
     if stage == "har_source":
         return HarSourceWrapper(model.decoder)
+    if stage == "decoder_pre":
+        return DecoderPreWrapper(model.decoder)
+    if stage == "decoder_upsample":
+        return DecoderUpsampleWrapper(model.decoder)
     if stage == "decoder":
         return DecoderWrapper(model.decoder)
     raise ValueError(f"unknown stage: {stage!r} (valid: {STAGE_NAMES})")

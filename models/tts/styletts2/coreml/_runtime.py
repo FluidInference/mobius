@@ -183,6 +183,15 @@ def stage_example_inputs(stage: str, rt: Runtime) -> tuple:
         from coreml.wrappers import precompute_har_source
         har = precompute_har_source(rt.model.decoder, c.f0_pred)
         return (c.asr, c.f0_pred, c.n_pred, c.ref, har)
+    if stage == "decoder_pre":
+        return (c.asr, c.f0_pred, c.n_pred, c.ref)
+    if stage == "decoder_upsample":
+        from coreml.wrappers import DecoderPreWrapper, precompute_har_source
+        pre = DecoderPreWrapper(rt.model.decoder)
+        with torch.no_grad():
+            x_pre = pre(c.asr, c.f0_pred, c.n_pred, c.ref)
+        har = precompute_har_source(rt.model.decoder, c.f0_pred)
+        return (x_pre, c.ref, har)
     raise ValueError(f"unknown stage: {stage!r}")
 
 
@@ -237,6 +246,20 @@ def stage_reference_outputs(stage: str, rt: Runtime) -> tuple:
         from coreml.wrappers import build_wrapper as _bw
         wrapper = _bw("diffusion_unet", rt.model)
         inputs = stage_example_inputs("diffusion_unet", rt)
+        with torch.no_grad():
+            out = wrapper(*inputs)
+        return (out,)
+    if stage == "decoder_pre":
+        from coreml.wrappers import build_wrapper as _bw
+        wrapper = _bw("decoder_pre", rt.model)
+        inputs = stage_example_inputs("decoder_pre", rt)
+        with torch.no_grad():
+            out = wrapper(*inputs)
+        return (out,)
+    if stage == "decoder_upsample":
+        from coreml.wrappers import build_wrapper as _bw
+        wrapper = _bw("decoder_upsample", rt.model)
+        inputs = stage_example_inputs("decoder_upsample", rt)
         with torch.no_grad():
             out = wrapper(*inputs)
         return (out,)

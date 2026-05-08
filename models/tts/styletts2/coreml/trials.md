@@ -323,6 +323,159 @@ globally — adding new stages should not require revisiting them.
   `_TOL`. Decoder uses `mse < 1e-6 / max|Δ| < 5e-3` because its 88k-
   sample output naturally accumulates more fp32 ordering error.
 
+## Trial: decoder split (decoder_pre + decoder_upsample) — wash
+
+**Hypothesis.** HiFi-GAN's `ConvTranspose1d` upsample stack triggers
+`MILCompilerForANE error: ANECCompile() FAILED` on `CPU_AND_NE`. The
+AdaIN encode + decode blocks before the Generator are 1D conv +
+LayerNorm + linear style modulation — ANE-clean on paper. Splitting the
+decoder at the AdaIN→Generator boundary should let ANE soak the front
+half and keep CPU on the broken HiFi-GAN tail, without paying the
+30+ second `ALL` compile path.
+
+**Implementation.** Wrappers, runtime example/reference branches,
+convert input descriptors, inference manifest + dispatch all wired:
+
+| File | Change |
+|------|--------|
+| `coreml/wrappers.py` | `DecoderPreWrapper`, `DecoderUpsampleWrapper`; `STAGE_NAMES` and `build_wrapper` registered |
+| `coreml/_runtime.py` | `stage_example_inputs` / `stage_reference_outputs` branches |
+| `coreml/convert.py` | `T_FRAME2` RangeDim + `decoder_pre` / `decoder_upsample` input descriptors |
+| `coreml/inference.py` | `_STAGE_COMPUTE` (pre→`CPU_AND_NE`, upsample→`CPU_ONLY`), `_STAGE_PRECISION` (both fp16), separate dispatch |
+
+Boundary tensor: `x_pre [1, 512, T_F * 2]` ≈ 150 KB at fp16 for 3 s
+audio. Both packages converted with mse=0 trace parity.
+
+**Result.** Wash. 3-run warm, "Welcome to the CoreML inference demo."
+(46 tokens, 3.10 s output @ 24 kHz, M-series Mac, fp16 everywhere
+except `har_source` fp32):
+
+```
+                     baseline (mono)   split (best)
+decoder_pre          —                 15 ms
+decoder_upsample     —                 247 ms
+decoder (mono)       262 ms            —
+─────────────────────────────────────────────────
+total decoder        262 ms            262 ms
+```
+
+A/B vs baseline (`/tmp/_now.wav` vs `/tmp/_split_2.wav`, identical
+inputs): max|Δ|=0.022, rms(Δ)=0.001 on a clip with rms 0.074.
+Listening-identical.
+
+**Why the prediction was wrong.**
+
+1. AdaIN front-end was only ~15 ms of the 262 ms — not the ~110 ms
+   I'd estimated. HiFi-GAN dominates more thoroughly than expected.
+2. `decoder_pre` on `CPU_AND_NE` *still* triggers
+   `ANECCompile() FAILED`. The ANE compiler rejected the AdaIN graph
+   despite it being "ANE-clean" on paper. It silently falls back to
+   CPU/GPU, so we don't even get the ANE speedup we paid the split
+   for. (The `MILCompilerForANE` line on stderr is now from the pre
+   stage, not the upsample.)
+3. ANE compile fingerprints in CoreML's compile cache are per-package.
+   Two new packages → two new compile-cache misses on the first run
+   after conversion → cold latencies stay high until the cache warms.
+
+**Real bottleneck.** HiFi-GAN's 4× `ConvTranspose1d` ups stack
+(10× × 5× × 3× × 2× = 300×). Splitting can't speed that up because the
+work is the same regardless of where the AdaIN runs.
+
+**Better paths for actual decoder speedup**, ranked by effort/reward:
+
+1. **Int8/4-bit weight quantization on `decoder_upsample`.** HiFi-GAN
+   is bandwidth-bound; 1.5-2× warm on CPU is typical with
+   `coremltools.optimize.coreml.linear_quantize_weights(...)`. No
+   graph changes, no retrain. Risk: audio artifacts; A/B required.
+2. **Decoder `ALL` for server use.** 33.9 s load → 241 ms warm
+   (-77 ms vs CPU_ONLY's 318 ms). Break-even ~415 utterances per
+   process. Gate behind a `--server` flag.
+3. **Replace HiFi-GAN with iSTFT vocoder (Vocos / RingFormer).**
+   5-10× faster at parity quality, ANE-friendly (no transposed
+   convs). Needs full vocoder retrain.
+4. **Streaming chunked decode.** Doesn't reduce total work, but cuts
+   TTFA dramatically — emit PCM in chunks of N frames as ready.
+
+**Status.** Split implementation kept on disk
+(`decoder_pre_fp16.mlpackage`, `decoder_upsample_fp16.mlpackage`)
+and wired in `inference.py` for future ANE-quantization experiments.
+Monolithic `decoder` mlpackage retained as the parity reference and
+fallback. Removing the split would only save tens of MB on disk and
+~3 s of conversion time; not worth it unless we conclude the split is
+permanently a dead end.
+
+---
+
+## Trial: int8 weight quantization on `decoder_upsample` — slower, not faster
+
+**Hypothesis.** HiFi-GAN is bandwidth-bound; per-channel int8 weights
+(via `coremltools.optimize.coreml.linear_quantize_weights`) cut weight
+DRAM traffic 4× and should give 1.5-2× warm on CPU. No retrain.
+
+**Implementation.** Added `quantize_stage()` to `coreml/convert.py`
+that takes an existing fp16 mlpackage and applies post-training
+weight-only quantization (per-channel symmetric int8,
+`weight_threshold=2048`). New CLI: `--precision int8 --stage <name>`.
+Inference manifest extended: `_STAGE_PRECISION` accepts `"int8"`,
+`_load_stage` maps it to `_int8.mlpackage` suffix. New CLI flag
+`--int8 <stage…>` mirrors `--fp16` / `--fp32`.
+
+```bash
+uv run python coreml/convert.py --stage decoder_upsample --precision int8
+# decoder_upsample_fp16.mlpackage (41.9 MB) -> decoder_upsample_int8.mlpackage (21.4 MB), 51%
+```
+
+**Result.** Disk halved, warm latency *worse*. Sweep on the converted
+package, M-series Mac, 5 warm runs each:
+
+```
+                   load     warm
+fp16 CPU_ONLY      1.3 s    274 ms
+fp16 CPU_AND_GPU   1.4 s    253 ms
+fp16 ALL          47.3 s    230 ms    ← best warm, 47 s load tax
+int8 CPU_ONLY      1.6 s    385 ms    ← +40 % slower than fp16
+int8 CPU_AND_GPU   3.1 s    291 ms    ← still slower
+int8 ALL          46.9 s    580 ms    ← much worse
+```
+
+A/B audio (int8 CPU_ONLY vs fp16 CPU_ONLY): SNR 31.0 dB,
+max|Δ| = 0.037, rms(Δ) = 0.002 on rms-0.074 clip. Listening-grade
+but degraded.
+
+**Why int8 lost.** Apple Silicon CPUs have no native int8
+ConvTranspose1d kernel. CoreML's CPU backend dequantizes int8 weights
+to fp16 per-call for the matmul, adding overhead. On ANE int8 is
+hardware-accelerated, but HiFi-GAN's transposed-conv stack triggers
+`ANECCompile() FAILED` regardless of precision — so the only path
+that would benefit from int8 is closed.
+
+**Apparent free win that wasn't.** Micro-bench in isolation showed
+fp16 `CPU_AND_GPU` ~20 ms faster than `CPU_ONLY` (253 vs 274 ms warm).
+Tried it; in the full pipeline GPU contention with `har_source`
+(also `CPU_AND_GPU`) produced occasional outliers spiking to >1 s.
+Reverted to `CPU_ONLY` for `decoder_upsample` — predictability beats
+20 ms of average-case savings.
+
+**Remaining options for further decoder speedup**, ranked:
+
+1. **4-bit palettization** (`coremltools.optimize.coreml.palettize_weights`,
+   16 levels k-means). Can be faster than linear int8 on CPU because
+   the lookup table fits in registers; sometimes works on ANE where
+   linear int8 doesn't. Untested for this graph.
+2. **Decoder `ALL` for server use.** 47 s load → 230 ms warm
+   (-44 ms vs current). Break-even ~1100 utterances per process.
+   Gate behind a `--server` flag.
+3. **Replace HiFi-GAN with iSTFT vocoder (Vocos / RingFormer).**
+   5-10× faster, ANE-friendly. Needs full vocoder retrain.
+4. **Streaming chunked decode.** Doesn't reduce total work, but cuts
+   TTFA dramatically.
+
+**Status.** `decoder_upsample_int8.mlpackage` kept on disk for future
+ANE-quantization experiments (and as a smaller fallback). Runtime
+default stays fp16 + `CPU_AND_GPU`; opt-in via `--int8 decoder_upsample`.
+
+---
+
 ## Anticipated blockers (original list, retained for reference)
 
 | Blocker | Stage | Mitigation |
@@ -349,6 +502,85 @@ globally — adding new stages should not require revisiting them.
   - f0n_predictor, decoder: `T_align` (post-alignment frame length)
   - diffusion_unet: `T_text` on `embedding` only — `x_noisy` is fixed
     `[1,1,256]`, `sigma` is `[1]`, `features` is `[1,256]`.
+
+## Trial: int8 palettization on `decoder_upsample` — speed parity, lossy quality
+
+**Hypothesis.** Linear int8 lost on CPU (385 vs 274 ms warm) because the
+backend has no native int8 ConvTranspose1d kernel and dequantizes per
+call. Palettization (k-means LUT) replaces the per-weight scale-multiply
+with a fp16 LUT fetch — sometimes faster on Accelerate paths, and
+historically better-supported on ANE than per-channel linear int8. If
+true, we'd get the disk savings *without* the CPU regression — and maybe
+finally land HiFi-GAN's ConvTranspose1d on ANE.
+
+**Implementation.** Added `palettize_stage()` in `convert.py` using
+`coremltools.optimize.coreml.palettize_weights` with
+`OpPalettizerConfig(mode="kmeans", nbits=8, weight_threshold=2048)`.
+Tried both `granularity="per_tensor"` (one 256-LUT per weight tensor)
+and `granularity="per_grouped_channel"` (one LUT per output channel).
+Wired `--precision int8pal` and `--palette-granularity` through the CLI
+and `--int8pal STAGE` override into `inference.py`.
+
+**Results — `decoder_upsample` only, full pipeline.**
+
+| variant                         | size   | CPU_ONLY warm     | CPU_AND_GPU warm    | ALL warm              |
+|---------------------------------|--------|-------------------|---------------------|-----------------------|
+| fp16 (baseline)                 | 41.9 MB| **274 ms**        | 253 ms (unstable)   | 230 ms (47 s load)    |
+| int8 linear per-channel         | 21.4 MB| 385 ms ❌         | 380 ms              | 380 ms                |
+| int8pal **per_tensor**          | 21.4 MB| **272–285 ms** ✓  | 241–320 ms          | 232–339 ms (36 s load)|
+| int8pal **per_grouped_channel** | 21.9 MB| **275–292 ms** ✓  | 519–623 ms ❌       | 727–737 ms ❌ (236 s) |
+
+ANE remains a no-go: `MILCompilerForANE error: ANECCompile() FAILED`
+on every variant. With CPU_AND_NE, the int8pal fallback path is even
+worse than fp16's (3.3 s warm).
+
+**Audio A/B vs fp16 on a 3.67 s clip.**
+
+| variant              | max\|Δ\| | rms(Δ) | rms(ref) | SNR     |
+|----------------------|----------|--------|----------|---------|
+| int8 linear per-ch   | 0.037    | 0.002  | 0.074    | 31.4 dB |
+| int8pal per-tensor   | 0.175    | 0.0076 | 0.071    | 19.4 dB |
+| int8pal per-grouped  | 0.181    | 0.0073 | 0.071    | 19.7 dB |
+
+Per-grouped-channel didn't beat per-tensor on quality despite per-channel
+LUTs (52% size vs 51%). 256 centroids per channel still can't capture
+HiFi-GAN's heavy-tailed ConvTranspose1d weight distribution. SNR 19 dB
+is on the edge of audible degradation — needs listening test before
+shipping. Linear int8 is meaningfully better here (31 dB), but pays for
+it with 40% slower CPU.
+
+**Why per_grouped_channel didn't help.** k-means quantization on fp32
+weights, with centroids stored as fp16, is bottlenecked by the centroid
+representation, not the partitioning. The dynamic range of HiFi-GAN
+weights spans ~4 decades; 8 bits over a single channel is the same
+log2-density as 8 bits over the tensor. To win quality back you'd need
+either (a) higher bit depth (12-bit or 16-bit pal — defeats the
+size win), (b) multiple LUTs per channel (`per_block`, group_size < N),
+or (c) post-quant fine-tuning (calibration set + activation-aware
+weight quantization, AWQ-style).
+
+**Decision.** Stay on fp16 for `decoder_upsample`. int8pal `per_tensor`
+is the runner-up: identical CPU latency, 51% disk, 19 dB SNR is the
+quality cliff. Worth shipping behind a flag for size-constrained
+distribution (mobile bundles), but not as default.
+
+**Status.** Helper + CLI committed; `decoder_upsample_int8pal.mlpackage`
+left in place for opt-in via `inference.py --int8pal decoder_upsample`.
+Default `_STAGE_PRECISION["decoder_upsample"]` stays `"fp16"`.
+
+**Remaining options for further decoder speedup**, ranked:
+
+1. **4-bit palettization** with calibration / GPTQ-style quantization —
+   coremltools 9.0 supports `OpPalettizerConfig(nbits=4)` with
+   `cluster_dim>1` for vector-quantized blocks. Likely lossier than
+   8-bit pal here, but the ANE story may differ. ~10 MB.
+2. **Decoder `ALL` for server use.** 47 s load → 230 ms warm
+   (-44 ms vs current). Break-even ~1100 utterances per process. Gate
+   behind a `--server` flag.
+3. **Replace HiFi-GAN with iSTFT vocoder (Vocos / RingFormer).** 5-10×
+   faster, ANE-friendly. Needs full vocoder retrain.
+4. **Streaming chunked decode.** Doesn't reduce total work, but cuts
+   TTFA dramatically.
 
 ## How to run
 

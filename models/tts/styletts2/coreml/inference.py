@@ -85,7 +85,19 @@ _STAGE_COMPUTE: dict[str, ct.ComputeUnit] = {
     "duration_predictor": ct.ComputeUnit.CPU_ONLY,
     "f0n_predictor":      ct.ComputeUnit.CPU_AND_NE,
     "har_source":         ct.ComputeUnit.CPU_AND_GPU,
-    "decoder":            ct.ComputeUnit.CPU_ONLY,
+    # Decoder is split for ANE acceleration. The AdaIN encode + decode
+    # blocks are ANE-clean (1D conv + LayerNorm + linear style mod);
+    # the HiFi-GAN Generator's ConvTranspose1d ups stack triggers
+    # `MILCompilerForANE error: ANECCompile() FAILED`. Routing only the
+    # pre-stage to ANE captures the speedup without paying the broken
+    # compile path on the upsample tail.
+    "decoder_pre":        ct.ComputeUnit.CPU_AND_NE,
+    # CPU_ONLY. Tried CPU_AND_GPU — micro-bench showed ~20 ms warm
+    # win (253 vs 274 ms) but in the full pipeline GPU contention
+    # with `har_source` (also CPU_AND_GPU) caused outliers spiking
+    # to >1 s. CPU_ONLY is more predictable; ANE compile fails on
+    # HiFi-GAN's ConvTranspose1d ups stack.
+    "decoder_upsample":   ct.ComputeUnit.CPU_ONLY,
 }
 
 
@@ -118,7 +130,8 @@ _STAGE_PRECISION: dict[str, str] = {
     # input (precompute_har_source path), so the remaining decoder math
     # is just the conv/upsample stack — no cumsum, fp16-safe. Verified
     # by listening test with har_source fp32 + decoder fp16.
-    "decoder":            "fp16",
+    "decoder_pre":        "fp16",
+    "decoder_upsample":   "fp16",
 }
 
 
@@ -137,9 +150,16 @@ def _load_stage(
     override. `compute_units=None` consults `_STAGE_COMPUTE`.
     """
     prec = precision if precision is not None else _STAGE_PRECISION[stage]
-    if prec not in ("fp16", "fp32"):
-        raise ValueError(f"precision must be fp16 or fp32, got {prec!r}")
-    suffix = "_fp16" if prec == "fp16" else ""
+    if prec not in ("fp16", "fp32", "int8", "int8pal"):
+        raise ValueError(
+            f"precision must be fp16, fp32, int8, or int8pal, got {prec!r}"
+        )
+    suffix = {
+        "fp16": "_fp16",
+        "fp32": "",
+        "int8": "_int8",
+        "int8pal": "_int8pal",
+    }[prec]
     pkg = PACKAGES_DIR / f"{stage}{suffix}.mlpackage"
     if not pkg.exists():
         raise FileNotFoundError(f"missing {pkg} — run coreml/convert.py first")
@@ -300,6 +320,30 @@ def main() -> int:
             "Mirror of `--fp32`."
         ),
     )
+    parser.add_argument(
+        "--int8",
+        nargs="*",
+        default=None,
+        metavar="STAGE",
+        help=(
+            "Override `_STAGE_PRECISION` to int8 (post-training weight-only "
+            "quantized) for the listed stages. Requires the matching "
+            "`<stage>_int8.mlpackage` to exist (build via "
+            "`coreml/convert.py --stage <stage> --precision int8`)."
+        ),
+    )
+    parser.add_argument(
+        "--int8pal",
+        nargs="*",
+        default=None,
+        metavar="STAGE",
+        help=(
+            "Override `_STAGE_PRECISION` to int8pal (post-training k-means "
+            "8-bit weight palettization) for the listed stages. Requires "
+            "the matching `<stage>_int8pal.mlpackage` to exist (build via "
+            "`coreml/convert.py --stage <stage> --precision int8pal`)."
+        ),
+    )
     args = parser.parse_args()
 
     # ------ Load eager artefacts that stay on Python ------
@@ -330,6 +374,8 @@ def main() -> int:
     for flag_val, target_prec, flag_name in (
         (args.fp32, "fp32", "--fp32"),
         (args.fp16, "fp16", "--fp16"),
+        (args.int8, "int8", "--int8"),
+        (args.int8pal, "int8pal", "--int8pal"),
     ):
         if flag_val is None:
             continue
@@ -354,7 +400,8 @@ def main() -> int:
     duration_predictor = _load_stage("duration_predictor", precision=precision["duration_predictor"])
     f0n_predictor = _load_stage("f0n_predictor", precision=precision["f0n_predictor"])
     har_source_model = _load_stage("har_source", precision=precision["har_source"])
-    decoder = _load_stage("decoder", precision=precision["decoder"])
+    decoder_pre = _load_stage("decoder_pre", precision=precision["decoder_pre"])
+    decoder_upsample = _load_stage("decoder_upsample", precision=precision["decoder_upsample"])
     print(f"  coreml load: {time.perf_counter() - t0:.2f}s")
 
     # ------ Stage 1: phonemize + tokenize (Python) ------
@@ -497,18 +544,27 @@ def main() -> int:
     (har_np,) = _predict(har_source_model, {"f0": f0_pred_np.astype(np.float32)})
     print(f"har_source:         {time.perf_counter() - t0:.3f}s  har={har_np.shape}")
 
-    # ------ Stage 9: decoder (CoreML, RangeDim T_FRAME / F0_LEN / HAR_LEN) ------
+    # ------ Stage 9a: decoder_pre (CoreML, ANE: F0/N conv + AdaIN encode/decode) ------
     ref_in = ref.squeeze().unsqueeze(0).numpy().astype(np.float32)  # [1, 128]
     t0 = time.perf_counter()
     feed = {
         "asr": asr.numpy().astype(np.float32),
-        "f0": f0_pred_np.astype(np.float32),
-        "n": n_pred_np.astype(np.float32),
+        "f0_pred": f0_pred_np.astype(np.float32),
+        "n_pred": n_pred_np.astype(np.float32),
+        "ref": ref_in,
+    }
+    (x_pre_np,) = _predict(decoder_pre, feed)
+    print(f"decoder_pre:        {time.perf_counter() - t0:.3f}s  x_pre={x_pre_np.shape}")
+
+    # ------ Stage 9b: decoder_upsample (CoreML, CPU: HiFi-GAN Generator) ------
+    t0 = time.perf_counter()
+    feed = {
+        "x_pre": x_pre_np.astype(np.float32),
         "ref": ref_in,
         "har_source": har_np.astype(np.float32),
     }
-    (audio_np,) = _predict(decoder, feed)
-    print(f"decoder:            {time.perf_counter() - t0:.3f}s  audio={audio_np.shape}")
+    (audio_np,) = _predict(decoder_upsample, feed)
+    print(f"decoder_upsample:   {time.perf_counter() - t0:.3f}s  audio={audio_np.shape}")
 
     # Mirror run_inference's tail trim of 50 samples (no other trim
     # needed: decoder runs at native frame length now).
