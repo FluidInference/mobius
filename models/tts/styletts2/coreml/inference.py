@@ -116,21 +116,22 @@ _STAGE_COMPUTE: dict[str, ct.ComputeUnit] = {
 # for the legacy fp16 path (only valid for stages that have an
 # `<stage>_fp16.mlpackage`).
 _STAGE_PRECISION: dict[str, str] = {
-    "text_encoder":             "fp32",
-    "bert":                     "fp32",
-    "ref_encoder":              "fp32",
-    "fused_diffusion_sampler":  "fp32",
-    "diffusion_unet":           "fp32",
-    "duration_predictor":       "fp32",
+    "text_encoder":             "fp16",
+    "bert":                     "fp16",
+    "ref_encoder":              "fp16",
+    "fused_diffusion_sampler":  "fp16",
+    "diffusion_unet":           "fp32",  # legacy fallback (use --no-fused)
+    "duration_predictor":       "fp16",
+    # fused_f0n_har_source must stay fp32: the har_source half computes
+    # sin(2π × cumsum(f0)) at audio rate (88 200 samples). fp16 cumsum
+    # drifts ~10 bits over that span and produces audible phase
+    # distortion in the second half of the clip. Verified by A/B in
+    # iteration_3 sweep.
     "fused_f0n_har_source":     "fp32",
-    "f0n_predictor":            "fp32",
-    # har_source must stay fp32: it computes sin(2π × cumsum(f0)) at
-    # audio rate (74 400 samples). fp16 cumsum drifts ~10 bits over that
-    # span and produces audible phase distortion in the second half of
-    # the clip.
-    "har_source":               "fp32",
-    "decoder_pre":              "fp32",
-    "decoder_upsample":         "fp32",
+    "f0n_predictor":            "fp32",  # legacy fallback
+    "har_source":               "fp32",  # legacy fallback (same drift)
+    "decoder_pre":              "fp16",
+    "decoder_upsample":         "fp16",
 }
 
 
