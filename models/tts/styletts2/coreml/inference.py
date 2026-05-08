@@ -89,21 +89,51 @@ _STAGE_COMPUTE: dict[str, ct.ComputeUnit] = {
 }
 
 
+# ---------- Per-stage precision (Kokoro-ANE-style mixed pattern) ----------
+#
+# Most stages run fp16 for fast Accelerate / ANE predict, but `bert` is fp32
+# because:
+#   * fp16 Albert ANE compile is by far the slowest stage to load (~5 s
+#     compile per fresh MLModel instance, dominates the 14 s cold start);
+#   * fp32 Albert on CPU_AND_NE warm is only ~25 ms (vs ~6 ms fp16) — the
+#     extra ~20 ms × 1 dispatch is dwarfed by the load saving;
+#   * empirically, dropping fp16-ANE compile pressure also makes the rest
+#     of the pipeline reach steady-state warm faster (decoder 255 ms vs
+#     1.1 s without the bert flip — apparently shared compile-cache
+#     contention).
+#
+# Quality is identical: ASR roundtrip on every fp32-stage variant produces
+# the same transcript as all-fp16.
+_STAGE_PRECISION: dict[str, str] = {
+    "text_encoder":       "fp16",
+    "bert":               "fp32",
+    "ref_encoder":        "fp16",
+    "diffusion_unet":     "fp16",
+    "duration_predictor": "fp16",
+    "f0n_predictor":      "fp16",
+    "har_source":         "fp16",
+    "decoder":            "fp16",
+}
+
+
 # ---------- CoreML helpers ----------
 
 
 def _load_stage(
     stage: str,
     *,
-    fp16: bool = True,
+    precision: str | None = None,
     compute_units: ct.ComputeUnit | None = None,
 ) -> ct.models.MLModel:
-    """Load `stage.mlpackage` (or `stage_fp16.mlpackage`).
+    """Load `<stage>.mlpackage` or `<stage>_fp16.mlpackage` per the manifests.
 
-    `compute_units=None` consults `_STAGE_COMPUTE` for the per-stage
-    placement; pass an explicit value to override (e.g. for benchmarking).
+    `precision=None` consults `_STAGE_PRECISION`; pass `"fp16"`/`"fp32"` to
+    override. `compute_units=None` consults `_STAGE_COMPUTE`.
     """
-    suffix = "_fp16" if fp16 else ""
+    prec = precision if precision is not None else _STAGE_PRECISION[stage]
+    if prec not in ("fp16", "fp32"):
+        raise ValueError(f"precision must be fp16 or fp32, got {prec!r}")
+    suffix = "_fp16" if prec == "fp16" else ""
     pkg = PACKAGES_DIR / f"{stage}{suffix}.mlpackage"
     if not pkg.exists():
         raise FileNotFoundError(f"missing {pkg} — run coreml/convert.py first")
@@ -245,11 +275,16 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
         "--fp32",
-        action="store_true",
-        help="Load fp32 .mlpackages (default: fp16, which is faster on Accelerate).",
+        nargs="*",
+        default=None,
+        metavar="STAGE",
+        help=(
+            "Override `_STAGE_PRECISION` to fp32 for the listed stages. "
+            "`--fp32` with no args flips all stages to fp32; "
+            "`--fp32 decoder diffusion_unet` flips only those."
+        ),
     )
     args = parser.parse_args()
-    fp16 = not args.fp32
 
     # ------ Load eager artefacts that stay on Python ------
     import phonemizer  # noqa: E402
@@ -274,18 +309,31 @@ def main() -> int:
     )
     print(f"  eager load: {time.perf_counter() - t0:.2f}s")
 
-    # ------ Load all CoreML stages (per-stage compute placement; see
-    #         _STAGE_COMPUTE manifest at top of file) ------
-    print(f"\nLoading CoreML stages (fp16={fp16}, mixed compute units)…")
+    # Resolve per-stage precision (manifest + CLI overrides)
+    precision = dict(_STAGE_PRECISION)
+    if args.fp32 is not None:
+        targets = list(_STAGE_PRECISION.keys()) if not args.fp32 else args.fp32
+        unknown = [s for s in targets if s not in precision]
+        if unknown:
+            raise ValueError(
+                f"unknown stage(s) for --fp32: {unknown}; valid: {list(precision)}"
+            )
+        for s in targets:
+            precision[s] = "fp32"
+
+    # ------ Load all CoreML stages (per-stage compute + precision; see
+    #         _STAGE_COMPUTE / _STAGE_PRECISION manifests at top of file) ------
+    print("\nLoading CoreML stages…")
+    print("  precision: " + ", ".join(f"{k}={v}" for k, v in precision.items()))
     t0 = time.perf_counter()
-    text_encoder = _load_stage("text_encoder", fp16=fp16)
-    bert = _load_stage("bert", fp16=fp16)
-    ref_encoder = _load_stage("ref_encoder", fp16=fp16)
-    diffusion_unet = _load_stage("diffusion_unet", fp16=fp16)
-    duration_predictor = _load_stage("duration_predictor", fp16=fp16)
-    f0n_predictor = _load_stage("f0n_predictor", fp16=fp16)
-    har_source_model = _load_stage("har_source", fp16=fp16)
-    decoder = _load_stage("decoder", fp16=fp16)
+    text_encoder = _load_stage("text_encoder", precision=precision["text_encoder"])
+    bert = _load_stage("bert", precision=precision["bert"])
+    ref_encoder = _load_stage("ref_encoder", precision=precision["ref_encoder"])
+    diffusion_unet = _load_stage("diffusion_unet", precision=precision["diffusion_unet"])
+    duration_predictor = _load_stage("duration_predictor", precision=precision["duration_predictor"])
+    f0n_predictor = _load_stage("f0n_predictor", precision=precision["f0n_predictor"])
+    har_source_model = _load_stage("har_source", precision=precision["har_source"])
+    decoder = _load_stage("decoder", precision=precision["decoder"])
     print(f"  coreml load: {time.perf_counter() - t0:.2f}s")
 
     # ------ Stage 1: phonemize + tokenize (Python) ------
