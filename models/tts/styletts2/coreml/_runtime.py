@@ -177,6 +177,8 @@ def stage_example_inputs(stage: str, rt: Runtime) -> tuple:
         return (c.d_en, c.s, mask_f)
     if stage == "f0n_predictor":
         return (c.en, c.s)
+    if stage == "har_source":
+        return (c.f0_pred,)
     if stage == "decoder":
         from coreml.wrappers import precompute_har_source
         har = precompute_har_source(rt.model.decoder, c.f0_pred)
@@ -208,6 +210,12 @@ def stage_reference_outputs(stage: str, rt: Runtime) -> tuple:
         return (c.d, duration)
     if stage == "f0n_predictor":
         return (c.f0_pred, c.n_pred)
+    if stage == "har_source":
+        from coreml.wrappers import precompute_har_source
+        # Reference: the eager CPU-side precompute_har_source path.
+        # HarSourceWrapper math is bit-equivalent (see docstring).
+        har = precompute_har_source(rt.model.decoder, c.f0_pred)
+        return (har,)
     if stage == "decoder":
         # The captured `c.waveform` was post-`squeeze() + [..., :-50]`
         # trimmed (see pipeline/stages.decode_audio). The CoreML wrapper

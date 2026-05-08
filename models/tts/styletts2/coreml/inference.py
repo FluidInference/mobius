@@ -1,17 +1,16 @@
 """End-to-end CoreML inference for StyleTTS2 LibriTTS.
 
-Drives all 7 converted `.mlpackage` stages and writes a 24 kHz WAV.
-The Python side keeps:
+Drives all 8 CoreML `.mlpackage` stages (text_encoder, bert, ref_encoder,
+diffusion_unet, duration_predictor, f0n_predictor, har_source, decoder)
+and writes a 24 kHz WAV. The Python side keeps:
 
     * phonemizer + tokenizer        (CPU-only by definition)
     * Karras sigma schedule         (5 floats, trivial)
     * ADPM2 step loop               (5 steps × 2 dispatches per step;
                                      each dispatch runs CoreML UNet)
     * alignment matrix construction (data-dependent shape)
-    * `precompute_har_source(...)`  (SineGen + SourceModuleHnNSF on CPU,
-                                     see trials.md Stage 7)
 
-Everything else lives in CoreML.
+Every neural-net stage runs in CoreML.
 
 Usage:
 
@@ -22,32 +21,20 @@ Usage:
 
 Shape strategy:
 
-  * `text_encoder`, `duration_predictor`, `f0n_predictor` are converted
-    with `ct.RangeDim` on the variable axis (token T or frame F) and
-    run at native length. This avoids LSTM bidirectional contamination
-    on the token axis (their wrappers drop `pack_padded_sequence` for
-    trace).
+  * `text_encoder`, `duration_predictor`, `f0n_predictor`, `har_source`,
+    `decoder` are converted with `ct.RangeDim` on the variable axis
+    (token T, frame F, or 2*frame F0; har at 600*frame). All five run
+    at native length. The decoder's `T_FRAME` / `F0_LEN` / `HAR_LEN`
+    RangeDims are independent in CoreML's symbolic shape inference, but
+    coremltools propagates trace defaults consistently so that runtime
+    shape checks (e.g. ios18.add broadcast in noise_convs/ups sums)
+    pass when the caller feeds inputs with the matching ratio.
   * `bert` and `diffusion_unet` keep a fixed token axis of 57. HF Albert
     and the cross-attention diffusion U-Net both produce shape ops that
     coremltools' MLProgram backend rejects under RangeDim
     ("data-dependent shapes were disabled"). Tokens are padded to 57 for
     these two stages; BERT respects `attention_mask` so contamination at
     real positions is bounded.
-  * `decoder` (HiFi-GAN) runs **eager PyTorch** at native frame length.
-    Two reasons it isn't CoreML:
-      - Frame-axis zero-padding fundamentally contaminates real frames
-        through the snake-activation residual stack and AdaIN convs
-        (verified at "core employees" / "core email" output drift).
-      - With `T_FRAME` promoted to `ct.RangeDim`, the decoder MIL graph
-        has internal shape constants baked at trace time that the CPU
-        MLProgram backend rejects at runtime ("Invalid blob shape:
-        Data-dependent shapes were disabled: input_13 [1, ?, ?] vs
-        [1, 57, ?]"). The trace shape leaks through `torch.zeros_like`
-        / shape-derived constants in the source-filter / AdaIN paths.
-    Running the decoder eagerly at native frames gives bit-identical
-    HiFi-GAN output and avoids the ~14ms HiFi-GAN x300-upsample CoreML
-    speedup; that's an acceptable trade-off until the wrapper can be
-    rewritten free of shape-baked constants.
 
 Sentences must phonemize to ≤ 57 tokens until BERT / diffusion get
 RangeDim support.
@@ -239,8 +226,6 @@ def main() -> int:
     import run_inference  # type: ignore  # noqa: E402
     from text_utils import TextCleaner  # type: ignore  # noqa: E402
 
-    from coreml.wrappers import precompute_har_source  # noqa: E402
-
     ensure_nltk()
 
     cleaner = TextCleaner()
@@ -248,12 +233,12 @@ def main() -> int:
         language="en-us", preserve_punctuation=True, with_stress=True
     )
 
-    # We still load StyleTTS2 itself, but only for `precompute_har_source`
-    # (CPU-side SineGen) and `model_params.decoder.type == 'hifigan'` lookup.
-    # Everything else is dispatched to CoreML below.
-    print("Loading eager StyleTTS2 (used only for SineGen precompute)…")
+    # We still load StyleTTS2 itself for `model_params.decoder.type`
+    # lookup (controls the hifigan asr-shift). Everything else is
+    # dispatched to CoreML below.
+    print("Loading eager StyleTTS2 (used only for params lookup)…")
     t0 = time.perf_counter()
-    eager_model, eager_params = run_inference.load_styletts2(
+    _, eager_params = run_inference.load_styletts2(
         Path(HERE / "checkpoints" / "LibriTTS"), "cpu"
     )
     print(f"  eager load: {time.perf_counter() - t0:.2f}s")
@@ -267,22 +252,9 @@ def main() -> int:
     diffusion_unet = _load_stage("diffusion_unet", cu)
     duration_predictor = _load_stage("duration_predictor", cu)
     f0n_predictor = _load_stage("f0n_predictor", cu)
+    har_source_model = _load_stage("har_source", cu)
+    decoder = _load_stage("decoder", cu)
     print(f"  coreml load: {time.perf_counter() - t0:.2f}s")
-
-    # Decoder is eager (see module docstring). Apply the same
-    # weight_norm / dropout / generator patches DecoderWrapper applies,
-    # so the eager decoder here matches the reference output exactly.
-    from coreml.wrappers import (  # noqa: E402
-        _patch_generator_use_har,
-        _remove_weight_norm_recursive,
-        _strip_dropout,
-    )
-
-    eager_decoder = eager_model.decoder
-    _strip_dropout(eager_decoder)
-    _remove_weight_norm_recursive(eager_decoder)
-    _patch_generator_use_har(eager_decoder.generator)
-    eager_decoder.eval()
 
     # ------ Stage 1: phonemize + tokenize (Python) ------
     from nltk.tokenize import word_tokenize
@@ -419,36 +391,23 @@ def main() -> int:
         f"f0={f0_pred_np.shape}  n={n_pred_np.shape}"
     )
 
-    # ------ Stage 8: precompute har_source (CPU) + decoder (eager) ------
-    f0_pred = torch.from_numpy(f0_pred_np).float()
-    n_pred = torch.from_numpy(n_pred_np).float()
-
+    # ------ Stage 8: har_source (CoreML, RangeDim F0_LEN) ------
     t0 = time.perf_counter()
-    har = precompute_har_source(eager_decoder, f0_pred)
-    print(f"har_source (CPU):   {time.perf_counter() - t0:.3f}s  har={tuple(har.shape)}")
+    (har_np,) = _predict(har_source_model, {"f0": f0_pred_np.astype(np.float32)})
+    print(f"har_source:         {time.perf_counter() - t0:.3f}s  har={har_np.shape}")
 
-    ref_in = ref.squeeze().unsqueeze(0)  # [1, 128]
+    # ------ Stage 9: decoder (CoreML, RangeDim T_FRAME / F0_LEN / HAR_LEN) ------
+    ref_in = ref.squeeze().unsqueeze(0).numpy().astype(np.float32)  # [1, 128]
     t0 = time.perf_counter()
-    # Inline DecoderWrapper.forward at native frame length. The eager
-    # decoder produces bit-identical HiFi-GAN output without the CoreML
-    # frame-axis padding contamination or RangeDim shape errors.
-    with torch.no_grad():
-        F0 = eager_decoder.F0_conv(f0_pred.unsqueeze(1))
-        N = eager_decoder.N_conv(n_pred.unsqueeze(1))
-        x_dec = torch.cat([asr, F0, N], dim=1)
-        x_dec = eager_decoder.encode(x_dec, ref_in)
-        asr_res = eager_decoder.asr_res(asr)
-        res = True
-        for block in eager_decoder.decode:
-            if res:
-                x_dec = torch.cat([x_dec, asr_res, F0, N], dim=1)
-            x_dec = block(x_dec, ref_in)
-            if block.upsample_type != "none":
-                res = False
-        # Patched Generator.forward signature: (x, s, har_source, f0).
-        audio_t = eager_decoder.generator(x_dec, ref_in, har, f0_pred)
-    audio_np = audio_t.cpu().numpy()
-    print(f"decoder (eager):    {time.perf_counter() - t0:.3f}s  audio={audio_np.shape}")
+    feed = {
+        "asr": asr.numpy().astype(np.float32),
+        "f0": f0_pred_np.astype(np.float32),
+        "n": n_pred_np.astype(np.float32),
+        "ref": ref_in,
+        "har_source": har_np.astype(np.float32),
+    }
+    (audio_np,) = _predict(decoder, feed)
+    print(f"decoder:            {time.perf_counter() - t0:.3f}s  audio={audio_np.shape}")
 
     # Mirror run_inference's tail trim of 50 samples (no other trim
     # needed: decoder runs at native frame length now).

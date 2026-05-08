@@ -623,6 +623,91 @@ class DecoderWrapper(nn.Module):
 
 
 # ---------------------------------------------------------------------------
+# Stage 8 — har_source (SineGen + SourceModuleHnNSF, deterministic)
+# ---------------------------------------------------------------------------
+
+
+class HarSourceWrapper(nn.Module):
+    """CoreML-friendly SineGen + SourceModuleHnNSF.
+
+    Replaces `precompute_har_source` (which ran on CPU) with a traceable,
+    convertible nn.Module. The original SineGen does:
+
+        f0_up   = Upsample(scale=300, mode="nearest")(f0[:, None])
+                  -> [B, 1, T_up]
+        rad_hi  = (f0_up * harmonics / sr) % 1
+        rad_lo  = interp(rad_hi, scale=1/300, mode="linear")
+                  -> [B, T_F0, 9]
+        phase_lo = cumsum(rad_lo, dim=1) * 2pi
+        phase   = interp(phase_lo * 300, scale=300, mode="linear")
+                  -> [B, T_up, 9]
+        sines   = sin(phase) * sine_amp
+        uv      = (fn > voiced_threshold).float()
+        sine_waves = sines * uv               (noise dropped — RNG -> 0)
+        sine_merge = tanh(linear(sine_waves)) -> [B, T_up, 1]
+        har     = sine_merge.transpose(1, 2)  -> [B, 1, T_up]
+
+    Two simplifications without changing math:
+
+      * The `f0_upsamp` (nearest, 300x) followed by `interp(1/300, linear)`
+        is a no-op for our values — every block of 300 has the same value
+        and linear-mean of identical values is the value. Skip the round
+        trip and operate directly at frame rate.
+      * The `% 1` on rad is redundant: `f0 * harmonic / sr` is bounded by
+        1000Hz * 9 / 24000 = 0.375 < 1, so the modulo is identity.
+
+    Inputs:
+        f0    [1, T_F0]    float32, f0 contour at 2 * T_frames rate
+    Output:
+        har   [1, 1, T_F0 * 300]   float32, harmonic source at 24 kHz
+    """
+
+    def __init__(self, decoder: nn.Module) -> None:
+        super().__init__()
+        gen = decoder.generator
+        sg = gen.m_source.l_sin_gen
+        # Re-use the *same* trained l_linear / l_tanh weights as the
+        # eager precompute path, so per-stage parity holds bit-exact.
+        self.l_linear = gen.m_source.l_linear
+        self.l_tanh = gen.m_source.l_tanh
+        self.upsample_scale = int(sg.upsample_scale)            # 300
+        self.harmonic_num = int(sg.harmonic_num)                # 8
+        self.sine_amp = float(sg.sine_amp)                      # 0.1
+        self.sampling_rate = float(sg.sampling_rate)            # 24000
+        self.voiced_threshold = float(sg.voiced_threshold)      # 10
+        self.register_buffer(
+            "harmonics",
+            torch.arange(1, self.harmonic_num + 2, dtype=torch.float32).view(1, 1, -1),
+            persistent=False,
+        )
+        self.eval()
+
+    def forward(self, f0: torch.Tensor) -> torch.Tensor:
+        # f0: [B, T_F0]
+        f0_lo = f0.unsqueeze(-1)                                # [B, T_F0, 1]
+        fn_lo = f0_lo * self.harmonics                          # [B, T_F0, 9]
+        rad_lo = fn_lo / self.sampling_rate                     # [B, T_F0, 9]
+        phase_lo = torch.cumsum(rad_lo, dim=1) * (2.0 * np.pi)  # [B, T_F0, 9]
+        # Upsample phase by 300x (linear) to sample rate.
+        phase = torch.nn.functional.interpolate(
+            (phase_lo * self.upsample_scale).transpose(1, 2),
+            scale_factor=float(self.upsample_scale),
+            mode="linear",
+        ).transpose(1, 2)                                       # [B, T_up, 9]
+        sines = torch.sin(phase) * self.sine_amp                # [B, T_up, 9]
+        # uv at frame rate -> nearest upsample to sample rate.
+        uv_lo = (fn_lo > self.voiced_threshold).type(torch.float32)  # [B, T_F0, 9]
+        uv = torch.nn.functional.interpolate(
+            uv_lo.transpose(1, 2),
+            scale_factor=float(self.upsample_scale),
+            mode="nearest",
+        ).transpose(1, 2)                                       # [B, T_up, 9]
+        sine_waves = sines * uv                                 # noise -> 0
+        sine_merge = self.l_tanh(self.l_linear(sine_waves))     # [B, T_up, 1]
+        return sine_merge.transpose(1, 2)                       # [B, 1, T_up]
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 
@@ -634,6 +719,7 @@ STAGE_NAMES: Tuple[str, ...] = (
     "diffusion_unet",
     "duration_predictor",
     "f0n_predictor",
+    "har_source",
     "decoder",
 )
 
@@ -652,6 +738,8 @@ def build_wrapper(stage: str, model) -> nn.Module:
         return DurationPredictorWrapper(model.predictor)
     if stage == "f0n_predictor":
         return F0NPredictorWrapper(model.predictor)
+    if stage == "har_source":
+        return HarSourceWrapper(model.decoder)
     if stage == "decoder":
         return DecoderWrapper(model.decoder)
     raise ValueError(f"unknown stage: {stage!r} (valid: {STAGE_NAMES})")

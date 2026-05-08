@@ -169,8 +169,8 @@ def _ct_inputs_for_stage(stage: str, example_inputs: tuple) -> list:
 
     T_TOKEN = ct.RangeDim(lower_bound=1, upper_bound=512, default=57)
     T_FRAME = ct.RangeDim(lower_bound=1, upper_bound=2048, default=147)
-    F0_LEN = ct.RangeDim(lower_bound=2, upper_bound=4096, default=294)        # = 2 * T_FRAME
-    HAR_LEN = ct.RangeDim(lower_bound=300, upper_bound=614400, default=44100)  # = 300 * T_FRAME
+    F0_LEN = ct.RangeDim(lower_bound=2, upper_bound=4096, default=294)            # = 2 * T_FRAME
+    HAR_LEN = ct.RangeDim(lower_bound=600, upper_bound=1228800, default=88200)    # = 300 * F0_LEN = 600 * T_FRAME
 
     descs = []
     if stage == "text_encoder":
@@ -204,6 +204,9 @@ def _ct_inputs_for_stage(stage: str, example_inputs: tuple) -> list:
             ct.TensorType(name="en", shape=ct.Shape(shape=(1, en.shape[1], T_FRAME)), dtype=np.float32)
         )
         descs.append(ct.TensorType(name="s", shape=tuple(s.shape), dtype=np.float32))
+    elif stage == "har_source":
+        (f0,) = example_inputs
+        descs.append(ct.TensorType(name="f0", shape=ct.Shape(shape=(1, F0_LEN)), dtype=np.float32))
     elif stage == "decoder":
         asr, f0, n, ref, har = example_inputs
         descs.append(
