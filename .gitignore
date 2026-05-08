@@ -28,3 +28,8 @@ models/tts/pocket_tts/coreml/build/
 
 # PocketTTS upstream source pulled by uv (not part of this repo)
 models/tts/pocket_tts/pocket_tts/
+
+# Swift package build artifacts + generated side-load fixtures
+.build/
+Package.resolved
+models/tts/styletts2/iteration_3/swift/fixtures/
