@@ -91,22 +91,20 @@ _STAGE_COMPUTE: dict[str, ct.ComputeUnit] = {
 
 # ---------- Per-stage precision (Kokoro-ANE-style mixed pattern) ----------
 #
-# Most stages run fp16 for fast Accelerate / ANE predict, but `bert` is fp32
-# because:
-#   * fp16 Albert ANE compile is by far the slowest stage to load (~5 s
-#     compile per fresh MLModel instance, dominates the 14 s cold start);
-#   * fp32 Albert on CPU_AND_NE warm is only ~25 ms (vs ~6 ms fp16) — the
-#     extra ~20 ms × 1 dispatch is dwarfed by the load saving;
-#   * empirically, dropping fp16-ANE compile pressure also makes the rest
-#     of the pipeline reach steady-state warm faster (decoder 255 ms vs
-#     1.1 s without the bert flip — apparently shared compile-cache
-#     contention).
+# Default: fp16 everywhere except the two audio-domain stages that compute
+# sin(2π × cumsum(f0)). At fp16, cumsum over 74 400 samples accumulates
+# ~10 bits of error and produces audible phase drift in the tail of the
+# clip (clean first ~2 s, distorted afterwards). har_source and decoder
+# therefore stay fp32.
 #
-# Quality is identical: ASR roundtrip on every fp32-stage variant produces
-# the same transcript as all-fp16.
+# `bert` was tried in fp32 to skip the ~3 s fp16-Albert ANE compile on
+# fresh process startup. Quality A/B is identical, but for long-running
+# servers fp16 wins on warm (~20 ms vs ~25 ms × however many utterances).
+# Default favours warm-path speed; flip to fp32 with `--fp32 bert` if cold
+# start matters (CLI / one-shot invocations).
 _STAGE_PRECISION: dict[str, str] = {
     "text_encoder":       "fp16",
-    "bert":               "fp32",
+    "bert":               "fp16",
     "ref_encoder":        "fp16",
     "diffusion_unet":     "fp16",
     "duration_predictor": "fp16",
@@ -289,6 +287,16 @@ def main() -> int:
             "`--fp32 decoder diffusion_unet` flips only those."
         ),
     )
+    parser.add_argument(
+        "--fp16",
+        nargs="*",
+        default=None,
+        metavar="STAGE",
+        help=(
+            "Override `_STAGE_PRECISION` to fp16 for the listed stages. "
+            "Mirror of `--fp32`."
+        ),
+    )
     args = parser.parse_args()
 
     # ------ Load eager artefacts that stay on Python ------
@@ -316,15 +324,20 @@ def main() -> int:
 
     # Resolve per-stage precision (manifest + CLI overrides)
     precision = dict(_STAGE_PRECISION)
-    if args.fp32 is not None:
-        targets = list(_STAGE_PRECISION.keys()) if not args.fp32 else args.fp32
+    for flag_val, target_prec, flag_name in (
+        (args.fp32, "fp32", "--fp32"),
+        (args.fp16, "fp16", "--fp16"),
+    ):
+        if flag_val is None:
+            continue
+        targets = list(_STAGE_PRECISION.keys()) if not flag_val else flag_val
         unknown = [s for s in targets if s not in precision]
         if unknown:
             raise ValueError(
-                f"unknown stage(s) for --fp32: {unknown}; valid: {list(precision)}"
+                f"unknown stage(s) for {flag_name}: {unknown}; valid: {list(precision)}"
             )
         for s in targets:
-            precision[s] = "fp32"
+            precision[s] = target_prec
 
     # ------ Load all CoreML stages (per-stage compute + precision; see
     #         _STAGE_COMPUTE / _STAGE_PRECISION manifests at top of file) ------
