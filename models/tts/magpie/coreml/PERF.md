@@ -1,230 +1,203 @@
-# Magpie TTS — TTFA / RTFx Performance Notes
+# Magpie TTS — Performance & Optimization Log
 
-Running record of latency tuning for the FluidAudio Swift port. All numbers are
-on **Apple M2 / macOS 26.5 / coremltools 8.x** unless noted. "TTFA" = time to
-first audio chunk under the streaming `synthesizeStream(...)` API.
+Single source of truth for Magpie TTS latency tuning on Apple Silicon.
+All numbers on **Apple M2 / macOS 26.5 / coremltools 9.0** unless noted.
+"TTFA" = wall-clock from `synthesizeStream(...)` call to first
+`MagpieAudioChunk` yield, warm path, release build, seed 42.
 
-## Latest — Lever #3: Local Transformer fusion ✓ SHIPPED
+---
 
-Standalone fused mlpackage (`local_transformer.mlpackage`) — separate from
-`decoder_step` to avoid a NeMo retrace. Bakes 8 unrolled LT iterations +
-per-codebook softmax / cumsum / sample into a single CoreML graph.
+## TL;DR — current state
 
-| Build | Inputs | Output | ANE residency | Per-step |
-|---|---|---|---|---|
-| `local_transformer.mlpackage` (fp32) | `decoder_hidden 1×768`, `uniforms 8`, `forbid_eos 1`, `temperature 1` | `codes 8 int32` | 73.9 % | 1.78 ms |
-
-End-to-end TTFA, M2, release build, seed 42, 3 trials:
-
-| Input | Swift LT (baseline) | Fused LT (ANE) | Δ |
+| Lever | Status | Δ TTFA | Notes |
 |---|---|---|---|
-| "Hello from Magpie." (3 words) | 1.283 s | **1.122 s** | **-161 ms (-12.5 %)** |
-| 14-word EN sentence | 4.243 / 4.203 s | 4.788 / 4.146 s | neutral, high variance |
+| #1 Streaming first-chunk cap 50→24 | ✓ shipped | **−978 ms** (−38.7%) | pure Swift, no model touched |
+| #3 Local Transformer fusion | ✓ shipped | **−161 ms** (−12.5%) on short input | one ANE call replaces 8 Swift CPU passes |
+| #2 int8 weight quant on `decoder_step` | ✗ dead | — | EOS classifier breaks on long inputs |
+| #5 `speakerContextLength` 110→64 | ✗ dead | +1.7 s regression | naive truncation breaks voice cloning |
+| #7 First-chunk cap 24→16 | ✗ dead | 0 ms | no win, UX regression |
+| #4 AR loop unroll (N=2 / N=8) | ⏸ deferred | est. −75 to −150 ms | trace work not yet done |
+| #10 NanoCodec investigation | ⏸ pending | unknown ceiling | **182 ms (22% TTFA)** — biggest unprofiled term |
+| #8 QAT/calibration int8 via NeMo | ⏸ deferred | est. −400 ms | multi-day project, highest ceiling |
 
-Short-input win is inside the predicted **-120 to -240 ms** band. Long-input
-delta is dominated by AR loop length (143 codes vs 38) and per-step variance
-on shared M2 — the LT fusion saving still applies but is a smaller fraction
-of total TTFA.
+**Net stack**: ~830 ms warm TTFA on M2 (Levers #1 + #3 active).
 
-## Baseline (pre-tuning)
+---
 
-| Mode | TTFA | Total | RTFx | Notes |
+## Architecture context (verified from NeMo source)
+
+NeMo's open-source `MagpieTTSModel` (in `nemo/collections/tts/models/magpietts.py`)
+is **batch-only**. Public inference surface is `infer_batch(...)` and
+`generate_long_form_speech(...)` — both synchronous, both return a complete
+audio tensor at the end. Zero `yield`/`async`/streaming primitives across
+all 4 NeMo Magpie modules (`magpietts.py`, `magpietts_inference/inference.py`,
+`magpietts_inference/utils.py`, `magpietts_modules.py`).
+
+Streaming exists only in:
+- **NVIDIA Riva / MagpieTTS NIM** (closed enterprise)
+- **Our Swift `synthesizeStream(...)`** in `MagpieSynthesizer.swift:252` —
+  custom producer/consumer wrapper. Sentence-chunks the text (same as
+  NeMo's long-form), but **yields each chunk's audio as it finishes**
+  instead of concatenating at the end.
+
+Lever #1's first-chunk cap exists to fake streaming for single-sentence
+input where there's only one chunk to yield.
+
+---
+
+## TTFA breakdown (warm, M2, 24-frame first chunk, seed 42)
+
+Empirical per-model latency from `coreml-cli` with `cpu_and_neural_engine`
+policy (matches Swift production config in `MagpieModelStore.swift:75-99`):
+
+| Model | Predict | ANE % | Calls per first-chunk | Total |
 |---|---|---|---|---|
-| Streaming, 8-word EN sentence | 2.525 s | — | — | first-chunk cap = 50 codec frames |
-| Batch synth, 8-word EN | — | ≈ 96 s | 0.04× | autoregressive, 357M params |
-| Aggregate MiniMax-EN corpus | — | — | 0.41× | reported in `MagpieTtsManager.swift` doc |
+| `text_encoder.mlmodelc` | 12.4 ms | 98.1% | 1 | 12 ms |
+| `decoder_prefill.mlmodelc` | 17.1 ms | 93.9% | 1 | 17 ms |
+| `decoder_step.mlmodelc` | 15.7 ms | 97.3% | 24 | 377 ms |
+| `local_transformer.mlmodelc` | 1.6 ms | 73.9% | 24 | 38 ms |
+| `nanocodec_decoder_v3.mlmodelc` | 182.3 ms | 0% (CPU) | 1 | 182 ms |
+| **Compute total** | | | | **626 ms** |
+| Measured warm TTFA | | | | **~830 ms** |
+| **Implied Swift overhead** | | | | **~204 ms (24%)** |
 
-Magpie's value prop is **multilingual coverage and 5 built-in speakers**, not
-throughput. For latency-sensitive paths use **Kokoro (~20× RTFx, parallel)** or
-**PocketTTS (~1.5–2× RTFx, streaming Mimi)** — both already in FluidAudio.
+Where the Swift overhead goes: 24 AR steps × 2 dispatch round-trips
+(decoder_step + local_transformer) = 48 boundary crossings, plus
+audio-embed lookup (vDSP), MLMultiArray allocations, KV-state I/O,
+producer/consumer task hopping.
 
-## CoreML model inventory
+### Compute-unit selection (already optimal in Swift)
+
+| Model | `all` Predict | `cpu_and_neural_engine` Predict | Penalty if `.all` |
+|---|---|---|---|
+| text_encoder | 17.9 ms | 12.4 ms | +5.5 ms |
+| decoder_prefill | **70.7 ms** | 17.1 ms | **+53.6 ms** |
+| decoder_step | 16.8 ms | 15.7 ms | +1.1 ms |
+| local_transformer | 3.6 ms | 1.6 ms | +2.0 ms |
+| nanocodec_v3 | 337.8 ms | 182.3 ms (CPU forced) | +155.5 ms |
+
+Swift uses `.cpuAndNeuralEngine` per model in `MagpieModelStore.swift` —
+verified correct. CoreML's `.all` chooser would mis-route prefill to GPU
+(+54 ms) and NanoCodec to GPU (+155 ms). **No change needed** — flagging
+in case a downstream consumer overrides the default.
+
+---
+
+## Model inventory
 
 4 logical models + 4 NanoCodec build variants (only one active at runtime):
 
 | File | Role | Compute | Status |
 |---|---|---|---|
 | `text_encoder.mlmodelc` | phoneme/IPA → encoder hidden states | ANE | required |
-| `decoder_prefill.mlmodelc` | speaker-context prefill batched 110-step | ANE | optional fast path |
+| `decoder_prefill.mlmodelc` | speaker-context prefill, batched 110-step | ANE | optional fast path |
 | `decoder_step.mlmodelc` | AR transformer body, called per code-frame | ANE 97.3% | required |
+| `local_transformer.mlmodelc` | fused 8-codebook sampler (Lever #3) | ANE 73.9% | optional, shipped |
 | `nanocodec_decoder.mlmodelc` (v1) | T=256 monolithic, fp16 | CPU | legacy fallback |
 | `nanocodec_decoder_v2.mlmodelc` | T=24 chunked, fp16 | ~43% ANE | noisy on voiced speech |
 | `nanocodec_decoder_v3.mlmodelc` | T=24 chunked, fp32 | CPU | **default**, audibly clean |
 | `nanocodec_decoder_v4.mlmodelc` | T=24 chunked, fp32 + 8-bit palette | CPU | acoustically transparent vs v3, 4× smaller (31 MB) |
 
-Plus a Swift-side **Local Transformer** (1-layer, 8-codebook sampler) loaded
-from `constants/local_transformer/`. Not a separate mlmodelc — runs on CPU
-between every `decoder_step` call.
-
-## Per-step `decoder_step` latency (coreml-cli, 1 isolated step)
-
-| Variant | `all` predict | `cpu_and_neural_engine` | ANE residency |
-|---|---|---|---|
-| fp16 (baseline) | 16.05 ms | 15.49 ms | 97.3 % |
-| int8 per-tensor | 12.56 ms | 14.25 ms | 97.3 % |
-| int8 per-channel | 14.62 ms | 15.09 ms | 97.3 % |
-| int8 per-channel + skip-head | 15.06 ms | **13.44 ms** | 97.3 % |
-
-`constexpr_affine_dequantize` shows up in `--fallback` op counts but is a
-constant-prep op, not in the forward path. All quantized variants stay 97.3 %
-ANE-resident on actual measured runs.
-
-## TTFA breakdown (warm, fp16, after chunker tweak)
-
-| Stage | Cost | Notes |
-|---|---|---|
-| Text encoder | ~50–100 ms | 1 call per utterance |
-| Decoder prefill (110 steps batched) | ~200–300 ms | 1 call per utterance via `decoder_prefill.mlmodelc` |
-| AR loop on first chunk (24 steps) | **~360 ms** | dominant — 24 × 15 ms |
-| Local Transformer (8 codebooks × 24) | ~100–200 ms | Swift, CPU |
-| NanoCodec decode of 24 frames | ~50–100 ms | CPU (v3) |
-| **Total TTFA** | **~870 ms warm** | M2 |
-
-The AR loop is the structural bottleneck. 357M params × 24 sequential
-`decoder_step` calls — there is no way around the 24 calls without changing
-the model.
-
 ---
 
-## Trial 1 — Streaming first-chunk cap 50 → 24 frames ✓ SHIPPED
+## Trials & verdicts (chronological)
+
+### Trial 1 — Streaming first-chunk cap 50 → 24 frames ✓ SHIPPED
 
 `MagpieChunker.streamingFirstChunkCap` reduced from **50 → 24** codec frames
 (matches NanoCodec's v2/v3 sliding-window receptive field).
 
 | | Before | After | Δ |
 |---|---|---|---|
-| TTFA | 2 525 ms | 1 547 ms | **-38.7 %** |
+| TTFA | 2 525 ms | 1 547 ms | **−38.7%** |
 | Audio quality | clean | clean | unchanged |
-| Reconvert? | no | no | — |
 
-Result: **shipped** as commit `b93f3b099` on branch `feat/magpie-ttfa-tweak`
-(FluidAudio repo, not yet pushed). Pure Swift change, no model touched.
+Commit `b93f3b099` (FluidAudio). Pure Swift change, no model touched.
+`24` is hard floor: NanoCodec v2/v3 use 24-frame chunk shape.
 
-`24` is hard floor: NanoCodec v2/v3 use a 24-frame chunk shape, going below
-forces zero-padding on the first chunk and adds boundary ringing.
-
----
-
-## Trial 2 — Post-training int8 weight quant on `decoder_step` ✗ DEAD-END
+### Trial 2 — Post-training int8 weight quant on `decoder_step` ✗ DEAD-END
 
 Three configs tried, all break end-to-end EOS termination on long-context
-streaming inputs. Per-step latency wins are real in isolation but unusable
-when the model can't terminate.
+streaming inputs.
 
-Script: `quantize_decoder_step_int8.py` (in this dir).
+Script: `quantize_decoder_step_int8.py`
 
-### 2a. Per-tensor `linear_symmetric` int8
-
-End-to-end synth, "Hello from Magpie." (3 words, 1–2 chunks):
-
-| | fp16 | int8 per-tensor |
+| Config | Short TTFA (3 words) | Long-input EOS |
 |---|---|---|
-| TTFA | 1.48 s | 6.84 s |
-| Total synth | 2.00 s | 15.13 s |
-| Audio out | 2.59 s | **24.04 s (garbled)** |
-| Chunk 1 EOS | @ 29 codes ✓ | **never fires**, hits maxSteps=500 |
+| fp16 (baseline) | 1.48 s | ✓ @ 197 codes |
+| int8 per-tensor | 6.84 s (regression) | **never fires**, runaway @ 500 |
+| int8 per-channel | 0.87 s (−41%) ✓ | ✓ chunks 0-3, **runaway chunk 4** |
+| per-channel + skip LM head | 0.92 s ✓ | **still runaway chunk 4** |
 
-**Diagnosis**: per-tensor int8 collapses dynamic range across the 16192-way
-output softmax. The EOS code's logit no longer wins after the prefill-anchored
-chunk 0 → unconditional runaway from chunk 1.
+**Diagnosis**: drift accumulates in the int8 transformer **body** (12 layers
+× ~300 generated codes of int8-perturbed activations), not localized to LM
+head. Real fix requires QAT or activation-calibrated int8 export (Lever #8).
 
-### 2b. Per-channel `linear_symmetric` int8
+### Trial 3 — Local Transformer fusion ✓ SHIPPED
 
-Better but still not viable on long inputs:
-
-| | fp16 | int8 per-channel |
-|---|---|---|
-| Short (3 words) TTFA | 1.48 s | **0.87 s** (-41 %) ✓ |
-| Short total | 2.00 s | 1.46 s ✓ |
-| Short chunk 1 EOS | ✓ @ 29 | ✓ @ 36 |
-| Long (5 chunks) TTFA | 2.79 s | 2.12 s ✓ |
-| Long chunk 4 EOS | ✓ @ 197 codes | **runaway @ 500, ~12 s tail garbage** |
-
-Per-channel scales preserve per-output-code dynamic range and recover EOS on
-chunks 0–3, but the longest terminal chunk still drifts. Short-input win is
-genuine; long-input regression is unshippable as default.
-
-### 2c. Per-channel + skip LM head (`linear_60_cast_fp16` kept fp16)
-
-Textbook fix for INT8 transformer LMs. Did NOT help long-input runaway:
-
-| | fp16 | per-ch + skip-head |
-|---|---|---|
-| Short TTFA | 1.48 s | 0.92 s ✓ |
-| Long TTFA | 2.79 s | 2.73 s |
-| Long chunk 4 EOS | ✓ @ 197 | **still runaway @ 500** |
-
-**Diagnosis**: the drift is in the int8 transformer **body**, not localized to
-the head. By chunk 4 the KV cache holds 110 prefill steps + ~300 generated
-codes of int8-perturbed representations; an fp16 LM head can't recover the
-correct EOS distribution off that drifted state.
-
-### Verdict on post-training int8
-
-Not shippable as default. Possibly opt-in for short / always-streaming
-workloads where every chunk is bounded (≤ 2 chunks). Real fix requires
-**QAT or activation-calibrated int8 export via NeMo** — multi-day project
-with uncertain outcome. The mlpackages and mlmodelcs are kept under
-`build/` and `compiled/build/` for the calibration follow-up.
-
----
-
-## Untried levers, ranked by expected ROI
-
-### 3. Local Transformer fusion into `decoder_step` (high-EV) ✓ SHIPPED (standalone)
-
-Implemented as **standalone** `local_transformer.mlpackage` rather than
-fused into `decoder_step` — keeps the original `decoder_step` graph intact
-(no NeMo retrace) and lets the AR loop branch on availability. Wiring in
-`MagpieFusedLocalSampler.swift` + `MagpieSynthesizer.swift`. CFG path falls
-back to Swift `MagpieLocalSampler` (unconditional branch not in fused graph).
+Standalone fused mlpackage (`local_transformer.mlpackage`) — separate from
+`decoder_step` to avoid NeMo retrace. Bakes 8 unrolled LT iterations +
+per-codebook softmax / cumsum / sample into a single CoreML graph.
 
 ```
-before: decoder_step → 1×768 hidden → Swift LT (8 sequential passes + topk softmax) → 8 ints
-after:  decoder_step → 1×768 hidden → local_transformer (one ANE call)        → 8 ints
+before: decoder_step → 1×768 hidden → Swift LT (8 sequential CPU passes) → 8 ints
+after:  decoder_step → 1×768 hidden → local_transformer.mlmodelc (1 ANE call) → 8 ints
 ```
 
-Measured: **-161 ms TTFA on short input** (see top of file). 1.78 ms/step on
-ANE replaces ~4–8 ms/step of Swift CPU work. See `convert_local_transformer.py`.
+| Build | ANE residency | Per-step |
+|---|---|---|
+| `local_transformer.mlpackage` (fp32) | 73.9% | 1.78 ms |
 
-### 4. AR loop unroll into fixed-N graph (research lever) — **deferred**
+End-to-end TTFA, M2 release, 3 trials:
 
-Trace `decoder_step` with N unrolled iterations inside one CoreML graph.
-Single ANE submission for N steps; KV cache stays internal between steps.
+| Input | Swift LT (baseline) | Fused LT (ANE) | Δ |
+|---|---|---|---|
+| "Hello from Magpie." (3 words) | 1.283 s | **1.122 s** | **−161 ms (−12.5%)** |
+| 14-word EN sentence | 4.243 s | 4.146 s | within noise |
 
-**Updated estimate (post-LT-fusion empirical data):**
+Wiring: `MagpieFusedLocalSampler.swift`, `MagpieSynthesizer.swift`. CFG
+path falls back to Swift `MagpieLocalSampler`. Unit tests in
+`MagpieFusedLocalSamplerTests.swift` (env-gated by `FLUIDAUDIO_RUN_MAGPIE_LT_FUSED=1`).
 
-The Lever #3 fused LT graph successfully unrolls 8 × 1-layer LT iterations
-on ANE at 73.9 % residency. By contrast, decoder_step is a **12-layer**
-transformer body. N=8 unroll → 12 × 8 = 96 transformer-layer ops + 8 LT
-samplers + 8 audio_embed gathers + KV cache scatter management — roughly
-**20× the graph size of `local_transformer.mlmodelc`**. Apple's ANE
-compiler typically chokes well before that scale; expect partial GPU
-fallback or outright compile failure.
+Commits: `4b57ab27e` (Swift), `f3ba62e` (mobius mlpackage).
 
-Per-trip overhead saved is the only real win: ~2-3 ms per ANE submission.
-For TTFA on a 24-frame first chunk that's 3 × N=8 batches → 21 saved
-trips × 2.5 ms ≈ **50 ms TTFA**, not the original -100 to -200 ms estimate.
+### Trial 4 — AR loop unroll into fixed-N graph ⏸ DEFERRED
 
-| | Updated cost |
-|---|---|
-| TTFA win | **~50 ms** (per-trip savings only, compute is unchanged) |
-| Risk | high — 96-layer graph likely exceeds ANE compile limits |
-| Effort | high — TraceableDecoderStepUnrolled + audio_embed lookup + EOS masking + sampling integration; ~2-3 day project |
-| Sampler | needs the same uniforms / forbid_eos plumbing as the fused LT graph, but now multiplied by N |
-| Stateful variant | already documented dead-end (`traceable_decoder_step_stateful.py`) — 2.2× regression because MLState forces CPU+GPU |
+Trace `decoder_step` with N unrolled iterations + N LT samplers + (N-1)
+audio-embed lookups inside one CoreML graph. Single ANE submission per N
+steps; KV cache stays internal between unrolled steps.
 
-**Recommended pre-flight:** test N=2 unroll first. If the 24-layer graph
-compiles + stays > 90 % ANE, scale up to N=4. If N=2 already drops below
-~80 % ANE, stop — N=8 is hopeless. Skip until cheaper levers exhausted
-or until a profile-driven hot spot demands it.
+**Updated estimate from Trial 3 + full-pipeline profiling**:
 
-### 5. Drop `speakerContextLength` 110 → 64 ✗ DEAD-END (measured)
+The Trial 3 fused LT graph successfully unrolls **8 × 1-layer LT** at 73.9%
+ANE. By contrast, decoder_step is a **12-layer transformer body**.
+- N=2 unroll → 24 transformer-layer ops + 2 LT + 1 audio-embed → ~5× LT graph size
+- N=8 unroll → 96 transformer-layer ops + 8 LT + 7 audio-embed → ~20× LT graph size
+
+Boundary cost is ~4 ms per dispatch (200 ms Swift overhead / 48 dispatches
+in first chunk). Unroll savings:
+
+| N | Dispatches saved | Est. Δ TTFA | ANE compile risk |
+|---|---|---|---|
+| 1 (fuse decoder+LT only) | 24 | −50 to −75 ms | low |
+| 2 | 36 | −75 to −100 ms | moderate |
+| 4 | 42 | −100 to −130 ms | high |
+| 8 | 45 | −130 to −160 ms | very high |
+
+**Pre-flight**: trace N=2 first. If 24-layer fused graph compiles + stays
+> 90% ANE, scale up. If N=2 already drops below ~80% ANE, stop — N=8 hopeless.
+
+Already-known dead-end: stateful variant (`traceable_decoder_step_stateful.py`)
+forces CPU+GPU via MLState, regresses 2.2×.
+
+Effort: ~4-6 hours for N=2 (trace + audio-embed bake-in + parity check +
+Swift integration + profiling).
+
+### Trial 5 — `speakerContextLength` 110 → 64 ✗ DEAD-END
 
 Pure-reconvert path tried. **Naive truncation breaks voice cloning fidelity.**
 
-Reproduce:
-```
+```bash
 uv run python convert_decoder_prefill.py --t-ctx 64 \
   --output build/decoder_prefill_tctx64.mlpackage
 xcrun coremlcompiler compile build/decoder_prefill_tctx64.mlpackage compiled/build/
@@ -232,89 +205,109 @@ uv run python truncate_speaker_embeddings.py \
   --constants-dir ~/.cache/fluidaudio/Models/magpie-tts/constants --t-ctx 64
 ```
 
-The `truncate_speaker_embeddings.py` helper takes the **last 64 frames** of
-each (5, 110, 768) speaker embedding (most recent prosodic state) and patches
-`constants.json` + `speaker_info.json` so the Swift loader picks up the new
-T. Per-speaker `speaker_{0..4}.npy` files must also be truncated alongside
-`speaker_embeddings_raw.npy` — Swift's `MagpieConstantsStore` validates each
-speaker's shape against `(speaker_context_length, d_model)` on load.
+`truncate_speaker_embeddings.py` takes **last 64 frames** of each
+(5, 110, 768) speaker embedding. Per-speaker `speaker_{0..4}.npy` files
+must also be truncated (Swift's `MagpieConstantsStore` validates each
+shape against `(speaker_context_length, d_model)`).
 
-End-to-end result on M2 release, seed 42, "Hello from Magpie.":
+Result on M2 release, "Hello from Magpie.":
 
 | | T_ctx=110 (baseline) | T_ctx=64 |
 |---|---|---|
 | TTFA | 0.829 s | **2.520 s** (regression) |
 | First chunk | 24 codes (1.19 s "Hello") | 83 codes (3.93 s "Hello") |
-| EOS @ chunk 0 | ✓ at natural boundary | runs ~3.5× past natural EOS |
+| EOS | ✓ at natural boundary | runs ~3.5× past natural EOS |
 
-The model was trained on T_ctx=110 speaker context. Truncating to 64 frames
-destroys the prosodic state the EOS classifier relies on, so the AR loop
-runs ~3.5× past the natural boundary on the first chunk. Net: **TTFA is
-worse**, audio is over-generated, and voice identity drifts.
+Model trained on T_ctx=110 — truncating destroys the prosodic state the
+EOS classifier relies on. Real fix paths (none simple): re-extract from
+source audio at T=64 via NeMo's speaker encoder, or train a learned
+pooling. Cache restored from `~/.cache/fluidaudio/Models/magpie-tts/.backup-tctx110/`.
 
-Real fix paths (none simple):
-- Re-extract embeddings from source audio at T=64 via NeMo's speaker
-  encoder. Need the original 5 reference audio prompts.
-- Pool / downsample 110 → 64 with a learned compressor. Multi-day project.
-- Train new T=64 speakers from scratch on a corpus.
+Artifacts kept: `truncate_speaker_embeddings.py`,
+`build/decoder_prefill_tctx64.mlpackage`.
 
-`truncate_speaker_embeddings.py` and `build/decoder_prefill_tctx64.mlpackage`
-are kept for the re-extraction follow-up. Cache is restored from
-`~/.cache/fluidaudio/Models/magpie-tts/.backup-tctx110/`.
-
-### 6. NanoCodec / AR pipelining in Swift
+### Trial 6 — NanoCodec / AR pipelining in Swift (low-impact for TTFA)
 
 NanoCodec runs CPU, AR runs ANE → free parallelism if scheduled to overlap.
+Already implemented via producer/consumer split in `synthesizeStream(...)`.
 Helps **aggregate RTFx**, not TTFA (first chunk has nothing to overlap with).
-Pure Swift change.
 
-### 7. First-chunk cap 24 → 16 frames ✗ DEAD-END (measured)
+### Trial 7 — First-chunk cap 24 → 16 frames ✗ DEAD-END
 
-A/B on M2 release build, seed 42, 5 runs each, fused LT path:
+A/B on M2 release, fused LT path, 5 runs each:
 
 | Input | Cap | TTFA median | First chunk |
 |---|---|---|---|
-| "The quick brown fox..." | 24 | **1.585 s** | 22 codes ("The quick"), 1.10 s audio |
-| "The quick brown fox..." | 16 | 1.636 s | 7 codes ("The"), 0.41 s audio |
+| "The quick brown fox..." | 24 | **1.585 s** | 22 codes ("The quick"), 1.10 s |
+| "The quick brown fox..." | 16 | 1.636 s | 7 codes ("The"), 0.41 s |
 
-Predicted -120 ms TTFA did not materialize. Two issues:
+1. **TTFA didn't drop** — with chunker tweak + LT fusion, the first chunk's
+   AR loop is no longer dominant; 8 fewer steps don't move the needle.
+2. **0.41 s first chunk is too short for streaming UX** — visible playback
+   stutter as the player waits for chunk 1.
 
-1. **TTFA didn't drop.** With the LT fusion + chunker tweak baseline, the
-   first chunk's AR loop is no longer the dominant cost — prefill / encode /
-   ANE warm-up amortize across the trial, and 8 fewer AR steps don't move
-   the needle out of measurement noise.
-2. **0.41 s first chunk is too short for streaming UX.** "The" alone
-   produces visible playback stutter as the player waits for chunk 1. The
-   chunker truncated the first sentence to a single word because cap 16
-   sits below the 22-code natural boundary at "The quick".
+24 frames is the sweet spot. Recorded so we don't re-litigate.
 
-24 frames is already at the sweet spot. Not shippable. PERF.md left here
-as a record so we don't re-litigate this lever.
+### Trial 8 — QAT / calibration int8 via NeMo ⏸ DEFERRED
 
-### 8. QAT / calibration int8 via NeMo
+Real fix for the int8 runaway in Trial 2. Recovers per-step int8 win cleanly.
+Multi-day project: NeMo install (~1-2 GB), calibration data, training-time
+work. **Highest ceiling, highest cost.** Theoretical TTFA floor ~300 ms on M2.
 
-Real fix for the int8 runaway. Recovers the per-step int8 win cleanly.
-Multi-day project: NeMo install (~1–2 GB), calibration data, training-time
-work. Highest ceiling, highest cost.
-
-### 9. Pipeline-level fusion via `MLPipeline` (low-EV)
+### Trial 9 — Pipeline-level fusion via `MLPipeline` (low-EV)
 
 Wire `text_encoder → decoder_prefill` into a single mlpackage. Saves one
-Swift dispatch per synth (~1–2 ms). Doesn't help the AR loop. Not worth it.
+Swift dispatch per synth (~1-2 ms). Doesn't help the AR loop. Not worth it.
+
+### Trial 10 — NanoCodec investigation ⏸ NOT YET TRIED
+
+**Newly identified as 2nd-largest single TTFA contributor (182 ms / 22%)
+after full-pipeline profiling.** Currently runs 100% CPU because v3 is fp32
+(ANE is fp16-only).
+
+Cheap experiments to try:
+
+1. **Profile v4 (`nanocodec_decoder_v4.mlmodelc`, fp32 + 8-bit palette)** —
+   not yet downloaded/measured. May have different per-call overhead.
+2. **Split first NanoCodec call** — decode 8 frames first → emit, then decode
+   16 more in parallel with AR for chunk 2. Could overlap NanoCodec with
+   later AR work; needs `MagpieSynthesizer` plumbing.
+3. **Re-audit fp16 v2** — documented as "audibly noisy on voiced speech" but
+   ANE-resident at ~43%. If v2 quality is acceptable for first-chunk only
+   (with v3 for subsequent chunks), could save ~150 ms TTFA at known
+   quality cost.
+
+Effort: a few hours each. Worth doing before Trial 4 because the win is
+plausibly larger and the work is shorter.
 
 ---
 
-## Estimated ceilings
+## Lever ranking (post-profiling)
 
-| Stack | TTFA |
+Updated priority order based on the 2026-05-08 full-pipeline profiling:
+
+| Rank | Lever | Est. TTFA win | Effort | Risk |
+|---|---|---|---|---|
+| 1 | #10a NanoCodec v4 profiling | unknown, plausibly 0-50 ms | 1 hr | low |
+| 2 | #10b Split first NanoCodec call | up to ~90 ms | half-day | low |
+| 3 | #4 AR unroll N=2 pre-flight | 75-100 ms | 4-6 hr | moderate |
+| 4 | #10c fp16 NanoCodec for first chunk only | up to ~150 ms | half-day | quality risk |
+| 5 | #4 AR unroll N=8 (post N=2 success) | 130-160 ms | 1-2 days | high |
+| 6 | #8 QAT int8 via NeMo | ~400 ms | multi-day | very high |
+
+---
+
+## Estimated TTFA ceilings
+
+| Stack | TTFA (warm M2) |
 |---|---|
 | Pre-tuning baseline | ~2 525 ms |
-| + chunker tweak (#1, shipped) | ~870 ms warm |
-| + LT fusion (#3, shipped) | **~710 ms warm** (measured -161 ms) |
-| + cap 24→16 (#7, dead-end) | no measurable Δ; UX regresses |
-| + naive speaker context 64 (#5, dead-end) | regresses to ~2 520 ms (EOS broken) |
-| + AR unroll (#4, deferred) | ~660 ms (revised estimate -50 ms) |
-| + QAT int8 (#8) | ~300 ms theoretical floor on M2 |
+| + chunker tweak (#1) | ~1 547 ms |
+| + LT fusion (#3) | **~830 ms** ← current |
+| + AR unroll N=2 (#4) | ~755 ms |
+| + NanoCodec optimization (#10) | ~705 ms (rough) |
+| + AR unroll N=8 + nano opts | ~600 ms (best plausible) |
+| + QAT int8 (#8) | ~300 ms (theoretical floor) |
 
 For comparison: **Kokoro TTFA < 100 ms** (parallel non-AR, ~20× RTFx). Any
 amount of optimization on a 357M autoregressive transformer with 21.5 fps
@@ -333,9 +326,9 @@ features are specifically required.
 | `nvidia/magpie_tts_multilingual_357m` v2602 (Mar 2026) | HF | 357M (+Hindi, +Japanese) | **same** |
 | `magpie-tts-flow` | NIM API only | different arch | n/a (cloud) |
 | `magpie-tts-zeroshot` | NIM API only, voice cloning removed from open release | n/a | n/a (cloud) |
-| `magpie-tts-multilingual` | NIM API only, "optimized batch and latency pipeline" | n/a | n/a (cloud) |
+| `magpie-tts-multilingual` NIM | NIM API only, "optimized batch and latency pipeline" | n/a | n/a (cloud) |
 
-**No faster open-weight Magpie exists.** `v2602` is a content upgrade
+**No faster open-weight Magpie exists.** v2602 is a content upgrade
 (2 more languages) at the same architecture/size/speed. Speed-class
 upgrades are NIM-only.
 
@@ -343,9 +336,29 @@ upgrades are NIM-only.
 
 ## Repro
 
-Conversion / quantization scripts in this directory:
+### Profile any model
 
 ```bash
+cd mobius/tools/coreml-cli
+uv run coreml-cli ~/.cache/fluidaudio/Models/magpie-tts/decoder_step.mlmodelc
+uv run coreml-cli ~/.cache/fluidaudio/Models/magpie-tts/decoder_step.mlmodelc --fallback
+```
+
+### End-to-end TTFA measurement
+
+```bash
+cd FluidAudio
+swift build -c release
+.build/release/fluidaudio tts \
+  --text "Hello from Magpie." --engine magpie --stream \
+  --speaker 0 --output /tmp/out.wav --seed 42
+```
+
+### Reconvert decoder_step (int8)
+
+```bash
+cd mobius/models/tts/magpie/coreml
+
 # Bring fp16 decoder_step.mlpackage from HF (avoid NeMo install)
 huggingface-cli download FluidInference/magpie-tts-multilingual-357m-coreml \
   decoder_step.mlpackage --local-dir build/upstream/
@@ -357,19 +370,38 @@ uv run python quantize_decoder_step_int8.py \
   --granularity per_channel \
   --skip-ops linear_60_cast_fp16
 
-# Compile to mlmodelc
 uv run python compile_mlmodelc.py
-
-# Profile per-step latency + ANE residency
-cd ../../../tools/coreml-cli
-uv run coreml-cli ../../models/tts/magpie/coreml/compiled/build/decoder_step_int8_pc_skiphead.mlmodelc
-
-# A/B end-to-end (hot-swap into FluidAudio cache)
-cp -R compiled/build/decoder_step_int8_pc_skiphead.mlmodelc \
-      ~/.cache/fluidaudio/Models/magpie-tts/decoder_step.mlmodelc
-swift run fluidaudiocli magpie text \
-  --text "Hello from Magpie." --stream --speaker 0 --output /tmp/out.wav
 ```
 
-To restore fp16 baseline: re-download `decoder_step.mlmodelc` from HF or
-keep a backup before swapping.
+### Reconvert decoder_prefill (T_ctx=N)
+
+```bash
+uv run python convert_decoder_prefill.py --t-ctx 64 \
+  --output build/decoder_prefill_tctx64.mlpackage
+xcrun coremlcompiler compile build/decoder_prefill_tctx64.mlpackage compiled/build/
+uv run python truncate_speaker_embeddings.py \
+  --constants-dir ~/.cache/fluidaudio/Models/magpie-tts/constants --t-ctx 64
+```
+
+### Convert fused Local Transformer
+
+```bash
+uv run python convert_local_transformer.py \
+  --output build/local_transformer.mlpackage
+xcrun coremlcompiler compile build/local_transformer.mlpackage compiled/build/
+# See UPLOAD_LOCAL_TRANSFORMER.md for HF upload steps.
+```
+
+### Hot-swap a candidate model into the cache
+
+```bash
+# Backup first
+cp -R ~/.cache/fluidaudio/Models/magpie-tts/decoder_step.mlmodelc \
+      ~/.cache/fluidaudio/Models/magpie-tts/.backup-decoder_step.mlmodelc
+
+# Swap candidate in
+cp -R compiled/build/decoder_step_candidate.mlmodelc \
+      ~/.cache/fluidaudio/Models/magpie-tts/decoder_step.mlmodelc
+
+# Re-run end-to-end TTFA, then restore from backup if regressed.
+```
