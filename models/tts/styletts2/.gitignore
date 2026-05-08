@@ -1,0 +1,23 @@
+# Upstream code is vendored locally for tracing; do not commit / redistribute.
+# (no trailing slash so symlinks named `vendor` are also ignored)
+vendor
+vendor/
+
+# Pretrained weights — download on demand, do not commit (~771 MB).
+checkpoints
+checkpoints/
+
+# Reference audio extracted from upstream HF release.
+reference_audio
+reference_audio/
+
+# Generated artifacts.
+*.wav
+*.mlpackage/
+*.mlmodelc/
+
+# Python env
+.venv/
+.uv/
+__pycache__/
+*.pyc
