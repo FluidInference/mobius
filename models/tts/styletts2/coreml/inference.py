@@ -63,75 +63,74 @@ from coreml._runtime import HERE, ensure_nltk  # noqa: E402
 PACKAGES_DIR = HERE / "coreml" / "packages"
 
 
-# ---------- Per-stage compute placement (Kokoro-ANE-style mixed pattern) ----------
+# ---------- Per-stage compute placement (post Trials 4 + 6 + 8b) ----------
 #
-# Picked from a sweep over {fp16, fp32} × {ALL, CPU_ONLY, CPU_AND_GPU, CPU_AND_NE}
-# minimising warm predict latency (tools/profile_stages.py). Notes:
-#   * bert / ref_encoder / diffusion_unet / f0n_predictor → ANE: graphs are
-#     ANE-friendly (Albert, small CNN, attention U-Net, conv stack); fp16 ANE
-#     warm is 3-4x faster than CPU.
-#   * text_encoder / duration_predictor → CPU_ONLY: tiny LSTMs that don't
-#     benefit from ANE and have <1 s load there.
-#   * har_source → CPU_AND_GPU: trivial graph, GPU is free + fast warm.
-#   * decoder → CPU_ONLY: HiFi-GAN ANE compile *fails*
-#     ("MILCompilerForANE error: ANECCompile() FAILED"); CPU_ONLY skips the
-#     compile attempt entirely (1.6 s load vs ~38 s for ALL) and Accelerate
-#     fp16 SIMD keeps warm predict ~300 ms.
+# Placement validated on fp32 packages via Trial 8 sweep (see fusions.md).
+# Trials 4 and 6 reduced 9 stages → 8 (fused_diffusion_sampler subsumes
+# the 8-dispatch ADPM2 loop; fused_f0n_har_source subsumes f0n_predictor +
+# har_source). Trial 8b applied the clean placement wins on small graphs:
+#   * bert        → ALL          (was CPU_AND_NE; sweep min 8 vs 16 ms)
+#   * ref_encoder → CPU_AND_GPU  (was CPU_AND_NE; sweep min 13 vs 46 ms)
+#   * fused_diffusion_sampler → ALL (Trial 4 ran CPU_AND_GPU; Trial 8 sweep
+#       showed ALL 17 ms vs CPU_AND_GPU 21 ms)
+#   * fused_f0n_har_source → CPU_ONLY (Trial 6 verdict)
+#   * decoder_upsample → CPU_ONLY (kept; Trial 8 ALL was bimodal 322-759 ms
+#       under contention — see fusions.md "why Trial 8 aggressive failed")
 _STAGE_COMPUTE: dict[str, ct.ComputeUnit] = {
-    "text_encoder":       ct.ComputeUnit.CPU_ONLY,
-    "bert":               ct.ComputeUnit.CPU_AND_NE,
-    "ref_encoder":        ct.ComputeUnit.CPU_AND_NE,
-    "diffusion_unet":     ct.ComputeUnit.CPU_AND_NE,
-    "duration_predictor": ct.ComputeUnit.CPU_ONLY,
-    "f0n_predictor":      ct.ComputeUnit.CPU_AND_NE,
-    "har_source":         ct.ComputeUnit.CPU_AND_GPU,
+    "text_encoder":             ct.ComputeUnit.CPU_ONLY,
+    "bert":                     ct.ComputeUnit.ALL,
+    "ref_encoder":              ct.ComputeUnit.CPU_AND_GPU,
+    # Trial 4 fused 5-step ADPM2 sampler (replaces 8 diffusion_unet calls).
+    "fused_diffusion_sampler":  ct.ComputeUnit.ALL,
+    # Legacy diffusion_unet kept for --no-fused fallback.
+    "diffusion_unet":           ct.ComputeUnit.CPU_AND_GPU,
+    "duration_predictor":       ct.ComputeUnit.CPU_ONLY,
+    # Trial 6 fused f0n + har (replaces two stage round-trip).
+    "fused_f0n_har_source":     ct.ComputeUnit.CPU_ONLY,
+    # Legacy entries kept for --no-fused fallback.
+    "f0n_predictor":            ct.ComputeUnit.CPU_AND_NE,
+    "har_source":               ct.ComputeUnit.CPU_AND_GPU,
     # Decoder is split for ANE acceleration. The AdaIN encode + decode
     # blocks are ANE-clean (1D conv + LayerNorm + linear style mod);
     # the HiFi-GAN Generator's ConvTranspose1d ups stack triggers
     # `MILCompilerForANE error: ANECCompile() FAILED`. Routing only the
     # pre-stage to ANE captures the speedup without paying the broken
     # compile path on the upsample tail.
-    "decoder_pre":        ct.ComputeUnit.CPU_AND_NE,
-    # CPU_ONLY. Tried CPU_AND_GPU — micro-bench showed ~20 ms warm
-    # win (253 vs 274 ms) but in the full pipeline GPU contention
-    # with `har_source` (also CPU_AND_GPU) caused outliers spiking
-    # to >1 s. CPU_ONLY is more predictable; ANE compile fails on
-    # HiFi-GAN's ConvTranspose1d ups stack.
-    "decoder_upsample":   ct.ComputeUnit.CPU_ONLY,
+    "decoder_pre":              ct.ComputeUnit.CPU_AND_NE,
+    # CPU_ONLY kept after Trial 8 aggressive ALL placement showed bimodal
+    # latency (322 ms best / 759 ms worst — runtime retries ANE compile
+    # paths under contention). CPU_ONLY is the deterministic choice.
+    "decoder_upsample":         ct.ComputeUnit.CPU_ONLY,
 }
 
 
-# ---------- Per-stage precision (Kokoro-ANE-style mixed pattern) ----------
+# ---------- Per-stage precision ----------
 #
-# Default: fp16 everywhere except the two audio-domain stages that compute
-# sin(2π × cumsum(f0)). At fp16, cumsum over 74 400 samples accumulates
-# ~10 bits of error and produces audible phase drift in the tail of the
-# clip (clean first ~2 s, distorted afterwards). har_source and decoder
-# therefore stay fp32.
+# Default fp32 for all stages. On this hardware fp32 warm latency
+# (~530 ms with Trials 4+6+8b) beat fp16 warm (~950 ms) — driven by
+# decoder_upsample, where Accelerate is fp32-native and fp16 hurts.
+# See fusions.md cross-trial notes.
 #
-# `bert` was tried in fp32 to skip the ~3 s fp16-Albert ANE compile on
-# fresh process startup. Quality A/B is identical, but for long-running
-# servers fp16 wins on warm (~20 ms vs ~25 ms × however many utterances).
-# Default favours warm-path speed; flip to fp32 with `--fp32 bert` if cold
-# start matters (CLI / one-shot invocations).
+# Fused stages (Trials 4 and 6) are fp32-only — no fp16 conversion has
+# been done for them. Override individual stages with `--fp16 <stage>`
+# for the legacy fp16 path (only valid for stages that have an
+# `<stage>_fp16.mlpackage`).
 _STAGE_PRECISION: dict[str, str] = {
-    "text_encoder":       "fp16",
-    "bert":               "fp16",
-    "ref_encoder":        "fp16",
-    "diffusion_unet":     "fp16",
-    "duration_predictor": "fp16",
-    "f0n_predictor":      "fp16",
+    "text_encoder":             "fp32",
+    "bert":                     "fp32",
+    "ref_encoder":              "fp32",
+    "fused_diffusion_sampler":  "fp32",
+    "diffusion_unet":           "fp32",
+    "duration_predictor":       "fp32",
+    "fused_f0n_har_source":     "fp32",
+    "f0n_predictor":            "fp32",
     # har_source must stay fp32: it computes sin(2π × cumsum(f0)) at
     # audio rate (74 400 samples). fp16 cumsum drifts ~10 bits over that
     # span and produces audible phase distortion in the second half of
-    # the clip (clean first ~2 s, garbled tail). Verified empirically.
-    "har_source":         "fp32",
-    # decoder is *bypassed* of its internal SineGen by the har_source
-    # input (precompute_har_source path), so the remaining decoder math
-    # is just the conv/upsample stack — no cumsum, fp16-safe. Verified
-    # by listening test with har_source fp32 + decoder fp16.
-    "decoder_pre":        "fp16",
-    "decoder_upsample":   "fp16",
+    # the clip.
+    "har_source":               "fp32",
+    "decoder_pre":              "fp32",
+    "decoder_upsample":         "fp32",
 }
 
 
@@ -344,7 +343,18 @@ def main() -> int:
             "`coreml/convert.py --stage <stage> --precision int8pal`)."
         ),
     )
+    parser.add_argument(
+        "--no-fused",
+        action="store_true",
+        help=(
+            "Disable the Trial 4 + Trial 6 fused stages. Falls back to the "
+            "legacy 9-package path: 8-dispatch ADPM2 sampler + separate "
+            "f0n_predictor and har_source calls. Use for debugging or to "
+            "compare against the unfused baseline."
+        ),
+    )
     args = parser.parse_args()
+    use_fused = not args.no_fused
 
     # ------ Load eager artefacts that stay on Python ------
     import phonemizer  # noqa: E402
@@ -396,13 +406,32 @@ def main() -> int:
     text_encoder = _load_stage("text_encoder", precision=precision["text_encoder"])
     bert = _load_stage("bert", precision=precision["bert"])
     ref_encoder = _load_stage("ref_encoder", precision=precision["ref_encoder"])
-    diffusion_unet = _load_stage("diffusion_unet", precision=precision["diffusion_unet"])
+    if use_fused:
+        # Trial 4: fused 5-step ADPM2 sampler (1 dispatch instead of 8).
+        fused_sampler = _load_stage(
+            "fused_diffusion_sampler",
+            precision=precision["fused_diffusion_sampler"],
+        )
+        diffusion_unet = None
+    else:
+        diffusion_unet = _load_stage("diffusion_unet", precision=precision["diffusion_unet"])
+        fused_sampler = None
     duration_predictor = _load_stage("duration_predictor", precision=precision["duration_predictor"])
-    f0n_predictor = _load_stage("f0n_predictor", precision=precision["f0n_predictor"])
-    har_source_model = _load_stage("har_source", precision=precision["har_source"])
+    if use_fused:
+        # Trial 6: fused f0n_predictor + har_source (1 dispatch instead of 2).
+        fused_f0n_har = _load_stage(
+            "fused_f0n_har_source",
+            precision=precision["fused_f0n_har_source"],
+        )
+        f0n_predictor = None
+        har_source_model = None
+    else:
+        fused_f0n_har = None
+        f0n_predictor = _load_stage("f0n_predictor", precision=precision["f0n_predictor"])
+        har_source_model = _load_stage("har_source", precision=precision["har_source"])
     decoder_pre = _load_stage("decoder_pre", precision=precision["decoder_pre"])
     decoder_upsample = _load_stage("decoder_upsample", precision=precision["decoder_upsample"])
-    print(f"  coreml load: {time.perf_counter() - t0:.2f}s")
+    print(f"  coreml load: {time.perf_counter() - t0:.2f}s  fused={use_fused}")
 
     # ------ Stage 1: phonemize + tokenize (Python) ------
     from nltk.tokenize import word_tokenize
@@ -483,23 +512,44 @@ def main() -> int:
     # traced with — until we promote token/frame axes to RangeDim.
     run_inference.seed_everything(args.seed)
     t0 = time.perf_counter()
-    noise = torch.randn(1, 256).unsqueeze(1).numpy().astype(np.float32)  # [1, 1, 256]
-    s_pred_np = _adpm2_sample(
-        diffusion_unet,
-        noise=noise,
-        embedding=bert_dur_np,
-        features=ref_s_np,
-        num_steps=args.diffusion_steps,
-    )
+    if use_fused:
+        # Trial 4: single fused dispatch. RNG draws are pre-materialized
+        # into noise_init + noises_aux to match the unfused 5-step loop
+        # bit-for-bit (same torch.randn order under seeded generator).
+        noise_init = torch.randn(1, 256).unsqueeze(1).numpy().astype(np.float32)
+        noises_aux = np.stack(
+            [
+                torch.randn(1, 1, 256).numpy().astype(np.float32)
+                for _ in range(args.diffusion_steps - 1)
+            ],
+            axis=0,
+        )
+        feed = {
+            "noise_init": noise_init,
+            "noises_aux": noises_aux,
+            "embedding": bert_dur_np.astype(np.float32),
+            "features": ref_s_np.astype(np.float32),
+        }
+        (s_pred_np,) = _predict(fused_sampler, feed)
+        sampler_label = f"fused_diffusion_sampler ({args.diffusion_steps} steps × 1 dispatch)"
+    else:
+        noise = torch.randn(1, 256).unsqueeze(1).numpy().astype(np.float32)  # [1, 1, 256]
+        s_pred_np = _adpm2_sample(
+            diffusion_unet,
+            noise=noise,
+            embedding=bert_dur_np,
+            features=ref_s_np,
+            num_steps=args.diffusion_steps,
+        )
+        sampler_label = f"adpm2 sampler ({args.diffusion_steps} steps × 2 dispatches)"
     s_pred = torch.from_numpy(s_pred_np).squeeze(1)  # [1, 256]
     s_diff = s_pred[:, 128:]
     ref_diff = s_pred[:, :128]
     ref = args.alpha * ref_diff + (1.0 - args.alpha) * ref_s[:, :128]
     s = args.beta * s_diff + (1.0 - args.beta) * ref_s[:, 128:]
     print(
-        f"adpm2 sampler:      {time.perf_counter() - t0:.3f}s  "
-        f"s_pred={tuple(s_pred.shape)}  ref={tuple(ref.shape)}  s={tuple(s.shape)}  "
-        f"({args.diffusion_steps} steps × 2 dispatches)"
+        f"{sampler_label:<30s} {time.perf_counter() - t0:.3f}s  "
+        f"s_pred={tuple(s_pred.shape)}  ref={tuple(ref.shape)}  s={tuple(s.shape)}"
     )
 
     # ------ Stage 6: duration_predictor (CoreML, RangeDim T) → alignment ------
@@ -533,16 +583,24 @@ def main() -> int:
         "en": en.numpy().astype(np.float32),
         "s": s.numpy().astype(np.float32),
     }
-    f0_pred_np, n_pred_np = _predict(f0n_predictor, feed)
-    print(
-        f"f0n_predictor:      {time.perf_counter() - t0:.3f}s  "
-        f"f0={f0_pred_np.shape}  n={n_pred_np.shape}"
-    )
+    if use_fused:
+        # Trial 6: single fused dispatch returning (f0, n, har).
+        f0_pred_np, n_pred_np, har_np = _predict(fused_f0n_har, feed)
+        print(
+            f"fused_f0n_har:      {time.perf_counter() - t0:.3f}s  "
+            f"f0={f0_pred_np.shape}  n={n_pred_np.shape}  har={har_np.shape}"
+        )
+    else:
+        f0_pred_np, n_pred_np = _predict(f0n_predictor, feed)
+        print(
+            f"f0n_predictor:      {time.perf_counter() - t0:.3f}s  "
+            f"f0={f0_pred_np.shape}  n={n_pred_np.shape}"
+        )
 
-    # ------ Stage 8: har_source (CoreML, RangeDim F0_LEN) ------
-    t0 = time.perf_counter()
-    (har_np,) = _predict(har_source_model, {"f0": f0_pred_np.astype(np.float32)})
-    print(f"har_source:         {time.perf_counter() - t0:.3f}s  har={har_np.shape}")
+        # ------ Stage 8: har_source (CoreML, RangeDim F0_LEN) ------
+        t0 = time.perf_counter()
+        (har_np,) = _predict(har_source_model, {"f0": f0_pred_np.astype(np.float32)})
+        print(f"har_source:         {time.perf_counter() - t0:.3f}s  har={har_np.shape}")
 
     # ------ Stage 9a: decoder_pre (CoreML, ANE: F0/N conv + AdaIN encode/decode) ------
     ref_in = ref.squeeze().unsqueeze(0).numpy().astype(np.float32)  # [1, 128]
