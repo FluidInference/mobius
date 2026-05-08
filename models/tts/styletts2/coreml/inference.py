@@ -63,20 +63,52 @@ from coreml._runtime import HERE, ensure_nltk  # noqa: E402
 PACKAGES_DIR = HERE / "coreml" / "packages"
 
 
+# ---------- Per-stage compute placement (Kokoro-ANE-style mixed pattern) ----------
+#
+# Picked from a sweep over {fp16, fp32} × {ALL, CPU_ONLY, CPU_AND_GPU, CPU_AND_NE}
+# minimising warm predict latency (tools/profile_stages.py). Notes:
+#   * bert / ref_encoder / diffusion_unet / f0n_predictor → ANE: graphs are
+#     ANE-friendly (Albert, small CNN, attention U-Net, conv stack); fp16 ANE
+#     warm is 3-4x faster than CPU.
+#   * text_encoder / duration_predictor → CPU_ONLY: tiny LSTMs that don't
+#     benefit from ANE and have <1 s load there.
+#   * har_source → CPU_AND_GPU: trivial graph, GPU is free + fast warm.
+#   * decoder → CPU_ONLY: HiFi-GAN ANE compile *fails*
+#     ("MILCompilerForANE error: ANECCompile() FAILED"); CPU_ONLY skips the
+#     compile attempt entirely (1.6 s load vs ~38 s for ALL) and Accelerate
+#     fp16 SIMD keeps warm predict ~300 ms.
+_STAGE_COMPUTE: dict[str, ct.ComputeUnit] = {
+    "text_encoder":       ct.ComputeUnit.CPU_ONLY,
+    "bert":               ct.ComputeUnit.CPU_AND_NE,
+    "ref_encoder":        ct.ComputeUnit.CPU_AND_NE,
+    "diffusion_unet":     ct.ComputeUnit.CPU_AND_NE,
+    "duration_predictor": ct.ComputeUnit.CPU_ONLY,
+    "f0n_predictor":      ct.ComputeUnit.CPU_AND_NE,
+    "har_source":         ct.ComputeUnit.CPU_AND_GPU,
+    "decoder":            ct.ComputeUnit.CPU_ONLY,
+}
+
+
 # ---------- CoreML helpers ----------
 
 
 def _load_stage(
     stage: str,
-    compute_units: ct.ComputeUnit,
     *,
-    fp16: bool = False,
+    fp16: bool = True,
+    compute_units: ct.ComputeUnit | None = None,
 ) -> ct.models.MLModel:
+    """Load `stage.mlpackage` (or `stage_fp16.mlpackage`).
+
+    `compute_units=None` consults `_STAGE_COMPUTE` for the per-stage
+    placement; pass an explicit value to override (e.g. for benchmarking).
+    """
     suffix = "_fp16" if fp16 else ""
     pkg = PACKAGES_DIR / f"{stage}{suffix}.mlpackage"
     if not pkg.exists():
         raise FileNotFoundError(f"missing {pkg} — run coreml/convert.py first")
-    return ct.models.MLModel(str(pkg), compute_units=compute_units)
+    cu = compute_units if compute_units is not None else _STAGE_COMPUTE[stage]
+    return ct.models.MLModel(str(pkg), compute_units=cu)
 
 
 def _spec_outputs_in_order(mlmodel: ct.models.MLModel) -> list[str]:
@@ -212,25 +244,12 @@ def main() -> int:
     parser.add_argument("--diffusion-steps", type=int, default=5)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
-        "--compute-units",
-        default="ALL",
-        choices=["ALL", "CPU_ONLY", "CPU_AND_GPU", "CPU_AND_NE"],
-    )
-    parser.add_argument(
         "--fp32",
         action="store_true",
         help="Load fp32 .mlpackages (default: fp16, which is faster on Accelerate).",
     )
     args = parser.parse_args()
     fp16 = not args.fp32
-
-    cu_map = {
-        "ALL": ct.ComputeUnit.ALL,
-        "CPU_ONLY": ct.ComputeUnit.CPU_ONLY,
-        "CPU_AND_GPU": ct.ComputeUnit.CPU_AND_GPU,
-        "CPU_AND_NE": ct.ComputeUnit.CPU_AND_NE,
-    }
-    cu = cu_map[args.compute_units]
 
     # ------ Load eager artefacts that stay on Python ------
     import phonemizer  # noqa: E402
@@ -255,24 +274,19 @@ def main() -> int:
     )
     print(f"  eager load: {time.perf_counter() - t0:.2f}s")
 
-    # ------ Load all CoreML stages ------
-    print(f"\nLoading CoreML stages (compute_units={args.compute_units})…")
+    # ------ Load all CoreML stages (per-stage compute placement; see
+    #         _STAGE_COMPUTE manifest at top of file) ------
+    print(f"\nLoading CoreML stages (fp16={fp16}, mixed compute units)…")
     t0 = time.perf_counter()
-    text_encoder = _load_stage("text_encoder", cu, fp16=fp16)
-    bert = _load_stage("bert", cu, fp16=fp16)
-    ref_encoder = _load_stage("ref_encoder", cu, fp16=fp16)
-    diffusion_unet = _load_stage("diffusion_unet", cu, fp16=fp16)
-    duration_predictor = _load_stage("duration_predictor", cu, fp16=fp16)
-    f0n_predictor = _load_stage("f0n_predictor", cu, fp16=fp16)
-    har_source_model = _load_stage("har_source", cu, fp16=fp16)
-    # Decoder: fp16 + CPU_ONLY is the sweet spot. fp16 ANE compile fails
-    # ("MILCompilerForANE error") for the HiFi-GAN graph; CPU_ONLY skips
-    # the ANE compile step entirely (1.6 s load vs ~38 s for ALL) and the
-    # Accelerate fp16 SIMD path keeps warm predict ~300 ms. The fp32
-    # decoder doesn't have the ANE problem so we leave it on `cu`.
-    decoder_cu = ct.ComputeUnit.CPU_ONLY if fp16 else cu
-    decoder = _load_stage("decoder", decoder_cu, fp16=fp16)
-    print(f"  coreml load: {time.perf_counter() - t0:.2f}s  fp16={fp16}")
+    text_encoder = _load_stage("text_encoder", fp16=fp16)
+    bert = _load_stage("bert", fp16=fp16)
+    ref_encoder = _load_stage("ref_encoder", fp16=fp16)
+    diffusion_unet = _load_stage("diffusion_unet", fp16=fp16)
+    duration_predictor = _load_stage("duration_predictor", fp16=fp16)
+    f0n_predictor = _load_stage("f0n_predictor", fp16=fp16)
+    har_source_model = _load_stage("har_source", fp16=fp16)
+    decoder = _load_stage("decoder", fp16=fp16)
+    print(f"  coreml load: {time.perf_counter() - t0:.2f}s")
 
     # ------ Stage 1: phonemize + tokenize (Python) ------
     from nltk.tokenize import word_tokenize
