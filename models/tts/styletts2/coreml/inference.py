@@ -111,8 +111,13 @@ _STAGE_PRECISION: dict[str, str] = {
     "diffusion_unet":     "fp16",
     "duration_predictor": "fp16",
     "f0n_predictor":      "fp16",
-    "har_source":         "fp16",
-    "decoder":            "fp16",
+    # har_source / decoder kept in fp32: both compute sin(2π × cumsum(f0))
+    # in the audio domain (har_source explicitly, decoder inside SineGen).
+    # fp16 cumsum loses ~10 bits of precision after a few thousand samples,
+    # producing audible phase drift that gets worse the further into the
+    # clip you go (clean first ~2 s, distorted tail).
+    "har_source":         "fp32",
+    "decoder":            "fp32",
 }
 
 
