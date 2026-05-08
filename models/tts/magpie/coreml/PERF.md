@@ -215,8 +215,15 @@ Pre-flight kill criteria: ship if N=2 stays > 90% ANE; abandon if < 80% ANE.
 | cpu_and_gpu | — | 100.0% | — | 28.64 ms |
 | cpu_and_neural_engine | — | — | — | ANEF compile fails |
 
-**Baseline target to beat**: decoder_step 15.7 ms + LT 1.6 ms = 17.3 ms × 2 =
-**34.6 ms**. N=2 .all is **+30.2 ms regression**.
+**Baseline target to beat** (from "TTFA breakdown" table above):
+- Production policy `.cpu_and_neural_engine`: decoder_step 15.7 ms + LT 1.6 ms
+  = 17.3 ms × 2 = **34.6 ms**. N=2 fused fails to compile under this policy
+  (ANEF error), so this is the *intended* target.
+- Apples-to-apples `.all` (only policy where N=2 actually runs): decoder_step
+  16.8 ms + LT 3.6 ms = 20.4 ms × 2 = **40.8 ms**.
+
+N=2 fused `.all` = 64.77 ms is **+23.97 ms** vs the lenient `.all`-baseline and
+**+30.2 ms** vs the production-policy baseline. Lever loses on both yardsticks.
 
 **Root cause** (`coreml-cli --fallback`): **858 of 2315 ops fall back to CPU
 (37.1%)** despite 88.7% aggregate residency. The doubled sampler tail dominates
