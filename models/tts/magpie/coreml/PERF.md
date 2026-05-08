@@ -206,24 +206,34 @@ Pre-flight kill criteria: ship if N=2 stays > 90% ANE; abandon if < 80% ANE.
 - 38 outputs (codes_1 + codes_2 + 36 new KV state)
 - Conversion: 35.4 s, mlprogram fp16 iOS17, 215 MB weights
 
-**Profile (M2, coreml-cli)**:
+**Profile (M2, coreml-cli, all three models re-measured in same session)**:
 
-| Compute Unit | CPU | GPU | ANE | Predict |
+| Model | `.all` | `.cpu_only` | `.cpu_and_gpu` | `.cpu_and_neural_engine` |
 |---|---|---|---|---|
-| all | 1.4% | 9.9% | 88.7% | **64.77 ms** |
-| cpu_only | 100.0% | — | — | 26.23 ms |
-| cpu_and_gpu | — | 100.0% | — | 28.64 ms |
-| cpu_and_neural_engine | — | — | — | ANEF compile fails |
+| decoder_step | 17.19 ms | 18.59 ms | 23.45 ms | **16.26 ms** (97.3% ANE) |
+| local_transformer | 3.07 ms | 1.09 ms | 3.86 ms | **1.57 ms** (73.9% ANE) |
+| fused_decoder_step_n2 | **64.77 ms** (88.7% ANE) | 26.23 ms | 28.64 ms | **ANEF compile fails** |
 
-**Baseline target to beat** (from "TTFA breakdown" table above):
-- Production policy `.cpu_and_neural_engine`: decoder_step 15.7 ms + LT 1.6 ms
-  = 17.3 ms × 2 = **34.6 ms**. N=2 fused fails to compile under this policy
-  (ANEF error), so this is the *intended* target.
-- Apples-to-apples `.all` (only policy where N=2 actually runs): decoder_step
-  16.8 ms + LT 3.6 ms = 20.4 ms × 2 = **40.8 ms**.
+**Head-to-head, per policy** (N=2 fused vs 2 × sequential):
 
-N=2 fused `.all` = 64.77 ms is **+23.97 ms** vs the lenient `.all`-baseline and
-**+30.2 ms** vs the production-policy baseline. Lever loses on both yardsticks.
+| Policy | 2 × sequential | N=2 fused | Δ |
+|---|---|---|---|
+| `.all` | 40.52 ms | 64.77 ms | **+24.25 ms (1.60×)** |
+| `.cpu_only` | 39.36 ms | 26.23 ms | −13.13 ms (0.67×) |
+| `.cpu_and_gpu` | 54.62 ms | 28.64 ms | −25.98 ms (0.52×) |
+| `.cpu_and_neural_engine` (prod) | 35.66 ms | err | N=2 cannot run |
+
+Two notable findings:
+
+1. **N=2 fused IS faster than 2 sequential calls on CPU-only and CPU+GPU**
+   (dispatch amortization works as predicted). It just can't pay off on ANE
+   because the sampler tail forces partition thrash.
+
+2. **N=2 still loses under `.all` and is unrunnable under production
+   `.cpu_and_neural_engine`**. Swift's production code routes individual
+   models to `.cpu_and_neural_engine` (16.26 + 1.57 = 17.83 ms per iter,
+   35.66 ms × 2). The lever was always going to lose vs that — N=2 can't
+   even compile under that policy.
 
 **Root cause** (`coreml-cli --fallback`): **858 of 2315 ops fall back to CPU
 (37.1%)** despite 88.7% aggregate residency. The doubled sampler tail dominates
