@@ -1270,18 +1270,195 @@ uv run python coreml/exporters/trial10e1_t_mel_cap.py \
 
 Each candidate runs ~3-5 min (convert + probe + parity + bench).
 
-### Trial 10e2 — chunked decoder_upsample (Option 2) [NOT ATTEMPTED]
+### Trial 10e2 — ANE planner is the blocker, not per-op rejection
 
-Cancelled before implementation. The structural ANE blocker found by
-Trial 10e1 fires at any T_mel including T_mel = 50, where natural
-intermediate widths are well under the 16,384 limit. A chunking wrapper
-that subdivides the input into per-chunk T_mel ≤ 54 would still feed
-each chunk through the same wrapper graph — and that graph fails
-ANECCompile at the structural level regardless of input size. Chunking
-adds per-chunk overhead and overlap-discard plumbing on top of zero ANE
-acceleration; the math doesn't work. Trial 10e3 (op bisection) is the
-prerequisite; if a structural rewrite is found, both Option 1 (cap) and
-Option 2 (chunk) become real-options-in-search-of-a-shipping-target.
+Trial 10e1 ended with the structural-blocker hypothesis: ANE refuses
+something about the graph itself (an op, a tensor rank, a layer
+property), independent of T_mel. The next-step plan was either to
+unredact the `<private>` strings in `[com.apple.ane:compiler]` os_log
+output (cheap, ~5 min), or to bisect ops by ablation (multi-hour).
+Tried the unredact path first. **The redact attempt didn't fully unredact, but it surfaced a different finding that changes the bisection target.**
+
+#### 1. `private_data:on` is gone on macOS 26.5
+
+`sudo log config --mode "private_data:on"` returns:
+```
+log: Invalid Modes 'private_data:on'
+```
+
+Confirmed both with `--subsystem com.apple.ane` and globally. The
+legacy syntax was deprecated; per current `man log` on macOS 26.5
+(Darwin 25.5.0, build 25F5042g), `log config --mode` only accepts
+`level: {off|default|info|debug}` and `persist: {off|default|info|debug}`.
+
+Working alternatives:
+
+* `level:debug` — surfaces additional message types but does **not**
+  unredact `%{private}` fields.
+* Configuration profile (`com.apple.system.logging` payload with
+  `Enable-Private-Data: true` per subsystem) — installed via
+  `sudo profiles install -path <plist> -type configuration`, then
+  approved manually in System Settings → General → Device Management.
+  Requires GUI approval, persists across reboots, scope = system-wide
+  for the named subsystem.
+
+#### 2. `level:debug` empirically does not unredact
+
+Confirmed:
+```bash
+sudo log config --mode "level:debug" --subsystem com.apple.ane
+sudo log config --mode "level:debug" --subsystem com.apple.ane --category compiler
+sudo killall aned
+```
+
+The stream has more chatter (debug-level messages now visible) but
+every previously redacted field still renders as `<private>` — only
+the configuration profile path actually unredacts. `level:debug` is
+strictly a verbosity knob, not a privacy override.
+
+#### 3. New finding from the level:debug capture: ANECompilerService never reports failure
+
+Over a ~4-minute compile attempt at T_mel = 50 (T_audio = 15,000, well
+under the 16,384 ANE-tile-width ceiling), os_log shows **dozens of
+SUCCESS lines** from `ANECompilerService`. Multi-threaded — concurrent
+work on threads `46a842e` and `46aa141` — every per-call result is
+`ret(0)` with `lErr=(nil)`. Representative pattern (each block repeats
+dozens of times):
+
+```
+ANECompilerService [com.apple.ane:compiler] Calling ANE compiler
+ANECompilerService [com.apple.ane:compiler] Calling ANE compiler done ret(0)
+aned                [com.apple.ane:aned]     FAILED removing <private> ...
+                                             NSPOSIXErrorDomain Code=2
+                                             "No such file or directory"
+                                             ...   ← harmless tmp-file cleanup
+ANECompilerService [com.apple.ane:compiler] Attempt to store <private>
+ANECompilerService [com.apple.ane:compiler] SUCCESS: model=<private> :
+                                             output=<private> :
+                                             lAttr=<private> : lErr=(nil)
+```
+
+`ret(0)` with `lErr=(nil)` is unambiguous: **the underlying ANE
+compiler accepts every subgraph it's handed.**
+
+#### 4. Contradiction with Python's `E5RT` layer
+
+While `ANECompilerService` reports nothing but successes, the Python
+`coremltools` runtime sitting on top simultaneously reports:
+
+```
+[coreml] E5RT: MILCompilerForANE error: failed to compile ANE model
+        using ANEF.
+        Error=_ANECompiler : ANECCompile() FAILED (11)
+```
+
+So the rejection is **not at per-call ANECompilerService**. It's at a
+layer above — most likely one of:
+
+* MIL → ANEF planner: deciding how to partition the graph into ANE
+  subgraphs and reassemble them into a deployable single-ANEF model
+  fails when the per-subgraph artifacts can't be linked.
+* Final whole-graph compile after subgraph caching: the "stitch" step
+  that combines the cached `<private>` files (visible in `Attempt to
+  store <private>`) into a single deployable artifact.
+* E5RT runtime load: the file is built but the runtime can't load it.
+
+The multi-threaded parallel ANECompilerService activity is informative
+on its own — it suggests the planner is **aggressively fragmenting**
+the graph into many small ANE-eligible subgraphs (which compile fine
+individually) but then can't reassemble the result.
+
+#### 5. Reframe of Issue #59 hypothesis space
+
+Issue #59's framing:
+> Identify the exact MIL op (or graph property) that ANE refuses
+
+was already loosened by Trial 10d / 10e1: not an op, but a width
+ceiling at large T_mel and a `<private>`-redacted structural
+rejection at small T_mel. **Trial 10e2 loosens it further:** the ANE
+compiler doesn't refuse anything at the per-subgraph level. The
+blocker is the *orchestration / partitioning strategy* that produces
+many small ANE-eligible chunks the planner can't link.
+
+The right question for bisection therefore shifts from:
+
+  ❌ *"What op is structurally rejected by ANE?"*
+
+to:
+
+  ✓ *"What property of the graph makes the planner over-fragment, and
+  what change reduces fragmentation to a linkable shape?"*
+
+This reframes the bisection target. Candidate causes of aggressive
+fragmentation, in priority order:
+
+1. **Skip / residual connections at high fan-out.** Each AdaINResBlock1
+   has three internal residual adds; the MRF aggregation sums three
+   resblocks per stage; the source-filter add joins two parallel
+   branches. Each residual forces the planner to materialize an
+   ANE-readable intermediate. If those intermediates exceed the
+   planner's per-subgraph budget, it splits aggressively.
+2. **Wide channel transitions in tight succession.** ConvTranspose1d
+   stages drop channels 512 → 256 → 128 → 64 → 32 in four steps. Each
+   transition may trigger a re-plan boundary.
+3. **AdaIN style input shape (1, 128).** A scalar-per-feature affine
+   modulation requires broadcasting across a (1, C, T) intermediate;
+   the planner may insert reshape boundaries around every AdaIN call
+   (88 instances per the production fp16 fallback table). That's a lot
+   of partitioning seams.
+4. **Snake activation count.** 101 instances of `pow(sin(αx), 2)`
+   placed after every AdaIN; even if Snake itself is ANE-supported,
+   the sheer number of activation boundaries multiplies fragmentation.
+
+Each candidate is testable by ablation (replace with linear / identity
+in strict diagnostic mode, re-convert, see if the planner stops
+fragmenting). The fragmentation signal is observable directly in the
+`level:debug` os_log stream — count the `Calling ANE compiler` /
+`SUCCESS:` pairs per compile attempt. Fewer pairs = less fragmentation
+= closer to a linkable graph.
+
+#### 6. Cost-benefit: stop unredacting, start bisecting
+
+The configuration-profile path requires GUI approval, persists across
+reboots, scope is system-wide, and the payoff is a single string
+inside `lErr.NSLocalizedDescription` — which, given finding #3, may
+only describe the `_ANECompiler` runtime layer's error rather than
+the underlying planner reason. ~4 min compile + GUI friction +
+uncertain payoff isn't worth it. **Pivoting to op bisection** with the
+reframed target (reduce fragmentation, not avoid a "rejected op").
+
+### Suggested Trial 10e3 — bisection by ablation
+
+Now reframed around fragmentation reduction, in priority order:
+
+1. **Drop AdaIN affine modulation.** Replace `AdaIN1d(style_dim,
+   channels)` with a plain `LayerNorm` (no style conditioning), then
+   re-convert. Watch the os_log fragmentation count. If the count
+   drops sharply, AdaIN is the partitioning trigger. Weight-preserving
+   replacement: bake the AdaIN affine into the trained weights at
+   export time (style `s` is known at conversion time per stage in the
+   production manifest? — only if speakers are fixed at conversion;
+   typically not).
+2. **Replace Snake → identity** (pure diagnostic, no shipping intent).
+   If fragmentation drops, the partitioning is per-activation. Then
+   try the cosine-identity rewrite (`x + (1 − cos(2αx))/(2α)`) which
+   is bit-equivalent at fp32 (already validated by Kokoro-ANE's port);
+   if it lands the planner, ship that.
+3. **Fold residuals.** Replace residual adds in `AdaINResBlock1` with
+   in-place modifications (no separate add node). Risky for parity but
+   cheap to ablate.
+4. **Halve the upsample stack.** Drop `ups[2]` and `ups[3]` (final two
+   stages), trace + convert, see if the truncated graph plans cleanly.
+   If yes, the issue is depth-related; if no, it's elsewhere.
+
+Cost per ablation: ~2 min trace+convert + ~80 s ANE compile ≈ 3-4 min.
+Five ablations ≈ 20 min. Each one yields a fragmentation-count delta.
+
+### Artifacts
+
+* No new mlpackage produced this trial.
+* Captured probe outputs from `level:debug` session retained at
+  `/tmp/ane_log_t50_debug.log` (user-side; not committed).
 
 ## Trial 11 — token-axis bucketing for `bert` + `fused_diffusion_sampler` (fp16)
 
