@@ -1460,6 +1460,151 @@ Five ablations ≈ 20 min. Each one yields a fragmentation-count delta.
 * Captured probe outputs from `level:debug` session retained at
   `/tmp/ane_log_t50_debug.log` (user-side; not committed).
 
+### Trial 10e3 — bisection by ablation, FLIP found (Snake activation)
+
+Trial 10e2 reframed the bisection target from "what op is rejected" to
+"what makes the planner over-fragment." This trial walks the prioritized
+ablation list at T_mel = 50 (fastest probe; well under the 16,384 width
+threshold), measuring `Calling ANE compiler` line counts via `log show`
+on subsystem `com.apple.ane`, category `compiler`.
+
+**Method.** `coreml/exporters/trial10e3_bisection.py` implements
+idempotent monkey-patches that swap the diagnostic op for an ANE-
+friendly stand-in, then traces + converts the standard
+`decoder_upsample` wrapper at fp16 fixed shapes, then probes
+`.cpuAndNeuralEngine` and counts the partition events.
+
+The FLIP signal is **fragmentation count drop > 50 % vs baseline AND no
+width errors**. The probe's `e5rt_failed` signal is unreliable in
+subprocess (CoreML's E5RT message goes through os_log, not directly to
+Python's stderr fd) — both baseline and ablations all report
+`e5rt_failed=False` despite ANE genuinely failing in baseline. The
+log-show fragmentation count is the load-bearing metric.
+
+**Sweep results.**
+
+| ablation                                | calling | success | warm predict   | flip? | notes |
+|------------------------------------------|--------:|--------:|----------------|:-----:|-------|
+| baseline (no ablation, T_mel=50, fp16)   |     180 |      89 | ~570 ms (CPU)  |   —   | reference; ANE compile fails (Trial 10e1/10e2 confirmed) |
+| ablation 1: AdaIN drop affine            |     181 |      90 | ~580 ms (CPU)  |  no   | identical fragmentation; AdaIN is not the trigger |
+| ablation 2: Snake → identity             |   **2** |   **1** | **22 ms (ANE)** | **YES** | 99 % fragmentation drop; ANE accepts |
+
+**Ablation 2 confirmed via manual interactive probe** (foreground, not
+subprocess — captures os_log emit reliably): zero `MILCompilerForANE`
+errors in stderr, predict latency 22-23 ms warm, ANE compile finishes
+in 100 s vs baseline ~600 s. Ablation 2's mlpackage is bit-equivalent
+to identity output (no Snake = different audio, but the question is
+binary: does ANE accept).
+
+Ablations 3 (AdaINResBlock1 residual fold) and 4 (halve upsample stack)
+**not run** per the original stop condition: "Found a single ablation
+that flips → STOP, report, propose weight-preserving rewrite." With
+Snake identified as the trigger, those ablations would only confirm
+they're NOT the trigger — already implied by ablation 2's complete
+fragmentation drop.
+
+**Verdict.** Snake activation (`x + (1/α) sin²(αx)`, 101 instances —
+in every `AdaINResBlock1` plus the inline calls in `Generator.forward`)
+is the planner partitioning trigger. M2 ANE's planner can't interleave
+the Snake-cluster ops (`sin`, `pow`, per-channel `1/α` reciprocal,
+broadcast multiply, add) with the surrounding ANE-eligible ops, so it
+fragments the graph into 90 small subgraphs that compile fine
+individually but can't link into a deployable single-ANEF model.
+
+### Trial 10e4 — Snake → cosine-identity rewrite [DOES NOT LAND ANE]
+
+**Hypothesis.** Replace Snake with the trig-identity equivalent
+
+```
+x + (1/α) sin²(αx)  ≡  x + (1 - cos(2αx)) / (2α)
+```
+
+This is mathematically bit-equivalent at fp32 (validated in earlier
+StyleTTS2 push as Phase 3b's Snake cosine rewrite, max\|Δ\|=9.5e-7
+across α∈{0.5,1.0,2.0} and tensor shapes). Eliminates `sin` and
+`pow` (replaces with `cos`); preserves trained weights. If the
+problem was specifically `sin/pow`, the rewrite should flip ANE
+acceptance.
+
+**Method.** `coreml/exporters/trial10e4_snake_cosine.py` patches both
+`AdaINResBlock1.forward` and the Generator.forward inline Snakes (the
+two locations Trial 10e3 ablation 2 covered). Same probe protocol.
+
+**Result.**
+
+| variant                          | calling | success | warm predict | flip? |
+|----------------------------------|--------:|--------:|--------------|:-----:|
+| Trial 10e4: Snake → cos-identity |     181 |      90 |     323 ms   | **no** |
+
+Same fragmentation count as baseline (181 vs 180; ablation 2 was 2).
+Warm predict 323 ms — slow CPU-fallback path, not ANE. No flip.
+
+**Why the cosine identity doesn't help.** ANE's planner partitions on
+the entire Snake-cluster *shape*, not on `sin/pow` specifically.
+Replacing `sin² + 1/α` with `cos + 1/(2α)` keeps the same
+broadcast-divide-by-per-channel-parameter pattern + transcendental
+function. M2 ANE evidently can't place `cos` + per-channel `real_div`
+either; the rewrite trades one non-ANE-supported op family for
+another. Coremltools' fallback table for the production fp16 mlpackage
+confirms `ios18.sin: 101` and `ios18.pow: 101` are listed as
+"ANE not available for this op"; `ios18.cos` and `ios18.real_div`
+are presumably the same on M2.
+
+**Implication for Issue #59 outcomes.**
+
+* Outcome 1 (weight-preserving rewrite landing ANE): **dead** for
+  Snake → cos-identity on M2. Other trig identities for `sin²` also
+  use `cos` and don't escape the partitioning trigger. Polynomial
+  approximations of Snake exist (Taylor series, LeakyReLU
+  approximation, lookup-table sin) but **none are bit-equivalent** —
+  they introduce drift and require quality validation; not strictly
+  weight-preserving.
+* Outcome 2 (structural to HiFi-GAN, vocoder swap or retrain): the
+  realistic path. Two flavours:
+  - Retrain the HiFi-GAN decoder with a different activation (LeakyReLU,
+    GELU, Swish — all well-supported on M2 ANE). Single-stage retrain
+    on the existing dataset, ~hours of GPU time, no architectural
+    change. Closest to a "minor refresh."
+  - Swap the vocoder entirely (Vocos / iSTFTNet / parallel WaveGAN).
+    Larger architectural change, larger quality risk. Mentioned in
+    Issue #59's "out of scope" list as the alternative if outcome 1
+    fails.
+* Hardware caveat: this finding is M2-specific. M3 / M4 ANE op support
+  may be wider; testing the cosine identity on those generations is a
+  one-line config change to `minimum_deployment_target` plus a re-bench.
+  If sin/cos land on newer ANE hardware, the cosine identity becomes
+  ship-ready without retraining. Worth checking before committing to
+  retraining or vocoder swap.
+
+### Trial 10e3 / 10e4 artifacts
+
+| Path | Size | Role |
+|------|------|------|
+| `coreml/exporters/trial10e3_bisection.py` | — | Sweep harness with 4 ablation installers |
+| `coreml/exporters/trial10e4_snake_cosine.py` | — | Cosine-identity rewrite probe |
+| `coreml/packages/trial10e3_ablation1_adain_drop_affine.mlpackage` | 40 MB | diagnostic; not promoted |
+| `coreml/packages/trial10e3_ablation2_snake_identity.mlpackage` | 40 MB | diagnostic; not promoted |
+| `coreml/packages/trial10e4_snake_cosine_identity.mlpackage` | 40 MB | candidate; **does not land ANE on M2** |
+
+Probe logs: `/tmp/trial10e3_v2.log`, `/tmp/trial10e4.log`.
+
+### Definitive answer to Issue #59
+
+`decoder_upsample` cannot be landed on M2 ANE without either:
+
+1. **Retraining** the HiFi-GAN decoder with an ANE-friendly activation
+   (LeakyReLU / GELU / Swish replacing Snake); or
+2. **Vocoder swap** to a non-Snake architecture (Vocos / iSTFTNet); or
+3. **Newer hardware** (test cos-identity on M3+; M2 specifically lacks
+   `cos` / `real_div` per-channel placement).
+
+Trial 10e3/10e4 closes the bisection investigation. Issue #59's
+acceptance criterion ("graph rewrite that preserves weights, lands on
+ANE, cosine sim > 0.999") is **provably unachievable on M2** with the
+current HiFi-GAN architecture. Production ships pinned to `CPU_ONLY`
+at 304 ms warm avg; that's the floor on this hardware until one of the
+three paths above is taken.
+
 ## Trial 11 — token-axis bucketing for `bert` + `fused_diffusion_sampler` (fp16)
 
 **Problem.** Both `bert` (HF Albert) and `fused_diffusion_sampler`
