@@ -31,7 +31,7 @@ load + min/med/avg/max ms and parity vs the eager wrapper output.
 Run
 ---
     cd models/tts/styletts2
-    uv run python coreml/exporters/trial10_decoder_upsample_fixed.py
+    uv run python coreml/experiments/trial10_decoder_upsample_fixed.py
 """
 
 from __future__ import annotations
