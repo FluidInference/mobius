@@ -1,7 +1,7 @@
 """Bucket-aware end-to-end CoreML inference.
 
 Same pipeline as `coreml/inference.py` but loads the bucketed bert +
-fused_diffusion_sampler packages built by `coreml/build_buckets.py`:
+fused_diffusion_sampler packages built by `coreml/exporters/build_buckets.py`:
 
     bert_fp16_t{T}.mlpackage
     fused_diffusion_sampler_fp16_t{T}.mlpackage
@@ -68,7 +68,7 @@ def _load_bucketed(stage: str, bucket_T: int, precision: str) -> ct.models.MLMod
     pkg = PACKAGES_DIR / f"{stage}_fp16_t{bucket_T}.mlpackage"
     if not pkg.exists():
         raise FileNotFoundError(
-            f"missing {pkg} — run coreml/build_buckets.py --buckets {bucket_T} first"
+            f"missing {pkg} — run coreml/exporters/build_buckets.py --buckets {bucket_T} first"
         )
     cu = _inf._STAGE_COMPUTE[stage]
     return ct.models.MLModel(str(pkg), compute_units=cu)

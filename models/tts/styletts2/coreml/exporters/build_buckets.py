@@ -5,7 +5,7 @@ Why
 Bert and fused_diffusion_sampler are the two stages whose token axis
 (T_TOK) cannot be `ct.RangeDim` — HF Albert and the cross-attention in
 the diffusion sampler both contain shape ops the MLProgram CPU backend
-rejects under data-dependent shapes (see notes in `coreml/convert.py`
+rejects under data-dependent shapes (see notes in `coreml/exporters/convert.py`
 on bert and diffusion_unet).
 
 iteration_3 ships both at T=57 (the captured shape from the default
@@ -36,9 +36,9 @@ Disk delta vs single T=57 build (fp16):
 Run
 ---
     cd models/tts/styletts2
-    uv run python coreml/build_buckets.py
-    uv run python coreml/build_buckets.py --buckets 64,128
-    uv run python coreml/build_buckets.py --precision fp32 --stages bert
+    uv run python coreml/exporters/build_buckets.py
+    uv run python coreml/exporters/build_buckets.py --buckets 64,128
+    uv run python coreml/exporters/build_buckets.py --precision fp32 --stages bert
 """
 
 from __future__ import annotations
@@ -54,13 +54,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-_HERE = Path(__file__).resolve().parent.parent
+_HERE = Path(__file__).resolve().parent.parent.parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
-from coreml import convert as _convert  # noqa: F401  (installs MIL patches)
+from coreml.exporters import convert as _convert  # noqa: F401  (installs MIL patches)
 from coreml._runtime import HERE, build_runtime, stage_example_inputs
-from coreml.fuse_diffusion_sampler import FusedDiffusionSampler
+from coreml.exporters.fuse_diffusion_sampler import FusedDiffusionSampler
 from coreml.wrappers import BertWrapper
 
 PACKAGES_DIR = HERE / "coreml" / "packages"

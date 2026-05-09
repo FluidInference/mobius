@@ -36,7 +36,7 @@ to confirm the 1D→2D swap is mathematically a no-op).
 Run
 ---
     cd models/tts/styletts2
-    uv run python coreml/trial10b_decoder_upsample_conv2d.py
+    uv run python coreml/exporters/trial10b_decoder_upsample_conv2d.py
 """
 
 from __future__ import annotations
@@ -49,11 +49,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-_HERE = Path(__file__).resolve().parent.parent
+_HERE = Path(__file__).resolve().parent.parent.parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
-from coreml import convert as _convert  # noqa: F401  (installs MIL patches)
+from coreml.exporters import convert as _convert  # noqa: F401  (installs MIL patches)
 from coreml._runtime import HERE, build_runtime, stage_example_inputs
 from coreml.wrappers import build_wrapper
 

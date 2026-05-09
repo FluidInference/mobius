@@ -48,9 +48,9 @@ multiple bucket sizes, run this script once per bucket with --t-tok.
 Run
 ---
     cd models/tts/styletts2
-    uv run python coreml/fuse_diffusion_sampler.py
-    uv run python coreml/fuse_diffusion_sampler.py --precision fp16
-    uv run python coreml/fuse_diffusion_sampler.py --t-tok 128 --suffix _t128
+    uv run python coreml/exporters/fuse_diffusion_sampler.py
+    uv run python coreml/exporters/fuse_diffusion_sampler.py --precision fp16
+    uv run python coreml/exporters/fuse_diffusion_sampler.py --t-tok 128 --suffix _t128
 """
 
 from __future__ import annotations
@@ -65,11 +65,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-_HERE = Path(__file__).resolve().parent.parent
+_HERE = Path(__file__).resolve().parent.parent.parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
-from coreml import convert as _convert  # noqa: F401  (installs MIL patches)
+from coreml.exporters import convert as _convert  # noqa: F401  (installs MIL patches)
 from coreml._runtime import HERE, build_runtime
 from coreml.wrappers import DiffusionDenoiseStepWrapper
 

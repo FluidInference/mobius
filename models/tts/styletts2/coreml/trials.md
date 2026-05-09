@@ -70,7 +70,7 @@ The two ops that stay on Python:
 
 * Decided on the 7-stage split above (see table).
 * Added `coremltools>=8.0` to `pyproject.toml` (resolved to 9.0).
-* Created `coreml/wrappers.py`, `coreml/convert.py`, `coreml/parity.py`,
+* Created `coreml/wrappers.py`, `coreml/exporters/convert.py`, `coreml/parity.py`,
   `coreml/packages/` (gitignored .mlpackage outputs).
 * Existing parity baseline (`scripts/parity_check.py`,
   `pipeline/orchestrator.py`) gives MSE = 0.0 vs `run_inference.py` —
@@ -282,7 +282,7 @@ The two ops that stay on Python:
 
 ## Cross-cutting fixes
 
-These live in `coreml/convert.py` / `coreml/wrappers.py` and apply
+These live in `coreml/exporters/convert.py` / `coreml/wrappers.py` and apply
 globally — adding new stages should not require revisiting them.
 
 * **`_patch_coreml_int_cast()`** — replaces `coremltools` `_cast` so it
@@ -340,7 +340,7 @@ convert input descriptors, inference manifest + dispatch all wired:
 |------|--------|
 | `coreml/wrappers.py` | `DecoderPreWrapper`, `DecoderUpsampleWrapper`; `STAGE_NAMES` and `build_wrapper` registered |
 | `coreml/_runtime.py` | `stage_example_inputs` / `stage_reference_outputs` branches |
-| `coreml/convert.py` | `T_FRAME2` RangeDim + `decoder_pre` / `decoder_upsample` input descriptors |
+| `coreml/exporters/convert.py` | `T_FRAME2` RangeDim + `decoder_pre` / `decoder_upsample` input descriptors |
 | `coreml/inference.py` | `_STAGE_COMPUTE` (pre→`CPU_AND_NE`, upsample→`CPU_ONLY`), `_STAGE_PRECISION` (both fp16), separate dispatch |
 
 Boundary tensor: `x_pre [1, 512, T_F * 2]` ≈ 150 KB at fp16 for 3 s
@@ -412,7 +412,7 @@ permanently a dead end.
 (via `coremltools.optimize.coreml.linear_quantize_weights`) cut weight
 DRAM traffic 4× and should give 1.5-2× warm on CPU. No retrain.
 
-**Implementation.** Added `quantize_stage()` to `coreml/convert.py`
+**Implementation.** Added `quantize_stage()` to `coreml/exporters/convert.py`
 that takes an existing fp16 mlpackage and applies post-training
 weight-only quantization (per-channel symmetric int8,
 `weight_threshold=2048`). New CLI: `--precision int8 --stage <name>`.
@@ -421,7 +421,7 @@ Inference manifest extended: `_STAGE_PRECISION` accepts `"int8"`,
 `--int8 <stage…>` mirrors `--fp16` / `--fp32`.
 
 ```bash
-uv run python coreml/convert.py --stage decoder_upsample --precision int8
+uv run python coreml/exporters/convert.py --stage decoder_upsample --precision int8
 # decoder_upsample_fp16.mlpackage (41.9 MB) -> decoder_upsample_int8.mlpackage (21.4 MB), 51%
 ```
 
@@ -596,7 +596,7 @@ Fixed shapes used: `x_pre [1,512,294]`, `ref [1,128]`,
 `har_source [1,1,88200]` (T_FRAME=147, the trace default).
 
 **Implementation.** New standalone script
-`coreml/trial10_decoder_upsample_fixed.py`:
+`coreml/exporters/trial10_decoder_upsample_fixed.py`:
 * loads `build_runtime()` + `build_wrapper("decoder_upsample", ...)` —
   same wrapper used by `convert.py`,
 * traces at fixed shapes,
@@ -654,7 +654,7 @@ under macOS 15 / coremltools 9.
 
 **Artifacts.**
 
-* `coreml/trial10_decoder_upsample_fixed.py` — script (gitignored
+* `coreml/exporters/trial10_decoder_upsample_fixed.py` — script (gitignored
   output package).
 * `decoder_upsample_trial10_fp32_fixed.mlpackage` — saved locally;
   not promoted to `iteration_3/packages/`.
@@ -674,7 +674,7 @@ the replacement boundaries; MIL has the chance to fold adjacent
 squeeze/unsqueeze pairs.
 
 **Implementation.** New standalone script
-`coreml/trial10b_decoder_upsample_conv2d.py`:
+`coreml/exporters/trial10b_decoder_upsample_conv2d.py`:
 * `Conv1dAs2d` / `ConvTranspose1dAs2d` drop-in modules,
 * `_swap_convs_inplace(wrapper)` walks the wrapper's submodule tree
   and replaces every `Conv1d` (101 instances) and `ConvTranspose1d`
@@ -757,7 +757,7 @@ cumsum in the generator; `har_source` is pre-computed input).
 
 **Artifacts.**
 
-* `coreml/trial10b_decoder_upsample_conv2d.py` — script.
+* `coreml/exporters/trial10b_decoder_upsample_conv2d.py` — script.
 * `decoder_upsample_trial10b_fp32_conv2d.mlpackage` — saved locally;
   not promoted.
 
@@ -783,14 +783,14 @@ Buckets chosen to cover typical TTS surface area:
 | 128    | 128   | ≤ 85            | full sentence             |
 | 256    | 256   | ≤ 170           | short paragraph           |
 
-**Builder.** `coreml/build_buckets.py` (one driver) reuses the existing
+**Builder.** `coreml/exporters/build_buckets.py` (one driver) reuses the existing
 `BertWrapper` and the restored `FusedDiffusionSampler` from Trial 4.
 Per bucket: pad captured (tokens, attn_mask) to T, trace, convert at
 fp16 to match iteration_3 precision. Eager parity gate (`max|d| <
 1e-4`) before each conversion.
 
 ```bash
-uv run python coreml/build_buckets.py \
+uv run python coreml/exporters/build_buckets.py \
     --buckets 64,128,256 --stages bert,sampler --precision fp16
 ```
 
@@ -847,7 +847,7 @@ the embedding the sampler receives, which is the bert output).
 
 **Artifacts.**
 
-* `coreml/build_buckets.py` — driver.
+* `coreml/exporters/build_buckets.py` — driver.
 * `coreml/inference_buckets.py` — bucket-aware end-to-end driver.
 * `coreml/packages/{bert,fused_diffusion_sampler}_fp16_t{64,128,256}.mlpackage` — outputs.
 * `coreml/out_t{64,128,256}.wav` — validation audio.
@@ -858,21 +858,21 @@ the embedding the sampler receives, which is the bert output).
 cd models/tts/styletts2
 
 # Convert all stages (writes coreml/packages/*.mlpackage)
-uv run python coreml/convert.py --stage all
-uv run python coreml/convert.py --stage text_encoder
+uv run python coreml/exporters/convert.py --stage all
+uv run python coreml/exporters/convert.py --stage text_encoder
 
 # Per-stage parity vs PyTorch
 uv run python coreml/parity.py --stage all
 uv run python coreml/parity.py --stage text_encoder
 
 # Trial 10: decoder_upsample fp32 fixed-shape ANE probe
-uv run python coreml/trial10_decoder_upsample_fixed.py
+uv run python coreml/exporters/trial10_decoder_upsample_fixed.py
 
 # Trial 10b: decoder_upsample fp32 + Conv1d→Conv2d rewrite
-uv run python coreml/trial10b_decoder_upsample_conv2d.py
+uv run python coreml/exporters/trial10b_decoder_upsample_conv2d.py
 
 # Trial 11: per-bucket bert + sampler (T=64/128/256), fp16
-uv run python coreml/build_buckets.py \
+uv run python coreml/exporters/build_buckets.py \
     --buckets 64,128,256 --stages bert,sampler --precision fp16
 uv run python coreml/inference_buckets.py --all --output-dir coreml
 ```

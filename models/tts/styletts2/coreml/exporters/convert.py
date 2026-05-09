@@ -3,8 +3,8 @@
 Usage:
 
     cd models/tts/styletts2
-    uv run python coreml/convert.py --stage all
-    uv run python coreml/convert.py --stage text_encoder
+    uv run python coreml/exporters/convert.py --stage all
+    uv run python coreml/exporters/convert.py --stage text_encoder
 
 Output: coreml/packages/<stage>.mlpackage (gitignored).
 
@@ -21,10 +21,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-# Allow `python coreml/convert.py` from the project root to import the
+# Allow `python coreml/exporters/convert.py` from the project root to import the
 # `coreml` package: prepend the project root to sys.path before any
 # `from coreml.* import` statements.
-_HERE = Path(__file__).resolve().parent.parent
+_HERE = Path(__file__).resolve().parent.parent.parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 

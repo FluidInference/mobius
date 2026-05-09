@@ -179,7 +179,7 @@ buckets to save ~60 MB.
 cd models/tts/styletts2
 
 # Build buckets (writes to coreml/packages/, run once)
-uv run python coreml/build_buckets.py \
+uv run python coreml/exporters/build_buckets.py \
     --buckets 64,128,256 --stages bert,sampler --precision fp16
 
 # Stage into iteration_3 + compile

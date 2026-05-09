@@ -44,8 +44,8 @@ package accepts any sentence length.
 Run
 ---
     cd models/tts/styletts2
-    uv run python coreml/fuse_f0n_har_source.py
-    uv run python coreml/fuse_f0n_har_source.py --precision fp16
+    uv run python coreml/exporters/fuse_f0n_har_source.py
+    uv run python coreml/exporters/fuse_f0n_har_source.py --precision fp16
 """
 
 from __future__ import annotations
@@ -60,11 +60,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-_HERE = Path(__file__).resolve().parent.parent
+_HERE = Path(__file__).resolve().parent.parent.parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
-from coreml import convert as _convert  # noqa: F401  (installs MIL patches)
+from coreml.exporters import convert as _convert  # noqa: F401  (installs MIL patches)
 from coreml._runtime import HERE, build_runtime, stage_example_inputs
 from coreml.wrappers import F0NPredictorWrapper, HarSourceWrapper
 

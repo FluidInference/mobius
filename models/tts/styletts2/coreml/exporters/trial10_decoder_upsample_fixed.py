@@ -31,7 +31,7 @@ load + min/med/avg/max ms and parity vs the eager wrapper output.
 Run
 ---
     cd models/tts/styletts2
-    uv run python coreml/trial10_decoder_upsample_fixed.py
+    uv run python coreml/exporters/trial10_decoder_upsample_fixed.py
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-_HERE = Path(__file__).resolve().parent.parent
+_HERE = Path(__file__).resolve().parent.parent.parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
@@ -51,7 +51,7 @@ if str(_HERE) not in sys.path:
 # `_register_aten_aliases` — both are required for the decoder graph to
 # convert cleanly (HiFi-GAN uses `torch.multiply`; the LSTM weight-norm
 # strip emits `aten::Int` chains).
-from coreml import convert as _convert  # noqa: F401  (side-effect import)
+from coreml.exporters import convert as _convert  # noqa: F401  (side-effect import)
 from coreml._runtime import HERE, build_runtime, stage_example_inputs
 from coreml.wrappers import build_wrapper
 

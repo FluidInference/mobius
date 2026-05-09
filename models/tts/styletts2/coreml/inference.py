@@ -162,7 +162,7 @@ def _load_stage(
     }[prec]
     pkg = PACKAGES_DIR / f"{stage}{suffix}.mlpackage"
     if not pkg.exists():
-        raise FileNotFoundError(f"missing {pkg} — run coreml/convert.py first")
+        raise FileNotFoundError(f"missing {pkg} — run coreml/exporters/convert.py first")
     cu = compute_units if compute_units is not None else _STAGE_COMPUTE[stage]
     return ct.models.MLModel(str(pkg), compute_units=cu)
 
@@ -329,7 +329,7 @@ def main() -> int:
             "Override `_STAGE_PRECISION` to int8 (post-training weight-only "
             "quantized) for the listed stages. Requires the matching "
             "`<stage>_int8.mlpackage` to exist (build via "
-            "`coreml/convert.py --stage <stage> --precision int8`)."
+            "`coreml/exporters/convert.py --stage <stage> --precision int8`)."
         ),
     )
     parser.add_argument(
@@ -341,7 +341,7 @@ def main() -> int:
             "Override `_STAGE_PRECISION` to int8pal (post-training k-means "
             "8-bit weight palettization) for the listed stages. Requires "
             "the matching `<stage>_int8pal.mlpackage` to exist (build via "
-            "`coreml/convert.py --stage <stage> --precision int8pal`)."
+            "`coreml/exporters/convert.py --stage <stage> --precision int8pal`)."
         ),
     )
     parser.add_argument(
