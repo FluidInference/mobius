@@ -113,3 +113,112 @@ python -m coreml.inference --fp32
 Other quantization tiers (int8 weight-only, int4 palettization) deferred
 to a future iteration — fp16 already pays for itself on disk and warm
 latency.
+
+## Token-axis buckets (Trial 11)
+
+The `bert` and `fused_diffusion_sampler` packages reject `ct.RangeDim`
+on the token axis (HF Albert + cross-attn produce ops MIL refuses with
+"data-dependent shapes were disabled"). The default packages above
+hard-code T = 57, which caps prompts at ~37 chars.
+
+To support longer prompts without RangeDim, this iteration ships
+**three additional fixed-T variants** of each constrained stage:
+
+| File                                              | Compute      | Size  |
+|---------------------------------------------------|--------------|-------|
+| `bert_fp16_t64.mlpackage`                         | ALL          | 12 MB |
+| `bert_fp16_t128.mlpackage`                        | ALL          | 12 MB |
+| `bert_fp16_t256.mlpackage`                        | ALL          | 12 MB |
+| `fused_diffusion_sampler_fp16_t64.mlpackage`      | ALL          | 48 MB |
+| `fused_diffusion_sampler_fp16_t128.mlpackage`     | ALL          | 48 MB |
+| `fused_diffusion_sampler_fp16_t256.mlpackage`     | ALL          | 48 MB |
+| **Sub-total (extra over the 8 defaults)**         |              | **180 MB** |
+
+The original `bert_fp16.mlpackage` / `fused_diffusion_sampler_fp16.mlpackage`
+(T = 57) remain in the manifest as the default fast path — every
+sentence that fits T = 57 should keep using them. The bucketed variants
+are loaded on demand for longer prompts.
+
+Loader policy (Swift / Python):
+
+```
+real_n = #espeak tokens
+if   real_n <=  57: use *_fp16.mlpackage          (default)
+elif real_n <=  64: use *_fp16_t64.mlpackage
+elif real_n <= 128: use *_fp16_t128.mlpackage
+elif real_n <= 256: use *_fp16_t256.mlpackage
+else: error (extend the bucket ladder)
+```
+
+Pad the token + attention_mask tensors with zeros to the chosen
+bucket's T. `bert` honours `attention_mask`, so contamination at
+padded positions is bounded; the sampler attends to bert output, so
+it inherits the same masking.
+
+Per-bucket end-to-end inference verified by `coreml/inference_buckets.py
+--all` (writes `coreml/out_t{64,128,256}.wav`):
+
+| Bucket | Prompt                                     | Tokens | Audio  | Pipeline |
+|--------|--------------------------------------------|--------|--------|----------|
+| 64     | "Hello there. How are you today?"          | 36     | 2.42 s |  494 ms  |
+| 128    | "StyleTTS 2 is a text to speech model."    | 57     | 3.60 s |  414 ms  |
+| 256    | longer paragraph (see `inference_buckets.py`) | 154 | 8.37 s | 4933 ms  |
+
+T = 256 cost is dominated by `decoder_upsample` at 4.5 s / 4.9 s
+(real-time-ish CPU_ONLY at 24 kHz × 8.4 s output). Bucket-swap cost
+itself is a few ms; the rest of the pipeline scales with output
+frame count, not bucket size.
+
+**Total iteration_3 footprint with buckets: 451 MB** (274 MB defaults
++ 180 MB buckets), or skip the T = 57 defaults entirely and ship only
+buckets to save ~60 MB.
+
+### Build / refresh the bucketed packages
+
+```bash
+cd models/tts/styletts2
+
+# Build buckets (writes to coreml/packages/, run once)
+uv run python coreml/build_buckets.py \
+    --buckets 64,128,256 --stages bert,sampler --precision fp16
+
+# Stage into iteration_3 + compile
+for T in 64 128 256; do
+  for stage in bert fused_diffusion_sampler; do
+    cp -R "coreml/packages/${stage}_fp16_t${T}.mlpackage" \
+          "iteration_3/packages/${stage}_fp16_t${T}.mlpackage"
+    xcrun coremlcompiler compile \
+      "iteration_3/packages/${stage}_fp16_t${T}.mlpackage" \
+      "iteration_3/compiled/"
+  done
+done
+
+# Validate
+uv run python coreml/inference_buckets.py --all --output-dir coreml
+```
+
+### HuggingFace upload manifest
+
+Upload the entire `iteration_3/packages/` tree (14 mlpackages):
+
+```
+iteration_3/packages/
+├── text_encoder_fp16.mlpackage
+├── bert_fp16.mlpackage                              ← T=57 default
+├── bert_fp16_t64.mlpackage                          ← bucket
+├── bert_fp16_t128.mlpackage                         ← bucket
+├── bert_fp16_t256.mlpackage                         ← bucket
+├── ref_encoder_fp16.mlpackage
+├── fused_diffusion_sampler_fp16.mlpackage           ← T=57 default
+├── fused_diffusion_sampler_fp16_t64.mlpackage       ← bucket
+├── fused_diffusion_sampler_fp16_t128.mlpackage      ← bucket
+├── fused_diffusion_sampler_fp16_t256.mlpackage      ← bucket
+├── duration_predictor_fp16.mlpackage
+├── fused_f0n_har_source.mlpackage                   ← fp32 (cumsum drift)
+├── decoder_pre_fp16.mlpackage
+└── decoder_upsample_fp16.mlpackage
+```
+
+Total: **451 MB** (12 fp16 stages + 1 fp32 stage + 1 cumsum-sensitive
+stage). Compiled `.mlmodelc` siblings live next to the packages in
+`iteration_3/compiled/` — same file count, same total size.

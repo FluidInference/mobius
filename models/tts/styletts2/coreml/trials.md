@@ -761,6 +761,97 @@ cumsum in the generator; `har_source` is pre-computed input).
 * `decoder_upsample_trial10b_fp32_conv2d.mlpackage` — saved locally;
   not promoted.
 
+## Trial 11 — token-axis bucketing for `bert` + `fused_diffusion_sampler` (fp16)
+
+**Problem.** Both `bert` (HF Albert) and `fused_diffusion_sampler`
+(cross-attention U-Net) reject `ct.RangeDim` on the token axis —
+coremltools' MIL backend errors with *"data-dependent shapes were
+disabled"*. The iteration_3 packages therefore hard-code T = 57.
+Anything longer than 57 espeak tokens (~37 chars) errors out at
+runtime.
+
+**Approach.** Bake separate per-bucket mlpackages, no `EnumeratedShapes`
+(which the same MIL pass also rejects on these graphs). The Swift /
+Python loader picks the smallest bucket that fits the prompt's token
+count and pads to that bucket's T.
+
+Buckets chosen to cover typical TTS surface area:
+
+| Bucket | T_TOK | Char budget (~) | Rough use case            |
+|--------|-------|-----------------|---------------------------|
+| 64     | 64    | ≤ 42            | clause / short sentence   |
+| 128    | 128   | ≤ 85            | full sentence             |
+| 256    | 256   | ≤ 170           | short paragraph           |
+
+**Builder.** `coreml/build_buckets.py` (one driver) reuses the existing
+`BertWrapper` and the restored `FusedDiffusionSampler` from Trial 4.
+Per bucket: pad captured (tokens, attn_mask) to T, trace, convert at
+fp16 to match iteration_3 precision. Eager parity gate (`max|d| <
+1e-4`) before each conversion.
+
+```bash
+uv run python coreml/build_buckets.py \
+    --buckets 64,128,256 --stages bert,sampler --precision fp16
+```
+
+**Disk cost.** All six packages produced clean (fp16):
+
+| Package                                   | Size  |
+|-------------------------------------------|-------|
+| `bert_fp16_t64.mlpackage`                 | 12 MB |
+| `bert_fp16_t128.mlpackage`                | 12 MB |
+| `bert_fp16_t256.mlpackage`                | 12 MB |
+| `fused_diffusion_sampler_fp16_t64.mlpackage`  | 48 MB |
+| `fused_diffusion_sampler_fp16_t128.mlpackage` | 48 MB |
+| `fused_diffusion_sampler_fp16_t256.mlpackage` | 48 MB |
+| **Total (extra over iteration_3)**        | **~120 MB** |
+
+iteration_3 itself is ~275 MB; bucketed deployment becomes ~395 MB
+total if all three buckets are shipped. T = 57 (the original
+hard-coded) is a strict subset of T = 64 and can be dropped, so the
+real net delta is ~108 MB.
+
+**Validation.** `coreml/inference_buckets.py` runs the full 8-stage
+pipeline at each bucket, swapping in the bucketed `bert` + sampler
+packages and padding tokens to T. The other six iteration_3 stages
+(`text_encoder`, `ref_encoder`, `duration_predictor`,
+`fused_f0n_har_source`, `decoder_pre`, `decoder_upsample`) are
+loaded unchanged from `coreml/packages/`.
+
+```bash
+uv run python coreml/inference_buckets.py --all --output-dir coreml
+```
+
+Per-bucket result (M-series Mac, warm-ish — load + predict, single
+pass each):
+
+| Bucket | Prompt                                      | Real tokens / T | Frames | Audio | Pipeline |
+|--------|---------------------------------------------|------------------|--------|-------|----------|
+| 64     | "Hello there. How are you today?"           | 36 / 64          | 97     | 2.42 s | 494 ms |
+| 128    | "StyleTTS 2 is a text to speech model."     | 57 / 128         | 144    | 3.60 s | 414 ms |
+| 256    | "StyleTTS 2 is a text to speech model that produces clear, natural sounding speech in a variety of voices and speaking styles." | 154 / 256 | 335 | 8.37 s | 4933 ms |
+
+WAVs written to `coreml/out_t{64,128,256}.wav`. Spot-checked
+healthy: 24 kHz mono, peaks 0.6–0.7, RMS ~0.07 (typical TTS-level
+audio, no NaN/silence/clipping).
+
+The T = 256 pipeline is dominated by `decoder_upsample` (4.5 s of
+the 4.9 s) — that's expected since output audio is 8.4 s long
+(decoder is real-time-ish on CPU_ONLY at 24 kHz). The bucket
+swapouts themselves cost a few ms.
+
+**Verdict.** Bucketing works as designed. Padding contamination on
+`bert` is bounded by `attention_mask`, and the sampler doesn't
+attend to padded positions either (cross-attn is masked upstream by
+the embedding the sampler receives, which is the bert output).
+
+**Artifacts.**
+
+* `coreml/build_buckets.py` — driver.
+* `coreml/inference_buckets.py` — bucket-aware end-to-end driver.
+* `coreml/packages/{bert,fused_diffusion_sampler}_fp16_t{64,128,256}.mlpackage` — outputs.
+* `coreml/out_t{64,128,256}.wav` — validation audio.
+
 ## How to run
 
 ```bash
@@ -779,4 +870,9 @@ uv run python coreml/trial10_decoder_upsample_fixed.py
 
 # Trial 10b: decoder_upsample fp32 + Conv1d→Conv2d rewrite
 uv run python coreml/trial10b_decoder_upsample_conv2d.py
+
+# Trial 11: per-bucket bert + sampler (T=64/128/256), fp16
+uv run python coreml/build_buckets.py \
+    --buckets 64,128,256 --stages bert,sampler --precision fp16
+uv run python coreml/inference_buckets.py --all --output-dir coreml
 ```
