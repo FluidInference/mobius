@@ -979,6 +979,107 @@ supported (16414 > 16384.` / `(16390 > 16384.` plus the
 * `coreml/exporters/trial10d_step1_capture_ane_log.py` — probe.
 * No mlpackage produced or modified; iteration_3 unchanged.
 
+### Step 1c — same probe on Trial 10b (fp32 + Conv2d) and Trial 10c (fp16 + Conv2d)
+
+**Question.** Does the Conv1d → Conv2d rewrite sidestep the width
+limit? Trial 10b's earlier bench (`CPU_AND_NE` slower than `CPU_ONLY`)
+suggested ANE was still rejecting, but didn't surface the reason.
+
+**Method.** Re-ran `trial10b_decoder_upsample_conv2d.py` on this M2 to
+produce `decoder_upsample_trial10b_fp32_conv2d.mlpackage`, then a
+one-shot inline variant (`/tmp/trial10c_inline.py`, identical to
+trial10b except `compute_precision = FLOAT16`) to produce
+`decoder_upsample_trial10c_fp16_conv2d.mlpackage`. Both at the same
+fixed shapes — `x_pre = (1, 512, 294)`, `ref = (1, 128)`,
+`har_source = (1, 1, 88200)` (T_mel = 294 — identical to Step 1a/b
+fixture). Probed both with `coreml-cli --fallback --json` and the same
+`.cpuAndNeuralEngine` Python loader from `trial10d_step1_capture_ane_log.py`.
+
+**Comparison table.**
+
+| Artifact                        | Precision | Conv | Total ops | ANE % | Top rejection reason                                  | Espresso stderr                                                            |
+|---------------------------------|-----------|------|-----------|-------|-------------------------------------------------------|----------------------------------------------------------------------------|
+| iteration_3 (shipping)          | fp16      | 1D   | 1344      | 0.0 % | `"ANE not available for this op"` (1344)              | `Tensor width > 16384` (16414×6, 16390×6) + ANECCompile FAILED              |
+| Trial 10b                       | fp32      | 2D   | 1349      | 0.0 % | `"Invalid output tensor format: fp32"` (1348) + 1 op  | none — ANE planner refused at format gate, no compile attempt                |
+| Trial 10c                       | fp16      | 2D   | 1352      | 0.0 % | `"ANE not available for this op"` (1352)              | `Tensor width > 16384` (16414×6, 16390×6) + ANECCompile FAILED (×2)         |
+
+(Trial 10c has 8 more ops than the production 1D fp16 — the
+`unsqueeze(H=1) → conv2d → squeeze(H)` brackets around each `Conv1d` /
+`ConvTranspose1d`. Otherwise the graph is the same wrapper.)
+
+**Trial 10b (fp32) interpretation.** ANE never reaches the width check
+because `fp32` outputs are disqualified at the planner's format gate
+upstream. No ANE compile attempt → no `ANECCompile() FAILED` in
+stderr. The bench result (`CPU_AND_NE` 943 ms < `CPU_ONLY` 1108 ms on
+this M2 / macOS 26.5) does NOT indicate ANE acceptance — the speedup is
+likely from CPU+GPU planner splits that `CPU_ONLY` doesn't have. Trial
+10b's old "ANE-attempted-then-fallback" framing is wrong; ANE never
+attempts.
+
+**Trial 10c (fp16 + Conv2d) — the load-bearing comparison.**
+`coreml-cli --fallback` reports the **same** generic-catch-all rejection
+pattern as production fp16, and the Espresso stderr emits the **exact
+same** width-limit errors:
+
+```
+Error: Tensor width goes beyond limit supported (16414 > 16384.   (×6)
+Error: Tensor width goes beyond limit supported (16390 > 16384.   (×6)
+[espresso] [Espresso::handle_ex_plan] exception=ANECF error: failed to load ANE model
+   ... Error=ANECCompile(...) FAILED: err=( CompilationFailure )
+```
+
+Identical widths. Identical retry pattern. **Conv2d rewrite does NOT
+move the width budget.** ANE's 16,384-element limit is on the rank-N
+spatial axis regardless of whether T sits at the rank-3 W axis (1D
+unsqueeze trick) or the rank-3 W axis of a 4D tensor (the natural 2D
+layout) — same physical tensor, same hardware budget.
+
+**Trial 10c bench wasn't run** — same artifact size as production fp16
+(40 MB vs 41 MB), same MIL graph shape, same ANE outcome → no useful
+new latency information.
+
+**Outcome (per Issue #59 Step 4 tree).**
+
+> If same `Tensor width > 16384` error: Conv2d doesn't sidestep the
+> limit. Confirms the blocker is dimensionality / width-budget,
+> orthogonal to op type. Go to chunking (option 2) for Trial 10e.
+
+**Hit. Confirmed.** Conv2d is orthogonal to the blocker. Trial 10e
+should pursue **chunked decoder_upsample** (option 2 from Step 1's Step
+3 candidates): split the T axis into overlapping windows pre-`ups[1]`
+where the natural T is < 14,000, run the upsample stack per chunk, fuse
+outputs with overlap-aware stitching. The cumulative receptive field
+of the four ConvTranspose1d ops governs the required overlap; same
+weights, no retraining, lossless if overlap ≥ receptive field.
+
+The companion fallback path is **option 1** (production-cap
+T_mel ≤ ~280) which is trivially achievable through bucketed exporters
+and works today without code changes — Trial 11's bucketing pattern
+extends naturally. Combining options 1 + 2 (cap each ANE-eligible chunk
+to T_mel ≤ ~280) is the most robust shape: chunk for arbitrary input
+length, cap each chunk for ANE eligibility.
+
+### Step 1c artifacts
+
+* `coreml/packages/decoder_upsample_trial10b_fp32_conv2d.mlpackage` (79 MB)
+  — saved locally; not promoted.
+* `coreml/packages/decoder_upsample_trial10c_fp16_conv2d.mlpackage` (40 MB)
+  — saved locally; not promoted.
+* Probe artifacts: `/tmp/probe_trial10b.stderr`, `/tmp/probe_trial10c.stderr`,
+  `/tmp/trial10b_fallback.out`, `/tmp/trial10c_fallback.out`.
+
+### Acceptance per #59 (now actionable)
+
+- ✓ MIL "op" + reason: not an op; **ANE-compiler width-axis limit
+  (16,384) hit by post-`generator.ups[1]` intermediates at T_mel ≥ ~285**.
+- ✓ Confirmed dimensionality-orthogonal — not specific to Conv1d (1D)
+  vs Conv2d (2D) layout.
+- Decision per Step 3: **Outcome 1 (graph rewrite, no retraining)** is
+  the path. Specifically: chunked decoder_upsample (option 2) along T
+  axis, ± production-cap (option 1). Trial 10e to implement and verify
+  cosine sim > 0.999 vs iteration_3 fp32 reference at the original
+  T_mel = 294 fixture (and one larger T_mel that exercises chunking).
+
 ## Trial 11 — token-axis bucketing for `bert` + `fused_diffusion_sampler` (fp16)
 
 **Problem.** Both `bert` (HF Albert) and `fused_diffusion_sampler`
