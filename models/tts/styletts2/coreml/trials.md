@@ -761,6 +761,224 @@ cumsum in the generator; `har_source` is pre-computed input).
 * `decoder_upsample_trial10b_fp32_conv2d.mlpackage` — saved locally;
   not promoted.
 
+## Trial 10d — `decoder_upsample` ANE rejection: tensor-width limit (Step 1)
+
+Tracking issue: [#59](https://github.com/FluidInference/mobius/issues/59).
+
+**Goal.** Identify the concrete MIL op or graph property that causes
+ANECCompile to fail on `decoder_upsample`. Trials 10 (fixed-shape
+ConvTranspose1d, fp32) and 10b (fixed-shape, Conv1d→Conv2d rewrite,
+fp32) both confirmed ANE still refuses the graph after dynamism and
+1D→2D were ruled out. Three remaining hypotheses (per #59) were Snake
+activation, weight-norm-wrapped convs, or reflection padding.
+
+**All three hypotheses were wrong.** The blocker is none of those.
+
+### Setup
+
+* Artifact: `iteration_3/packages/decoder_upsample_fp16.mlpackage` —
+  the **production** fp16 mlpackage (what ships, pinned to `CPU_ONLY`
+  precisely because of the ANE rejection this issue investigates).
+  Pulled from HF via
+  `huggingface_hub.snapshot_download(allow_patterns=["iteration_3/packages/decoder_upsample_fp16.mlpackage/**"])`.
+* Fixture inputs: `iteration_3/swift/fixtures/decoder_upsample/in_*.npy`
+  (T_mel = 294, T_audio = 88,200 samples = ~3.7 s of 24 kHz audio).
+* Hardware: Apple M2, macOS 26.5.
+
+### Step 1a — coreml-cli fallback dump
+
+```
+cd tools/coreml-cli
+uv run coreml-cli .../iteration_3/compiled/decoder_upsample_fp16.mlmodelc \
+    --fallback --json
+```
+
+Result:
+
+| compute_units            | total ops | ANE | GPU | CPU | reason                          |
+|--------------------------|-----------|-----|-----|-----|---------------------------------|
+| `cpu_and_neural_engine`  | 1344      | **0** | 0 | 1344 | `"ANE not available for this op"` |
+
+The 0/1344 ANE residency on **every** op — including basic
+`ios18.add` (×353), `ios18.mul` (×302), `ios18.linear` (×96) that ANE
+trivially supports — is the **model-level ANECCompile bail signature**,
+not per-op rejection. The fallback walker reports the generic catch-all
+because the runtime never made it past the planner; the planner gave up
+on the whole graph and fell everything to CPU.
+
+After the JSON body, `coreml-cli` itself spilled the runtime stderr:
+
+```
+E5RT encountered an STL exception. msg = MILCompilerForANE error:
+  failed to compile ANE model using ANEF.
+  Error=_ANECompiler : ANECCompile() FAILED.
+```
+
+Same error #59 cites, but no detail on *why* compile failed.
+
+### Step 1b — ANE compile log via os_log + runtime stderr
+
+Probe: `coreml/exporters/trial10d_step1_capture_ane_log.py`.
+Loads the dereferenced fp16 mlpackage with
+`compute_units=CPU_AND_NE`, runs one predict to lazily provoke the
+ANE compile, captures everything the runtime emits.
+
+```
+MLLOG=1 OS_ACTIVITY_MODE=info OS_ACTIVITY_DT_MODE=enable \
+    uv run python coreml/exporters/trial10d_step1_capture_ane_log.py \
+    2>&1 | tee /tmp/trial10d_step1.log
+```
+
+The Espresso layer (Apple's ANE backend in CoreML) printed the
+**actual rejection reason** on Python stderr:
+
+```
+2026-05-09 13:57:02 [coreml] E5RT: MILCompilerForANE error: failed to
+  compile ANE model using ANEF.
+  Error=_ANECompiler : ANECCompile() FAILED (11)
+2026-05-09 13:57:03 Error: Tensor width goes beyond limit supported (16414 > 16384.
+2026-05-09 13:57:03 Error: Tensor width goes beyond limit supported (16414 > 16384.
+2026-05-09 13:57:03 Error: Tensor width goes beyond limit supported (16390 > 16384.
+2026-05-09 13:57:03 Error: Tensor width goes beyond limit supported (16390 > 16384.
+                            ... (12 lines total, alternating widths) ...
+2026-05-09 13:59:04 [espresso] [Espresso::handle_ex_plan]
+  exception=ANECF error: failed to load ANE model file:///private/var/folders/.../decoder_upsample_fp16.mlmodelc/model.mil
+  Error=ANECCompile(/Library/Caches/com.apple.aned/tmp/-/...) FAILED:
+  err=( CompilationFailure )
+2026-05-09 13:59:04 [coreml] Error plan build: -1.
+```
+
+The `[com.apple.ane:compiler]` subsystem messages were
+`<private>`-redacted in the os_log stream (the typical fate of ANE
+compile diagnostics on user macOS). The actionable strings landed on
+Python stderr regardless.
+
+### Finding
+
+**ANE has a hard width limit of 16,384 elements per tensor.** Two
+intermediate tensors in `decoder_upsample` exceed it at our fixture's
+T_mel = 294:
+
+* width **16,414** (overshoot 30) — appears 6×
+* width **16,390** (overshoot 6) — appears 6×
+
+(Each width prints twice per ANE attempt, presumably for two distinct
+op layouts, ×3 retry attempts before the planner gives up.)
+
+The MIL itself uses `?` for the time axis (it was traced with fixed
+shapes baked into the example_inputs but coremltools emits dynamic
+shapes for the time dim through ConvTranspose1d). The 16414 / 16390
+widths are computed **at compile time** by ANE during placement — they
+include ANE's internal layout / tiling padding on top of the natural
+intermediate tensor T. The natural T at the largest pre-rejection
+boundary is the post-`generator.ups[1]` width:
+
+```
+ups[0]: stride 10, kernel 20, T: 294        →  2950
+ups[1]: stride 5,  kernel 10, T: 2950 (post-trim)  → 14755 raw, ~14702 post-slice
+                                                   (this is the boundary that
+                                                    ANE's layout pads to >16384)
+ups[2]: stride 3,  kernel 6,  (further upsample to ~44k — never reached)
+ups[3]: stride 2,  kernel 4,
+```
+
+Post-`ups[1]` natural T ≈ 14702. ANE's layout pads/tiles this to
+either 16414 or 16390 depending on which intermediate tensor (likely
+the convolution output + the residual / noise-source-add branch)
+overflows. Either way, the rejection is **input-length-dependent**, not
+an op-type rejection.
+
+**This rules out all three #59 hypotheses:**
+
+* ❌ **Snake activation.** `mil.sin` / `mil.pow` execute on ANE for
+  smaller inputs; not the blocker.
+* ❌ **Weight-norm-wrapped convs.** Weight norm is folded by
+  `_remove_weight_norm_recursive` before tracing; the converted graph
+  has plain `weight` and `bias` constants. Not the blocker.
+* ❌ **Reflection / replication padding inside the ups blocks.** Snake
+  uses `pad` of `[0, 0]` (custom mode) per the MIL; no reflection /
+  replication pad is in the rejected subgraph.
+
+The blocker is **a hardware width-axis limit on intermediate tensors**,
+which is a function of input T_mel and the upsample stack's stride
+product. Issue #59's framing "which op causes ANE to refuse" doesn't
+fully apply — every op is fine; the *combination* of op chain plus
+input length pushes one intermediate over the limit.
+
+### Implications for Step 3 decision
+
+Issue #59 anticipated three outcomes; the actual finding maps to
+**outcome 1 (graph rewrite, no retraining)**, but the rewrite is *not*
+about an op type — it's about **how the upsample is sliced along T**.
+Three families of weight-preserving rewrites are viable:
+
+1. **T_mel ceiling.** With strides [10, 5, 3, 2] and the observed
+   16,414-element overshoot at T_mel = 294, the headroom is small:
+   T_mel ≤ ~285 (≈ 14,250 post-ups[1] + 1714 ANE pad ≈ 15,964 < 16,384)
+   should fit. T_mel ≤ ~280 has comfortable margin. Production should
+   bucket below ~3.4 s of audio per call. Lossless and trivial; loses
+   nothing on quality but caps the per-call utterance length and
+   forces chunking for longer prompts. Already aligned with Trial 11's
+   per-bucket exporters for `bert` / sampler.
+
+2. **Chunked decoder_upsample.** Run the upsample stack on overlapping
+   T-axis chunks of size < ~280 each, fuse outputs with a stitch /
+   crossfade. Mathematically equivalent to the monolithic decoder for
+   sufficient overlap (governed by the cumulative receptive field of
+   the ups stack). Same weights, no retraining. Some per-call overhead
+   (chunk + stitch). This is the "scale to arbitrary T_mel" path that
+   keeps ANE eligible.
+
+3. **Use Trial 10b's Conv2d-rewritten artifact at smaller T_mel.** Open
+   question: does the same 16,384 limit apply to Conv2d's `W` axis?
+   Trial 10b's bench result (`CPU_AND_NE` slower than `CPU_ONLY`)
+   indicates ANE still rejected the rewrite — we should re-run Step 1b
+   on the Trial 10b mlpackage at our 294-frame fixture to confirm the
+   *same* width-limit error. If so, the dimensionality rewrite is
+   orthogonal to this blocker; if a different error surfaces, Trial 10b
+   is hitting an additional ceiling and bisection (Step 2) is needed
+   for that one.
+
+### Acceptance per #59
+
+* ✓ MIL op + reason: **rejection is not op-specific**; it's the
+  Espresso "Tensor width goes beyond limit supported" check applied
+  to the post-`generator.ups[1]` layout's W axis. Documented above.
+* Go / no-go decision deferred until either (a) we confirm Trial 10b
+  hits the same width limit, or (b) Trial 10e implements one of the
+  three rewrite families above and verifies cosine sim > 0.999 vs
+  iteration_3 fp32 reference.
+
+### Reproduction
+
+```bash
+cd tools/coreml-cli
+uv run coreml-cli .../iteration_3/compiled/decoder_upsample_fp16.mlmodelc \
+    --fallback --json 2>&1 | tee /tmp/decoder_upsample_fallback.json
+# scroll past the JSON to see the trailing
+#   "MILCompilerForANE error: ANECCompile() FAILED" stderr
+```
+
+```bash
+cd models/tts/styletts2
+huggingface-cli download FluidInference/StyleTTS-2-coreml \
+    "iteration_3/packages/decoder_upsample_fp16.mlpackage/*" \
+    "iteration_3/swift/fixtures/decoder_upsample/*"
+MLLOG=1 OS_ACTIVITY_MODE=info OS_ACTIVITY_DT_MODE=enable \
+    uv run python coreml/exporters/trial10d_step1_capture_ane_log.py \
+    2>&1 | tee /tmp/trial10d_step1.log
+grep "Tensor width" /tmp/trial10d_step1.log
+```
+
+Expected output: 12 lines of `Error: Tensor width goes beyond limit
+supported (16414 > 16384.` / `(16390 > 16384.` plus the
+`ANECCompile() FAILED` cascade.
+
+### Artifacts
+
+* `coreml/exporters/trial10d_step1_capture_ane_log.py` — probe.
+* No mlpackage produced or modified; iteration_3 unchanged.
+
 ## Trial 11 — token-axis bucketing for `bert` + `fused_diffusion_sampler` (fp16)
 
 **Problem.** Both `bert` (HF Albert) and `fused_diffusion_sampler`
