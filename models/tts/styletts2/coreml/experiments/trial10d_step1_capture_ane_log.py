@@ -24,7 +24,7 @@ they come straight from CoreML's runtime, not the os_log subsystem.
 Run:
     cd models/tts/styletts2
     MLLOG=1 OS_ACTIVITY_MODE=info \\
-        uv run python coreml/exporters/trial10d_step1_capture_ane_log.py \\
+        uv run python coreml/experiments/trial10d_step1_capture_ane_log.py \\
         2>&1 | tee /tmp/trial10d_step1.log
 
 Look for lines like:

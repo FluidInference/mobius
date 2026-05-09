@@ -35,7 +35,7 @@ listening. Quality irrelevant.
 
 Run:
     cd models/tts/styletts2
-    uv run python coreml/exporters/trial10e3_bisection.py
+    uv run python coreml/experiments/trial10e3_bisection.py
 """
 
 from __future__ import annotations

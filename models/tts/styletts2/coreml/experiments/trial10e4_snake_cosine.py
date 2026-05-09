@@ -19,7 +19,7 @@ issue #59 outcome (1) lands.
 
 Run:
     cd models/tts/styletts2
-    uv run python coreml/exporters/trial10e4_snake_cosine.py
+    uv run python coreml/experiments/trial10e4_snake_cosine.py
 """
 
 from __future__ import annotations

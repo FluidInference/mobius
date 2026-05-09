@@ -596,7 +596,7 @@ Fixed shapes used: `x_pre [1,512,294]`, `ref [1,128]`,
 `har_source [1,1,88200]` (T_FRAME=147, the trace default).
 
 **Implementation.** New standalone script
-`coreml/exporters/trial10_decoder_upsample_fixed.py`:
+`coreml/experiments/trial10_decoder_upsample_fixed.py`:
 * loads `build_runtime()` + `build_wrapper("decoder_upsample", ...)` —
   same wrapper used by `convert.py`,
 * traces at fixed shapes,
@@ -654,7 +654,7 @@ under macOS 15 / coremltools 9.
 
 **Artifacts.**
 
-* `coreml/exporters/trial10_decoder_upsample_fixed.py` — script (gitignored
+* `coreml/experiments/trial10_decoder_upsample_fixed.py` — script (gitignored
   output package).
 * `decoder_upsample_trial10_fp32_fixed.mlpackage` — saved locally;
   not promoted to `iteration_3/packages/`.
@@ -674,7 +674,7 @@ the replacement boundaries; MIL has the chance to fold adjacent
 squeeze/unsqueeze pairs.
 
 **Implementation.** New standalone script
-`coreml/exporters/trial10b_decoder_upsample_conv2d.py`:
+`coreml/experiments/trial10b_decoder_upsample_conv2d.py`:
 * `Conv1dAs2d` / `ConvTranspose1dAs2d` drop-in modules,
 * `_swap_convs_inplace(wrapper)` walks the wrapper's submodule tree
   and replaces every `Conv1d` (101 instances) and `ConvTranspose1d`
@@ -757,7 +757,7 @@ cumsum in the generator; `har_source` is pre-computed input).
 
 **Artifacts.**
 
-* `coreml/exporters/trial10b_decoder_upsample_conv2d.py` — script.
+* `coreml/experiments/trial10b_decoder_upsample_conv2d.py` — script.
 * `decoder_upsample_trial10b_fp32_conv2d.mlpackage` — saved locally;
   not promoted.
 
@@ -818,14 +818,14 @@ Same error #59 cites, but no detail on *why* compile failed.
 
 ### Step 1b — ANE compile log via os_log + runtime stderr
 
-Probe: `coreml/exporters/trial10d_step1_capture_ane_log.py`.
+Probe: `coreml/experiments/trial10d_step1_capture_ane_log.py`.
 Loads the dereferenced fp16 mlpackage with
 `compute_units=CPU_AND_NE`, runs one predict to lazily provoke the
 ANE compile, captures everything the runtime emits.
 
 ```
 MLLOG=1 OS_ACTIVITY_MODE=info OS_ACTIVITY_DT_MODE=enable \
-    uv run python coreml/exporters/trial10d_step1_capture_ane_log.py \
+    uv run python coreml/experiments/trial10d_step1_capture_ane_log.py \
     2>&1 | tee /tmp/trial10d_step1.log
 ```
 
@@ -965,7 +965,7 @@ huggingface-cli download FluidInference/StyleTTS-2-coreml \
     "iteration_3/packages/decoder_upsample_fp16.mlpackage/*" \
     "iteration_3/swift/fixtures/decoder_upsample/*"
 MLLOG=1 OS_ACTIVITY_MODE=info OS_ACTIVITY_DT_MODE=enable \
-    uv run python coreml/exporters/trial10d_step1_capture_ane_log.py \
+    uv run python coreml/experiments/trial10d_step1_capture_ane_log.py \
     2>&1 | tee /tmp/trial10d_step1.log
 grep "Tensor width" /tmp/trial10d_step1.log
 ```
@@ -976,7 +976,7 @@ supported (16414 > 16384.` / `(16390 > 16384.` plus the
 
 ### Artifacts
 
-* `coreml/exporters/trial10d_step1_capture_ane_log.py` — probe.
+* `coreml/experiments/trial10d_step1_capture_ane_log.py` — probe.
 * No mlpackage produced or modified; iteration_3 unchanged.
 
 ### Step 1c — same probe on Trial 10b (fp32 + Conv2d) and Trial 10c (fp16 + Conv2d)
@@ -1105,7 +1105,7 @@ Step 2 — bisection).
 
 ### Trial 10e1 — T_mel cap (Option 1) [DEAD-END]
 
-**Method.** Capped exporter (`coreml/exporters/trial10e1_t_mel_cap.py`)
+**Method.** Capped exporter (`coreml/experiments/trial10e1_t_mel_cap.py`)
 crops the captured T_mel = 294 fixture to a smaller T_mel, traces +
 converts the same `decoder_upsample` wrapper at fixed shapes, fp16, 1D
 Conv (matches production iteration_3 shape exactly except for fixed
@@ -1264,7 +1264,7 @@ Probe artifacts: `/tmp/trial10e1.log`, `/tmp/trial10e1_small.log`,
 
 ```bash
 cd models/tts/styletts2
-uv run python coreml/exporters/trial10e1_t_mel_cap.py \
+uv run python coreml/experiments/trial10e1_t_mel_cap.py \
     --candidates 50,64,128,280,292,293,294
 ```
 
@@ -1468,7 +1468,7 @@ ablation list at T_mel = 50 (fastest probe; well under the 16,384 width
 threshold), measuring `Calling ANE compiler` line counts via `log show`
 on subsystem `com.apple.ane`, category `compiler`.
 
-**Method.** `coreml/exporters/trial10e3_bisection.py` implements
+**Method.** `coreml/experiments/trial10e3_bisection.py` implements
 idempotent monkey-patches that swap the diagnostic op for an ANE-
 friendly stand-in, then traces + converts the standard
 `decoder_upsample` wrapper at fp16 fixed shapes, then probes
@@ -1526,7 +1526,7 @@ across α∈{0.5,1.0,2.0} and tensor shapes). Eliminates `sin` and
 problem was specifically `sin/pow`, the rewrite should flip ANE
 acceptance.
 
-**Method.** `coreml/exporters/trial10e4_snake_cosine.py` patches both
+**Method.** `coreml/experiments/trial10e4_snake_cosine.py` patches both
 `AdaINResBlock1.forward` and the Generator.forward inline Snakes (the
 two locations Trial 10e3 ablation 2 covered). Same probe protocol.
 
@@ -1580,8 +1580,8 @@ are presumably the same on M2.
 
 | Path | Size | Role |
 |------|------|------|
-| `coreml/exporters/trial10e3_bisection.py` | — | Sweep harness with 4 ablation installers |
-| `coreml/exporters/trial10e4_snake_cosine.py` | — | Cosine-identity rewrite probe |
+| `coreml/experiments/trial10e3_bisection.py` | — | Sweep harness with 4 ablation installers |
+| `coreml/experiments/trial10e4_snake_cosine.py` | — | Cosine-identity rewrite probe |
 | `coreml/packages/trial10e3_ablation1_adain_drop_affine.mlpackage` | 40 MB | diagnostic; not promoted |
 | `coreml/packages/trial10e3_ablation2_snake_identity.mlpackage` | 40 MB | diagnostic; not promoted |
 | `coreml/packages/trial10e4_snake_cosine_identity.mlpackage` | 40 MB | candidate; **does not land ANE on M2** |
@@ -1710,10 +1710,10 @@ uv run python coreml/parity.py --stage all
 uv run python coreml/parity.py --stage text_encoder
 
 # Trial 10: decoder_upsample fp32 fixed-shape ANE probe
-uv run python coreml/exporters/trial10_decoder_upsample_fixed.py
+uv run python coreml/experiments/trial10_decoder_upsample_fixed.py
 
 # Trial 10b: decoder_upsample fp32 + Conv1d→Conv2d rewrite
-uv run python coreml/exporters/trial10b_decoder_upsample_conv2d.py
+uv run python coreml/experiments/trial10b_decoder_upsample_conv2d.py
 
 # Trial 11: per-bucket bert + sampler (T=64/128/256), fp16
 uv run python coreml/exporters/build_buckets.py \

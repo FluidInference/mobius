@@ -36,7 +36,7 @@ For each candidate this script:
 
 Run:
     cd models/tts/styletts2
-    uv run python coreml/exporters/trial10e1_t_mel_cap.py \\
+    uv run python coreml/experiments/trial10e1_t_mel_cap.py \\
         --candidates 280,290,292,293,294
 """
 
