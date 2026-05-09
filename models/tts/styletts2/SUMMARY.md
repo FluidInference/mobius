@@ -27,9 +27,10 @@ per-iteration notes live in `iteration_2/README.md`,
 | decoder_upsample            | fp16      | CPU_ONLY     | 304.2 ms   | 40.0 MB |
 | **Total**                   |           |              | **≈ 360 ms** | **≈ 274.8 MB** |
 
-Warm avg = `iter3-bench` synthetic-input timed loop (Swift, 4 iters
-per stage). End-to-end Python pipeline measures higher because of
-phonemizer + alignment matmul + per-stage MLModel.predict overhead.
+Warm avg = sum of per-stage `mlmodel.predict` timings on synthetic
+inputs (4 iters per stage, M-series Mac). End-to-end Python pipeline
+measures higher because of phonemizer + alignment matmul + per-stage
+MLModel.predict overhead.
 
 ### Notable decisions
 
@@ -47,31 +48,20 @@ phonemizer + alignment matmul + per-stage MLModel.predict overhead.
 
 ## Swift status
 
-`iteration_3/swift/` ships two SwiftPM executables.
+The earlier prototype Swift driver (`iter3-bench` + `iter3-tts`) has
+been removed from this repo. It only ran the eight neural stages and
+side-loaded everything else (phonemizer, ref-mel, alignment matmul,
+asr-shift, `s/ref` split, RNG-deterministic noise) from Python `.npy`
+fixtures, so it was not a viable integration path on its own. The
+production Swift consumer lives in **FluidAudio**, which will reuse
+the existing G2P / mel / audio plumbing it already ships for Kokoro
+and PocketTTS.
 
-### iter3-bench (Swift, synthetic inputs)
+The CoreML packages produced by `coreml/inference.py` are the
+deliverable. The canonical artefact set for downstream consumption is
+on HuggingFace:
 
-Loads each `.mlmodelc` with the documented placement, runs warmup +
-4 timed predicts on synthesised inputs (shape resolved from each
-model's input description), reports load + min/avg/max latency. No
-audio output. Used to baseline per-stage cost without leaving Swift.
-
-### iter3-tts (Swift, real audio via side-loaded fixtures)
-
-`dump_intermediates.py` monkey-patches `coreml.inference._load_stage`
-+ `_predict` to dump every stage's inputs and outputs as `.npy` files
-plus a `manifest.json` describing shape/dtype/order. Swift binary then
-loads each fixture, runs predict on the corresponding `.mlmodelc`, and
-writes a 24 kHz mono int16 WAV.
-
-* NPY v1/v2/v3 reader (`<f4`, `<i4`, C-contiguous).
-* float16 → float32 conversion at the audio output stage.
-* RIFF/WAVE writer mirroring `inference.py`'s 50-sample tail trim.
-* Parity vs `fixtures_python.wav`: cosine sim 1.000000, max|Δ| ≈ 3e-5.
-
-This proves all 8 mlmodelc stages produce bit-equivalent audio to
-Python when run from Swift. The eager glue (phonemizer + ref-mel +
-alignment matmul + asr-shift + s/ref split) is still in Python.
+  https://huggingface.co/FluidInference/StyleTTS-2-coreml/tree/main/iteration_3
 
 ## Layout
 
@@ -84,9 +74,8 @@ models/tts/styletts2/
 │   └── packages/                # ALL precision/stage variants (gitignored)
 ├── iteration_2/                 # adopted Trials 4+6+8b at all-fp32 (514 MB)
 ├── iteration_3/                 # mixed precision (274 MB)
-│   ├── packages/                # 8 mlpackages (gitignored)
-│   ├── compiled/                # 8 mlmodelc (gitignored)
-│   ├── swift/                   # SwiftPM with iter3-bench + iter3-tts
+│   ├── packages/                # 8 mlpackages (gitignored, on HF)
+│   ├── compiled/                # 8 mlmodelc (gitignored, on HF)
 │   └── README.md
 └── SUMMARY.md                   # this file
 ```
@@ -98,17 +87,14 @@ models/tts/styletts2/
 * [x] Mixed-precision sweep (iteration_3): 7 fp16 / 1 fp32, A/B verified.
 * [x] iteration_3 mlpackages + mlmodelc compiled.
 * [x] Python end-to-end inference (`coreml/inference.py`).
-* [x] Swift bench (`iter3-bench`) on synthetic inputs.
-* [x] Swift side-loaded TTS (`iter3-tts`) writing bit-equivalent WAV.
-* [x] HuggingFace upload of fp32 packages (iteration_2 lineage).
+* [x] HuggingFace upload of iteration_3 packages
+  ([link](https://huggingface.co/FluidInference/StyleTTS-2-coreml/tree/main/iteration_3)).
 
 ## What's outstanding
 
-* [ ] Port eager glue to Swift to drop the side-load:
-  * phonemizer (espeak + TextCleaner)
-  * reference-audio mel extraction
-  * alignment matmul `d_en @ pred_aln_trg` and asr-shift
-  * `s/ref` split off `fused_diffusion_sampler` output
+* [ ] FluidAudio Swift integration owns the eager glue
+  (phonemizer / ref-mel / alignment matmul / asr-shift / `s/ref` split).
+  Reuse Kokoro or PocketTTS G2P; do not ship espeak. Tracked downstream.
 * [ ] Tackle `decoder_upsample` dominant cost (≈ 84 % of total):
   Trial 8 ALL placement is bimodal; explore ConvTranspose1d → ConvTranspose2d
   rewrite or weight palettization.
@@ -132,10 +118,14 @@ models/tts/styletts2/
     finally beats baseline. Or Trial 10d (drill into MILCompilerForANE
     log to identify the structural blocker). Or accept and pursue
     Vocos/iSTFT vocoder swap.
-* [ ] int8 weight palettization on the surviving fp16 stages
+* [ ] int8 linear weight quantization on the surviving fp16 stages
   (deferred — fp16 already pays for itself; int8 needs A/B that hasn't been done).
+  int8 palettization is closed: every attempt failed on these graphs.
 * [ ] FluidAudio integration as a TTS backend.
-* [ ] BERT + diffusion RangeDim on token axis (currently fixed at 57 tokens).
+* RangeDim on the token axis for BERT + diffusion is **closed as dead end**
+  (HF Albert + cross-attention force MLProgram into "data-dependent shapes
+  were disabled"). Token-axis bucketing is the production answer
+  (`bert_fp16_t{64,128,256}` + sampler buckets in `iteration_3`).
 
 ## Reference numbers
 
@@ -154,6 +144,6 @@ decoder_upsample        CPU_ONLY    ~614 ms
 
 iteration_3 fp16/fp32 mix (current):
 ```
-                                   ~360 ms total  (Swift bench warm)
+                                   ~360 ms total  (sum of per-stage warm avg)
                                    ~683 ms total  (Python end-to-end avg)
 ```

@@ -399,6 +399,17 @@ def main() -> int:
         for s in targets:
             precision[s] = target_prec
 
+    # fused_f0n_har_source is fp32-only — har_source's cumsum drifts
+    # audibly at fp16 across the 88 200-sample window. Reject any
+    # override that tries to flip it.
+    if precision["fused_f0n_har_source"] != "fp32":
+        raise ValueError(
+            "fused_f0n_har_source is fp32-only "
+            f"(got {precision['fused_f0n_har_source']!r}); "
+            "har_source cumsum drifts at fp16. "
+            "See iteration_3/README.md."
+        )
+
     # ------ Load all CoreML stages (per-stage compute + precision; see
     #         _STAGE_COMPUTE / _STAGE_PRECISION manifests at top of file) ------
     print("\nLoading CoreML stages…")

@@ -121,6 +121,13 @@ on the token axis (HF Albert + cross-attn produce ops MIL refuses with
 "data-dependent shapes were disabled"). The default packages above
 hard-code T = 57, which caps prompts at ~37 chars.
 
+**RangeDim removal: DEAD END.** Multiple attempts to lift the token
+axis to `ct.RangeDim` for these two stages were closed out (HF Albert's
+embedding-layer shape ops + the U-Net's cross-attention `reshape_like`
+chains both bottom out in MLProgram's "data-dependent shapes were
+disabled" guard). Token-axis bucketing is the production answer; the
+buckets below are not a stopgap.
+
 To support longer prompts without RangeDim, this iteration ships
 **three additional fixed-T variants** of each constrained stage:
 
@@ -139,7 +146,7 @@ The original `bert_fp16.mlpackage` / `fused_diffusion_sampler_fp16.mlpackage`
 sentence that fits T = 57 should keep using them. The bucketed variants
 are loaded on demand for longer prompts.
 
-Loader policy (Swift / Python):
+Loader policy (Python — Swift consumer lives in FluidAudio):
 
 ```
 real_n = #espeak tokens

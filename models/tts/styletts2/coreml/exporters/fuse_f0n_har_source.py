@@ -41,11 +41,16 @@ CoreML inputs / outputs
 T_FRAME and its derived axes are exposed as `ct.RangeDim` so the
 package accepts any sentence length.
 
+Precision is fp32-only. `har_source` computes `sin(2*pi*cumsum(f0))`
+over up to 88 200 samples; fp16 cumsum drifts ~10 bits across that
+window, producing audible second-half phase distortion. The fp16 build
+has been A/B'd and rejected — see `iteration_3/README.md`. The CLI no
+longer accepts `--precision fp16` for this stage.
+
 Run
 ---
     cd models/tts/styletts2
     uv run python coreml/exporters/fuse_f0n_har_source.py
-    uv run python coreml/exporters/fuse_f0n_har_source.py --precision fp16
 """
 
 from __future__ import annotations
@@ -155,11 +160,15 @@ def convert_fused(*, precision: str) -> tuple[Path, tuple, tuple]:
     with torch.no_grad():
         traced = torch.jit.trace(fused, (en, s), check_trace=False, strict=False)
 
-    if precision not in ("fp16", "fp32"):
-        raise ValueError(f"precision must be fp16 or fp32, got {precision!r}")
-    ct_precision = (
-        ct.precision.FLOAT16 if precision == "fp16" else ct.precision.FLOAT32
-    )
+    # fp32-only. har_source's cumsum drifts audibly at fp16 across the
+    # 88 200-sample window. Reject any other request at the converter so
+    # downstream cannot accidentally ship a degraded build.
+    if precision != "fp32":
+        raise ValueError(
+            f"fused_f0n_har_source is fp32-only (got precision={precision!r}); "
+            "har_source cumsum drifts at fp16 — see iteration_3/README.md"
+        )
+    ct_precision = ct.precision.FLOAT32
 
     # T_FRAME range matches convert.py's f0n_predictor + har_source.
     T_FRAME = ct.RangeDim(lower_bound=1, upper_bound=2048, default=int(en.shape[2]))
@@ -248,8 +257,11 @@ def main() -> int:
     parser.add_argument(
         "--precision",
         default="fp32",
-        choices=["fp32", "fp16"],
-        help="output mlpackage precision (default fp32)",
+        choices=["fp32"],
+        help=(
+            "fp32 only — fp16 har_source cumsum drift is audible "
+            "(see iteration_3/README.md)."
+        ),
     )
     parser.add_argument("--no-bench", action="store_true", help="skip the bench loop")
     args = parser.parse_args()
