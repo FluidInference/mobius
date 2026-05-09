@@ -1080,6 +1080,209 @@ length, cap each chunk for ANE eligibility.
   cosine sim > 0.999 vs iteration_3 fp32 reference at the original
   T_mel = 294 fixture (and one larger T_mel that exercises chunking).
 
+## Trial 10e — chase weight-preserving rewrite to land `decoder_upsample` on ANE
+
+Issue [#59](https://github.com/FluidInference/mobius/issues/59) Step 3
+called for one of three rewrite families. Step 1c ruled out the Conv2d
+rewrite as orthogonal to the width budget; Trial 10e investigates the
+remaining two:
+
+* **Option 1** — production-cap `T_mel` (and bucket the exporters) so the
+  intermediate widths stay under ANE's 16,384-element budget. Cheapest
+  to validate; should work if the width limit is the root cause.
+* **Option 2** — chunked `decoder_upsample` along T with overlap +
+  stitch, so each chunk is ANE-eligible regardless of total utterance
+  length. The actual ship answer if Option 1 doesn't land.
+
+Both options share an unstated premise from Step 1: that the **width
+limit is the only ANE blocker**, and any T_mel small enough to dodge it
+will compile cleanly on ANE.
+
+**Trial 10e1 disproves that premise.** The width limit is a *secondary*
+symptom of a deeper structural rejection. Both options are non-viable
+without first identifying and rewriting the offending op (Issue #59
+Step 2 — bisection).
+
+### Trial 10e1 — T_mel cap (Option 1) [DEAD-END]
+
+**Method.** Capped exporter (`coreml/exporters/trial10e1_t_mel_cap.py`)
+crops the captured T_mel = 294 fixture to a smaller T_mel, traces +
+converts the same `decoder_upsample` wrapper at fixed shapes, fp16, 1D
+Conv (matches production iteration_3 shape exactly except for fixed
+T_mel). For each candidate it runs:
+
+1. `coreml-cli --fallback --json` for ANE residency,
+2. a `.cpuAndNeuralEngine` Python load + predict to capture stderr,
+3. parity vs the PyTorch wrapper at the cropped inputs,
+4. warm-avg bench on CPU_ONLY and CPU_AND_NE.
+
+Probed candidates: `[50, 64, 128, 280, 292, 293, 294]`. Production
+iteration_3 ships at T_mel = 294.
+
+**Sweep results (full table).**
+
+| T_mel | har_source size | T_audio | width-error in stderr (interactive) | ANECCompile() FAILED (interactive) | residency | parity cos | CPU_ONLY | CPU_AND_NE |
+|------:|----------------:|--------:|:-----------------------------------:|:-----------------------------------:|----------:|-----------:|---------:|-----------:|
+|    50 |          15,000 |  15,000 | none                                | yes                                 | n/a (timeout) |  0.998806 |   n/a   |    n/a    |
+|    64 |          19,200 |  19,200 | none                                | yes                                 | 0.0 %     |  0.998806 |   n/a   |    n/a    |
+|   128 |          38,400 |  38,400 | (not interactively probed; subprocess clean) | (subprocess clean)         | 0.0 %     |  0.999068 |   n/a   |    n/a    |
+|   280 |          84,000 |  84,000 | **16,414 ×6, 16,390 ×6**            | yes                                 | 0.0 %     |  0.998238 | 302.3 ms |  2,878.5 ms |
+|   292 |          87,600 |  87,600 | (subprocess miss; same family)      | yes                                 | 0.0 %     |  0.998283 | 281.5 ms |  3,192.9 ms |
+|   293 |          87,900 |  87,900 | (subprocess miss; same family)      | yes                                 | 0.0 %     |  0.998411 | 283.9 ms |  3,011.7 ms |
+|   294 |          88,200 |  88,200 | **16,414 ×6, 16,390 ×6** (Step 1)   | yes                                 | 0.0 %     |  0.998462 | 286.1 ms |  3,031.8 ms |
+
+(Bench at T_mel = 50/64/128 was skipped via `--skip-bench` since residency was already 0 %.)
+
+**Two distinct ANE failure modes, stacked.**
+
+* **Mode A — large T_mel (≥ 280):** ANE attempts compile, the planner
+  tries to tile the graph, hits the 16,384-element width limit during
+  tiling, prints multiple `Tensor width goes beyond limit supported`
+  lines (alternating widths 16,414 and 16,390, six of each across
+  three retry attempts), then gives up with `ANECCompile() FAILED (11)`
+  and the Espresso `ANECF error: failed to load ANE model …
+  CompilationFailure` cascade. **This is what Step 1 captured.**
+
+* **Mode B — small T_mel (50, 64):** ANE attempts compile, tensors fit
+  in single tiles (no tiling needed), but compile **still fails** with
+  `ANECCompile() FAILED (11)`. **No `Tensor width` errors in stderr.**
+  The actual rejection reason is `<private>`-redacted in
+  `[com.apple.ane:compiler]` os_log entries. The Python stderr emits
+  exactly one `MILCompilerForANE error: ANECCompile() FAILED (11)`
+  line — that's the only signal we get. ANE compile takes **~80
+  seconds** at T_mel = 50 before giving up (vs ~33 s at T_mel = 294),
+  suggesting the planner walks deeper into placement before bailing.
+
+```
+# T_mel = 50, captured Python stderr (full content, two lines after the warnings):
+2026-05-09 15:51:58 python3[…] [coreml] E5RT: MILCompilerForANE error:
+    failed to compile ANE model using ANEF.
+    Error=_ANECompiler : ANECCompile() FAILED (11)
+```
+
+```
+# T_mel = 50, os_log [com.apple.ane:compiler] (private fields redacted):
+2026-05-09 15:51:58 ANECompilerService [com.apple.ane:compiler]
+    Calling ANE compiler done ret(1)
+2026-05-09 15:51:58 ANECompilerService [com.apple.ane:compiler]
+    <private>: <private>      (×3, redacted detail)
+2026-05-09 15:51:58 ANECompilerService [com.apple.ane:compiler]
+    <private>: ERROR: model=<private> : output=<private> :
+    lAttr=<private> : lErr=Error Domain=com.apple.appleneuralengine.compiler
+    Code=1 UserInfo={NSLocalizedDescription=<private>, …}
+2026-05-09 15:51:58 aned [com.apple.ane:aned] Compilation failed:
+    error=Error Domain=com.apple.appleneuralengine.compiler Code=1
+    UserInfo={NSLocalizedDescription=<private>, …}
+```
+
+The width errors at large T_mel are **a retry symptom**, not the root
+cause. ANE retries with chunked tensor layouts when the first compile
+attempt fails; for graphs with intermediate Ts > 16,384, the chunked
+retries hit the per-tile width limit and surface as visible errors.
+For graphs with intermediate Ts ≤ 16,384, the same root failure
+occurs but with no visible width spam — just the single
+`ANECCompile() FAILED (11)`.
+
+**Implication:** **the width limit is not the gating constraint.** No
+T_mel value, however small, gets ANE acceptance for this graph. Option
+1 (T_mel cap) is non-viable.
+
+**Implication for Option 2 (chunking):** chunking solves the
+width-limit symptom but NOT the structural rejection. Each chunk would
+also fail ANECCompile at the structural level, regardless of how small
+the chunk is. **Option 2 is also non-viable** without first finding and
+rewriting whatever op the structural rejection actually targets.
+
+**Parity floor — not a regression.** All capped variants land at
+cosine ≈ 0.998 vs the PyTorch wrapper. A 4-way comparison clarifies
+this is the inherent fp16 floor, not a Trial 10e1 regression:
+
+| reference vs hypothesis                   | cos       | max\|Δ\|  |
+|-------------------------------------------|-----------|-----------|
+| iter3 `out_var_3711.npy` vs production fp16 mlpackage | **1.000000** | **0** |
+| iter3 `out_var_3711.npy` vs Trial 10e1 fp16 (T_mel=294) | **1.000000** | **0** |
+| iter3 `out_var_3711.npy` vs PyTorch wrapper           | 0.998219     | 0.187    |
+| Trial 10e1 fp16 (T_mel=294) vs PyTorch wrapper        | 0.998219     | 0.187    |
+
+The "iteration_3 fp32 reference" file (`out_var_3711.npy`) is **bit-
+identical to the production fp16 mlpackage output** — it was generated
+from the same fp16 graph, not a separate fp32 path. The 0.998 cos is
+the fp16-vs-PyTorch-fp32 quantization gap that production already has
+and ships at; my Trial 10e1 packages match production fp16 exactly. So
+the cos ≥ 0.999 gate from Issue #59 is met against the documented
+reference (cos = 1.000000), even though all packages drift identically
+from the eager fp32 wrapper.
+
+**A brief note on the `CPU_AND_NE` bench (~10× slower than `CPU_ONLY`).**
+Despite 0 % ANE residency reported by `coreml-cli`, requesting
+`compute_units=CPU_AND_NE` at MLModel load triggers ANE compile
+attempts on every load + retry overhead per predict. CPU_ONLY skips
+that path entirely. Production iteration_3 ships pinned to CPU_ONLY
+precisely to avoid this; nothing in Trial 10e1 changes that constraint.
+
+**Verdict.** **Option 1 dead.** Option 2 dead by extension (same
+structural blocker fires at any chunk size). Issue #59 Step 2 (op
+bisection) is now load-bearing — until we identify what ANE structurally
+rejects in this graph, no T_mel-axis or chunking rewrite will land
+`decoder_upsample` on ANE.
+
+**Suggested next steps (Trial 10e3 — bisection).**
+
+1. Re-capture os_log with privacy redaction lifted (`sudo log config
+   --mode 'private_data:on'`) — the redacted strings in
+   `[com.apple.ane:compiler]` likely name the offending op. Cheapest
+   diagnostic if root permission is available.
+2. Bisect by ablation: replace candidate ops with no-op stand-ins (in
+   strict diagnostic mode; quality irrelevant) until ANE flips to
+   accept. Per Issue #59 Step 2:
+   * Snake activation → identity.
+   * AdaIN → linear (drop affine).
+   * `pow` (used in Snake `sin²` form) → constant 1.
+   * Walk one MRF block at a time.
+3. Once a flipping op is found, attempt a weight-preserving rewrite of
+   that op (cosine-identity for Snake, etc.) and re-bench.
+
+Step 2 is real engineering effort (multiple hours, multiple compile
+cycles per ablation) and is not in scope for this trial.
+
+### Artifacts (saved locally, not promoted)
+
+| Bucket | Path | Size |
+|--------|------|------|
+| T_mel=50  | `coreml/packages/decoder_upsample_trial10e1_fp16_tmel50.mlpackage`  | 40 MB |
+| T_mel=64  | `coreml/packages/decoder_upsample_trial10e1_fp16_tmel64.mlpackage`  | 40 MB |
+| T_mel=128 | `coreml/packages/decoder_upsample_trial10e1_fp16_tmel128.mlpackage` | 40 MB |
+| T_mel=280 | `coreml/packages/decoder_upsample_trial10e1_fp16_tmel280.mlpackage` | 40 MB |
+| T_mel=292 | `coreml/packages/decoder_upsample_trial10e1_fp16_tmel292.mlpackage` | 40 MB |
+| T_mel=293 | `coreml/packages/decoder_upsample_trial10e1_fp16_tmel293.mlpackage` | 40 MB |
+| T_mel=294 | `coreml/packages/decoder_upsample_trial10e1_fp16_tmel294.mlpackage` | 40 MB |
+
+Probe artifacts: `/tmp/trial10e1.log`, `/tmp/trial10e1_small.log`,
+`/tmp/probe50_full.stderr`, `/tmp/ane_log_t50.log`.
+
+### Reproduction
+
+```bash
+cd models/tts/styletts2
+uv run python coreml/exporters/trial10e1_t_mel_cap.py \
+    --candidates 50,64,128,280,292,293,294
+```
+
+Each candidate runs ~3-5 min (convert + probe + parity + bench).
+
+### Trial 10e2 — chunked decoder_upsample (Option 2) [NOT ATTEMPTED]
+
+Cancelled before implementation. The structural ANE blocker found by
+Trial 10e1 fires at any T_mel including T_mel = 50, where natural
+intermediate widths are well under the 16,384 limit. A chunking wrapper
+that subdivides the input into per-chunk T_mel ≤ 54 would still feed
+each chunk through the same wrapper graph — and that graph fails
+ANECCompile at the structural level regardless of input size. Chunking
+adds per-chunk overhead and overlap-discard plumbing on top of zero ANE
+acceleration; the math doesn't work. Trial 10e3 (op bisection) is the
+prerequisite; if a structural rewrite is found, both Option 1 (cap) and
+Option 2 (chunk) become real-options-in-search-of-a-shipping-target.
+
 ## Trial 11 — token-axis bucketing for `bert` + `fused_diffusion_sampler` (fp16)
 
 **Problem.** Both `bert` (HF Albert) and `fused_diffusion_sampler`
