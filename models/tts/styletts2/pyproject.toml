@@ -1,0 +1,36 @@
+[project]
+name = "styletts2-ground-truth"
+version = "0.1.0"
+description = "PyTorch ground-truth inference for StyleTTS2 LibriTTS (parity reference for CoreML conversion)."
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "torch>=2.5.0",
+    "torchaudio>=2.5.0",
+    "numpy>=1.24",
+    "soundfile>=0.12.0",
+    "librosa>=0.10",
+    "scipy>=1.10",
+    "pyyaml>=6.0",
+    "munch>=4.0",
+    "nltk>=3.8",
+    "phonemizer>=3.2",
+    # Pin transformers: 5.x rewrote masking_utils with trace-hostile
+    # int indexing; 4.50+ introduces `aten::Int` casts on multi-element
+    # tensors that break coremltools.convert. 4.45.x is the last good
+    # version for HF Albert/PL-BERT trace + CoreML conversion.
+    # See coreml/trials.md, Stage 2.
+    "transformers>=4.40,<4.46",
+    "einops>=0.7",
+    "einops-exts>=0.0.4",
+    "matplotlib>=3.7",
+    "accelerate>=0.20",
+    "tqdm>=4.65",
+    "huggingface-hub>=0.20",
+    "monotonic-align @ git+https://github.com/resemble-ai/monotonic_align.git",
+    "coremltools>=8.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
