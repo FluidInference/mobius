@@ -32,7 +32,7 @@ BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
 # rank-4 production path: 2.2× regression. Stateful graphs run on CPU+GPU
 # only (ANE rejects them); the IO-marshaling savings from collapsing 36 cache
 # tensors don't compensate for losing ANE acceleration. See
-# ``traceable/traceable_decoder_step_stateful.py`` for full rationale.
+# ``experiments/traceable/traceable_decoder_step_stateful.py`` for full rationale.
 STATEFUL = os.environ.get("MAGPIE_STATEFUL", "") == "1"
 
 # Decoder step output key names (from CoreML model spec — rank-4 split-K/V)

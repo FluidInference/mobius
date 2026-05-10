@@ -5,7 +5,8 @@ Convert decoder step model to CoreML — STATEFUL variant (MLState).
 Kept as a documented dead-end. Benchmark on Apple M2 / macOS 26.5 / 146-step
 real loop showed this variant runs at ~212 ms/step vs ~96 ms/step for the
 production rank-4 split-K/V graph (2.2× regression). See sibling file
-``traceable/traceable_decoder_step_stateful.py`` for full rationale.
+``traceable/traceable_decoder_step_stateful.py`` (relative to this
+script — i.e. ``coreml/experiments/traceable/...``) for full rationale.
 
 KV caches are managed as on-device state buffers via ``ct.StateType`` instead of
 being passed in/out of the graph as 36 input/output tensors per step. The model
@@ -27,9 +28,10 @@ import numpy as np
 import torch
 
 # Script lives in ``coreml/experiments/``; add the parent (``coreml/``) to
-# sys.path so ``from traceable.…`` continues to resolve.
+# sys.path so the experimental traceable under
+# ``coreml/experiments/traceable/`` resolves via an absolute import.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from traceable.traceable_decoder_step_stateful import StatefulDecoderStep
+from experiments.traceable.traceable_decoder_step_stateful import StatefulDecoderStep
 
 
 def convert_decoder_step_stateful(nemo_path=None, max_seq_len=512, max_text_len=256,

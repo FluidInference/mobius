@@ -346,7 +346,7 @@ Pre-flight kill criteria: ship if N=2 stays > 90% ANE; abandon if < 80% ANE.
 
 #### Trial 4a — N=2 pre-flight ✗ DEAD
 
-**Implementation** (`traceable/traceable_decoder_step_n2.py`,
+**Implementation** (`experiments/traceable/traceable_decoder_step_n2.py`,
 `experiments/convert_decoder_step_n2.py`):
 
 - Reuse `TraceableDecoderStep` for both iterations (parameters shared, KV
@@ -410,13 +410,14 @@ been per-op fallback rate or partition count.
 sampler-tail penalty and state I/O. **Do not pursue**.
 
 Files retained for reference (do not delete):
-- `traceable/traceable_decoder_step_n2.py`
+- `experiments/traceable/traceable_decoder_step_n2.py`
 - `experiments/convert_decoder_step_n2.py`
 - `build/fused_decoder_step_n2.mlpackage` (215 MB)
 - `compiled/build/fused_decoder_step_n2.mlmodelc` (1.7 MB + weights)
 
 Already-known dead-end (separate experiment): stateful variant
-(`traceable_decoder_step_stateful.py`) forces CPU+GPU via MLState, regresses 2.2×.
+(`experiments/traceable/traceable_decoder_step_stateful.py`) forces CPU+GPU
+via MLState, regresses 2.2×.
 
 **Lesson**: ANE residency percentage is a misleading proxy for an unroll
 graph's quality — partition count + per-op fallback rate matter more.

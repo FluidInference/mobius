@@ -27,10 +27,12 @@ import torch
 import coremltools as ct
 
 # Local imports. Script lives in ``coreml/experiments/``; add the parent
-# (``coreml/``) to sys.path so ``from traceable.…`` continues to resolve.
+# (``coreml/``) to sys.path so the production wrappers under
+# ``coreml/traceable/`` and the experimental wrappers under
+# ``coreml/experiments/traceable/`` both resolve via absolute imports.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from traceable.traceable_decoder_step import TraceableDecoderStep
-from traceable.traceable_decoder_step_n2 import (
+from experiments.traceable.traceable_decoder_step_n2 import (
     FusedDecoderN2,
     NUM_CODEBOOKS,
     NUM_CODES_PER_CODEBOOK,
