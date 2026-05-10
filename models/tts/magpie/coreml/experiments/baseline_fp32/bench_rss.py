@@ -231,12 +231,17 @@ def _md_row(label: str, cu: str, m: Dict[str, Any]) -> str:
 
 
 def _savings_row(cu: str, v3: Dict[str, Any], v4: Dict[str, Any]) -> str:
-    """v3 - v4 in bytes for each delta — positive = v4 saves RAM."""
+    """v3 - v4 in bytes for each delta — positive = v4 saves RAM vs v3.
+
+    Convention (see `PERF.md`'s "Trial 10a re-bench — RSS" table):
+    diff > 0  →  v3 uses more, v4 saves    →  prefix '+'
+    diff < 0  →  v3 uses less, v4 costs    →  prefix '−'
+    """
     fields = ("peak_load", "post_load", "warm_median", "warm_p95")
     parts = [f"| **savings v4 vs v3** | {cu} | — |"]
     for f in fields:
         diff = v3["deltas_vs_baseline_bytes"][f] - v4["deltas_vs_baseline_bytes"][f]
-        sign = "−" if diff > 0 else "+"
+        sign = "+" if diff > 0 else "−"
         parts.append(f" {sign}{_human_mb(abs(diff))} |")
     return "".join(parts)
 
