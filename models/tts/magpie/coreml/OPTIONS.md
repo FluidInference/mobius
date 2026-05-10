@@ -5,6 +5,25 @@ multilingual checkpoint**, after Trials 1 + 3 already shipped (−978 ms,
 −161 ms TTFA respectively per [`PERF.md`](PERF.md)) and every other
 graph-level lever in `PERF.md` was exhausted.
 
+## Top-line state (current)
+
+| # | Option | Status | Verdict source |
+|---|---|---|---|
+| 1 | MIL post-conversion graph rewriting (tail-fp16) | **🟡 CONDITIONAL GO — probe in flight** | Probe 1 (this doc) — F.2 didn't test tail-fp16 |
+| 2 | coremltools 9.x upgrade | **🔴 NO-GO** | Probe 2 — pass code byte-identical to 8.3 |
+| 3 | Vocoder swap (Vocos / iSTFTNet) | **🔴 NO-GO** | Probe 3 — no NanoCodec-FSQ consumer; glue training out of scope |
+| 4 | `local_transformer` body/tail split | ⏸ Available, not pursued in this PR | Tier 2 (1 % win, partition-cost risk) |
+| 5 | MLPipeline fusion (Trial 9 revisit) | ⏸ Parked | Tier 2 (~0.5–1 % win) |
+| 6 | Per-stage CU override re-audit | ⏸ Roll into BASELINE_FP32 follow-up | Tier 2 (0–20 ms ceiling) |
+| 7 | QAT int8 (Trial 8 deferred) | ❌ Out of scope | Constraint: no retraining |
+| 8 | Architecture-level retraining | ❌ Out of scope | Constraint: no retraining |
+
+**Tier 1 is now narrowed to a single active probe** — the tail-fp16
+mixed-precision configuration that Phase F.2 did not cover (its
+op-class sweep tested whole-graph subsets but not "stages 0–1 fp32 +
+stages 2–4 + post-head fp16"). Tier 2 options 4, 5, 6 remain on the
+menu for follow-up work but are **not being pursued in this PR**.
+
 ## Constraints
 
 - **No retraining.** No NeMo or HuggingFace fine-tunes, no QAT, no
@@ -45,7 +64,7 @@ graph-level lever in `PERF.md` was exhausted.
 
 ## Tier 1 — could lower the 830 ms TTFA ceiling
 
-### Option 1 — MIL post-conversion graph rewriting
+### Option 1 — MIL post-conversion graph rewriting 🟡 ACTIVE
 
 **What.** Walk the converted MIL graph after `ct.convert()` and
 explicitly insert `cast_to_fp32` / `cast_to_fp16` at module-named
@@ -76,7 +95,7 @@ sweep.
 
 **Probe 1 verdict** below determines technical feasibility.
 
-### Option 2 — coremltools 9.x upgrade
+### Option 2 — coremltools 9.x upgrade 🔴 NO-GO (Probe 2)
 
 **What.** Phase F.2b was run on coremltools 8.x. The repo currently
 ships at coremltools 9.0 (per BASELINE_FP32 metadata captures). 9.x's
@@ -94,7 +113,7 @@ make Option 1 trivial instead of high-effort. Latency impact identical.
 **Probe 2 verdict** below determines if 9.x is even released and
 whether the relevant fix is in.
 
-### Option 3 — Vocoder swap (Vocos / iSTFTNet)
+### Option 3 — Vocoder swap (Vocos / iSTFTNet) 🔴 NO-GO (Probe 3)
 
 **What.** Replace `nanocodec_decoder_v3` end-to-end with a different
 vocoder graph that doesn't carry NanoCodec's structural ANE blockers
@@ -190,20 +209,21 @@ constraint.
 
 ## Decision summary
 
-**Only Options 1–3 have a shot at lowering the structural 830 ms warm
-TTFA ceiling.** Options 4–6 are sub-3 % wins. Options 7–8 are out of
-scope by constraint.
+**Originally:** Only Options 1–3 had a shot at lowering the 830 ms
+TTFA ceiling. Probes 2 and 3 closed Options 2 and 3 as NO-GO.
+**Tier 1 is now Option 1 only**, narrowed further to the tail-fp16
+configuration Phase F.2 didn't cover.
 
 | # | Option | Impact ceiling | Effort | Status |
 |---|---|---|---|---|
-| 1 | MIL post-conversion graph rewriting | ~15-30 ms (~2-4 %) | High | Probe 1 |
-| 2 | coremltools 9.x upgrade | same as #1 | Low | Probe 2 |
-| 3 | Vocoder swap (Vocos / iSTFTNet) | ~100-150 ms (~12-18 %) | 0 if pretrained, weeks otherwise | Probe 3 |
-| 4 | `local_transformer` body/tail split | ~10-20 ms (~1 %) | Medium | Quick spike candidate |
-| 5 | MLPipeline fusion | ~5-10 ms (~0.5-1 %) | Low | Park |
-| 6 | Compute-unit override audit | 0-20 ms | Low | Roll into BASELINE_FP32 |
-| 7 | QAT int8 (`decoder_step`) | est. −400 ms | Multi-day | Out of scope |
-| 8 | Architecture-level retraining | open-ended | Multi-week | Out of scope |
+| 1 | MIL post-conversion graph rewriting (tail-fp16) | ~15-30 ms (~2-4 %) | 1–2 person-days | **🟡 ACTIVE** |
+| 2 | coremltools 9.x upgrade | same as #1 | Low | 🔴 NO-GO (Probe 2) |
+| 3 | Vocoder swap (Vocos / iSTFTNet) | ~100-150 ms (~12-18 %) | 0 if pretrained, weeks otherwise | 🔴 NO-GO (Probe 3) |
+| 4 | `local_transformer` body/tail split | ~10-20 ms (~1 %) | Medium | ⏸ Available, not pursued in this PR |
+| 5 | MLPipeline fusion | ~5-10 ms (~0.5-1 %) | Low | ⏸ Parked |
+| 6 | Compute-unit override audit | 0-20 ms | Low | ⏸ Roll into BASELINE_FP32 follow-up |
+| 7 | QAT int8 (`decoder_step`) | est. −400 ms | Multi-day | ❌ Out of scope |
+| 8 | Architecture-level retraining | open-ended | Multi-week | ❌ Out of scope |
 
 ## Cross-references
 
