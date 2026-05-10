@@ -28,15 +28,41 @@ _HF_CACHE_DIR = os.path.expanduser("~/.cache/fluidaudio/Models/magpie-tts")
 
 
 def _nanocodec_t_in(model):
-    """Read the NanoCodec's expected `tokens` time dimension from the spec.
+    """Read the NanoCodec's expected `tokens` time dimension.
+
     Returns the third axis size of the `tokens` input, e.g. 24 for the
     chunked v3/v4 builds, 256 for the legacy monolithic v1.
+
+    `MLModel` (mlpackage) exposes `.get_spec()`; `CompiledMLModel`
+    (.mlmodelc) does not. The latter is reached when `_load_coreml_model`
+    falls back to the HF cache, so we read `metadata.json` from the
+    `.mlmodelc` directory instead. The source path is attached to the
+    model as `_mobius_source_path` at load time.
     """
-    spec = model.get_spec()
-    for inp in spec.description.input:
-        if inp.name == "tokens":
-            shape = list(inp.type.multiArrayType.shape)
-            return int(shape[-1]) if shape else None
+    # Preferred path: MLModel.get_spec().
+    if hasattr(model, "get_spec"):
+        spec = model.get_spec()
+        for inp in spec.description.input:
+            if inp.name == "tokens":
+                shape = list(inp.type.multiArrayType.shape)
+                return int(shape[-1]) if shape else None
+    # Fallback path: CompiledMLModel — read the bundle's metadata.json.
+    path = getattr(model, "_mobius_source_path", None)
+    if path and path.endswith(".mlmodelc"):
+        meta_path = os.path.join(path, "metadata.json")
+        if os.path.exists(meta_path):
+            import ast
+            with open(meta_path) as f:
+                meta = json.load(f)
+            entry = meta[0] if isinstance(meta, list) and meta else meta
+            for inp in entry.get("inputSchema", []) if isinstance(entry, dict) else []:
+                if inp.get("name") == "tokens":
+                    shape_str = inp.get("shape", "")
+                    try:
+                        shape = ast.literal_eval(shape_str)
+                        return int(shape[-1]) if shape else None
+                    except (ValueError, SyntaxError):
+                        return None
     return None
 
 
@@ -100,8 +126,17 @@ def _load_coreml_model(path, cache_fallback=None, compute_units=None):
         if os.path.exists(cache_path):
             target = cache_path
     if target.endswith(".mlmodelc"):
-        return ct.models.CompiledMLModel(target, compute_units=compute_units)
-    return ct.models.MLModel(target, compute_units=compute_units)
+        model = ct.models.CompiledMLModel(target, compute_units=compute_units)
+    else:
+        model = ct.models.MLModel(target, compute_units=compute_units)
+    # Stash the resolved source path so `_nanocodec_t_in` can read the
+    # .mlmodelc bundle's metadata.json when `get_spec()` isn't available.
+    try:
+        model._mobius_source_path = target
+    except AttributeError:
+        # CompiledMLModel may forbid arbitrary attributes; ignore.
+        pass
+    return model
 
 # EXPERIMENTAL: Stateful (MLState) decoder path. Off by default.
 #
