@@ -1,0 +1,40 @@
+{
+  "stage": "text_encoder",
+  "fp32_package": "build/fp32/text_encoder_fp32.mlpackage",
+  "prod_mlmodelc": "/Users/kikow/.cache/fluidaudio/Models/magpie-tts/text_encoder.mlmodelc",
+  "size_bytes": 404863688,
+  "size_human": "386.1 MB",
+  "total_ops": 225,
+  "ane_ops": 0,
+  "ane_pct": 0.0,
+  "device_breakdown": {
+    "ane": 0,
+    "gpu": 0,
+    "cpu": 225
+  },
+  "warm_predict_ms": {
+    "cpu_and_neural_engine": 78.378,
+    "cpu_only": 78.879
+  },
+  "device_pct_at_cpu_and_neural_engine": {
+    "ane_pct": 0.0,
+    "gpu_pct": 0.0,
+    "cpu_pct": 100.0
+  },
+  "device_pct_at_cpu_only": {
+    "ane_pct": 0.0,
+    "gpu_pct": 0.0,
+    "cpu_pct": 100.0
+  },
+  "parity_vs_prod": {
+    "encoder_output": {
+      "cosine": 0.9985224851355446,
+      "max_abs_delta": 0.44253069162368774,
+      "shape": [
+        1,
+        256,
+        768
+      ]
+    }
+  }
+}
