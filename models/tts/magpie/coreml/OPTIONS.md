@@ -7,28 +7,27 @@ graph-level lever in `PERF.md` was exhausted.
 
 ## Top-line state (current)
 
-| # | Option | Status | Verdict source |
-|---|---|---|---|
-| 1 | MIL post-conversion graph rewriting (tail-fp16) | **🔴 NO-GO** | Probe 1 + Trial 11 (`PERF.md`) — v1 SNR 38.79 dB << 48 dB threshold, 0 % ANE |
-| 2 | coremltools 9.x upgrade | **🔴 NO-GO** | Probe 2 — pass code byte-identical to 8.3 |
-| 3 | Vocoder swap (Vocos / iSTFTNet) | **🔴 NO-GO** | Probe 3 — no NanoCodec-FSQ consumer; glue training out of scope |
-| 4 | `local_transformer` body/tail split | ⏸ Available, not pursued in this PR | Tier 2 (1 % win, partition-cost risk) |
-| 5 | MLPipeline fusion (Trial 9 revisit) | ⏸ Parked | Tier 2 (~0.5–1 % win) |
-| 6 | Per-stage CU override re-audit | ⏸ Roll into BASELINE_FP32 follow-up | Tier 2 (0–20 ms ceiling) |
-| 7 | QAT int8 (Trial 8 deferred) | ❌ Out of scope | Constraint: no retraining |
-| 8 | Architecture-level retraining | ❌ Out of scope | Constraint: no retraining |
+**All Tier 1 options closed under the no-retraining + no-hardware-upgrade
+constraints. The 830 ms warm TTFA ceiling is the operating point.**
+Tier 2 small wins (Options 4, 5, 6) remain available for future PRs;
+ceiling movement requires retraining (deferred Trial 8 QAT or NanoCodec
+swap with glue training) — see *Recommended next steps if constraints
+relax* below.
 
-**All three Tier 1 options are now closed.** The tail-fp16 probe
-(Trial 11 in `PERF.md`) ran with the smallest possible fp16 island
-(post_conv + out_activation, 3 ops) and failed both halves of the
-hypothesis: 38.79 dB SNR (vs the 48 dB Phase F.2 audibility threshold)
-AND 0 % ANE residency (the planner refused to partition for a 3-op
-fp16 island anchored to a fp32 output). Anything larger only adds
-more fp16 noise; the stopping rule fired, v2/v3 skipped.
+| # | Option | Tier | Status | Reference |
+|---|---|---|---|---|
+| 1 | MIL graph rewriting (tail-fp16) | 1 | 🔴 NO-GO | Trial 11 (`PERF.md`) |
+| 2 | coremltools 9.x upgrade | 1 | 🔴 NO-GO | Probe 2 (this doc) |
+| 3 | Vocoder swap (Vocos / iSTFTNet) | 1 | 🔴 NO-GO | Probe 3 (this doc) |
+| 4 | `local_transformer` body/tail split | 2 | ⏸ Available | est. 10–20 ms TTFA |
+| 5 | MLPipeline fusion | 2 | ⏸ Parked | Trial 9 low-EV |
+| 6 | Per-stage CU re-audit | 2 | ⏸ Available | LT 55.3 % ANE finding |
+| 7 | NanoCodec v3 → v4 (size-only) | 3 | 🔴 NO-GO for default flip | v3/v4 re-bench (`PERF.md`) |
+| 8 | QAT / retraining | — | ❌ OOS | #60 hard line |
 
-The structural 830 ms warm TTFA ceiling is the operating point under
-the no-retraining constraint. Tier 2 options 4, 5, 6 remain available
-for follow-up work but are **not being pursued in this PR**.
+`🔴` blocked under current constraints; `⏸` available, not pursued in this
+PR; `❌` outside scope. Each Tier 1 NO-GO has a `Result:` line below with
+the verbatim verdict and pointer to the source-of-truth doc section.
 
 ## Constraints
 
@@ -101,6 +100,18 @@ sweep.
 
 **Probe 1 verdict** below determines technical feasibility.
 
+**Result.** Probe 1 confirmed the MIL pass is fully feasible (`op.scopes`
+populated post-conversion; `mb.cast` + `replace_uses_of_var_after_op` is
+the canonical pattern from `add_fp16_cast`). **Trial 11** then ran the
+v1 (smallest possible region: `post_conv` + `out_activation`, 3 ops):
+**SNR 38.79 dB on 5 random-token utterances — 9 dB below Phase F.2's
+48 dB audibility threshold — and 0 % ANE residency** (planner refused
+to take a 3-op fp16 island anchored to a fp32 output). Both halves of
+the hypothesis fail simultaneously. v1 is the smallest possible region;
+v2/v3 skipped per the stopping rule. The MIL rewrite works; the
+audibility envelope rules out every fp16 island that would buy ANE.
+See `PERF.md` §"Trial 11 — Tail-fp16 mixed-precision (Option 1) ✗ DEAD".
+
 ### Option 2 — coremltools 9.x upgrade 🔴 NO-GO (Probe 2)
 
 **What.** Phase F.2b was run on coremltools 8.x. The repo currently
@@ -118,6 +129,14 @@ make Option 1 trivial instead of high-effort. Latency impact identical.
 
 **Probe 2 verdict** below determines if 9.x is even released and
 whether the relevant fix is in.
+
+**Result.** Probe 2: **9.0 ships byte-identical pass code to 8.3.**
+`AbstractQuantizationPass.apply` and `CastTypeQuantization.transform_op`
+unchanged; `mil/scope.py` zero commits since 8.1. No upstream issue or
+PR addresses either symptom; no in-flight 9.1 fix to wait on. The bug
+has not been filed upstream. Option 1's MIL pass remains the only
+viable per-location precision route — and Trial 11 closed that. See
+"Probe 2 — coremltools 9.x status" below.
 
 ### Option 3 — Vocoder swap (Vocos / iSTFTNet) 🔴 NO-GO (Probe 3)
 
@@ -142,6 +161,16 @@ violates the no-retraining constraint. Only a **pretrained, drop-in
 checkpoint** keeps Option 3 in scope.
 
 **Probe 3 verdict** below determines availability.
+
+**Result.** Probe 3: **zero pretrained vocoders consume NeMo NanoCodec
+FSQ codes.** The "nano-codec" hits on HF are name-collision distractors
+(16 kHz DAC RVQ); `nineninesix-ai/nanocodec-mlx` is just an MLX port of
+the same NeMo HiFi-GAN decoder. Vocos's input head is a learned
+`codebook_weights` Parameter hard-tied to EnCodec's centroids — any
+substitution requires glue training (~500–3 000 A100-hours) which
+violates the no-retraining constraint. Mel-intermediate path
+(NanoCodec → mel → stock Vocos) also requires training. See "Probe 3 —
+Pretrained Vocos / iSTFTNet for NanoCodec" below.
 
 ## Tier 2 — small / marginal wins (1-3 % of TTFA)
 
@@ -171,6 +200,12 @@ in Option 4 may eat the savings.
 `MagpieFusedLocalSampler.swift`. **Worth a quick spike before any
 serious commitment.**
 
+**Greenlight cost.** ⏸ Available. Roughly 0.5–1 day to build the spike
+(re-trace + split + bench). Greenlight if (a) someone wants the ~1 %
+TTFA win on long-input cases, or (b) we're already touching
+`MagpieFusedLocalSampler.swift` for another reason and the wiring cost
+is amortized. Not pursued in this PR.
+
 ### Option 5 — MLPipeline fusion (Trial 9 revisit)
 
 `PERF.md:515` flagged Trial 9 as "low-EV". The intuition was correct —
@@ -184,6 +219,11 @@ which makes the fused stage awkward to package and wires the prefill's
 **Effort.** Low.
 **Recommendation.** Park unless a probe surfaces a 50 + ms scheduler
 finding that changes the math.
+
+**Greenlight cost.** ⏸ Parked. Greenlight only if a future scheduler
+investigation finds a per-dispatch overhead > ~30 ms on cold paths
+that MLPipeline fusion could amortize. Not actionable on current
+M2 + macOS 26.5 numbers.
 
 ### Option 6 — Per-stage compute-unit override audit
 
@@ -199,27 +239,74 @@ heuristic change.
 shipping mlmodelc on each target OS. Hooks into the BASELINE_FP32
 probe harness directly.
 
-## Tier 3 — out of scope (require retraining / model-level changes)
+**Greenlight cost.** ⏸ Available. ~30 minutes to run + interpret on a
+new OS minor. Worth running before each iOS major release as a
+regression check. The live sweep also turned up the **LT 55.3 % ANE
+finding** (PERF.md:62 / 153 records 73.9 %, stale by ~18 ppt) — that
+mechanical fix lands when this re-audit ships. Not pursued in this PR.
 
-### Option 7 — QAT / activation-calibrated int8 on `decoder_step`
+## Tier 3 — investigated, ship-blocked
 
-`PERF.md:516` Trial 8 deferred. Multi-day NeMo training + EOS
-preservation work; estimated **−400 ms TTFA**. Violates the
-no-retraining constraint.
+### Option 7 — NanoCodec v3 → v4 (size-only) 🔴 NO-GO for default flip
 
-### Option 8 — Architecture-level retraining
+**What.** v4 is the palette-quantized fp32 NanoCodec variant from
+Trial 10a — same audibility envelope as v3, **4× smaller on disk**
+(121 MB → 31 MB). #60 Track 1 raised the question of flipping the
+`MagpieModelStore` default to v4 if it ships a TTFA win along with
+the size advantage.
 
-LiteMagpie / distilled smaller body / pruned attention / alternate
-codec head. Multi-week training pipeline. Violates the no-retraining
-constraint.
+**Investigation.** User A/B-listened the 5 fixture pairs at
+`nanocodec_experiments/results/ab_v3_v4/utt0{1..5}_{v3,v4}.wav` (now
+gitignored — re-generate via the harness) and **confirmed v4 is
+acoustically transparent vs v3**. Acoustic question settled.
+
+Two follow-up benches (`bench_v3_v4.py` warm-latency, `bench_rss.py`
+RSS) settled the perf question:
+
+- **Warm latency:** v4 is **+47 ms / +40 % slower** than v3 at the
+  production CU (`.cpuOnly`, v3=116.89 ms, v4=163.62 ms). Cold-load
+  delta +84 ms (palette dequant cost). Reconciles with Trial 10a's
+  original "v4 slower on every CU on M2" finding.
+- **RSS:** at production CU, **v4 has zero RAM savings.** Both add
+  ~537 MB to RSS at steady state; v4 actually +1 MB. The 90 MB
+  on-disk advantage is purely a download / asset-bundle benefit;
+  runtime RSS is identical because palette weights expand to fp32
+  at MLModel load.
+
+**Result.** **Don't flip the default.** v4 stays available as a 4×
+smaller artifact for download-size-constrained scenarios (HF / iOS
+app-bundle), but the consumer accepts ~47 ms-per-call cost
+consciously. End-to-end utterance cost: 20 sliding windows × 47 ms ≈
+940 ms slower per 8 s utterance. **No FluidAudio Swift change
+needed.** See `PERF.md` §"Trial 10a re-bench — v4 confirmed slower
+than v3 (post-ABX) ✗ KEEP v3" for full numbers.
+
+## Out of scope (constraint hard-lines)
+
+### Option 8 — QAT / retraining
+
+Two distinct sub-options that share the no-retraining hard line from
+mobius #60:
+
+- **QAT / activation-calibrated int8 on `decoder_step`** — Trial 8 in
+  `PERF.md:516`, deferred. Multi-day NeMo training + careful EOS
+  preservation work; estimated **−400 ms TTFA** if landed.
+- **Architecture-level retraining** — LiteMagpie / distilled smaller
+  body / pruned attention / alternate codec head. Multi-week training
+  pipeline.
+
+Both violate the no-retraining constraint and are gated on that
+constraint relaxing. See *Recommended next steps if constraints relax*
+below.
 
 ## Decision summary
 
-**Originally:** Only Options 1–3 had a shot at lowering the 830 ms
-TTFA ceiling. Probes 2 and 3 closed Options 2 and 3 as NO-GO; Trial 11
-(the tail-fp16 follow-up to Probe 1) closed Option 1 as NO-GO. All
-three Tier 1 options are now exhausted; the 830 ms ceiling is the
-operating point under the no-retraining constraint.
+**All Tier 1 options closed.** Probes 2 and 3 closed Options 2 and 3
+as NO-GO; Trial 11 (the tail-fp16 follow-up to Probe 1) closed Option 1
+as NO-GO. **Tier 3 Option 7 closed** as NO-GO for default flip via the
+post-ABX v3/v4 latency + RSS re-bench. The 830 ms warm TTFA ceiling is
+the operating point under the no-retraining + no-hardware-upgrade
+constraints.
 
 | # | Option | Impact ceiling | Effort | Status |
 |---|---|---|---|---|
@@ -228,9 +315,49 @@ operating point under the no-retraining constraint.
 | 3 | Vocoder swap (Vocos / iSTFTNet) | ~100-150 ms (~12-18 %) | 0 if pretrained, weeks otherwise | 🔴 NO-GO (Probe 3) |
 | 4 | `local_transformer` body/tail split | ~10-20 ms (~1 %) | Medium | ⏸ Available, not pursued in this PR |
 | 5 | MLPipeline fusion | ~5-10 ms (~0.5-1 %) | Low | ⏸ Parked |
-| 6 | Compute-unit override audit | 0-20 ms | Low | ⏸ Roll into BASELINE_FP32 follow-up |
-| 7 | QAT int8 (`decoder_step`) | est. −400 ms | Multi-day | ❌ Out of scope |
-| 8 | Architecture-level retraining | open-ended | Multi-week | ❌ Out of scope |
+| 6 | Compute-unit override audit | 0-20 ms (+ LT 55.3 % stale-doc fix) | Low | ⏸ Roll into BASELINE_FP32 follow-up |
+| 7 | NanoCodec v3 → v4 (size-only) | size: 121 MB → 31 MB; latency: −47 ms / call (regression) | n/a | 🔴 NO-GO for default flip; v4 stays available for download-size scenarios |
+| 8 | QAT / retraining (Trial 8 + LiteMagpie etc.) | est. −400 ms (QAT) to open-ended (retrain) | Multi-day to multi-week | ❌ Out of scope (#60 hard line) |
+
+## Recommended next steps if constraints relax
+
+The 830 ms ceiling is structural under the **current** constraints
+(no retraining, no hardware upgrade, no quality regression). Three
+relaxations would reopen ceiling movement, in increasing cost order:
+
+1. **Cheapest — M3/M4 retest.** All numbers in `PERF.md` and
+   `BASELINE_FP32.md` are M2 / macOS 26.5. The ANE compute cores
+   widened M2 → M3 → M4; the nanocodec dilated-conv `W ≤ 16 384`
+   ceiling and the fp16 audibility envelope are graph-level facts
+   that don't change with hardware, but per-stage ANE residency,
+   warm latency, and the planner's CU choices may shift enough to
+   reopen Tier 1 questions. Effort: ~half a day on each new chip
+   (rerun the BASELINE_FP32 + Trial 11 + v3/v4 benches via the
+   existing harnesses). Loosens the no-hardware-upgrade constraint.
+
+2. **Highest-EV unblock — Trial 8 QAT** (`PERF.md:516`). NeMo
+   activation-calibrated int8 on `decoder_step`, with careful EOS
+   preservation to dodge Trial 2's runaway-EOS failure mode.
+   Estimated **−400 ms TTFA** per the original Trial 8 entry —
+   roughly 48 % of the current ceiling. Effort: hours of GPU + a
+   few days of code (NeMo training loop + on-device parity sweep).
+   Loosens the no-retraining constraint for **one model only**
+   (`decoder_step`); the rest of the pipeline stays as-shipped.
+
+3. **Larger lift — Vocoder swap with glue training.** Train a
+   NanoCodec-input Vocos / iSTFTNet head from scratch against the
+   shipping NeMo NanoCodec encoder's output (Probe 3 estimate:
+   ~500–3 000 A100-hours depending on multi-language quality
+   target). Gets ANE-residency on the codec stage, eliminates the
+   `W ≤ 16 384` ceiling and the fp32-weight-required audibility
+   bind. Effort: weeks. Loosens the no-retraining constraint
+   broadly. Probably only worth it if QAT ships and there's still
+   a nanocodec-shaped hole in the budget.
+
+If none of those relaxations are funded, the next move is **Tier 2
+quick spikes** (Options 4 + 6) — small wins under existing
+constraints. Each is ~1 day of work for ~1–2 % TTFA, net of
+boundary-cost risk for Option 4.
 
 ## Cross-references
 
@@ -239,6 +366,10 @@ operating point under the no-retraining constraint.
 - `PERF.md` Trial 9 (`MLPipeline` low-EV) — line 515.
 - `PERF.md` Trial 10c (NanoCodec mixed-precision DEAD via Phase F.2)
   — line 567.
+- `PERF.md` Trial 10a re-bench (v3 vs v4 latency + RSS post-ABX) —
+  closes Option 7.
+- `PERF.md` Trial 11 (tail-fp16 MIL rewriting) — closes Option 1.
+- `BASELINE_FP32.md` — 5-stage fp32-vs-fp16 parity table.
 - `PERF.md` §Repro and §Lever ranking — line 642 onward.
 - `nanocodec_experiments/results/STATUS.md` Phase F.2 / F.2b — full
   audibility envelope and `op_selector` failure analysis.
