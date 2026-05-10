@@ -705,6 +705,70 @@ Option 1 dead (this trial), Options 2 + 3 dead (Probes 2 + 3). The
 structural 830 ms warm TTFA ceiling is the operating point under the
 no-retraining constraint.
 
+### Trial 10a re-bench — v4 confirmed slower than v3 (post-ABX) ✗ KEEP v3
+
+Prompted by mobius #60 Track 1: user A/B-listened the 5 fixture pairs at
+`nanocodec_experiments/results/ab_v3_v4/utt0{1..5}_{v3,v4}.wav` and
+**confirmed v4 is acoustically transparent vs v3**. The acoustic
+question is settled. The remaining open question — does v4 ship a
+warm-latency win that justifies flipping the `MagpieModelStore` default
+— is settled here in the negative.
+
+Fresh bench (M2, macOS 26.5, ct 9.0,
+`experiments/baseline_fp32/bench_v3_v4.py`, 5 cold loads + 60 warm
+calls per CU per variant):
+
+| variant | size | ANE % @ best | cold load (cpu+ne, n=5 med) | warm @ cpuOnly | warm @ cpu+ne | warm @ all |
+|---|---|---|---|---|---|---|
+| v3 (production) | 121.0 MB | 0.0 % (1820 ops, all CPU) | 254 ms | **116.89 ms** | 166.55 ms | 282.32 ms |
+| v4 (palette-quant) | 30.9 MB | 0.0 % (1913 ops, all CPU) | 338 ms | 163.62 ms | 163.77 ms | 298.74 ms |
+
+Headline numbers:
+
+- **v4 is +47 ms (+40 %) slower per warm call at the best-case CU.**
+  v3's optimal compute unit is `.cpuOnly` (116.89 ms median, p95 137.58,
+  std 7.06). v4's best is roughly `.cpu_and_neural_engine` *and*
+  `.cpuOnly` tied at ~163 ms — identical because the ANE planner takes
+  ~zero ops for either variant (both report 0 % ANE).
+- **v4 cold load is +84 ms slower** (254 → 338 ms at `cpu+ne`). This
+  is where the 8-bit palette → fp32 dequant cost shows up. Confirms
+  `STATUS.md` Phase F's "fp32 stays fp32 at runtime — weights
+  dequantize to it" — that dequant is *not* free; it's deferred from
+  on-disk size to load-time wall.
+- **v4 has more ops (1913 vs 1820)** — palette dequant introduces
+  ~93 extra ops per the diff. None of them help with ANE.
+- **`MagpieModelStore.swift` pin to `.cpuOnly` is correct.** v3 at
+  `.cpu_and_neural_engine` runs the planner-thrash penalty
+  (warm med 166 / p95 311 ms / std 56 — wide tail) for no benefit.
+  v4 dampens that variance (cu+ne p95 209 / std 17) but still loses on
+  median to v3 cpuOnly.
+
+These numbers reconcile with Trial 10a's original claim ("v4 is slower
+than v3 on every compute-unit policy on M2") even though the absolute
+v3 numbers come in 30-50 % lower than the original Trial 10a entry
+(macOS / coremltools improvements between measurement passes). The
+*relative* picture stands: every v4 column ≥ the matching v3 column.
+
+The "~12 ms" win earlier hypotheses cited likely conflated v4 with
+`v3_int8pal` (a separate Trial 10a variant — int8 weight palette
+*plus* fp32 compute, ~170 ms at `.cpu+ne`, never user-audibility-tested
+end-to-end).
+
+**Verdict.** Keep v3 as the production default. **Don't flip
+`MagpieModelStore.swift`.** v4 stays available as a 4× smaller artifact
+for low-RAM scenarios, but with a ~47 ms-per-call cost the consumer
+must accept consciously. End-to-end implication: a typical 8 s
+utterance runs ~20 sliding-window NanoCodec calls, so 20 × 47 ms ≈
+940 ms slower per utterance on v4. **No FluidAudio Swift change
+needed.**
+
+**Files retained for reference:**
+- `experiments/baseline_fp32/bench_v3_v4.py` — bench driver
+- `build/fp32/v3_vs_v4.bench.json` — full per-CU stats (cold, warm,
+  planner placement)
+- `nanocodec_experiments/results/ab_v3_v4/utt0{1..5}_{v3,v4}.wav` —
+  the 5 ABX fixture pairs
+
 ---
 
 ## Lever ranking (post-Trial 10 closure)
