@@ -16,7 +16,7 @@ which is exactly why this variant loses for Magpie (rank-4 production already
 gets 97.3% on ANE).
 
 Usage:
-    python convert_decoder_step_stateful.py [--nemo-path /path/to/model.nemo]
+    python experiments/convert_decoder_step_stateful.py [--nemo-path /path/to/model.nemo]
 """
 import argparse
 import os
@@ -26,7 +26,9 @@ import coremltools as ct
 import numpy as np
 import torch
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Script lives in ``coreml/experiments/``; add the parent (``coreml/``) to
+# sys.path so ``from traceable.…`` continues to resolve.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from traceable.traceable_decoder_step_stateful import StatefulDecoderStep
 
 

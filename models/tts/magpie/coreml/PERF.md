@@ -5,6 +5,13 @@ All numbers on **Apple M2 / macOS 26.5 / coremltools 9.0** unless noted.
 "TTFA" = wall-clock from `synthesizeStream(...)` call to first
 `MagpieAudioChunk` yield, warm path, release build, seed 42.
 
+> **Layout note** — production conversion scripts live at the top of
+> `coreml/`. Diagnostic / dead-end scripts (Trial 2 int8 quant, Trial 4a
+> N=2 unroll, STATEFUL MLState variant) live in
+> [`experiments/`](experiments/); the separate NanoCodec sweep track is
+> in [`nanocodec_experiments/`](nanocodec_experiments/). All path refs
+> below assume you `cd` into `coreml/`.
+
 ---
 
 ## TL;DR — current state
@@ -124,7 +131,7 @@ Commit `b93f3b099` (FluidAudio). Pure Swift change, no model touched.
 Three configs tried, all break end-to-end EOS termination on long-context
 streaming inputs.
 
-Script: `quantize_decoder_step_int8.py`
+Script: `experiments/quantize_decoder_step_int8.py`
 
 | Config | Short TTFA (3 words) | Long-input EOS |
 |---|---|---|
@@ -340,7 +347,7 @@ Pre-flight kill criteria: ship if N=2 stays > 90% ANE; abandon if < 80% ANE.
 #### Trial 4a — N=2 pre-flight ✗ DEAD
 
 **Implementation** (`traceable/traceable_decoder_step_n2.py`,
-`convert_decoder_step_n2.py`):
+`experiments/convert_decoder_step_n2.py`):
 
 - Reuse `TraceableDecoderStep` for both iterations (parameters shared, KV
   state passed through)
@@ -404,7 +411,7 @@ sampler-tail penalty and state I/O. **Do not pursue**.
 
 Files retained for reference (do not delete):
 - `traceable/traceable_decoder_step_n2.py`
-- `convert_decoder_step_n2.py`
+- `experiments/convert_decoder_step_n2.py`
 - `build/fused_decoder_step_n2.mlpackage` (215 MB)
 - `compiled/build/fused_decoder_step_n2.mlmodelc` (1.7 MB + weights)
 
@@ -722,7 +729,7 @@ huggingface-cli download FluidInference/magpie-tts-multilingual-357m-coreml \
   decoder_step.mlpackage --local-dir build/upstream/
 
 # Quantize (per-channel, skip LM head — best int8 we found)
-uv run python quantize_decoder_step_int8.py \
+uv run python experiments/quantize_decoder_step_int8.py \
   --input build/upstream/decoder_step.mlpackage \
   --output build/decoder_step_int8_pc_skiphead.mlpackage \
   --granularity per_channel \

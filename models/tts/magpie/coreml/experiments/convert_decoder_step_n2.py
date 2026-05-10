@@ -6,7 +6,7 @@ the resulting mlmodelc to measure ANE residency vs the per-iter
 baseline.
 
 Usage:
-    uv run python convert_decoder_step_n2.py \\
+    uv run python experiments/convert_decoder_step_n2.py \\
         --output build/fused_decoder_step_n2.mlpackage
 
 Loads weights from:
@@ -26,8 +26,9 @@ import numpy as np
 import torch
 import coremltools as ct
 
-# Local imports.
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Local imports. Script lives in ``coreml/experiments/``; add the parent
+# (``coreml/``) to sys.path so ``from traceable.…`` continues to resolve.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from traceable.traceable_decoder_step import TraceableDecoderStep
 from traceable.traceable_decoder_step_n2 import (
     FusedDecoderN2,

@@ -79,7 +79,7 @@ RESULT (2026-05, M2, macOS 26.5, coremltools 8.x):
 ------------------------------------------------------------------------------
 
 Usage:
-    uv run python quantize_decoder_step_int8.py \
+    uv run python experiments/quantize_decoder_step_int8.py \
         --input  build/upstream/decoder_step.mlpackage \
         --output build/decoder_step_int8.mlpackage
 """
