@@ -769,6 +769,76 @@ needed.**
 - `nanocodec_experiments/results/ab_v3_v4/utt0{1..5}_{v3,v4}.wav` —
   the 5 ABX fixture pairs
 
+#### RSS / runtime memory footprint
+
+The 4× on-disk savings (121 → 31 MB) raised the question: does v4
+actually save runtime RAM, or only download size? Hypothesis: palette
+dequant runs at MLModel load and weights expand to fp32 in RSS, so
+the on-disk win evaporates at runtime.
+
+Bench: `experiments/baseline_fp32/bench_rss.py`. Each (variant, CU)
+config runs in a **fresh subprocess** so the baseline RSS is clean.
+Per config:
+
+- Baseline: `process.memory_info().rss` before any CoreML import.
+- Peak load: 10 ms-interval polling thread during
+  `CompiledMLModel(...)` + first throwaway predict.
+- Post-load: median of 5 samples after a 2 s settle.
+- Warm inference: 100 ms-interval polling thread during a 60-call
+  warm loop; median + p95 across all samples.
+
+Apple M2, macOS 26.5, coremltools 9.0:
+
+| variant | CU | baseline | Δ peak load | Δ post-load | Δ warm median | Δ warm p95 |
+|---|---|---|---|---|---|---|
+| v3 | cpu_only | 22.6 MB | +537.2 MB | +537.3 MB | +537.5 MB | +537.5 MB |
+| v4 | cpu_only | 22.8 MB | +538.2 MB | +538.2 MB | +538.4 MB | +538.5 MB |
+| v3 | cpu_and_neural_engine | 22.6 MB | +538.8 MB | +538.8 MB | +539.0 MB | +539.1 MB |
+| v4 | cpu_and_neural_engine | 22.8 MB | +539.6 MB | +539.5 MB | +539.7 MB | +539.8 MB |
+| v3 | all | 22.6 MB | +553.1 MB | +553.1 MB | +555.2 MB | +555.2 MB |
+| v4 | all | 22.8 MB | +466.7 MB | +466.8 MB | +469.5 MB | +469.5 MB |
+
+Savings (positive = v4 saves RAM vs v3):
+
+| CU | Δ peak | Δ post-load | Δ warm median | Δ warm p95 |
+|---|---|---|---|---|
+| **cpu_only** (production) | **−1.0 MB** (v4 uses ~1 MB *more*) | −1.0 MB | −0.9 MB | −1.0 MB |
+| **cpu_and_neural_engine** | **−0.7 MB** (v4 uses ~0.7 MB *more*) | −0.7 MB | −0.7 MB | −0.7 MB |
+| `.all` | +86.4 MB | +86.4 MB | +85.7 MB | +85.7 MB |
+
+Findings:
+
+1. **At the production CU (`.cpuOnly`), v4 has ZERO RAM savings.** v3
+   and v4 both add ~537 MB to RSS at steady state. v4 is actually
+   ~1 MB *higher* (well within run-to-run noise). The 90 MB on-disk
+   advantage is purely a download / asset-bundle benefit; runtime
+   RSS is identical.
+2. **Same story at `.cpu_and_neural_engine`.** ~539 MB delta either
+   way; v4 is ~0.7 MB higher. No production-relevant savings.
+3. **At `.all` (not used by `MagpieModelStore`), v4 saves ~86 MB.**
+   The planner picks a different placement (likely partial GPU) for
+   palette-quantized weights when GPU is in scope. Curious optimizer
+   trick but **not relevant to Magpie's production routing** (which
+   pins NanoCodec to `.cpuOnly`).
+4. **No load-time transient.** Peak load deltas match post-load
+   deltas to within 0.2 MB — coremltools streams the dequant rather
+   than briefly holding both compressed and expanded weights. Or the
+   10 ms polling misses the peak; either way no spike to worry about.
+
+**Verdict.** v4 is a **download-size-only win.** Runtime RAM identical
+to v3 at production CU policy. **No memory-constrained-deployment
+benefit.** The 4× artifact-size advantage matters for HF download
+budgets and iOS app-bundle size, but not for on-device RSS at
+inference time.
+
+Combined with the warm-latency finding (v4 +47 ms / +40 % per call at
+production CU) the overall picture is: **v4 keeps the artifact-size
+win; v3 keeps everything else.** Default stays v3.
+
+**Files retained:**
+- `experiments/baseline_fp32/bench_rss.py` — RSS bench driver
+- `build/fp32/v3_vs_v4.rss.json` — full per-CU stats per variant
+
 ---
 
 ## Lever ranking (post-Trial 10 closure)
