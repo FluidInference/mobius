@@ -24,6 +24,84 @@ import soundfile as sf
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONST_DIR = os.path.join(SCRIPT_DIR, "constants")
 BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
+_HF_CACHE_DIR = os.path.expanduser("~/.cache/fluidaudio/Models/magpie-tts")
+
+
+def _nanocodec_t_in(model):
+    """Read the NanoCodec's expected `tokens` time dimension from the spec.
+    Returns the third axis size of the `tokens` input, e.g. 24 for the
+    chunked v3/v4 builds, 256 for the legacy monolithic v1.
+    """
+    spec = model.get_spec()
+    for inp in spec.description.input:
+        if inp.name == "tokens":
+            shape = list(inp.type.multiArrayType.shape)
+            return int(shape[-1]) if shape else None
+    return None
+
+
+def _decode_nanocodec(model, predicted_codes, num_codebooks, samples_per_frame):
+    """Run NanoCodec end-to-end. Auto-dispatches between monolithic
+    (T_in == max_frames, single call) and chunked (T_in < total, sliding
+    window with stride=t_in/3, edge-padded — mirrors chunked_parity.py
+    Phase C v2 step 5/7 behaviour).
+    """
+    T_total = predicted_codes.shape[1]
+    t_in = _nanocodec_t_in(model)
+
+    # Monolithic path: pad to t_in, single call.
+    if t_in is None or T_total <= t_in and t_in >= 256:
+        padded = np.zeros((num_codebooks, t_in or 256), dtype=np.int32)
+        padded[:, :T_total] = predicted_codes
+        out = model.predict({
+            "tokens": padded[np.newaxis, :, :].astype(np.int32),
+        })["audio"]
+        return out.flatten() if out.ndim > 1 else out
+
+    # Chunked path (v2/v3/v4): T_in=24, stride=8, overlap=16. Mirror
+    # `nanocodec_experiments/chunked_parity.py` lines 116-148.
+    stride = max(1, t_in // 3)
+    overlap = t_in - stride
+    tokens_np = predicted_codes[np.newaxis, :, :]  # (1, num_cb, T)
+    chunks = []
+    for start in range(0, T_total, stride):
+        ctx_start = start - overlap
+        if ctx_start < 0:
+            pad = -ctx_start
+            piece = np.concatenate([
+                np.zeros((1, num_codebooks, pad), dtype=np.int32),
+                tokens_np[:, :, 0: start + stride],
+            ], axis=2)
+        else:
+            piece = tokens_np[:, :, ctx_start: start + stride]
+        if piece.shape[2] < t_in:
+            pad = t_in - piece.shape[2]
+            piece = np.concatenate([
+                piece, np.zeros((1, num_codebooks, pad), dtype=np.int32)
+            ], axis=2)
+        out = model.predict({"tokens": piece.astype(np.int32)})["audio"]
+        keep_start = overlap * samples_per_frame
+        keep_end = keep_start + stride * samples_per_frame
+        chunks.append(out[..., keep_start:keep_end])
+    audio = np.concatenate(chunks, axis=-1)
+    if audio.ndim > 1:
+        audio = audio.flatten()
+    return audio[: T_total * samples_per_frame]
+
+
+def _load_coreml_model(path, cache_fallback=None, compute_units=None):
+    """Load a CoreML model. Tries `path` first; falls back to the HF cache
+    `.mlmodelc` if `path` does not exist. Auto-detects mlpackage vs mlmodelc
+    so production-deploy `.mlmodelc` files in the HF cache are usable here.
+    """
+    target = path
+    if not os.path.exists(target) and cache_fallback is not None:
+        cache_path = os.path.join(_HF_CACHE_DIR, cache_fallback)
+        if os.path.exists(cache_path):
+            target = cache_path
+    if target.endswith(".mlmodelc"):
+        return ct.models.CompiledMLModel(target, compute_units=compute_units)
+    return ct.models.MLModel(target, compute_units=compute_units)
 
 # EXPERIMENTAL: Stateful (MLState) decoder path. Off by default.
 #
@@ -304,27 +382,39 @@ def generate(
     text_mask = np.zeros(max_text_len, dtype=np.float32)
     text_mask[:T_text] = 1.0
 
-    # 2. Load CoreML models
+    # 2. Load CoreML models. Prefer the local `build/` mlpackage; fall back
+    # to the FluidAudio HF cache `.mlmodelc` (production deploy format) so
+    # this driver works without re-converting from PyTorch. NanoCodec is
+    # selectable via NANOCODEC_PATH so the v3 vs v4 fixture script can
+    # swap variants per call.
     print("Loading CoreML models...")
-    text_encoder = ct.models.MLModel(
+    text_encoder = _load_coreml_model(
         os.path.join(BUILD_DIR, "text_encoder.mlpackage"),
+        cache_fallback="text_encoder.mlmodelc",
         compute_units=ct.ComputeUnit.CPU_AND_GPU,
     )
     if STATEFUL:
-        decoder_step = ct.models.MLModel(
+        decoder_step = _load_coreml_model(
             os.path.join(BUILD_DIR, "decoder_step_stateful.mlpackage"),
-            # Stateful graphs are not ANE-compatible; CPU+GPU only.
+            cache_fallback=None,
             compute_units=ct.ComputeUnit.CPU_AND_GPU,
         )
     else:
-        decoder_step = ct.models.MLModel(
+        decoder_step = _load_coreml_model(
             os.path.join(BUILD_DIR, "decoder_step.mlpackage"),
+            cache_fallback="decoder_step.mlmodelc",
             compute_units=ct.ComputeUnit.ALL,  # rank-4 split-K/V — ANE compiles for some ops
         )
-    nanocodec = ct.models.MLModel(
-        os.path.join(BUILD_DIR, "nanocodec_decoder.mlpackage"),
+    nanocodec_path = os.environ.get(
+        "NANOCODEC_PATH",
+        os.path.join(BUILD_DIR, "nanocodec_decoder_v3.mlpackage"),
+    )
+    nanocodec = _load_coreml_model(
+        nanocodec_path,
+        cache_fallback="nanocodec_decoder_v3.mlmodelc",
         compute_units=ct.ComputeUnit.CPU_AND_GPU,
     )
+    print(f"  nanocodec: {nanocodec_path}")
 
     # 3. Encode text
     print("Encoding text...")
@@ -475,24 +565,11 @@ def generate(
     predicted_codes = np.stack(all_predictions, axis=1)  # (num_cb, T_total)
     T_total = predicted_codes.shape[1]
 
-    max_frames = 256
-    if T_total > max_frames:
-        print(f"  Warning: {T_total} frames > max {max_frames}, truncating")
-        predicted_codes = predicted_codes[:, :max_frames]
-        T_total = max_frames
+    samples_per_frame = constants["codec_samples_per_frame"]
+    audio = _decode_nanocodec(nanocodec, predicted_codes, num_codebooks,
+                              samples_per_frame)
 
-    padded = np.zeros((num_codebooks, max_frames), dtype=np.int32)
-    padded[:, :T_total] = predicted_codes
-
-    codec_out = nanocodec.predict({
-        "tokens": padded[np.newaxis, :, :].astype(np.int32),
-    })
-
-    audio = codec_out["audio"]
-    if audio.ndim > 1:
-        audio = audio.flatten()
-
-    expected_samples = T_total * constants["codec_samples_per_frame"]
+    expected_samples = T_total * samples_per_frame
     audio = audio[:expected_samples]
 
     peak = np.abs(audio).max()
