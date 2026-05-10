@@ -224,3 +224,73 @@ only, no conversions). Each lands as a separate commit on
 `feat/magpie-options-probe` so the trail is clear.
 
 <!-- Probe sections appended below as separate commits. -->
+
+### Probe 2 — coremltools 9.x status
+
+**One-line verdict: NO-GO.** Upgrading 8.x → 9.0 does not fix the
+Phase F.2b per-location precision bug. The path post-conversion MIL
+rewriting (Option 1) is still the only supported route.
+
+**Release status.** Latest stable: **coremltools 9.0** (2025-11-10).
+No 9.0.x patch release. 31 post-9.0 commits on `main` (through
+2026-05-07); next stable would be 9.1 — no in-flight fix to wait on.
+
+**Changelog grep.** The 9.0 release body and 9.0b1 (2025-07-28) full
+text contain **zero hits** for any of: `op_selector`,
+`FP16ComputePrecision`, `mixed precision`, `boundary`,
+`cast_to_fp16` / `cast_to_fp32`, `op.scopes`, `TORCHSCRIPT_MODULE_NAME`,
+`per-op`, `per-location`. The 9.0 release body verbatim:
+
+> Compare to 8.3.0 (including features from 9.0b1)
+> - Added Python 3.13 support.
+> - Bug fix related to upsample_bilinear.
+> - Fixed the lowering of broadcast_to for symbolic and dynamic shapes.
+> - Support for model input/output with int8 dtype.
+> - Ability to read and write model state.
+> - iOS26/macOS26/watchOS26/tvOS26 deployment targets.
+> - AllowLowPrecisionAccumulationOnGPU optimization hint.
+> - Support for PyTorch 2.7 and ExecuTorch 0.5.
+> - Additional metadata automatically added to converted models.
+> - Optimize im2col PyTorch operation.
+> - Various other bug fixes, enhancements, clean ups and optimizations.
+
+**Source-diff cross-check** via `gh api compare/8.3...9.0` (35 commits):
+
+- `coremltools/converters/mil/mil/passes/defs/quantization.py` —
+  the relevant `apply` and `transform_op` methods on
+  `AbstractQuantizationPass` and `CastTypeQuantization` are
+  **byte-identical** between 8.3 and 9.0. The only diff is an
+  unrelated `add_int16_cast.should_transform_op` branch detecting
+  preceding `uint16 → int32` casts.
+- `coremltools/converters/mil/mil/scope.py` — **zero commits since
+  8.1** (last touch 2024-11-20). Scope-during-pass semantics
+  unchanged from 8.x.
+- Post-9.0: PR #2669 ("Fix fp16 NaN from out-of-range fp32 tensor
+  sentinels") is the only fp16-adjacent fix. It patches
+  `add_fp16_cast.fp16_overflow`'s constant-range check for
+  `torch.finfo(fp32).min` from HuggingFace `eager` attention masks.
+  Different bug.
+
+**Issue tracker.** `gh search issues --repo apple/coremltools` for
+each of `"FP16ComputePrecision op_selector"`, `"boundary cast mixed
+precision"`, `"op scopes"`, `"per-op precision"`,
+`"selective fp16"`, `"skip cast"`, `"kept fp32"`,
+`"compute_precision per op"`, `"fp16 fp32 cast op_selector"` →
+**all zero hits**. Broader `"FP16ComputePrecision"` returns 9
+unrelated issues (slice_by_index mask, LayerNorm crash, NaN on
+transformer, AvgPool calc errors, etc.). No upstream report of the
+Magpie F.2b symptom. **The bug has not been filed.**
+
+**Implication.**
+
+1. `AbstractQuantizationPass.apply` invokes `self.op_selector(op)`
+   at the same call site as 8.3 with the same `op` object — if
+   `op.scopes[TORCHSCRIPT_MODULE_NAME]` came back empty in 8.x at
+   op_selector time, it comes back empty in 9.0.
+2. `CastTypeQuantization.transform_op` is unchanged — whatever the
+   runtime boundary-cast behavior was on 8.x, it is the same on 9.0.
+
+There is no in-flight upstream fix to wait on. Option 2's "low-effort
+upgrade" path is closed. **Option 1 (write the MIL post-pass) inherits
+the full burden** — Probe 1's verdict on technical feasibility
+becomes the gating factor.
