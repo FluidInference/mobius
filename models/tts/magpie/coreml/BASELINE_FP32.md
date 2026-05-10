@@ -27,6 +27,7 @@ Per-stage JSON: `build/fp32/<stage>.bench.json`.
 | stage | mlpackage | size | ops | ANE % | CU breakdown | warm @ cpu+ne | warm @ cpu | parity vs prod |
 |---|---|---|---|---|---|---|---|---|
 | text_encoder | `text_encoder_fp32.mlpackage` | 386.1 MB | 225 | 0.0 % | ANE 0 / GPU 0 / CPU 225 | 78.38 ms | 78.88 ms | cos 0.99852 / max\|d\| 4.43e-01 |
+| decoder_prefill | `decoder_prefill_fp32.mlpackage` | 321.0 MB | 541 | 0.0 % | ANE 0 / GPU 0 / CPU 541 | 112.76 ms | 121.27 ms | cos 0.99997 / max\|d\| 7.58e-02 |
 
 ## Per-stage notes
 
@@ -45,3 +46,18 @@ Per-stage JSON: `build/fp32/<stage>.bench.json`.
 - **Warm latency.** 78 ms at both `.cpuAndNeuralEngine` and `.cpuOnly` (identical
   because everything runs on CPU regardless). Production fp16 baseline (per
   `PERF.md`) is 12.4 ms at `.cpuAndNeuralEngine`, 98 % ANE → fp32 costs ~6.3×.
+
+### decoder_prefill
+
+- **0 % ANE residency.** Same structural rejection as text_encoder — every one of
+  the 541 ops marked "Invalid output tensor format: fp32". The 24 KV-cache
+  outputs all leave the graph as `MultiArray (Float32 …)` so the planner can't
+  hand any of the deeper graph to ANE.
+- **Parity vs prod fp16.** Cosine 0.99997, max|d| 0.076 across all 24 KV-cache
+  outputs (each shaped 2 × 1 × 512 × 12 × 64). Tighter than text_encoder because
+  the prefill outputs span a narrower dynamic range (KV cache scaling pre-softmax).
+- **Warm latency.** 112.8 ms at `.cpuAndNeuralEngine` vs 121.3 ms at `.cpuOnly`.
+  The 8 ms gap on a CPU-only graph likely reflects different threading defaults
+  in the coreml-cli loader's two policies, not actual ANE work — both rows show
+  100 % CPU placement in `summary`. Production fp16 baseline: 17.1 ms /
+  93.9 % ANE → fp32 costs ~6.6× wall-clock.
