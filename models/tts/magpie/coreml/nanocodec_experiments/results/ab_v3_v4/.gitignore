@@ -1,0 +1,8 @@
+# mobius #60 Track 1 — v3 vs v4 NanoCodec ABX fixture WAVs.
+#
+# The mobius-root .gitignore excludes `*.wav`. Re-include the matched
+# fixture pairs in this directory so the user can A/B-listen them
+# straight from a fresh checkout. Re-generate via
+#   uv run python -m nanocodec_experiments.ab_v3_v4_fixtures
+# from the magpie/coreml directory.
+!*.wav
