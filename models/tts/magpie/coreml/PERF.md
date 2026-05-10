@@ -645,6 +645,66 @@ NanoCodec are exhausted (10a fp32 palette, 10b split, 10c ANE/mixed,
 10d parallel). The only remaining path is model-level retraining
 (QAT int8 via NeMo) — out of scope here.
 
+### Trial 11 — Tail-fp16 mixed-precision (Option 1) ✗ DEAD
+
+The one configuration Phase F.2's op-class sweep did not test: keep
+**only the late HiFi-GAN ops at fp16** while everything before stays
+fp32. Hypothesis (Option 1 in `OPTIONS.md`): noise injected late in
+the stack has no downstream layers to amplify it audibly, so a small
+tail fp16 region might (a) clear the 48 dB audibility threshold and
+(b) let the ANE planner pick up the tail at fp16 even if upstream
+stays CPU-bound.
+
+**Implementation.** Custom MIL `AbstractGraphPass`
+(`experiments/baseline_fp32/tail_fp16_probe.py:TailFP16Cast`) appended
+to the default pass pipeline. Walks the program post-conversion,
+selects ops by `op.scopes[TORCHSCRIPT_MODULE_NAME]` substring match,
+and inserts `mb.cast(fp32→fp16)` on inputs + `mb.cast(fp16→fp32)` on
+outputs of elected ops. `op.scopes` IS populated post-conversion on
+torch-frontend ops (the mechanism Phase F.2b's `op_selector` predicate
+ran too early to see); confirmed in OPTIONS.md Probe 1.
+
+**v1 needles** (smallest possible fp16 region, per user's stopping
+rule) — `post_conv` + `out_activation`. **3 ops** elected for fp16
+casting out of 1 822 total. Upstream stages 0–4 + Snake activations +
+all upsamples remain fp32.
+
+**Result** (M2, macOS 26.5, coremltools 9.0, 5 random-token utterances
+× 72 frames, seeded RNG):
+
+| Variant | Ops fp16 | SNR_min vs fp32 | ANE % | Warm @cpu+ne | Verdict |
+|---|---|---|---|---|---|
+| v_full_fp32 (production reference) | 0 | ∞ (bit-exact) | 0 % | 117.11 ms | clean ✓ (Phase F gold) |
+| **v1 (post_conv + out_activation)** | **3** | **38.79 dB** | **0 %** | 117.11 ms | **FAIL** |
+
+Per Phase F.2's empirical threshold: **v_convs_fp32 came in at 48 dB
+and was declared audibly noisy by user A/B**. v1's 38.79 dB sits
+9 dB below that — well into noisy territory. Both halves of the
+hypothesis fail simultaneously:
+
+1. **Audibility.** 38.79 dB << 48 dB. Adding more fp16 ops (v2, v3)
+   only injects more noise — no path forward.
+2. **Latency / ANE residency.** 0 % ANE. The planner refused to take
+   the 3-op fp16 tail to ANE. The fp16-island-too-small-to-partition
+   pattern laishere documented in `kokoro-coreml`'s vocoder-split
+   attempt holds here: a tiny fp16 island anchored to a fp32 output
+   doesn't get scheduled to ANE.
+
+**Stopping rule fired.** v1 is the smallest possible fp16 region;
+nothing smaller exists, and anything larger fails the audibility test
+worse (Phase F.2's v_full_fp16 = 27 dB SNR). Skipped v2 / v3. The
+tail-fp16 hypothesis is a definitive negative.
+
+**Files retained for reference (do not delete):**
+- `experiments/baseline_fp32/tail_fp16_probe.py` — MIL pass + driver
+- `experiments/baseline_fp32/tail_fp16_audibility.py` — SNR + bench harness
+- `build/fp32/nanocodec_tail_fp16_v1.bench.json` — full per-utt metrics
+
+**Implication for OPTIONS.md.** All three Tier 1 options now closed:
+Option 1 dead (this trial), Options 2 + 3 dead (Probes 2 + 3). The
+structural 830 ms warm TTFA ceiling is the operating point under the
+no-retraining constraint.
+
 ---
 
 ## Lever ranking (post-Trial 10 closure)

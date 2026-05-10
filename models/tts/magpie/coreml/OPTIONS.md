@@ -9,7 +9,7 @@ graph-level lever in `PERF.md` was exhausted.
 
 | # | Option | Status | Verdict source |
 |---|---|---|---|
-| 1 | MIL post-conversion graph rewriting (tail-fp16) | **🟡 CONDITIONAL GO — probe in flight** | Probe 1 (this doc) — F.2 didn't test tail-fp16 |
+| 1 | MIL post-conversion graph rewriting (tail-fp16) | **🔴 NO-GO** | Probe 1 + Trial 11 (`PERF.md`) — v1 SNR 38.79 dB << 48 dB threshold, 0 % ANE |
 | 2 | coremltools 9.x upgrade | **🔴 NO-GO** | Probe 2 — pass code byte-identical to 8.3 |
 | 3 | Vocoder swap (Vocos / iSTFTNet) | **🔴 NO-GO** | Probe 3 — no NanoCodec-FSQ consumer; glue training out of scope |
 | 4 | `local_transformer` body/tail split | ⏸ Available, not pursued in this PR | Tier 2 (1 % win, partition-cost risk) |
@@ -18,11 +18,17 @@ graph-level lever in `PERF.md` was exhausted.
 | 7 | QAT int8 (Trial 8 deferred) | ❌ Out of scope | Constraint: no retraining |
 | 8 | Architecture-level retraining | ❌ Out of scope | Constraint: no retraining |
 
-**Tier 1 is now narrowed to a single active probe** — the tail-fp16
-mixed-precision configuration that Phase F.2 did not cover (its
-op-class sweep tested whole-graph subsets but not "stages 0–1 fp32 +
-stages 2–4 + post-head fp16"). Tier 2 options 4, 5, 6 remain on the
-menu for follow-up work but are **not being pursued in this PR**.
+**All three Tier 1 options are now closed.** The tail-fp16 probe
+(Trial 11 in `PERF.md`) ran with the smallest possible fp16 island
+(post_conv + out_activation, 3 ops) and failed both halves of the
+hypothesis: 38.79 dB SNR (vs the 48 dB Phase F.2 audibility threshold)
+AND 0 % ANE residency (the planner refused to partition for a 3-op
+fp16 island anchored to a fp32 output). Anything larger only adds
+more fp16 noise; the stopping rule fired, v2/v3 skipped.
+
+The structural 830 ms warm TTFA ceiling is the operating point under
+the no-retraining constraint. Tier 2 options 4, 5, 6 remain available
+for follow-up work but are **not being pursued in this PR**.
 
 ## Constraints
 
@@ -64,7 +70,7 @@ menu for follow-up work but are **not being pursued in this PR**.
 
 ## Tier 1 — could lower the 830 ms TTFA ceiling
 
-### Option 1 — MIL post-conversion graph rewriting 🟡 ACTIVE
+### Option 1 — MIL post-conversion graph rewriting 🔴 NO-GO (Trial 11)
 
 **What.** Walk the converted MIL graph after `ct.convert()` and
 explicitly insert `cast_to_fp32` / `cast_to_fp16` at module-named
@@ -210,13 +216,14 @@ constraint.
 ## Decision summary
 
 **Originally:** Only Options 1–3 had a shot at lowering the 830 ms
-TTFA ceiling. Probes 2 and 3 closed Options 2 and 3 as NO-GO.
-**Tier 1 is now Option 1 only**, narrowed further to the tail-fp16
-configuration Phase F.2 didn't cover.
+TTFA ceiling. Probes 2 and 3 closed Options 2 and 3 as NO-GO; Trial 11
+(the tail-fp16 follow-up to Probe 1) closed Option 1 as NO-GO. All
+three Tier 1 options are now exhausted; the 830 ms ceiling is the
+operating point under the no-retraining constraint.
 
 | # | Option | Impact ceiling | Effort | Status |
 |---|---|---|---|---|
-| 1 | MIL post-conversion graph rewriting (tail-fp16) | ~15-30 ms (~2-4 %) | 1–2 person-days | **🟡 ACTIVE** |
+| 1 | MIL post-conversion graph rewriting (tail-fp16) | ~15-30 ms (~2-4 %) | 1–2 person-days | 🔴 NO-GO (Trial 11) |
 | 2 | coremltools 9.x upgrade | same as #1 | Low | 🔴 NO-GO (Probe 2) |
 | 3 | Vocoder swap (Vocos / iSTFTNet) | ~100-150 ms (~12-18 %) | 0 if pretrained, weeks otherwise | 🔴 NO-GO (Probe 3) |
 | 4 | `local_transformer` body/tail split | ~10-20 ms (~1 %) | Medium | ⏸ Available, not pursued in this PR |
