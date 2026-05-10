@@ -55,16 +55,50 @@ def _decoder_prefill(T_ctx: int = 110, max_text_len: int = 256,
     }
 
 
-def _decoder_step() -> Dict[str, np.ndarray]:
-    raise NotImplementedError(
-        "decoder_step has 36 KV-cache inputs + position vars; build "
-        "from the converter's example feed once we tackle it."
-    )
+def _decoder_step(max_text_len: int = 256, max_seq_len: int = 512,
+                  d_model: int = 768, n_layers: int = 12,
+                  sa_n_heads: int = 12, position: int = 110) -> Dict[str, np.ndarray]:
+    """Per-step decoder feed.
+
+    Mirrors the trace-time shapes in `convert_decoder_step.py`:
+    audio_embed (1, 1, d_model), encoder_output (1, T_enc, d_model),
+    encoder_mask (1, T_enc), and 12 × {cache_k, cache_v, position}.
+    `position=110` puts the AR loop just past the speaker-context
+    prefill window — typical mid-loop scheduler state.
+    """
+    rng = _rng()
+    d_head = d_model // sa_n_heads
+    feed: Dict[str, np.ndarray] = {
+        "audio_embed": rng.standard_normal((1, 1, d_model)).astype(np.float32) * 0.05,
+        "encoder_output": rng.standard_normal(
+            (1, max_text_len, d_model)).astype(np.float32) * 0.05,
+        "encoder_mask": np.ones((1, max_text_len), dtype=np.float32),
+    }
+    cache_shape = (1, max_seq_len, sa_n_heads, d_head)
+    for i in range(n_layers):
+        feed[f"cache_k{i}"] = rng.standard_normal(cache_shape).astype(np.float32) * 0.05
+        feed[f"cache_v{i}"] = rng.standard_normal(cache_shape).astype(np.float32) * 0.05
+        feed[f"position{i}"] = np.array([position], dtype=np.float32)
+    return feed
 
 
-def _local_transformer() -> Dict[str, np.ndarray]:
-    raise NotImplementedError("local_transformer feed not built yet")
+def _local_transformer(d_model: int = 768) -> Dict[str, np.ndarray]:
+    """Per-step LT feed. See `convert_local_transformer.py` line 480 area:
+    `decoder_hidden (1, d_model)`, `uniforms (8,)`, `forbid_eos (1,)`,
+    `temperature (1,)`. All Float32 at the I/O boundary."""
+    rng = _rng()
+    return {
+        "decoder_hidden": rng.standard_normal((1, d_model)).astype(np.float32) * 0.5,
+        # Uniforms are random samples in [0, 1) — one per codebook for top-k CDF sampling.
+        "uniforms": rng.random(8).astype(np.float32),
+        "forbid_eos": np.array([1.0], dtype=np.float32),
+        "temperature": np.array([0.6], dtype=np.float32),
+    }
 
 
-def _nanocodec_v3(T: int = 24, n_codebooks: int = 8) -> Dict[str, np.ndarray]:
-    raise NotImplementedError("nanocodec feed not built yet")
+def _nanocodec_v3(T: int = 24, n_codebooks: int = 8,
+                  codebook_size: int = 2024) -> Dict[str, np.ndarray]:
+    """Per-call NanoCodec input. T_in=24 is the production chunk shape."""
+    rng = _rng()
+    tokens = rng.integers(0, codebook_size, size=(1, n_codebooks, T)).astype(np.int32)
+    return {"tokens": tokens}

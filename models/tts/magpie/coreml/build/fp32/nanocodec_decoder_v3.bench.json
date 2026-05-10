@@ -1,0 +1,30 @@
+{
+  "stage": "nanocodec_decoder_v3",
+  "fp32_package": "build/fp32/nanocodec_decoder_v3_fp32.mlpackage",
+  "prod_mlmodelc": null,
+  "size_bytes": 126904722,
+  "size_human": "121.0 MB",
+  "total_ops": 1820,
+  "ane_ops": 0,
+  "ane_pct": 0.0,
+  "device_breakdown": {
+    "ane": 0,
+    "gpu": 0,
+    "cpu": 1820
+  },
+  "warm_predict_ms": {
+    "cpu_and_neural_engine": 379.565,
+    "cpu_only": 315.558
+  },
+  "device_pct_at_cpu_and_neural_engine": {
+    "ane_pct": 0.0,
+    "gpu_pct": 0.0,
+    "cpu_pct": 100.0
+  },
+  "device_pct_at_cpu_only": {
+    "ane_pct": 0.0,
+    "gpu_pct": 0.0,
+    "cpu_pct": 100.0
+  },
+  "parity_vs_prod": null
+}
