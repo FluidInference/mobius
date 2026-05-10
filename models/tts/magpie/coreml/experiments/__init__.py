@@ -24,6 +24,10 @@ Experimental traceable wrappers (in `traceable/`):
 | `traceable/traceable_decoder_step_n2.py`     | `convert_decoder_step_n2.py`         |
 | `traceable/traceable_decoder_step_stateful.py` | `convert_decoder_step_stateful.py` |
 
+Sub-package: `baseline_fp32/` — fp32 stage-by-stage diagnostic bench
+(see `coreml/BASELINE_FP32.md`) plus the Option 1 tail-fp16 MIL-rewrite
+probe (Trial 11 in `PERF.md`).
+
 The mlpackages produced by these scripts land in `coreml/build/` and
 `coreml/compiled/build/` (gitignored) — they're throwaway diagnostic
 artifacts, not part of any HuggingFace upload.

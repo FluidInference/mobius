@@ -1,0 +1,38 @@
+{
+  "stage": "local_transformer",
+  "fp32_package": "build/fp32/local_transformer_fp32.mlpackage",
+  "prod_mlmodelc": "/Users/kikow/.cache/fluidaudio/Models/magpie-tts/local_transformer.mlmodelc",
+  "size_bytes": 35257776,
+  "size_human": "33.6 MB",
+  "total_ops": 423,
+  "ane_ops": 0,
+  "ane_pct": 0.0,
+  "device_breakdown": {
+    "ane": 0,
+    "gpu": 0,
+    "cpu": 423
+  },
+  "warm_predict_ms": {
+    "cpu_and_neural_engine": 1.45,
+    "cpu_only": 1.738
+  },
+  "device_pct_at_cpu_and_neural_engine": {
+    "ane_pct": 0.0,
+    "gpu_pct": 0.0,
+    "cpu_pct": 100.0
+  },
+  "device_pct_at_cpu_only": {
+    "ane_pct": 0.0,
+    "gpu_pct": 0.0,
+    "cpu_pct": 100.0
+  },
+  "parity_vs_prod": {
+    "codes": {
+      "cosine": 0.9366446908372453,
+      "max_abs_delta": 1000.0,
+      "shape": [
+        8
+      ]
+    }
+  }
+}

@@ -372,10 +372,14 @@ def _torch_reference(model: FusedLocalTransformer, inputs) -> np.ndarray:
         return model(*inputs).cpu().numpy()
 
 
+_PRECISION_MAP = {"fp16": ct.precision.FLOAT16, "fp32": ct.precision.FLOAT32}
+
+
 def convert(
     cache_dir: str,
     output_path: str,
     top_k: int = DEFAULT_TOP_K,
+    precision: str = "fp16",
 ) -> str:
     lt_dir = os.path.join(cache_dir, "constants", "local_transformer")
     const_dir = os.path.join(cache_dir, "constants")
@@ -446,7 +450,7 @@ def convert(
             ct.TensorType(name="codes", dtype=np.int32),
         ],
         convert_to="mlprogram",
-        compute_precision=ct.precision.FLOAT16,
+        compute_precision=_PRECISION_MAP[precision],
         minimum_deployment_target=ct.target.iOS17,
         compute_units=ct.ComputeUnit.ALL,
     )
@@ -498,9 +502,13 @@ def main() -> None:
         default=DEFAULT_TOP_K,
         help="Top-k value to bake into the graph (default 80).",
     )
+    parser.add_argument(
+        "--precision", choices=["fp16", "fp32"], default="fp16",
+        help="compute_precision for ct.convert (default fp16, production)",
+    )
     args = parser.parse_args()
 
-    convert(args.cache_dir, args.output, top_k=args.top_k)
+    convert(args.cache_dir, args.output, top_k=args.top_k, precision=args.precision)
 
 
 if __name__ == "__main__":
