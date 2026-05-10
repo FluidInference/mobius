@@ -24,6 +24,119 @@ import soundfile as sf
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONST_DIR = os.path.join(SCRIPT_DIR, "constants")
 BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
+_HF_CACHE_DIR = os.path.expanduser("~/.cache/fluidaudio/Models/magpie-tts")
+
+
+def _nanocodec_t_in(model):
+    """Read the NanoCodec's expected `tokens` time dimension.
+
+    Returns the third axis size of the `tokens` input, e.g. 24 for the
+    chunked v3/v4 builds, 256 for the legacy monolithic v1.
+
+    `MLModel` (mlpackage) exposes `.get_spec()`; `CompiledMLModel`
+    (.mlmodelc) does not. The latter is reached when `_load_coreml_model`
+    falls back to the HF cache, so we read `metadata.json` from the
+    `.mlmodelc` directory instead. The source path is attached to the
+    model as `_mobius_source_path` at load time.
+    """
+    # Preferred path: MLModel.get_spec().
+    if hasattr(model, "get_spec"):
+        spec = model.get_spec()
+        for inp in spec.description.input:
+            if inp.name == "tokens":
+                shape = list(inp.type.multiArrayType.shape)
+                return int(shape[-1]) if shape else None
+    # Fallback path: CompiledMLModel — read the bundle's metadata.json.
+    path = getattr(model, "_mobius_source_path", None)
+    if path and path.endswith(".mlmodelc"):
+        meta_path = os.path.join(path, "metadata.json")
+        if os.path.exists(meta_path):
+            import ast
+            with open(meta_path) as f:
+                meta = json.load(f)
+            entry = meta[0] if isinstance(meta, list) and meta else meta
+            for inp in entry.get("inputSchema", []) if isinstance(entry, dict) else []:
+                if inp.get("name") == "tokens":
+                    shape_str = inp.get("shape", "")
+                    try:
+                        shape = ast.literal_eval(shape_str)
+                        return int(shape[-1]) if shape else None
+                    except (ValueError, SyntaxError):
+                        return None
+    return None
+
+
+def _decode_nanocodec(model, predicted_codes, num_codebooks, samples_per_frame):
+    """Run NanoCodec end-to-end. Auto-dispatches between monolithic
+    (T_in == max_frames, single call) and chunked (T_in < total, sliding
+    window with stride=t_in/3, edge-padded — mirrors chunked_parity.py
+    Phase C v2 step 5/7 behaviour).
+    """
+    T_total = predicted_codes.shape[1]
+    t_in = _nanocodec_t_in(model)
+
+    # Monolithic path: pad to t_in, single call.
+    if t_in is None or T_total <= t_in and t_in >= 256:
+        padded = np.zeros((num_codebooks, t_in or 256), dtype=np.int32)
+        padded[:, :T_total] = predicted_codes
+        out = model.predict({
+            "tokens": padded[np.newaxis, :, :].astype(np.int32),
+        })["audio"]
+        return out.flatten() if out.ndim > 1 else out
+
+    # Chunked path (v2/v3/v4): T_in=24, stride=8, overlap=16. Mirror
+    # `nanocodec_experiments/chunked_parity.py` lines 116-148.
+    stride = max(1, t_in // 3)
+    overlap = t_in - stride
+    tokens_np = predicted_codes[np.newaxis, :, :]  # (1, num_cb, T)
+    chunks = []
+    for start in range(0, T_total, stride):
+        ctx_start = start - overlap
+        if ctx_start < 0:
+            pad = -ctx_start
+            piece = np.concatenate([
+                np.zeros((1, num_codebooks, pad), dtype=np.int32),
+                tokens_np[:, :, 0: start + stride],
+            ], axis=2)
+        else:
+            piece = tokens_np[:, :, ctx_start: start + stride]
+        if piece.shape[2] < t_in:
+            pad = t_in - piece.shape[2]
+            piece = np.concatenate([
+                piece, np.zeros((1, num_codebooks, pad), dtype=np.int32)
+            ], axis=2)
+        out = model.predict({"tokens": piece.astype(np.int32)})["audio"]
+        keep_start = overlap * samples_per_frame
+        keep_end = keep_start + stride * samples_per_frame
+        chunks.append(out[..., keep_start:keep_end])
+    audio = np.concatenate(chunks, axis=-1)
+    if audio.ndim > 1:
+        audio = audio.flatten()
+    return audio[: T_total * samples_per_frame]
+
+
+def _load_coreml_model(path, cache_fallback=None, compute_units=None):
+    """Load a CoreML model. Tries `path` first; falls back to the HF cache
+    `.mlmodelc` if `path` does not exist. Auto-detects mlpackage vs mlmodelc
+    so production-deploy `.mlmodelc` files in the HF cache are usable here.
+    """
+    target = path
+    if not os.path.exists(target) and cache_fallback is not None:
+        cache_path = os.path.join(_HF_CACHE_DIR, cache_fallback)
+        if os.path.exists(cache_path):
+            target = cache_path
+    if target.endswith(".mlmodelc"):
+        model = ct.models.CompiledMLModel(target, compute_units=compute_units)
+    else:
+        model = ct.models.MLModel(target, compute_units=compute_units)
+    # Stash the resolved source path so `_nanocodec_t_in` can read the
+    # .mlmodelc bundle's metadata.json when `get_spec()` isn't available.
+    try:
+        model._mobius_source_path = target
+    except AttributeError:
+        # CompiledMLModel may forbid arbitrary attributes; ignore.
+        pass
+    return model
 
 # EXPERIMENTAL: Stateful (MLState) decoder path. Off by default.
 #
@@ -32,7 +145,7 @@ BUILD_DIR = os.path.join(SCRIPT_DIR, "build")
 # rank-4 production path: 2.2× regression. Stateful graphs run on CPU+GPU
 # only (ANE rejects them); the IO-marshaling savings from collapsing 36 cache
 # tensors don't compensate for losing ANE acceleration. See
-# ``traceable/traceable_decoder_step_stateful.py`` for full rationale.
+# ``experiments/traceable/traceable_decoder_step_stateful.py`` for full rationale.
 STATEFUL = os.environ.get("MAGPIE_STATEFUL", "") == "1"
 
 # Decoder step output key names (from CoreML model spec — rank-4 split-K/V)
@@ -304,27 +417,39 @@ def generate(
     text_mask = np.zeros(max_text_len, dtype=np.float32)
     text_mask[:T_text] = 1.0
 
-    # 2. Load CoreML models
+    # 2. Load CoreML models. Prefer the local `build/` mlpackage; fall back
+    # to the FluidAudio HF cache `.mlmodelc` (production deploy format) so
+    # this driver works without re-converting from PyTorch. NanoCodec is
+    # selectable via NANOCODEC_PATH so the v3 vs v4 fixture script can
+    # swap variants per call.
     print("Loading CoreML models...")
-    text_encoder = ct.models.MLModel(
+    text_encoder = _load_coreml_model(
         os.path.join(BUILD_DIR, "text_encoder.mlpackage"),
+        cache_fallback="text_encoder.mlmodelc",
         compute_units=ct.ComputeUnit.CPU_AND_GPU,
     )
     if STATEFUL:
-        decoder_step = ct.models.MLModel(
+        decoder_step = _load_coreml_model(
             os.path.join(BUILD_DIR, "decoder_step_stateful.mlpackage"),
-            # Stateful graphs are not ANE-compatible; CPU+GPU only.
+            cache_fallback=None,
             compute_units=ct.ComputeUnit.CPU_AND_GPU,
         )
     else:
-        decoder_step = ct.models.MLModel(
+        decoder_step = _load_coreml_model(
             os.path.join(BUILD_DIR, "decoder_step.mlpackage"),
+            cache_fallback="decoder_step.mlmodelc",
             compute_units=ct.ComputeUnit.ALL,  # rank-4 split-K/V — ANE compiles for some ops
         )
-    nanocodec = ct.models.MLModel(
-        os.path.join(BUILD_DIR, "nanocodec_decoder.mlpackage"),
+    nanocodec_path = os.environ.get(
+        "NANOCODEC_PATH",
+        os.path.join(BUILD_DIR, "nanocodec_decoder_v3.mlpackage"),
+    )
+    nanocodec = _load_coreml_model(
+        nanocodec_path,
+        cache_fallback="nanocodec_decoder_v3.mlmodelc",
         compute_units=ct.ComputeUnit.CPU_AND_GPU,
     )
+    print(f"  nanocodec: {nanocodec_path}")
 
     # 3. Encode text
     print("Encoding text...")
@@ -475,24 +600,11 @@ def generate(
     predicted_codes = np.stack(all_predictions, axis=1)  # (num_cb, T_total)
     T_total = predicted_codes.shape[1]
 
-    max_frames = 256
-    if T_total > max_frames:
-        print(f"  Warning: {T_total} frames > max {max_frames}, truncating")
-        predicted_codes = predicted_codes[:, :max_frames]
-        T_total = max_frames
+    samples_per_frame = constants["codec_samples_per_frame"]
+    audio = _decode_nanocodec(nanocodec, predicted_codes, num_codebooks,
+                              samples_per_frame)
 
-    padded = np.zeros((num_codebooks, max_frames), dtype=np.int32)
-    padded[:, :T_total] = predicted_codes
-
-    codec_out = nanocodec.predict({
-        "tokens": padded[np.newaxis, :, :].astype(np.int32),
-    })
-
-    audio = codec_out["audio"]
-    if audio.ndim > 1:
-        audio = audio.flatten()
-
-    expected_samples = T_total * constants["codec_samples_per_frame"]
+    expected_samples = T_total * samples_per_frame
     audio = audio[:expected_samples]
 
     peak = np.abs(audio).max()

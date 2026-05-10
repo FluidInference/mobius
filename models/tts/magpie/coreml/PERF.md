@@ -5,6 +5,13 @@ All numbers on **Apple M2 / macOS 26.5 / coremltools 9.0** unless noted.
 "TTFA" = wall-clock from `synthesizeStream(...)` call to first
 `MagpieAudioChunk` yield, warm path, release build, seed 42.
 
+> **Layout note** — production conversion scripts live at the top of
+> `coreml/`. Diagnostic / dead-end scripts (Trial 2 int8 quant, Trial 4a
+> N=2 unroll, STATEFUL MLState variant) live in
+> [`experiments/`](experiments/); the separate NanoCodec sweep track is
+> in [`nanocodec_experiments/`](nanocodec_experiments/). All path refs
+> below assume you `cd` into `coreml/`.
+
 ---
 
 ## TL;DR — current state
@@ -124,7 +131,7 @@ Commit `b93f3b099` (FluidAudio). Pure Swift change, no model touched.
 Three configs tried, all break end-to-end EOS termination on long-context
 streaming inputs.
 
-Script: `quantize_decoder_step_int8.py`
+Script: `experiments/quantize_decoder_step_int8.py`
 
 | Config | Short TTFA (3 words) | Long-input EOS |
 |---|---|---|
@@ -339,8 +346,8 @@ Pre-flight kill criteria: ship if N=2 stays > 90% ANE; abandon if < 80% ANE.
 
 #### Trial 4a — N=2 pre-flight ✗ DEAD
 
-**Implementation** (`traceable/traceable_decoder_step_n2.py`,
-`convert_decoder_step_n2.py`):
+**Implementation** (`experiments/traceable/traceable_decoder_step_n2.py`,
+`experiments/convert_decoder_step_n2.py`):
 
 - Reuse `TraceableDecoderStep` for both iterations (parameters shared, KV
   state passed through)
@@ -403,13 +410,14 @@ been per-op fallback rate or partition count.
 sampler-tail penalty and state I/O. **Do not pursue**.
 
 Files retained for reference (do not delete):
-- `traceable/traceable_decoder_step_n2.py`
-- `convert_decoder_step_n2.py`
+- `experiments/traceable/traceable_decoder_step_n2.py`
+- `experiments/convert_decoder_step_n2.py`
 - `build/fused_decoder_step_n2.mlpackage` (215 MB)
 - `compiled/build/fused_decoder_step_n2.mlmodelc` (1.7 MB + weights)
 
 Already-known dead-end (separate experiment): stateful variant
-(`traceable_decoder_step_stateful.py`) forces CPU+GPU via MLState, regresses 2.2×.
+(`experiments/traceable/traceable_decoder_step_stateful.py`) forces CPU+GPU
+via MLState, regresses 2.2×.
 
 **Lesson**: ANE residency percentage is a misleading proxy for an unroll
 graph's quality — partition count + per-op fallback rate matter more.
@@ -637,6 +645,200 @@ NanoCodec are exhausted (10a fp32 palette, 10b split, 10c ANE/mixed,
 10d parallel). The only remaining path is model-level retraining
 (QAT int8 via NeMo) — out of scope here.
 
+### Trial 11 — Tail-fp16 mixed-precision (Option 1) ✗ DEAD
+
+The one configuration Phase F.2's op-class sweep did not test: keep
+**only the late HiFi-GAN ops at fp16** while everything before stays
+fp32. Hypothesis (Option 1 in `OPTIONS.md`): noise injected late in
+the stack has no downstream layers to amplify it audibly, so a small
+tail fp16 region might (a) clear the 48 dB audibility threshold and
+(b) let the ANE planner pick up the tail at fp16 even if upstream
+stays CPU-bound.
+
+**Implementation.** Custom MIL `AbstractGraphPass`
+(`experiments/baseline_fp32/tail_fp16_probe.py:TailFP16Cast`) appended
+to the default pass pipeline. Walks the program post-conversion,
+selects ops by `op.scopes[TORCHSCRIPT_MODULE_NAME]` substring match,
+and inserts `mb.cast(fp32→fp16)` on inputs + `mb.cast(fp16→fp32)` on
+outputs of elected ops. `op.scopes` IS populated post-conversion on
+torch-frontend ops (the mechanism Phase F.2b's `op_selector` predicate
+ran too early to see); confirmed in OPTIONS.md Probe 1.
+
+**v1 needles** (smallest possible fp16 region, per user's stopping
+rule) — `post_conv` + `out_activation`. **3 ops** elected for fp16
+casting out of 1 822 total. Upstream stages 0–4 + Snake activations +
+all upsamples remain fp32.
+
+**Result** (M2, macOS 26.5, coremltools 9.0, 5 random-token utterances
+× 72 frames, seeded RNG):
+
+| Variant | Ops fp16 | SNR_min vs fp32 | ANE % | Warm @cpu+ne | Verdict |
+|---|---|---|---|---|---|
+| v_full_fp32 (production reference) | 0 | ∞ (bit-exact) | 0 % | 117.11 ms | clean ✓ (Phase F gold) |
+| **v1 (post_conv + out_activation)** | **3** | **38.79 dB** | **0 %** | 117.11 ms | **FAIL** |
+
+Per Phase F.2's empirical threshold: **v_convs_fp32 came in at 48 dB
+and was declared audibly noisy by user A/B**. v1's 38.79 dB sits
+9 dB below that — well into noisy territory. Both halves of the
+hypothesis fail simultaneously:
+
+1. **Audibility.** 38.79 dB << 48 dB. Adding more fp16 ops (v2, v3)
+   only injects more noise — no path forward.
+2. **Latency / ANE residency.** 0 % ANE. The planner refused to take
+   the 3-op fp16 tail to ANE. The fp16-island-too-small-to-partition
+   pattern laishere documented in `kokoro-coreml`'s vocoder-split
+   attempt holds here: a tiny fp16 island anchored to a fp32 output
+   doesn't get scheduled to ANE.
+
+**Stopping rule fired.** v1 is the smallest possible fp16 region;
+nothing smaller exists, and anything larger fails the audibility test
+worse (Phase F.2's v_full_fp16 = 27 dB SNR). Skipped v2 / v3. The
+tail-fp16 hypothesis is a definitive negative.
+
+**Files retained for reference (do not delete):**
+- `experiments/baseline_fp32/tail_fp16_probe.py` — MIL pass + driver
+- `experiments/baseline_fp32/tail_fp16_audibility.py` — SNR + bench harness
+- `build/fp32/nanocodec_tail_fp16_v1.bench.json` — full per-utt metrics
+
+**Implication for OPTIONS.md.** All three Tier 1 options now closed:
+Option 1 dead (this trial), Options 2 + 3 dead (Probes 2 + 3). The
+structural 830 ms warm TTFA ceiling is the operating point under the
+no-retraining constraint.
+
+### Trial 10a re-bench — v4 confirmed slower than v3 (post-ABX) ✗ KEEP v3
+
+Prompted by mobius #60 Track 1: user A/B-listened the 5 fixture pairs at
+`nanocodec_experiments/results/ab_v3_v4/utt0{1..5}_{v3,v4}.wav` and
+**confirmed v4 is acoustically transparent vs v3**. The acoustic
+question is settled. The remaining open question — does v4 ship a
+warm-latency win that justifies flipping the `MagpieModelStore` default
+— is settled here in the negative.
+
+Fresh bench (M2, macOS 26.5, ct 9.0,
+`experiments/baseline_fp32/bench_v3_v4.py`, 5 cold loads + 60 warm
+calls per CU per variant):
+
+| variant | size | ANE % @ best | cold load (cpu+ne, n=5 med) | warm @ cpuOnly | warm @ cpu+ne | warm @ all |
+|---|---|---|---|---|---|---|
+| v3 (production) | 121.0 MB | 0.0 % (1820 ops, all CPU) | 254 ms | **116.89 ms** | 166.55 ms | 282.32 ms |
+| v4 (palette-quant) | 30.9 MB | 0.0 % (1913 ops, all CPU) | 338 ms | 163.62 ms | 163.77 ms | 298.74 ms |
+
+Headline numbers:
+
+- **v4 is +47 ms (+40 %) slower per warm call at the best-case CU.**
+  v3's optimal compute unit is `.cpuOnly` (116.89 ms median, p95 137.58,
+  std 7.06). v4's best is roughly `.cpu_and_neural_engine` *and*
+  `.cpuOnly` tied at ~163 ms — identical because the ANE planner takes
+  ~zero ops for either variant (both report 0 % ANE).
+- **v4 cold load is +84 ms slower** (254 → 338 ms at `cpu+ne`). This
+  is where the 8-bit palette → fp32 dequant cost shows up. Confirms
+  `STATUS.md` Phase F's "fp32 stays fp32 at runtime — weights
+  dequantize to it" — that dequant is *not* free; it's deferred from
+  on-disk size to load-time wall.
+- **v4 has more ops (1913 vs 1820)** — palette dequant introduces
+  ~93 extra ops per the diff. None of them help with ANE.
+- **`MagpieModelStore.swift` pin to `.cpuOnly` is correct.** v3 at
+  `.cpu_and_neural_engine` runs the planner-thrash penalty
+  (warm med 166 / p95 311 ms / std 56 — wide tail) for no benefit.
+  v4 dampens that variance (cu+ne p95 209 / std 17) but still loses on
+  median to v3 cpuOnly.
+
+These numbers reconcile with Trial 10a's original claim ("v4 is slower
+than v3 on every compute-unit policy on M2") even though the absolute
+v3 numbers come in 30-50 % lower than the original Trial 10a entry
+(macOS / coremltools improvements between measurement passes). The
+*relative* picture stands: every v4 column ≥ the matching v3 column.
+
+The "~12 ms" win earlier hypotheses cited likely conflated v4 with
+`v3_int8pal` (a separate Trial 10a variant — int8 weight palette
+*plus* fp32 compute, ~170 ms at `.cpu+ne`, never user-audibility-tested
+end-to-end).
+
+**Verdict.** Keep v3 as the production default. **Don't flip
+`MagpieModelStore.swift`.** v4 stays available as a 4× smaller artifact
+for low-RAM scenarios, but with a ~47 ms-per-call cost the consumer
+must accept consciously. End-to-end implication: a typical 8 s
+utterance runs ~20 sliding-window NanoCodec calls, so 20 × 47 ms ≈
+940 ms slower per utterance on v4. **No FluidAudio Swift change
+needed.**
+
+**Files retained for reference:**
+- `experiments/baseline_fp32/bench_v3_v4.py` — bench driver
+- `build/fp32/v3_vs_v4.bench.json` — full per-CU stats (cold, warm,
+  planner placement)
+- `nanocodec_experiments/results/ab_v3_v4/utt0{1..5}_{v3,v4}.wav` —
+  the 5 ABX fixture pairs
+
+#### RSS / runtime memory footprint
+
+The 4× on-disk savings (121 → 31 MB) raised the question: does v4
+actually save runtime RAM, or only download size? Hypothesis: palette
+dequant runs at MLModel load and weights expand to fp32 in RSS, so
+the on-disk win evaporates at runtime.
+
+Bench: `experiments/baseline_fp32/bench_rss.py`. Each (variant, CU)
+config runs in a **fresh subprocess** so the baseline RSS is clean.
+Per config:
+
+- Baseline: `process.memory_info().rss` before any CoreML import.
+- Peak load: 10 ms-interval polling thread during
+  `CompiledMLModel(...)` + first throwaway predict.
+- Post-load: median of 5 samples after a 2 s settle.
+- Warm inference: 100 ms-interval polling thread during a 60-call
+  warm loop; median + p95 across all samples.
+
+Apple M2, macOS 26.5, coremltools 9.0:
+
+| variant | CU | baseline | Δ peak load | Δ post-load | Δ warm median | Δ warm p95 |
+|---|---|---|---|---|---|---|
+| v3 | cpu_only | 22.6 MB | +537.2 MB | +537.3 MB | +537.5 MB | +537.5 MB |
+| v4 | cpu_only | 22.8 MB | +538.2 MB | +538.2 MB | +538.4 MB | +538.5 MB |
+| v3 | cpu_and_neural_engine | 22.6 MB | +538.8 MB | +538.8 MB | +539.0 MB | +539.1 MB |
+| v4 | cpu_and_neural_engine | 22.8 MB | +539.6 MB | +539.5 MB | +539.7 MB | +539.8 MB |
+| v3 | all | 22.6 MB | +553.1 MB | +553.1 MB | +555.2 MB | +555.2 MB |
+| v4 | all | 22.8 MB | +466.7 MB | +466.8 MB | +469.5 MB | +469.5 MB |
+
+Savings (positive = v4 saves RAM vs v3):
+
+| CU | Δ peak | Δ post-load | Δ warm median | Δ warm p95 |
+|---|---|---|---|---|
+| **cpu_only** (production) | **−1.0 MB** (v4 uses ~1 MB *more*) | −1.0 MB | −0.9 MB | −1.0 MB |
+| **cpu_and_neural_engine** | **−0.7 MB** (v4 uses ~0.7 MB *more*) | −0.7 MB | −0.7 MB | −0.7 MB |
+| `.all` | +86.4 MB | +86.4 MB | +85.7 MB | +85.7 MB |
+
+Findings:
+
+1. **At the production CU (`.cpuOnly`), v4 has ZERO RAM savings.** v3
+   and v4 both add ~537 MB to RSS at steady state. v4 is actually
+   ~1 MB *higher* (well within run-to-run noise). The 90 MB on-disk
+   advantage is purely a download / asset-bundle benefit; runtime
+   RSS is identical.
+2. **Same story at `.cpu_and_neural_engine`.** ~539 MB delta either
+   way; v4 is ~0.7 MB higher. No production-relevant savings.
+3. **At `.all` (not used by `MagpieModelStore`), v4 saves ~86 MB.**
+   The planner picks a different placement (likely partial GPU) for
+   palette-quantized weights when GPU is in scope. Curious optimizer
+   trick but **not relevant to Magpie's production routing** (which
+   pins NanoCodec to `.cpuOnly`).
+4. **No load-time transient.** Peak load deltas match post-load
+   deltas to within 0.2 MB — coremltools streams the dequant rather
+   than briefly holding both compressed and expanded weights. Or the
+   10 ms polling misses the peak; either way no spike to worry about.
+
+**Verdict.** v4 is a **download-size-only win.** Runtime RAM identical
+to v3 at production CU policy. **No memory-constrained-deployment
+benefit.** The 4× artifact-size advantage matters for HF download
+budgets and iOS app-bundle size, but not for on-device RSS at
+inference time.
+
+Combined with the warm-latency finding (v4 +47 ms / +40 % per call at
+production CU) the overall picture is: **v4 keeps the artifact-size
+win; v3 keeps everything else.** Default stays v3.
+
+**Files retained:**
+- `experiments/baseline_fp32/bench_rss.py` — RSS bench driver
+- `build/fp32/v3_vs_v4.rss.json` — full per-CU stats per variant
+
 ---
 
 ## Lever ranking (post-Trial 10 closure)
@@ -722,7 +924,7 @@ huggingface-cli download FluidInference/magpie-tts-multilingual-357m-coreml \
   decoder_step.mlpackage --local-dir build/upstream/
 
 # Quantize (per-channel, skip LM head — best int8 we found)
-uv run python quantize_decoder_step_int8.py \
+uv run python experiments/quantize_decoder_step_int8.py \
   --input build/upstream/decoder_step.mlpackage \
   --output build/decoder_step_int8_pc_skiphead.mlpackage \
   --granularity per_channel \

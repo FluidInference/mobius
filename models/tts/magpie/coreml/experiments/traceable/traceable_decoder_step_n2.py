@@ -23,13 +23,24 @@ Outputs:
 from __future__ import annotations
 
 import math
+import os
+import sys
 from typing import Dict, List
 
 import numpy as np
 import torch
 import torch.nn as nn
 
-from .traceable_decoder_step import TraceableDecoderStep
+# Module lives in ``coreml/experiments/traceable/`` while the production
+# ``traceable_decoder_step`` it depends on lives in ``coreml/traceable/``.
+# Ensure ``coreml/`` is on sys.path so the absolute import below resolves
+# even if this module is imported directly (callers in ``coreml/experiments/``
+# already perform the same insert).
+_COREML_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _COREML_DIR not in sys.path:
+    sys.path.insert(0, _COREML_DIR)
+
+from traceable.traceable_decoder_step import TraceableDecoderStep
 
 
 # Constants — must match Magpie + FusedLocalTransformer.

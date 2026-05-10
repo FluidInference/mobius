@@ -14,9 +14,12 @@ import coremltools as ct
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from traceable.traceable_decoder_step import TraceableDecoderStep
 
+_PRECISION_MAP = {"fp16": ct.precision.FLOAT16, "fp32": ct.precision.FLOAT32}
+
 
 def convert_decoder_step(nemo_path=None, max_seq_len=512, max_text_len=256,
-                         output_path="build/decoder_step.mlpackage"):
+                         output_path="build/decoder_step.mlpackage",
+                         precision="fp16"):
     # Load model
     print("Loading MagpieTTS model...")
     from nemo.collections.tts.models import MagpieTTSModel
@@ -89,7 +92,7 @@ def convert_decoder_step(nemo_path=None, max_seq_len=512, max_text_len=256,
         traced,
         inputs=inputs,
         convert_to="mlprogram",
-        compute_precision=ct.precision.FLOAT16,
+        compute_precision=_PRECISION_MAP[precision],
         minimum_deployment_target=ct.target.iOS17,
     )
 
@@ -135,5 +138,8 @@ if __name__ == "__main__":
     parser.add_argument("--max-seq-len", type=int, default=512)
     parser.add_argument("--max-text-len", type=int, default=256)
     parser.add_argument("--output", type=str, default="build/decoder_step.mlpackage")
+    parser.add_argument("--precision", choices=["fp16", "fp32"], default="fp16",
+                        help="compute_precision for ct.convert (default fp16, production)")
     args = parser.parse_args()
-    convert_decoder_step(args.nemo_path, args.max_seq_len, args.max_text_len, args.output)
+    convert_decoder_step(args.nemo_path, args.max_seq_len, args.max_text_len,
+                         args.output, args.precision)

@@ -15,7 +15,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from traceable.traceable_text_encoder import TraceableTextEncoder
 
 
-def convert_text_encoder(nemo_path=None, max_text_len=256, output_path="build/text_encoder.mlpackage"):
+_PRECISION_MAP = {"fp16": ct.precision.FLOAT16, "fp32": ct.precision.FLOAT32}
+
+
+def convert_text_encoder(nemo_path=None, max_text_len=256,
+                         output_path="build/text_encoder.mlpackage",
+                         precision="fp16"):
     # Load model
     print("Loading MagpieTTS model...")
     from nemo.collections.tts.models import MagpieTTSModel
@@ -63,7 +68,7 @@ def convert_text_encoder(nemo_path=None, max_text_len=256, output_path="build/te
             ct.TensorType(name="encoder_output", dtype=np.float32),
         ],
         convert_to="mlprogram",
-        compute_precision=ct.precision.FLOAT16,
+        compute_precision=_PRECISION_MAP[precision],
         minimum_deployment_target=ct.target.iOS17,
     )
 
@@ -98,5 +103,7 @@ if __name__ == "__main__":
     parser.add_argument("--nemo-path", type=str, default=None)
     parser.add_argument("--max-text-len", type=int, default=256)
     parser.add_argument("--output", type=str, default="build/text_encoder.mlpackage")
+    parser.add_argument("--precision", choices=["fp16", "fp32"], default="fp16",
+                        help="compute_precision for ct.convert (default fp16, production)")
     args = parser.parse_args()
-    convert_text_encoder(args.nemo_path, args.max_text_len, args.output)
+    convert_text_encoder(args.nemo_path, args.max_text_len, args.output, args.precision)
