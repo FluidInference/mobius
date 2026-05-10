@@ -294,3 +294,97 @@ There is no in-flight upstream fix to wait on. Option 2's "low-effort
 upgrade" path is closed. **Option 1 (write the MIL post-pass) inherits
 the full burden** — Probe 1's verdict on technical feasibility
 becomes the gating factor.
+
+### Probe 1 — MIL post-conversion graph rewriting
+
+**One-line verdict: NO-GO on the early-stages-fp16 split**;
+**conditional GO on a 1–2 person-day tail-fp16 probe** that Phase F.2
+did not cover. **The MIL pass itself is fully feasible — the blocker
+is numeric, not API.**
+
+**API surface (everything we need is public).**
+
+- `coremltools/converters/mil/mil/passes/`:
+  - `pass_registry.py` — `PASS_REGISTRY` singleton, `@register_pass(namespace=…)`
+  - `graph_pass.py` — `AbstractGraphPass` (extension point)
+  - `helper.py` — `@block_context_manager` (auto-`with block:` for safe insertion)
+  - `defs/quantization.py` — `CastTypeQuantization.transform_op` is the
+    reference implementation for boundary insertion (`mb.cast` on each
+    input, reverse cast on each output, `replace_uses_of_var_after_op`,
+    `remove_ops`).
+- `coremltools/converters/mil/mil/scope.py` — `ScopeSource.TORCHSCRIPT_MODULE_NAME`,
+  `op.scopes: Dict[ScopeSource, List[str]]`. **Scopes ARE populated
+  post-conversion** on torch-frontend ops, and `Block._replace_var →
+  _copy_scope_info` propagates them to newly-inserted ops automatically.
+- The empty-scope behavior Phase F.2b observed almost certainly came from
+  `add_fp16_cast` walking ops it had created earlier in the same pass
+  (which only carry `COREMLTOOLS_GRAPH_PASS` scopes). For a standalone
+  pass that runs on a saved-and-reloaded MIL program, scopes from the
+  torch frontend are intact.
+
+**Cast-insertion mechanism** (verbatim from
+`mil/passes/defs/quantization.py:273-363`):
+
+1. For each fp32 input var: `casted = mb.cast(x=v, dtype="fp16",
+   before_op=op)`.
+2. Reconstruct the op with casted inputs: `getattr(mb,
+   op.op_type)(**casted_inputs, before_op=op)`.
+3. For each output that changed dtype: insert reverse `mb.cast` and
+   `block.replace_uses_of_var_after_op(anchor_op=op, old_var=old,
+   new_var=cast_back, force_replace=True)`.
+4. `block.remove_ops([op])`.
+
+A self-contained ~80-line `PerLocationFP16Cast(AbstractGraphPass)`
+sketch is in `/tmp/magpie_probe_1_mil_rewriting.md` (not executed).
+
+**Numeric expectation — why per-location-fp16-on-early-stages is
+ruled out by F.2's data without running the pass.**
+
+| Variant (F.2) | SNR vs fp32 | Audible? |
+|---|---|---|
+| v_full_fp32 | 211 dB | clean ✓ |
+| v_convs_fp32 (all convs fp32, all acts fp16) | 48 dB | noisy ✗ |
+| v_acts_fp32 (all acts fp32, all convs fp16) | 28 dB | noisy ✗ |
+| v_full_fp16 | 27 dB | noisy ✗ |
+
+Per-location-fp16 in early stages is a **strict subset** of both
+"convs fp16" *and* "activations fp16" — keeping stages 0–1 at fp16
+allows fp16 in *both* op classes inside those stages. F.2 found no
+op-class fp16 subset that crosses the audibility threshold. By
+sum-of-noise argument, no per-location subset containing the early
+stages can either. Best-case SNR bound: 28 dB (the noisier of the
+two op-class envelopes), well below v_full_fp32's 211 dB. **No
+first-order reason from F.2's data to expect this to clear the
+audibility threshold.** Writing the MIL pass to verify a foregone
+conclusion is wasted engineering.
+
+**The one configuration F.2 did not cover** is the converse:
+**keep stages 0–1 fp32 and let stages 2–4 + post-head go to fp16**.
+Noise compounds toward the output, so tail-fp16 *might* be masked
+by the absence of further downstream amplification — F.2's data
+offers no signal either way. **This is the only conditional-go.**
+
+**Effort breakdown** (if we pursue tail-fp16):
+
+| Step | Cost |
+|---|---|
+| Write `PerLocationFP16Cast` post-pass | 0.5–1 person-day |
+| Wire to existing F.1/F.2 A/B harness (`/tmp/mono_fp16_vs_fp32.py`, `mixed_precision_sweep.py`) | 0.5–1 day |
+| **Total to a yes/no audibility verdict** | **1–2 person-days** |
+
+**Even if tail-fp16 sounds clean, the latency win is bounded.**
+ANE residency requires *every* op in a placement region to be
+fp16-friendly; CPU fallback is triggered by fp32 islands regardless
+of where they sit. The heavy convs are in the tail (the part we'd
+keep fp16), and the early-stage fp32 ops would still pull the planner
+to CPU. The Phase F production decision (full fp32, CPU-only, ~1.3×
+RTFx) likely stands.
+
+**Recommendation.** Run the tail-fp16 probe **only if the team has a
+concrete ANE-residency target** that makes the 1–2 day spend
+worthwhile. Otherwise: file Option 1 under "API feasible, but Phase
+F.2's audibility envelope rules out the configurations that would
+buy ANE residency", and treat retraining / QAT (Trial 8 deferred) as
+the real path. Probe 3's verdict on Vocoder swap availability is now
+the deciding factor — if Probe 3 surfaces a drop-in candidate,
+Option 1's 1–2 day probe value collapses further.
