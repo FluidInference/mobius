@@ -35,6 +35,13 @@ FRAME_SIZE = 1920  # 80ms frames
 VOICE_PROMPT_LENGTH = 125  # Standard voice prompt length
 EMBEDDING_DIM = 1024
 
+# The mimi_encoder.mlpackage produced by `convert_mimi_encoder.py` was traced
+# with a fixed audio input length of VOICE_PROMPT_LENGTH * FRAME_SIZE = 240_000
+# samples (10s @ 24kHz). The original mlmodelc accepted variable-length input,
+# so we pad/truncate here so the same Python entry point works against both
+# encoders.
+ENCODER_INPUT_SAMPLES = VOICE_PROMPT_LENGTH * FRAME_SIZE
+
 
 def load_audio(path: Path) -> np.ndarray:
     """Load and preprocess audio for the encoder."""
@@ -71,11 +78,17 @@ def load_audio(path: Path) -> np.ndarray:
 
 
 def pad_audio(audio: np.ndarray) -> np.ndarray:
-    """Pad audio to multiple of frame size."""
+    """Pad or truncate audio to ENCODER_INPUT_SAMPLES (fixed CoreML input length).
+
+    The retraced mimi_encoder.mlpackage requires exactly
+    `VOICE_PROMPT_LENGTH * FRAME_SIZE = 240_000` samples (10s @ 24kHz). Shorter
+    clips are right-padded with zeros, longer clips are truncated.
+    """
     length = len(audio)
-    pad_length = (FRAME_SIZE - (length % FRAME_SIZE)) % FRAME_SIZE
-    if pad_length > 0:
-        audio = np.pad(audio, (0, pad_length))
+    if length < ENCODER_INPUT_SAMPLES:
+        audio = np.pad(audio, (0, ENCODER_INPUT_SAMPLES - length))
+    elif length > ENCODER_INPUT_SAMPLES:
+        audio = audio[:ENCODER_INPUT_SAMPLES]
     return audio
 
 

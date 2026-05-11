@@ -344,6 +344,15 @@ def generate_v4(
     # the legacy emb_mean / emb_std / quantizer_weight / mimi_init_state
     # files are no longer consumed.
     bos_emb = np.load(os.path.join(const_dir, "bos_emb.npy"))
+    # bos_before_voice is prepended to the v1 audio_prompt during cond_step
+    # prefill (matches pocket-tts 2.0.0's `flow_lm.bos_before_voice`). Without
+    # it the cond_step output diverges from the deployed v2 cache state and
+    # the flow LM emits EOS within a few steps (silent / garbled audio).
+    # v2 voices have this token already baked into their KV state.
+    bos_before_voice_path = os.path.join(const_dir, "bos_before_voice.npy")
+    bos_before_voice = (
+        np.load(bos_before_voice_path) if os.path.isfile(bos_before_voice_path) else None
+    )
 
     # 6. Load CoreML models — per-model compute-unit strategy (profiled M-series, FP16):
     #
@@ -437,10 +446,18 @@ def generate_v4(
                 (2, 1, cache_slots, 16, 64), dtype=np.float32
             )
             positions[f'position{i}'] = np.array([0.0], dtype=np.float32)
-        prefill_tokens = np.concatenate([voice_emb_v1, text_emb], axis=1)
+        if bos_before_voice is None:
+            raise FileNotFoundError(
+                f"Missing {bos_before_voice_path}. The v1 cond_step prefill path "
+                "requires the bos_before_voice constant (pocket-tts 2.0.0's "
+                "`flow_lm.bos_before_voice`). Regenerate it with "
+                "coreml/voice_cloning/export_constants.py or switch the voice to v2."
+            )
+        bos_voice_text = [bos_before_voice, voice_emb_v1, text_emb]
+        prefill_tokens = np.concatenate(bos_voice_text, axis=1).astype(np.float32)
         print(
             f"Conditioning: {prefill_tokens.shape[1]} tokens "
-            f"(voice={voice_emb_v1.shape[1]}, text={text_emb.shape[1]})"
+            f"(bos=1, voice={voice_emb_v1.shape[1]}, text={text_emb.shape[1]})"
         )
 
     # 9. Prefill remaining conditioning tokens (v2: text only; v1: voice+text).

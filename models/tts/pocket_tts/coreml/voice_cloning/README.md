@@ -2,35 +2,60 @@
 
 Export custom voices for use with FluidAudio's PocketTTS Swift implementation.
 
+> **Two equivalent paths** as of 2026-05-11:
+>
+> - `export_voice_v2.py` — PyTorch pipeline, bakes a v2 KV-cache
+>   `.safetensors` (drop-in for `build/<lang>/constants_bin/`). Requires
+>   `pip install pocket-tts==2.0.0`.
+> - `export_voice_coreml.py` — pure CoreML pipeline, writes a v1
+>   `<voice>_audio_prompt.bin` consumed by `generate_coreml_v4.py`'s v1
+>   `cond_step` prefill path. Requires the retraced
+>   `mimi_encoder.mlpackage` produced by
+>   `convert_models/convert/convert_mimi_encoder.py`.
+>
+> Both produce intelligible speech against the deployed Apr 27 cond_step /
+> flowlm_step / flow_decoder mlpackages. Pick `export_voice_v2.py` when you
+> want PyTorch parity (e.g. matching deployed voice caches bit-for-bit) and
+> `export_voice_coreml.py` when you want a Python toolchain without
+> PyTorch + pocket-tts installed.
+>
+> Historical note (FluidAudio #592): the originally shipped
+> `mimi_encoder.mlmodelc` was traced against a pre-2.0.0 pocket-tts and
+> produced conditioning in the wrong latent space, causing immediate EOS.
+> The new mlpackage built from `convert_mimi_encoder.py` fixes that, and
+> the v1 `generate_coreml_v4.py` cond_step path now also prepends the
+> required `bos_before_voice` token.
+
 ## Quick Start
 
 ```bash
 cd mobius/models/tts/pocket_tts
 
-# Install dependencies
-pip install torch safetensors torchaudio
+# Install pocket-tts 2.0.0 (must match the deployed mlpackage trace)
+pip install "pocket-tts==2.0.0" safetensors torch
 
-# Export a voice from audio file
-python coreml/export_voice_coreml.py your_voice.wav -o constants_bin/custom_audio_prompt.bin
-
-# The output file can be used with FluidAudio
+# Bake a v2 KV-cache voice file (drop-in for build/<lang>/constants_bin/)
+python coreml/voice_cloning/export_voice_v2.py \
+    your_voice.wav \
+    -o build/english/constants_bin/your_voice.safetensors
 ```
 
 ## Full Workflow: Export → Test → Evaluate
 
 ```bash
-# One command does it all: export voice, run CoreML inference, evaluate
-python coreml/test_voice_coreml.py \
-    --reference speaker.wav \
-    --text "Hello, this is a voice cloning test." \
-    --output test_output.wav \
-    --evaluate
-```
+# 1. Bake voice as v2 KV-cache.
+python coreml/voice_cloning/export_voice_v2.py speaker.wav \
+    -o build/english/constants_bin/speaker.safetensors
 
-This will:
-1. Export the voice from `speaker.wav` → `speaker_audio_prompt.bin`
-2. Run CoreML TTS with the exported voice
-3. Evaluate spectral similarity against reference
+# 2. Run the CoreML pipeline against the freshly baked voice.
+python coreml/generate_coreml_v4.py \
+    --language english --voice speaker \
+    --text "Hello, this is a voice cloning test." \
+    --output test_output.wav
+
+# 3. (Optional) Speaker similarity vs reference.
+python coreml/voice_cloning/evaluate_voice.py speaker.wav test_output.wav
+```
 
 ## Testing Exported Voices
 
@@ -55,8 +80,33 @@ python coreml/test_voice_coreml.py \
 
 2. **Python dependencies**:
    ```bash
-   pip install torch safetensors torchaudio
+   pip install "pocket-tts==2.0.0" safetensors torch
    ```
+
+   `pocket-tts` 2.0.0 (released 2026-04-21) is the exact library that traced
+   the deployed `cond_step.mlpackage` / `flowlm_step.mlpackage` /
+   `flow_decoder_fused8.mlpackage`. Newer 2.x versions should also work; the
+   1.x line is incompatible (different HF revision + repo path layout).
+
+## Pure-CoreML export with `export_voice_coreml.py`
+
+The mlpackage shipped originally as `mimi_encoder.mlmodelc` was traced from a
+pre-2.0.0 pocket-tts revision and produced conditioning in a latent space
+incompatible with the deployed cond_step (FluidAudio #592 — immediate EOS).
+Re-trace the encoder against pocket-tts 2.0.0 first:
+
+```bash
+# Bake a fresh mlpackage from pocket-tts 2.0.0 weights into
+# coreml/build/<lang>/mimi_encoder.mlpackage and symlink it into voice_cloning/.
+python coreml/convert_models/convert/convert_mimi_encoder.py --language english
+ln -sfn ../build/english/mimi_encoder.mlpackage \
+    coreml/voice_cloning/mimi_encoder.mlpackage
+```
+
+After that, `export_voice_coreml.py` writes a v1
+`<voice>_audio_prompt.bin` that pairs with the patched
+`generate_coreml_v4.py` v1 prefill path (which now prepends the required
+`bos_before_voice` token).
 
 ## Usage
 
