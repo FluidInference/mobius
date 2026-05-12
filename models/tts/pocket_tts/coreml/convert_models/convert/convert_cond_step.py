@@ -35,10 +35,26 @@ def convert(language: str, compute_precision: str = "fp16", compute_units: str =
     num_layers = cond_step.num_layers
     print(f"num_layers={num_layers}")
 
-    # Example inputs
-    conditioning = torch.randn(1, 1, 1024)
-    cache = torch.full((2, 1, 512, 16, 64), float('nan'))
-    pos = torch.zeros(1)
+    # Example inputs — mirror convert_flowlm_step.py's pattern: a partially
+    # populated cache (real fp32 values in the prefix, zeros after) plus a
+    # mid-cache position. The previous recipe traced with an all-NaN cache
+    # at position 0 (`valid_len = pos + 1 = 1`), which collapses the
+    # attention mask to a single position and lets coremltools' MIL
+    # optimizer fold trace-specific shortcuts (constant softmax, dead
+    # `where(isnan,...)` branches) into the graph. Runtime invocations at
+    # `pos > 0` then take the wrong code path and accumulate drift across
+    # the 100+ iterations of v1 voice/text prefill.
+    B = 1
+    T = 1
+    H = 16
+    D = 64
+    max_seq_len = 512
+    trace_pos = 100  # arbitrary mid-cache position; matches flowlm trace style
+
+    conditioning = torch.randn(B, T, 1024)
+    cache = torch.zeros(2, B, max_seq_len, H, D)
+    cache[:, :, :trace_pos, :, :] = torch.randn(2, B, trace_pos, H, D)
+    pos = torch.tensor([float(trace_pos)])
 
     example_inputs_list = [conditioning]
     for _ in range(num_layers):
