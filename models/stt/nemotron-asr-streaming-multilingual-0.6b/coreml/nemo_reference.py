@@ -7,8 +7,11 @@ chunks. Identical to the English reference except for the language prompt:
 
     - `target_lang` selects an integer `prompt_id` from `prompt_dictionary`.
     - The encoder receives the prompt every chunk (constant per utterance).
-    - In "auto" mode (prompt 101) the model emits a leading `<xx-XX>` token;
-      we report that as the detected language and strip it from the text.
+    - In "auto" mode (prompt 101) the model nominally emits a `<xx-XX>`
+      token identifying the spoken language; we try to surface it if
+      present, but it is in practice rarely emitted on short utterances
+      (see ARCHITECTURE.md "Auto mode and language tags" for the parity
+      data). Do not depend on `detected_lang` being non-None.
 
 There is no separate language-ID head — see ARCHITECTURE.md for the proof.
 """
@@ -72,13 +75,22 @@ def resolve_prompt_id(model, target_lang: str) -> int:
 
 
 def split_lang_tag(text: str) -> Tuple[Optional[str], str]:
-    """Pull a leading <xx-XX> token off `text` if present."""
+    """Pull any <xx-XX> token(s) out of `text` if present.
+
+    NeMo's tokenizer.decode normally strips special tokens, so the tag
+    rarely survives to this stage. We still scan the full string (not
+    just the start) because the model can emit tag tokens at any
+    position — see ARCHITECTURE.md.
+    """
     if not text:
         return None, text
-    m = re.match(r"^(<[A-Za-z]{2,4}-[A-Za-z]{2,4}>)\s*(.*)", text)
-    if m:
-        return m.group(1), m.group(2)
-    return None, text
+    pat = re.compile(r"<[A-Za-z]{2,4}-[A-Za-z]{2,4}>")
+    m = pat.search(text)
+    if not m:
+        return None, text
+    first = m.group(0)
+    stripped = pat.sub("", text).strip()
+    return first, stripped
 
 
 def transcribe_streaming(
@@ -91,8 +103,9 @@ def transcribe_streaming(
     """
     Returns (detected_lang_tag, text_without_tag).
 
-    `detected_lang_tag` is "<en-US>", "<zh-CN>" etc. — useful even when
-    `target_lang` is forced, because the model still emits it as token #0.
+    `detected_lang_tag` is "<en-US>", "<zh-CN>" etc. when the model
+    emits one. Empirically this is rare on short utterances even in
+    `auto` mode — see ARCHITECTURE.md.
     """
     if sr != 16000:
         raise ValueError(f"expected 16 kHz audio, got {sr}")

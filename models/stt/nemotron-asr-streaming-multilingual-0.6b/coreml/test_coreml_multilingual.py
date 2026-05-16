@@ -9,7 +9,8 @@ test_coreml_streaming.py with three deltas:
   1. Reads `prompt_dictionary` + `lang_tag_token_ids` from metadata.json.
   2. Resolves `--target-lang` (default "auto") to an int32 prompt_id and
      feeds it as the 6th encoder input every chunk.
-  3. Detects the leading <xx-XX> token and reports it as detected_lang.
+  3. Scans the full token stream for any <xx-XX> token and reports the
+     first one as detected_lang (rare in practice — see README/ARCHITECTURE).
 
 This is a smoke test, not a benchmark. For WER use benchmark_wer.py
 adapted from the English variant.
@@ -100,8 +101,10 @@ class NemotronMultilingualCoreML:
             if tok == self.blank_idx or tok >= self.vocab_size:
                 continue
             if tok in self.lang_tag_token_ids:
-                # First lang tag becomes the detected language. Subsequent
-                # ones (rare; shouldn't happen mid-utterance) are stripped.
+                # Any lang tag (often a trailing fp16 hallucination, not
+                # legitimate detection — see README). Surface the first
+                # one as detected_lang for debugging; strip all of them
+                # from the body text.
                 if detected_lang is None:
                     detected_lang = self.piece_for_id(tok)
                 continue

@@ -96,7 +96,7 @@ post-encoder adapter**.
 | `"es-ES"`              | 2  | Biases toward European Spanish; emits `<es-ES>` first, then Spanish |
 | `"zh-CN"` (or `"zh-ZH"`) | 4  | Mandarin Simplified; emits `<zh-CN>` first, then Chinese characters |
 | `"zh-TW"`              | 5  | Mandarin Traditional (NOTE: vocab has no `<zh-TW>` tag — model emits `<zh-CN>` since that's the closest vocab entry, but encoder is conditioned for Traditional script) |
-| `"auto"`               | 101 | Generic prompt trained on all languages; model emits whatever lang-tag it detects acoustically |
+| `"auto"`               | 101 | Generic prompt trained on all languages; nominally the model would emit a `<xx-XX>` tag identifying the spoken language, but in practice this is unreliable on short utterances — see "Auto mode and language tags" below |
 
 ## How the prompt is fed at inference (two NeMo paths, one CoreML path)
 
@@ -127,21 +127,46 @@ and behaves identically whether the surrounding code calls
 `set_inference_prompt` or not. Swift/Python only needs to know the
 prompt-id mapping (carried in `metadata.json["prompt_dictionary"]`).
 
-## How "auto" mode detects language (the only mechanism)
+## "Auto" mode and language tags (empirical reality)
 
-There is **no explicit language detector**. The "detection" is entirely implicit:
+There is **no explicit language detector**. In theory `prompt_id=101`
+(`auto`) is supposed to cause the joint to predict a `<xx-XX>` token
+that identifies the spoken language. Embedding-space analysis is
+consistent with the model treating tag tokens as regular vocabulary
+items that live near their own language's content tokens:
 
-1. During training, examples were fed with `target_lang = "auto"` (prompt id 101) paired with the same `<xx-XX>` + transcript labels as their per-language counterparts.
-2. With prompt 101, the model learned that the joint must predict the correct `<xx-XX>` as the first non-blank token directly from acoustics.
-3. At inference with `prompt_id=101`, the encoder produces "generic" conditioned features; the RNNT decoder then emits the leading `<xx-XX>` it determines best matches the audio.
-4. Subsequent tokens are conditioned (autoregressively) on that emitted lang tag.
+- Lang-tag tokens have normal embedding magnitudes (mean norm 21.66 vs 21.96 for content tokens)
+- Lang-tag intra-group cosine is ~0.014 (essentially orthogonal)
 
-**Practical consequence:** in `auto` mode the first emitted non-blank token IS the language detection result. You can read it off without any extra head. Empirical verification (from `decoder.prediction.embed.weight` analysis):
+**However, parity testing against the unconverted NeMo fp32 model
+shows the model does NOT reliably emit these tags on short
+single-speaker audio.** Across 5 FLEURS-style samples (en/zh/ja/es/fr,
+10–13 s each) run through `nemo_reference.py` with `auto` prompt, the
+raw `y_sequence` from `previous_hypotheses[0]` contained **zero
+language-tag tokens** in every case:
 
-- Lang-tag tokens have normal embedding magnitudes (mean norm 21.66 vs 21.96 for content tokens) → they're treated as regular vocabulary, not special
-- Lang-tag intra-group cosine is ~0.014 (essentially orthogonal) → they don't cluster as a separate "indicator" group; each lives near its own language's content tokens
+| Lang | fp32 NeMo tokens | Tag in fp32 stream? |
+|------|------------------|----------------------|
+| en   | 76               | none                 |
+| zh   | 46               | none                 |
+| ja   | 46               | none                 |
+| es   | 82               | none                 |
+| fr   | 53               | none                 |
 
-This is consistent with: "the model just learned to emit them first."
+The fp16 CoreML conversion (`test_coreml_multilingual.py`) decodes the
+first 10 tokens identically to fp32 for all five languages, but emits
+1–3 spurious **trailing** tokens for es and fr (including `<es-US>`
+and `<fr-FR>` respectively) due to accumulated cache drift past the
+speech. These are **conversion artifacts, not legitimate detections**.
+
+**Practical consequence:** `detected_lang` from this model is
+unreliable for short utterances. The 39 tag IDs in
+`lang_tag_token_ids` are still needed in the tokenizer's filter set
+(so that any spurious emission is stripped from the transcript), but
+nothing downstream should depend on the field being populated.
+Possible mitigations (untested): longer audio, multi-language mixed
+audio (codeswitching). A separate LID model is the recommended path
+if reliable language identification is required.
 
 ## Recommended Swift API
 
@@ -162,16 +187,20 @@ public enum NemotronTargetLang {
 }
 
 public struct NemotronTranscription {
-    public let detectedLang: String?   // populated from leading <xx-XX> token
-    public let text: String            // lang-tag stripped
+    /// Populated from any <xx-XX> token that appears in the raw token
+    /// stream. UNRELIABLE on short utterances — see "Auto mode and
+    /// language tags" above. Treat as debug-only; do not surface as
+    /// a "detected language" UI feature.
+    public let rawLeadingTagIfAny: String?
+    public let text: String  // all lang-tag tokens stripped
 }
 ```
 
 Output handling:
 
 1. Run the RNNT decoding loop normally
-2. Inspect the **first emitted non-blank token id**. If it's in `metadata.json["lang_tag_token_ids"]`, record it as `detectedLang` (look up the piece text via tokenizer) and strip it from the output.
-3. Filter any further lang-tag tokens from `text` (they shouldn't occur mid-utterance in a well-behaved decode, but strip defensively).
+2. Scan the **entire** token stream (not just the first token) for any id in `metadata.json["lang_tag_token_ids"]`. If found, record the piece text and strip it from the output.
+3. Filter all lang-tag tokens from `text` (they can appear anywhere — fp16 conversion sometimes emits spurious ones at the tail).
 
 ## Why not have separate models per language?
 
@@ -190,7 +219,7 @@ For VoiceLink: `auto` is the right default. Provide a UI override to force a spe
 
 - The prompt is fed **every chunk** in the CoreML graph (not just the first). The conformer body itself doesn't consume the prompt, but `prompt_kernel` runs on every chunk's encoder output, so the int32 input must be supplied each call. NeMo's streaming API sidesteps this by reading from a stashed `self._inference_prompt_index` per chunk; the CoreML graph keeps the same effective behavior but makes the prompt explicit at the I/O boundary.
 - Switching `prompt_id` mid-utterance is theoretically possible but untested; safest to fix at session start.
-- The leading `<xx-XX>` will appear in the first chunk that produces a non-blank emission. Subsequent chunks should not re-emit it (the autoregressive decoder state knows it was already emitted).
+- A `<xx-XX>` token may appear anywhere in the stream when emitted at all (in practice: rarely, and most often as a trailing token in fp16 conversions due to cache drift). Filter all 39 tag IDs unconditionally when assembling text — do not assume a single leading occurrence.
 
 ## Verification commands
 

@@ -128,14 +128,23 @@ uv run python ../../../nemotron-speech-streaming-0.6b/coreml/Streaming/scripts/q
 
 Expected size: ~600 MB.
 
-## Prompt Layouts
+## Prompt Layout (post-encoder)
 
-`multilingual_components.detect_prompt_layout(model)` returns:
+`prompt_kernel` is applied AFTER the full encoder, on the `(B, D, T)`
+encoder output — not between `pre_encode` and the conformer body. This
+matches NeMo's runtime path `model.set_inference_prompt(lang) →
+_apply_prompt_to_encoded(encoded)`:
 
-- **`A`** — `model.encoder.forward` accepts a `prompt` (or `prompt_one_hot`/`prompt_emb`/`lang_prompt`) kwarg. Wrapper plumbs `prompt_id → one_hot → kwarg` through. Preferred path.
-- **`B`** — Prompt applied outside the encoder. Wrapper calls `encoder.pre_encode`, concatenates the one-hot, runs `prompt_kernel`, then calls a body-only forward (`forward_internal` / `forward_after_pre_encode`). Used when the fork hasn't merged a kwarg into `ConformerEncoder.forward`.
+1. Reads `prompt_id` from `cfg.model_defaults.prompt_dictionary`
+2. Builds a `(B, T, NUM_PROMPTS)` one-hot
+3. Concatenates `[encoder_out, one_hot]` along the feature dim
+   (encoder occupies `[0:1024]`, prompt occupies `[1024:1152]`)
+4. Projects back to 1024 via `Linear(1152→2048) → ReLU → Linear(2048→1024)`
 
-In both layouts, the CoreML graph builds the one-hot internally so Swift only sends an int32. If the layout discovery picks B but neither body-only forward exists in your installed NeMo build, `EncoderStreamingWithExternalPrompt.forward` will raise — at which point fall back to manually patching the encoder.
+`multilingual_components.EncoderStreamingWithPostPrompt` builds the
+one-hot inside the CoreML graph so Swift only sends `prompt_id: int32`.
+The encoder mlpackage exposes 6 inputs (`mel`, `mel_length`,
+`cache_channel`, `cache_time`, `cache_len`, `prompt_id`).
 
 ## Python Inference + Benchmark (macOS)
 
@@ -197,8 +206,10 @@ uv run python benchmark_fleurs.py \
 
 Output table per language: `n`, `WER/CER`, `RTFx`, `detect%`
 (auto mode only). The `detect%` column is the fraction of utterances
-where the leading `<xx-XX>` token matched the FLEURS label — that's the
+where any emitted `<xx-XX>` token matched the FLEURS label — that's the
 only sanity check on the implicit language-detection mechanism.
+See **Language Tag Detection (Important Caveat)** below: this number is
+expected to be low even on the fp32 reference.
 
 `fleurs_lang_map.py` defines the FLEURS↔Nemotron mapping for the 38
 supported languages. Edit it if NVIDIA expands the prompt dictionary.
@@ -230,6 +241,70 @@ After conversion:
 4. `metadata.json["lang_tag_token_ids"]` has **39 entries** (verified against this checkpoint) — `<bg-BG>` at id 1, `<en-US>` at 2947, `<zh-CN>` at 9847, `<vi-VN>` at 12944, etc. Every id maps to a `<xx-XX>`-style token. Note: these are scattered across the full 13,087-entry vocab, not bunched at the start
 5. Encoder mlpackage exposes 6 inputs: `mel`, `mel_length`, `cache_channel`, `cache_time`, `cache_len`, `prompt_id`
 6. Decoder + joint mlpackages are byte-similar in topology to the English variant (only output dim differs)
+
+## Language Tag Detection (Important Caveat)
+
+The 39 `<xx-XX>` token IDs in `lang_tag_token_ids` are real vocabulary
+entries — the model *can* emit them — but in practice it emits them
+**rarely and inconsistently** in auto-prompt mode.
+
+### Parity verification
+
+Both the converted CoreML fp16 pipeline (`test_coreml_multilingual.py`)
+and the fp32 NeMo reference (`nemo_reference.py`) were run on five
+FLEURS-style samples with `target_lang="auto"` (prompt_id=101). Raw
+token sequences were compared:
+
+| Lang sample | fp32 NeMo tokens | fp16 CoreML tokens | Tag in fp32? | Tag in fp16? |
+|-------------|------------------|---------------------|---------------|---------------|
+| en-US       | 76               | 77                  | none          | none          |
+| zh-CN       | 46               | 46                  | none          | none          |
+| ja-JP       | 46               | 46                  | none          | none          |
+| es-ES       | 82               | 85 (+3)             | none          | `<es-US>` (last) |
+| fr-FR       | 53               | 56 (+3)             | none          | `<fr-FR>` (last) |
+
+The first 10 tokens match exactly between fp32 and fp16 for all five
+languages — body decoding is faithful through the conversion. The
+divergence is confined to 1–3 spurious trailing tokens in fp16 caused
+by accumulated cache drift past the actual speech.
+
+### What this means
+
+1. The "leading tag" emission described in NeMo documentation is a
+   training-distribution behavior that **does not reliably trigger on
+   short single-speaker utterances** (10–13 s in our samples). The
+   model usually decodes straight into the body text without a
+   prefixed `<xx-XX>` token.
+2. The `<es-US>` and `<fr-FR>` tokens that *do* appear in our CoreML
+   output are **fp16 hallucinations at the tail**, not legitimate
+   language detection. The reference fp32 model emits no tag for
+   either sample.
+3. `_decode_tokens()` in `test_coreml_multilingual.py` already strips
+   any tag token it sees, so the transcribed text is unaffected.
+   `detected_lang` should be treated as a debug-only field; do **not**
+   surface it as a "detected language" feature in Swift.
+
+### Recommendations for Swift integration
+
+- Drop or rename `detected_lang` to make its unreliability explicit
+  (e.g., `rawLeadingTagIfAny`).
+- For language-identification at runtime, use either:
+  - A separate explicit LID model, or
+  - User-supplied `targetLang` (forced-prompt mode, which decodes
+    correctly across all 38 supported languages).
+- The `langTagTokenIds` set is still needed in Swift to strip these
+  tokens from `decode()` output when they do appear.
+
+### What's a useful next experiment
+
+If language detection from this model is a hard requirement, two
+things might surface tags more often (untested, listed for future
+work):
+
+- Longer audio (≥30 s) — the model may have been trained to insert
+  tags only at sentence boundaries or codeswitch points.
+- Multi-language mixed audio — codeswitching may be the actual signal
+  the tag was trained to mark.
 
 ## License & Distribution
 
