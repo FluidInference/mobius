@@ -1,0 +1,9 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Lock file (regenerate with uv sync)
+uv.lock

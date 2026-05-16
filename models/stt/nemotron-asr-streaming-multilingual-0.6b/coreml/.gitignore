@@ -1,0 +1,13 @@
+# Virtual environment
+.venv/
+
+# Build outputs
+build_fp16/
+build_*/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Lock file (regenerate with uv sync)
+uv.lock

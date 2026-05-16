@@ -1,0 +1,29 @@
+[project]
+name = "nemotron-multilingual-coreml-conversion"
+version = "0.1.0"
+description = "CoreML conversion scripts for Nemotron-3.5-ASR-Streaming-Multilingual 0.6B"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "torch==2.5.1",
+    # Public NeMo can load the model dict, but the class
+    # `EncDecRNNTBPEModelWithPrompt` only exists on the kingformatty fork
+    # (branch: prompt_unitifed_architecture_hf_EA). Install that fork:
+    "nemo_toolkit[asr] @ git+https://github.com/kingformatty/NeMo.git@prompt_unitifed_architecture_hf_EA",
+    "coremltools==8.3",
+    "soundfile>=0.12.0",
+    "numpy>=1.24.0",
+    "typer>=0.9.0",
+    "pyyaml>=6.0",
+    "sentencepiece>=0.2.0",
+]
+
+[tool.uv]
+dev-dependencies = []
+
+# The kingformatty NeMo fork pins torch to BOTH the CPU-only Linux wheel
+# index (download.pytorch.org/whl/cpu) AND the CUDA 12.9 wheel index
+# (download.pytorch.org/whl/cu129) via platform markers. uv refuses to
+# resolve when a transitive dep references conflicting indexes — and
+# [tool.uv.sources] only governs direct deps. Forcibly override torch
+# with our pinned PyPI version (which has the macOS arm64 wheel with MPS).
+override-dependencies = ["torch==2.5.1"]
