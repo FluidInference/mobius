@@ -138,22 +138,22 @@ vocabulary items that live near their own language's content tokens:
 - Lang-tag tokens have normal embedding magnitudes (mean norm 21.66 vs 21.96 for content tokens)
 - Lang-tag intra-group cosine is ~0.014 (essentially orthogonal)
 
-### Empirical detection rates (FLEURS test, n=100 per language, fp16 CoreML, auto prompt)
+### Empirical detection rates (FLEURS full test, fp16 CoreML, auto prompt)
 
-| Lang | Detection % | Notes |
-|------|-------------|-------|
-| ja-JP | **92%** | Strongest detection signal |
-| en-US | **77%** | Reliable |
-| es-ES | 36% | Often emits `<es-US>` instead of `<es-ES>` (both Spanish, both correct) — real detection rate is much higher if regional variants are accepted |
-| fr-FR | 33% | Similar regional-variant conflation |
-| zh-CN | 15% | Weakest — script alone isn't enough; tag often skipped |
+| Lang | n | Detection % | Notes |
+|------|---|-------------|-------|
+| ja-JP | 650 | **90.6%** | Strongest detection signal |
+| en-US | 647 | **81.6%** | Reliable |
+| es-ES | 908 | 33.4% | Often emits `<es-US>` instead of `<es-ES>` (both Spanish, both correct) — real detection rate is much higher if regional variants are accepted |
+| fr-FR | 676 | 30.2% | Similar regional-variant conflation, often `<fr-CA>` |
+| zh-CN | 945 | 11.6% | Weakest — script alone isn't enough; tag often skipped |
 
 ### What this means
 
 - Detection works, but the rate depends strongly on the language.
   Earlier single-sample tests suggesting zero detection were
-  misleading — across 100 samples each, ja and en reliably surface a
-  tag.
+  misleading — across the full FLEURS test set per language, ja and
+  en reliably surface a tag.
 - For Spanish/French, the "detection accuracy" against a strict
   region-code label (`<es-ES>`, `<fr-FR>`) underestimates because the
   model commonly emits the alternative regional tag (`<es-US>`,
@@ -169,18 +169,19 @@ vocabulary items that live near their own language's content tokens:
 Same suite, but with `prompt_id` pinned to the correct language for
 each utterance (no auto detection):
 
-| Lang | Metric | Auto | Forced | Δ |
-|------|--------|------|--------|---|
-| zh-CN | CER | 27.60% | **24.89%** | −2.71% |
-| en-US | WER | 11.32% | 11.18% | −0.14% |
-| es-ES | WER |  9.29% |  9.33% | +0.04% |
-| fr-FR | WER | 16.73% | 16.62% | −0.11% |
-| ja-JP | CER | 19.14% | **17.93%** | −1.21% |
+| Lang | n | Metric | Auto | Forced | Δ |
+|------|---|--------|------|--------|---|
+| zh-CN | 945 | CER | 26.91% | **24.54%** | −2.37% |
+| en-US | 647 | WER | 12.30% | **12.09%** | −0.21% |
+| es-ES | 908 | WER |  9.21% |  **9.01%** | −0.20% |
+| fr-FR | 676 | WER | 15.27% | **15.18%** | −0.09% |
+| ja-JP | 650 | CER | 17.88% | **16.86%** | −1.02% |
 
-Forced prompts help CJK noticeably (zh −2.7 CER, ja −1.2 CER) but
-have ~zero effect on Latin-script languages. The encoder's bias
-toward the right vocabulary matters more when the surface tokens are
-single-character (CJK).
+Forced prompts help CJK noticeably (zh −2.4 CER, ja −1.0 CER) and
+give a small but consistent WER win for Latin-script languages
+(~0.1–0.2%). The encoder's bias toward the right vocabulary matters
+more when the surface tokens are single-character (CJK), but is
+detectable for every language tested.
 
 ## Recommended Swift API
 

@@ -1,0 +1,55 @@
+{
+  "mode": "forced",
+  "results": [
+    {
+      "fleurs_lang": "cmn_hans_cn",
+      "nemo_lang": "zh-CN",
+      "files": 945,
+      "metric": "CER",
+      "value": 24.54,
+      "rtfx": 8.59,
+      "detect_acc": null,
+      "audio_seconds": 11065.2
+    },
+    {
+      "fleurs_lang": "en_us",
+      "nemo_lang": "en-US",
+      "files": 647,
+      "metric": "WER",
+      "value": 12.09,
+      "rtfx": 9.42,
+      "detect_acc": null,
+      "audio_seconds": 6387.9
+    },
+    {
+      "fleurs_lang": "es_419",
+      "nemo_lang": "es-ES",
+      "files": 908,
+      "metric": "WER",
+      "value": 9.01,
+      "rtfx": 7.64,
+      "detect_acc": null,
+      "audio_seconds": 11126.1
+    },
+    {
+      "fleurs_lang": "fr_fr",
+      "nemo_lang": "fr-FR",
+      "files": 676,
+      "metric": "WER",
+      "value": 15.18,
+      "rtfx": 7.0,
+      "detect_acc": null,
+      "audio_seconds": 7024.1
+    },
+    {
+      "fleurs_lang": "ja_jp",
+      "nemo_lang": "ja-JP",
+      "files": 650,
+      "metric": "CER",
+      "value": 16.86,
+      "rtfx": 8.27,
+      "detect_acc": null,
+      "audio_seconds": 8511.1
+    }
+  ]
+}

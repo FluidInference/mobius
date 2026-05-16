@@ -242,44 +242,48 @@ After conversion:
 5. Encoder mlpackage exposes 6 inputs: `mel`, `mel_length`, `cache_channel`, `cache_time`, `cache_len`, `prompt_id`
 6. Decoder + joint mlpackages are byte-similar in topology to the English variant (only output dim differs)
 
-## FLEURS Benchmark Results (build_fp16, n=100 per language)
+## FLEURS Benchmark Results (build_fp16, full test split)
 
 `benchmark_fleurs.py` was run against the converted fp16 CoreML
-pipeline on the test split of `google/fleurs`, 100 samples per
-language, comparing `--mode auto` (model picks language) vs.
-`--mode forced` (per-utterance correct prompt). Raw JSONs in
-`bench_results/`.
+pipeline on the **full test split** of `google/fleurs` for five
+languages (3,826 utterances total), comparing `--mode auto` (model
+picks language) vs. `--mode forced` (per-utterance correct prompt).
+Raw JSONs in `bench_results/fleurs_{auto,forced}_full.json`.
 
 ### Accuracy
 
-| FLEURS → Nemotron | Metric | **Auto** | **Forced** | Δ | Avg audio/s | RTFx auto / forced |
+| FLEURS → Nemotron | n | Metric | **Auto** | **Forced** | Δ | RTFx auto / forced |
 |---|---|---|---|---|---|---|
-| cmn_hans_cn → zh-CN | CER | 27.60% | **24.89%** | **−2.71%** | ~10s | 9.7× / 9.3× |
-| en_us → en-US | WER | 11.32% | 11.18% | −0.14% | ~10s | 9.4× / 7.8× |
-| es_419 → es-ES | WER | 9.29% | 9.33% | +0.04% | ~13s | 8.7× / 8.0× |
-| fr_fr → fr-FR | WER | 16.73% | 16.62% | −0.11% | ~10s | 7.3× / 7.3× |
-| ja_jp → ja-JP | CER | 19.14% | **17.93%** | **−1.21%** | ~10s | 7.7× / 8.6× |
+| cmn_hans_cn → zh-CN | 945 | CER | 26.91% | **24.54%** | **−2.37%** | 8.2× / 8.6× |
+| en_us → en-US | 647 | WER | 12.30% | **12.09%** | −0.21% | 7.9× / 9.4× |
+| es_419 → es-ES | 908 | WER | 9.21% | **9.01%** | −0.20% | 8.9× / 7.6× |
+| fr_fr → fr-FR | 676 | WER | 15.27% | **15.18%** | −0.09% | 9.5× / 7.0× |
+| ja_jp → ja-JP | 650 | CER | 17.88% | **16.86%** | **−1.02%** | 9.6× / 8.3× |
 
-- Forced prompts meaningfully help CJK (zh −2.7%, ja −1.2%) but are
-  essentially neutral for Latin-script languages.
-- All five languages run at 7–10× real time on the host Mac (CPU+ANE).
+- Forced prompts give a real CER win for CJK (zh −2.4%, ja −1.0%) and
+  a small WER win for Latin scripts (es/fr/en all −0.1 to −0.2%).
+- All five languages run at 7–10× real time on the host Mac
+  (CPU+ANE). Total audio benched: ~12 hours.
 - Decoder/joint state is reset per utterance; no cross-utterance bias.
+- Earlier n=100 numbers were within ±1.4% of these full-test values
+  on every language except fr (n=100 fr was unusually hard,
+  16.62% → 15.18% on the full set).
 
 ### Language tag detection (auto mode)
 
 How often the model emitted a `<xx-XX>` token in the stream that
-strictly matched the FLEURS subset label:
+**strictly** matched the FLEURS subset label:
 
 | Lang | Detection % | Notes |
 |------|-------------|-------|
-| ja-JP | **92%** | Strongest detection |
-| en-US | **77%** | Reliable |
-| es-ES | 36% | Often emits `<es-US>` (~equally common as `<es-ES>` — both correct Spanish) |
-| fr-FR | 33% | Similar regional-variant conflation |
-| zh-CN | 15% | Weakest |
+| ja-JP | **90.6%** | Strongest detection |
+| en-US | **81.6%** | Reliable |
+| es-ES | 33.4% | Often emits `<es-US>` (also correct Spanish) |
+| fr-FR | 30.2% | Often emits `<fr-CA>` (also correct French) |
+| zh-CN | 11.6% | Weakest — tag often skipped on Chinese audio |
 
 Earlier 1-sample testing suggested detection was unreliable across
-the board; the 100-sample run reveals it's actually strong for ja/en
+the board; the full-test run reveals it's actually strong for ja/en
 and the apparent es/fr "failures" are mostly the model picking a
 sister regional tag. Detection is good enough as a soft language
 hint, not as a hard LID.
@@ -293,7 +297,7 @@ hint, not as a hard LID.
 - For ja/zh content, prefer **forced** mode when the user has
   selected an input language — the CER gain is non-trivial.
 - For mixed/unknown content, **auto** mode is fine; the WER/CER
-  delta vs. forced is well under 1% for Latin scripts.
+  delta vs. forced is well under 0.3% for Latin scripts.
 
 ## License & Distribution
 
