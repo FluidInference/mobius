@@ -12,7 +12,7 @@ dependencies = [
     "pyobjc-core",
     "pyobjc-framework-CoreML",
     "pyobjc-framework-Cocoa",
-    "coremltools",
+    "coremltools==8.3.0",
     "huggingface-hub[cli]>=1.7.2",
 ]
 
