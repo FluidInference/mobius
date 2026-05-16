@@ -32,3 +32,6 @@ models/tts/pocket_tts/pocket_tts/
 # Swift package build artifacts
 .build/
 Package.resolved
+
+# Benchmark run logs (noisy HF progress bars + stack traces); JSON results are kept
+models/stt/nemotron-asr-streaming-multilingual-0.6b/coreml/bench_results/*.log

@@ -96,7 +96,7 @@ post-encoder adapter**.
 | `"es-ES"`              | 2  | Biases toward European Spanish; emits `<es-ES>` first, then Spanish |
 | `"zh-CN"` (or `"zh-ZH"`) | 4  | Mandarin Simplified; emits `<zh-CN>` first, then Chinese characters |
 | `"zh-TW"`              | 5  | Mandarin Traditional (NOTE: vocab has no `<zh-TW>` tag — model emits `<zh-CN>` since that's the closest vocab entry, but encoder is conditioned for Traditional script) |
-| `"auto"`               | 101 | Generic prompt trained on all languages; nominally the model would emit a `<xx-XX>` tag identifying the spoken language, but in practice this is unreliable on short utterances — see "Auto mode and language tags" below |
+| `"auto"`               | 101 | Generic prompt trained on all languages; the model emits a `<xx-XX>` tag identifying the spoken language with per-language reliability ranging from 15% (zh-CN) to 92% (ja-JP) — see "Auto mode and language tags" below |
 
 ## How the prompt is fed at inference (two NeMo paths, one CoreML path)
 
@@ -129,44 +129,58 @@ prompt-id mapping (carried in `metadata.json["prompt_dictionary"]`).
 
 ## "Auto" mode and language tags (empirical reality)
 
-There is **no explicit language detector**. In theory `prompt_id=101`
-(`auto`) is supposed to cause the joint to predict a `<xx-XX>` token
-that identifies the spoken language. Embedding-space analysis is
-consistent with the model treating tag tokens as regular vocabulary
-items that live near their own language's content tokens:
+There is **no explicit language detector**. With `prompt_id=101`
+(`auto`), the joint network predicts a `<xx-XX>` token at some point
+in the stream that identifies the spoken language. Embedding-space
+analysis is consistent with the model treating tag tokens as regular
+vocabulary items that live near their own language's content tokens:
 
 - Lang-tag tokens have normal embedding magnitudes (mean norm 21.66 vs 21.96 for content tokens)
 - Lang-tag intra-group cosine is ~0.014 (essentially orthogonal)
 
-**However, parity testing against the unconverted NeMo fp32 model
-shows the model does NOT reliably emit these tags on short
-single-speaker audio.** Across 5 FLEURS-style samples (en/zh/ja/es/fr,
-10–13 s each) run through `nemo_reference.py` with `auto` prompt, the
-raw `y_sequence` from `previous_hypotheses[0]` contained **zero
-language-tag tokens** in every case:
+### Empirical detection rates (FLEURS test, n=100 per language, fp16 CoreML, auto prompt)
 
-| Lang | fp32 NeMo tokens | Tag in fp32 stream? |
-|------|------------------|----------------------|
-| en   | 76               | none                 |
-| zh   | 46               | none                 |
-| ja   | 46               | none                 |
-| es   | 82               | none                 |
-| fr   | 53               | none                 |
+| Lang | Detection % | Notes |
+|------|-------------|-------|
+| ja-JP | **92%** | Strongest detection signal |
+| en-US | **77%** | Reliable |
+| es-ES | 36% | Often emits `<es-US>` instead of `<es-ES>` (both Spanish, both correct) — real detection rate is much higher if regional variants are accepted |
+| fr-FR | 33% | Similar regional-variant conflation |
+| zh-CN | 15% | Weakest — script alone isn't enough; tag often skipped |
 
-The fp16 CoreML conversion (`test_coreml_multilingual.py`) decodes the
-first 10 tokens identically to fp32 for all five languages, but emits
-1–3 spurious **trailing** tokens for es and fr (including `<es-US>`
-and `<fr-FR>` respectively) due to accumulated cache drift past the
-speech. These are **conversion artifacts, not legitimate detections**.
+### What this means
 
-**Practical consequence:** `detected_lang` from this model is
-unreliable for short utterances. The 39 tag IDs in
-`lang_tag_token_ids` are still needed in the tokenizer's filter set
-(so that any spurious emission is stripped from the transcript), but
-nothing downstream should depend on the field being populated.
-Possible mitigations (untested): longer audio, multi-language mixed
-audio (codeswitching). A separate LID model is the recommended path
-if reliable language identification is required.
+- Detection works, but the rate depends strongly on the language.
+  Earlier single-sample tests suggesting zero detection were
+  misleading — across 100 samples each, ja and en reliably surface a
+  tag.
+- For Spanish/French, the "detection accuracy" against a strict
+  region-code label (`<es-ES>`, `<fr-FR>`) underestimates because the
+  model commonly emits the alternative regional tag (`<es-US>`,
+  `<fr-CA>`). Both are correct language identifications.
+- The tag may appear anywhere in the token stream — `_decode_tokens`
+  scans the full list and strips all 39 tag IDs from the body text.
+- Detection is **not** a substitute for an explicit LID model when
+  every utterance must be labeled correctly, but it is good enough to
+  use as a soft signal for the dominant content languages (en, ja).
+
+### Forced-prompt mode (for comparison)
+
+Same suite, but with `prompt_id` pinned to the correct language for
+each utterance (no auto detection):
+
+| Lang | Metric | Auto | Forced | Δ |
+|------|--------|------|--------|---|
+| zh-CN | CER | 27.60% | **24.89%** | −2.71% |
+| en-US | WER | 11.32% | 11.18% | −0.14% |
+| es-ES | WER |  9.29% |  9.33% | +0.04% |
+| fr-FR | WER | 16.73% | 16.62% | −0.11% |
+| ja-JP | CER | 19.14% | **17.93%** | −1.21% |
+
+Forced prompts help CJK noticeably (zh −2.7 CER, ja −1.2 CER) but
+have ~zero effect on Latin-script languages. The encoder's bias
+toward the right vocabulary matters more when the surface tokens are
+single-character (CJK).
 
 ## Recommended Swift API
 
@@ -187,11 +201,11 @@ public enum NemotronTargetLang {
 }
 
 public struct NemotronTranscription {
-    /// Populated from any <xx-XX> token that appears in the raw token
-    /// stream. UNRELIABLE on short utterances — see "Auto mode and
-    /// language tags" above. Treat as debug-only; do not surface as
-    /// a "detected language" UI feature.
-    public let rawLeadingTagIfAny: String?
+    /// Any <xx-XX> token emitted by the model. Strong signal for ja
+    /// (~92%) and en (~77%), moderate for es/fr (often emits regional
+    /// variants like <es-US>/<fr-CA>), weak for zh (~15%). See
+    /// ARCHITECTURE.md for full per-language detection rates.
+    public let detectedLang: String?
     public let text: String  // all lang-tag tokens stripped
 }
 ```
@@ -199,8 +213,8 @@ public struct NemotronTranscription {
 Output handling:
 
 1. Run the RNNT decoding loop normally
-2. Scan the **entire** token stream (not just the first token) for any id in `metadata.json["lang_tag_token_ids"]`. If found, record the piece text and strip it from the output.
-3. Filter all lang-tag tokens from `text` (they can appear anywhere — fp16 conversion sometimes emits spurious ones at the tail).
+2. Scan the **entire** token stream (not just the first token) for any id in `metadata.json["lang_tag_token_ids"]`. If found, record the piece text as `detectedLang` and strip it from the output.
+3. Filter all lang-tag tokens from `text` (they can appear at any position).
 
 ## Why not have separate models per language?
 

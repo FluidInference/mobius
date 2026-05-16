@@ -242,69 +242,58 @@ After conversion:
 5. Encoder mlpackage exposes 6 inputs: `mel`, `mel_length`, `cache_channel`, `cache_time`, `cache_len`, `prompt_id`
 6. Decoder + joint mlpackages are byte-similar in topology to the English variant (only output dim differs)
 
-## Language Tag Detection (Important Caveat)
+## FLEURS Benchmark Results (build_fp16, n=100 per language)
 
-The 39 `<xx-XX>` token IDs in `lang_tag_token_ids` are real vocabulary
-entries — the model *can* emit them — but in practice it emits them
-**rarely and inconsistently** in auto-prompt mode.
+`benchmark_fleurs.py` was run against the converted fp16 CoreML
+pipeline on the test split of `google/fleurs`, 100 samples per
+language, comparing `--mode auto` (model picks language) vs.
+`--mode forced` (per-utterance correct prompt). Raw JSONs in
+`bench_results/`.
 
-### Parity verification
+### Accuracy
 
-Both the converted CoreML fp16 pipeline (`test_coreml_multilingual.py`)
-and the fp32 NeMo reference (`nemo_reference.py`) were run on five
-FLEURS-style samples with `target_lang="auto"` (prompt_id=101). Raw
-token sequences were compared:
+| FLEURS → Nemotron | Metric | **Auto** | **Forced** | Δ | Avg audio/s | RTFx auto / forced |
+|---|---|---|---|---|---|---|
+| cmn_hans_cn → zh-CN | CER | 27.60% | **24.89%** | **−2.71%** | ~10s | 9.7× / 9.3× |
+| en_us → en-US | WER | 11.32% | 11.18% | −0.14% | ~10s | 9.4× / 7.8× |
+| es_419 → es-ES | WER | 9.29% | 9.33% | +0.04% | ~13s | 8.7× / 8.0× |
+| fr_fr → fr-FR | WER | 16.73% | 16.62% | −0.11% | ~10s | 7.3× / 7.3× |
+| ja_jp → ja-JP | CER | 19.14% | **17.93%** | **−1.21%** | ~10s | 7.7× / 8.6× |
 
-| Lang sample | fp32 NeMo tokens | fp16 CoreML tokens | Tag in fp32? | Tag in fp16? |
-|-------------|------------------|---------------------|---------------|---------------|
-| en-US       | 76               | 77                  | none          | none          |
-| zh-CN       | 46               | 46                  | none          | none          |
-| ja-JP       | 46               | 46                  | none          | none          |
-| es-ES       | 82               | 85 (+3)             | none          | `<es-US>` (last) |
-| fr-FR       | 53               | 56 (+3)             | none          | `<fr-FR>` (last) |
+- Forced prompts meaningfully help CJK (zh −2.7%, ja −1.2%) but are
+  essentially neutral for Latin-script languages.
+- All five languages run at 7–10× real time on the host Mac (CPU+ANE).
+- Decoder/joint state is reset per utterance; no cross-utterance bias.
 
-The first 10 tokens match exactly between fp32 and fp16 for all five
-languages — body decoding is faithful through the conversion. The
-divergence is confined to 1–3 spurious trailing tokens in fp16 caused
-by accumulated cache drift past the actual speech.
+### Language tag detection (auto mode)
 
-### What this means
+How often the model emitted a `<xx-XX>` token in the stream that
+strictly matched the FLEURS subset label:
 
-1. The "leading tag" emission described in NeMo documentation is a
-   training-distribution behavior that **does not reliably trigger on
-   short single-speaker utterances** (10–13 s in our samples). The
-   model usually decodes straight into the body text without a
-   prefixed `<xx-XX>` token.
-2. The `<es-US>` and `<fr-FR>` tokens that *do* appear in our CoreML
-   output are **fp16 hallucinations at the tail**, not legitimate
-   language detection. The reference fp32 model emits no tag for
-   either sample.
-3. `_decode_tokens()` in `test_coreml_multilingual.py` already strips
-   any tag token it sees, so the transcribed text is unaffected.
-   `detected_lang` should be treated as a debug-only field; do **not**
-   surface it as a "detected language" feature in Swift.
+| Lang | Detection % | Notes |
+|------|-------------|-------|
+| ja-JP | **92%** | Strongest detection |
+| en-US | **77%** | Reliable |
+| es-ES | 36% | Often emits `<es-US>` (~equally common as `<es-ES>` — both correct Spanish) |
+| fr-FR | 33% | Similar regional-variant conflation |
+| zh-CN | 15% | Weakest |
 
-### Recommendations for Swift integration
+Earlier 1-sample testing suggested detection was unreliable across
+the board; the 100-sample run reveals it's actually strong for ja/en
+and the apparent es/fr "failures" are mostly the model picking a
+sister regional tag. Detection is good enough as a soft language
+hint, not as a hard LID.
 
-- Drop or rename `detected_lang` to make its unreliability explicit
-  (e.g., `rawLeadingTagIfAny`).
-- For language-identification at runtime, use either:
-  - A separate explicit LID model, or
-  - User-supplied `targetLang` (forced-prompt mode, which decodes
-    correctly across all 38 supported languages).
-- The `langTagTokenIds` set is still needed in Swift to strip these
-  tokens from `decode()` output when they do appear.
+### Production guidance
 
-### What's a useful next experiment
-
-If language detection from this model is a hard requirement, two
-things might surface tags more often (untested, listed for future
-work):
-
-- Longer audio (≥30 s) — the model may have been trained to insert
-  tags only at sentence boundaries or codeswitch points.
-- Multi-language mixed audio — codeswitching may be the actual signal
-  the tag was trained to mark.
+- `detected_lang` is usable as a Swift output field, but should not
+  be presented as a guarantee to the user. Bias the UI to fall back
+  to "Unknown" when the tag is missing or conflicts with the user's
+  configured locale.
+- For ja/zh content, prefer **forced** mode when the user has
+  selected an input language — the CER gain is non-trivial.
+- For mixed/unknown content, **auto** mode is fine; the WER/CER
+  delta vs. forced is well under 1% for Latin scripts.
 
 ## License & Distribution
 

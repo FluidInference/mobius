@@ -92,20 +92,30 @@ def score(reference: str, hypothesis: str, use_cer: bool) -> Tuple[int, int]:
 # ---------------------------------------------------------------------------
 
 def _iter_fleurs_hf(lang: str, max_files: Optional[int]) -> Iterator[Tuple[str, np.ndarray, int, str]]:
-    """Yield (utt_id, audio_float32, sr, reference) from `google/fleurs`."""
+    """Yield (utt_id, audio_float32, sr, reference) from `google/fleurs`.
+
+    Uses `Audio(decode=False)` + soundfile because the default
+    decode path requires torchcodec, which is not in the slim macOS
+    inference env.
+    """
     try:
-        from datasets import load_dataset
+        from datasets import load_dataset, Audio
     except ImportError as e:
         raise SystemExit(
             "datasets package not installed; run `uv add datasets` or pass --fleurs-root"
         ) from e
+    import io
+    import soundfile as sf
     ds = load_dataset("google/fleurs", lang, split="test", streaming=False)
+    ds = ds.cast_column("audio", Audio(decode=False))
     for i, ex in enumerate(ds):
         if max_files and i >= max_files:
             break
-        audio = np.asarray(ex["audio"]["array"], dtype=np.float32)
-        sr = int(ex["audio"]["sampling_rate"])
-        yield str(ex.get("id", i)), audio, sr, ex["transcription"]
+        audio_bytes = ex["audio"]["bytes"]
+        audio, sr = sf.read(io.BytesIO(audio_bytes), dtype="float32")
+        if audio.ndim > 1:
+            audio = audio.mean(axis=1)
+        yield str(ex.get("id", i)), audio, int(sr), ex["transcription"]
 
 
 def _iter_fleurs_local(
