@@ -133,10 +133,13 @@ denoising steps. ASR-verified against FluidAudio Parakeet TDT.
 | text_encoder (T=128)                | 38   | 0    | 62   | 2.15 ms | partial ANE |
 | vocoder (RangeDim L 4..512)         | 0    | 0    | 100  | 1.17 ms | full ANE, 4× vs FP32 |
 | vector_estimator (RangeDim 17..512) | —    | —    | —    | —       | ANE compile fails (dynamic shapes disabled) |
-| vector_estimator (fixed L=128 T=128)| 100  | 0    | 0    | 8.32 ms | 89.6% ops *eligible*, blocked by 1 bool `tile` op |
+| vector_estimator (fixed L=128 T=128)| 100  | 0    | 0    | 9.29 ms | 93.0% ops eligible (bool-tile fixed), `ANECCompile() FAILED (11)` opaque |
+| vector_estimator (fixed L=64  T=64) | 100  | 0    | 0    | 4.75 ms | identical eligibility/failure — not a size issue |
 
 See `coreml/trials.md` → "ANE residency profiling" for the full breakdown,
-the bool-tile blocker, and the EnumeratedShapes runtime stride gotcha.
+the float-mask refactor that eliminated the bool-tile blocker, the
+residual opaque `ANECCompile() FAILED (11)`, and the EnumeratedShapes
+runtime stride gotcha.
 
 ## Critical gotchas
 
@@ -160,6 +163,17 @@ See `coreml/trials.md` for the full log. Highlights:
    Wrap modules with a tiny `_Int32Wrapper` that casts inside the
    traced graph so the external input stays int32.
 7. **Python 3.14 has no BlobWriter** — pin `requires-python = ">=3.11,<3.13"`.
+8. **Float masking, not bool masking** — `masked_fill(mask==0, -inf)` and
+   `where(mask==0, 0, attn)` compile to `bool tile`/`select` ops that ANE
+   rejects. Use `scores - (1.0 - mask) * 1e4` (additive) and `attn * mask`
+   (multiplicative) instead. Lifts vector_estimator from 89.6% → 93.0%
+   ANE-eligible (though the residual opaque `ANECCompile() FAILED (11)`
+   still blocks final ANE landing — see trials.md).
+9. **coremltools `_int` cast with (1,) tensor** — `aten::Int` on a
+   (1,)-shape int tensor trips `TypeError: only 0-dimensional arrays can
+   be converted to Python scalars` inside coremltools' `_cast` handler.
+   `convert_coreml.py` monkey-patches `_cast` (`_patch_int_cast`) to
+   squeeze (1,) → scalar before forwarding.
 
 ## Upstream + downstream
 

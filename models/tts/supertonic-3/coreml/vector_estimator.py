@@ -213,7 +213,10 @@ class _TextAttn(nn.Module):
 
         scores = torch.matmul(q, k.transpose(-2, -1)) / ATTN_SCORE_DIVISOR
         mask = text_mask.unsqueeze(2)  # [2B, 1, 1, T_text]
-        scores = scores.masked_fill(mask == 0, float("-inf"))
+        # ANE-friendly additive mask (float, no bool/select): invalid positions
+        # get a large negative score → softmax → ~0. Equivalent to
+        # masked_fill(mask==0, -inf) within FP16 tolerance.
+        scores = scores - (1.0 - mask) * 1e4
         attn = F.softmax(scores, dim=-1)
         out = torch.matmul(attn, v).transpose(1, 2).reshape(B, L, H * dk)
         out = self.out_fc(out).transpose(1, 2)
@@ -251,8 +254,10 @@ class _StyleAttn(nn.Module):
         scores = torch.matmul(q, torch.tanh(k).transpose(-2, -1)) / ATTN_SCORE_DIVISOR
         attn = F.softmax(scores, dim=-1)
         # Post-softmax mask on the Q-side latent mask (zero out invalid Q rows).
+        # ANE-friendly multiplicative mask: float mult ≡ where(mask==0, 0, attn)
+        # but avoids bool tile/select that the ANE compiler rejects.
         mask = latent_mask.transpose(1, 2).unsqueeze(1)  # [2B, 1, L, 1]
-        attn = torch.where(mask == 0, torch.zeros_like(attn), attn)
+        attn = attn * mask
         out = torch.matmul(attn, v).transpose(1, 2).reshape(B, L, H * dk)
         out = self.out_fc(out).transpose(1, 2)
         return out * latent_mask

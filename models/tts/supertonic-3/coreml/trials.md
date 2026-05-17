@@ -249,12 +249,13 @@ FP16 + `compute_precision=ct.precision.FLOAT16`. Sizes drop ~2×:
 | vocoder (RangeDim L 4..512)         | 0     | 0    | 100   | 1.17 ms | 4× faster vs FP32; full ANE despite RangeDim |
 | vector_estimator (RangeDim 17..512) | —     | —    | —     | —       | **ANE compile fails — see below** |
 | vector_estimator (EnumeratedShapes) | —     | —    | —     | —       | converts but coreml-cli runtime hits stride/`FlexibleShapeInfo` error |
-| vector_estimator (fixed L=128 T=128)| 0     | 0    | 0     | 8.32 ms | 89.6% ops *eligible* for ANE, but ANE plan build fails on 1 `bool` `tile` op (see below) |
+| vector_estimator (fixed L=128 T=128)| 0     | 0    | 0     | 9.29 ms | 93.0% ops eligible (bool-tile fixed), ANE plan build still fails — see below |
+| vector_estimator (fixed L=64  T=64) | 0     | 0    | 0     | 4.75 ms | 93.0% eligible, ANECCompile() FAILED (11) — same as L=128 |
 
-### vector_estimator ANE blocker — bool `tile` for style-attention mask
+### vector_estimator ANE blocker — float-mask refactor (bool tile fixed, residual ANECCompile failure)
 
-Even with fixed shapes (`L=128, T=128`), the FP16 vector_estimator fails
-ANE plan build:
+**Round 1 — bool `tile` for style-attention mask (FIXED).** The fixed-shape
+FP16 vector_estimator originally failed ANE plan build with:
 
 ```
 [espresso] In 'tile' operations, tensors parameter x[0], and output at index 0
@@ -263,8 +264,8 @@ must have the same data type.
        Error=_ANECompiler : ANECCompile() FAILED
 ```
 
-`--fallback` analysis shows **614/685 ops (89.6%) are ANE-eligible**, blocked
-by exactly **1 `tile` op** in the style cross-attention:
+`--fallback` showed **614/685 ops (89.6%) ANE-eligible**, blocked by exactly
+one `tile` op in the style cross-attention:
 
 ```mil
 // model.mil:478  (style block, 50-frame style attention)
@@ -275,11 +276,45 @@ tensor<fp16, [2, 2, 128, 50]> attn_5_cast_fp16 =
     select(a = const_neginf_mask, b = attn_3_cast_fp16, cond = var_549_after_broadcast)
 ```
 
-ANE's `tile` op does not support `bool` dtype. The fix is to keep the mask
-as fp16 and use additive (`-inf` * mask) masking instead of bool `select`,
-which would require modifying the `StyleAttention` block in `vector_estimator.py`
-(the cond mask comes from `latent_mask == 0`). Punted for now; the model is
-still usable on CPU+GPU.
+ANE's `tile` op does not support `bool` dtype. Replaced four bool-mask sites
+across the port with float additive / multiplicative masking:
+
+| File                                | Before                                              | After                            |
+| ----------------------------------- | --------------------------------------------------- | -------------------------------- |
+| `vector_estimator.py` (text attn)   | `scores.masked_fill(mask == 0, -inf)`               | `scores - (1.0 - mask) * 1e4`    |
+| `vector_estimator.py` (style attn)  | `torch.where(mask == 0, zeros, attn)`               | `attn * mask`                    |
+| `common.py` (RelPosSelfAttention)   | `scores.masked_fill(mask == 0, -inf)`               | `scores - (1.0 - mask) * 1e4`    |
+| `text_encoder.py` (post-softmax)    | `torch.where(mask == 0, zeros, attn)`               | `attn * mask_q`                  |
+
+PyTorch ↔ ONNX parity preserved within tolerance (vector_estimator max_abs
+unchanged at 1.21e-3). The `--fallback` count improved 89.6% → 93.0% (the
+bool tile is gone), and the rejected CPU ops now match the expected
+fp32/fp16-boundary set: `cast`, `concat`, `mul`, `expand_dims`, `sin`, `cos`,
+`real_div`, `reshape`, `linear`, `slice_by_index`, `softplus`, `tanh`,
+`transpose`, `sub`, `add` (no `bool`, no `tile`, no `select`).
+
+**Round 2 — residual `ANECCompile() FAILED (11)` (UNRESOLVED).** Despite the
+93.0% eligibility and no obvious blocker, the ANE plan build still fails:
+
+```
+[coreml] E5RT: MILCompilerForANE error: failed to compile ANE model using ANEF.
+       Error=_ANECompiler : ANECCompile() FAILED (11)
+```
+
+- `--fallback` no longer names a specific blocking op (the 48 CPU ops are
+  expected fp32/fp16-boundary casts and the timestep-embedding sin/cos chain).
+- Reducing the fixed shape to `L=64, T=64` gives identical eligibility (93.0%)
+  and the identical `ANECCompile() FAILED (11)` — not a size/complexity issue.
+- The model loads and runs on `CPU_AND_NE` (predict succeeds), but the ANE
+  partition gets rejected and everything falls back to CPU.
+- Error code 11 is opaque without Apple internals; likely candidates are
+  the batch-2 CFG structure, the 144-channel non-power-of-2 dim, or a
+  specific op-fusion pattern the ANE compiler's pattern matcher rejects.
+
+**Quality-check passed** post-refactor: end-to-end CoreML FP16 inference
+produces clean audio ("Hello world, this is the float mask FP16 build.",
+ASR transcribed by FluidAudio Parakeet TDT at 0.939 confidence).
+Vector estimator runs on CPU+GPU (`cpu_and_gpu` or `all` compute unit).
 
 ### Dynamic shapes vs ANE
 
@@ -299,7 +334,9 @@ ANE prefers fixed shapes. Observed:
 - **duration_predictor**: leave on CPU (fixed T=128, ~1ms)
 - **text_encoder**: fixed T=128 → cpu_and_neural_engine (62% ANE, 2.15 ms)
 - **vocoder**: RangeDim L=4..512 → cpu_and_neural_engine (100% ANE, 1.17 ms)
-- **vector_estimator**: until bool-tile fix lands, use `cpu_and_gpu` or `all`
-  (falls back to GPU). For ANE, would need to: (1) fix bool tile in
-  `StyleAttention`, and (2) compile multiple fixed-L variants (e.g.,
-  L ∈ {32, 64, 128, 256}).
+- **vector_estimator**: bool-tile fixed via float-mask refactor (93.0% ops
+  ANE-eligible, parity preserved), but ANE plan build still fails with
+  opaque `ANECCompile() FAILED (11)` at both `L=128` and `L=64`. Use
+  `cpu_and_gpu` or `all` (falls back to GPU). Further ANE landing would
+  need: (a) deeper diagnosis of the opaque ANECCompile error (likely
+  batch-2 CFG or 144-channel pattern), or (b) Apple-side compiler fix.

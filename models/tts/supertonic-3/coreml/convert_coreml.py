@@ -15,6 +15,32 @@ import torch
 import coremltools as ct
 from coremltools import ImageType  # noqa: F401  (silence import warning)
 
+
+# --- coremltools workaround ----------------------------------------------------
+# Some traced graphs feed a (1,) int tensor into `aten::Int` (the int() cast).
+# coremltools' `_int` op handler does `int(np.array([1]))` which raises
+# `TypeError: only 0-dimensional arrays can be converted to Python scalars`.
+# Patch `_cast` to squeeze (1,) constants to scalars before forwarding.
+def _patch_int_cast() -> None:
+    import coremltools.converters.mil.frontend.torch.ops as _ops
+    from coremltools.converters.mil.mil import Builder as _mb
+
+    _orig_cast = _ops._cast
+
+    def _safe_cast(context, node, dtype, dtype_str):
+        x = context[node.inputs[0]]
+        val = getattr(x, "val", None)
+        if val is not None and hasattr(val, "shape") and val.shape == (1,):
+            res = _mb.const(val=dtype(val.item()), name=node.name)
+            context.add(res)
+            return res
+        return _orig_cast(context, node, dtype, dtype_str)
+
+    _ops._cast = _safe_cast
+
+
+_patch_int_cast()
+
 from .vocoder import build_vocoder_from_onnx
 from .text_encoder import build_text_encoder_from_onnx
 from .duration_predictor import build_duration_predictor_from_onnx
@@ -24,7 +50,7 @@ from .vector_estimator import build_vector_estimator_from_onnx
 # --- shared conversion settings ------------------------------------------------
 MIN_DEPLOY = ct.target.iOS18       # ≥ macOS 15, ≥ iOS 18 (multi-enum shapes)
 # FP32 = numerical-parity reference; FP16 = required for ANE residency (3/4
-# modules; vector_estimator still blocked by 1 bool-tile op — see trials.md).
+# modules; vector_estimator still ANE-rejected — see trials.md).
 COMPUTE_PRECISION = ct.precision.FLOAT32
 CONVERT_TO = "mlprogram"
 COMPUTE_UNITS = ct.ComputeUnit.CPU_AND_NE

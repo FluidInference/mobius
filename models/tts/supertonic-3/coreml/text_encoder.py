@@ -141,8 +141,10 @@ class _SpeechPromptedAttention(nn.Module):
         scores = torch.matmul(q, torch.tanh(k).transpose(-2, -1)) / math.sqrt(self.n_units)
         attn = F.softmax(scores, dim=-1)
         # Post-softmax mask: zero rows where text_mask == 0.
+        # ANE-friendly multiplicative mask: float mult ≡ where(mask==0, 0, attn)
+        # but avoids bool tile/select that the ANE compiler rejects.
         mask_q = mask.transpose(1, 2).unsqueeze(1)  # [B, 1, T, 1]
-        attn = torch.where(mask_q == 0, torch.zeros_like(attn), attn)
+        attn = attn * mask_q
         out = torch.matmul(attn, v)                  # [B, H, T, dk]
         out = out.transpose(1, 2).reshape(B, T, H * dk)
         out = self.out_fc(out)

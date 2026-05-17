@@ -236,7 +236,8 @@ class RelPosSelfAttention(nn.Module):
 
         if attn_mask is not None:
             mask = attn_mask.unsqueeze(2)  # [B, 1, 1, T]
-            scores = scores.masked_fill(mask == 0, float("-inf"))
+            # ANE-friendly additive mask (float, no bool/select).
+            scores = scores - (1.0 - mask) * 1e4
 
         p_attn = F.softmax(scores, dim=-1)
         out = torch.matmul(p_attn, v)  # [B, H, T, dk]
