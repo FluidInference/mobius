@@ -64,20 +64,29 @@ curl -L $HF/voice_styles/M1.json -o build/voice_styles/M1.json
 ## Convert
 
 ```bash
-uv run python -m coreml.convert_coreml \
-    --onnx-dir build/_onnx \
-    --out-dir build/_mlpackage
+# FP32 (numerical reference; ALL modules fall back to CPU on ANE)
+uv run python -m coreml.convert_coreml build/_onnx --out-dir build/_mlpackage
+
+# FP16 (required for ANE residency; 3/4 modules land on ANE — see Profile below)
+uv run python -m coreml.convert_coreml build/_onnx --fp16 --out-dir build/_mlpackage_fp16
+
+# Fixed-shape VectorEstimator variant for ANE profiling (RangeDim/Enum hit
+# ANE shape limits — see trials.md "Dynamic shapes vs ANE"):
+uv run python -m coreml.convert_ve_fixed \
+    --onnx build/_onnx/vector_estimator.onnx \
+    --out  build/_mlpackage_fp16_fixed/VectorEstimator_L128.mlpackage \
+    --L 128 --T 128
 ```
 
-Produces four `.mlpackage` bundles (~380 MB total, FP32, mlprogram,
-CPU+ANE, iOS 18+):
+Produces four `.mlpackage` bundles (FP32 ~380 MB, FP16 ~190 MB; mlprogram,
+iOS 18+):
 
-| Module             | Size  | Variable axes                       |
-| ------------------ | ----- | ----------------------------------- |
-| vocoder            | 97 MB | `latent.L_ttl` = RangeDim(4..512)   |
-| text_encoder       | 35 MB | fixed `text.T = 128`                |
-| duration_predictor | 3.5 MB | fixed `text.T = 128`               |
-| vector_estimator   | 244 MB | `latent.L` & `text.T` = RangeDim(17..512) |
+| Module             | FP32  | FP16   | Variable axes                             |
+| ------------------ | ----- | ------ | ----------------------------------------- |
+| vocoder            | 97 MB | 48 MB  | `latent.L_ttl` = RangeDim(4..512)         |
+| text_encoder       | 35 MB | 17 MB  | fixed `text.T = 128`                      |
+| duration_predictor | 3.5 MB| 1.8 MB | fixed `text.T = 128`                      |
+| vector_estimator   | 244 MB| 122 MB | `latent.L` & `text.T` = RangeDim(17..512) |
 
 ## Validate
 
@@ -115,6 +124,19 @@ Final parity vs ONNX-Runtime CPU:
 End-to-end CoreML on M-series CPU+ANE: **~0.74 s** to synthesize
 6.32 s of audio for a single English sentence (RTFx ≈ 8.5x), 8
 denoising steps. ASR-verified against FluidAudio Parakeet TDT.
+
+## Profile (FP16, Apple M2, macOS 26.5, `cpu_and_neural_engine`)
+
+| Module                              | CPU% | GPU% | ANE% | Predict | Notes |
+| ----------------------------------- | ---- | ---- | ---- | ------- | ----- |
+| duration_predictor                  | 100  | 0    | 0    | 0.82 ms | tiny, CPU-bound |
+| text_encoder (T=128)                | 38   | 0    | 62   | 2.15 ms | partial ANE |
+| vocoder (RangeDim L 4..512)         | 0    | 0    | 100  | 1.17 ms | full ANE, 4× vs FP32 |
+| vector_estimator (RangeDim 17..512) | —    | —    | —    | —       | ANE compile fails (dynamic shapes disabled) |
+| vector_estimator (fixed L=128 T=128)| 100  | 0    | 0    | 8.32 ms | 89.6% ops *eligible*, blocked by 1 bool `tile` op |
+
+See `coreml/trials.md` → "ANE residency profiling" for the full breakdown,
+the bool-tile blocker, and the EnumeratedShapes runtime stride gotcha.
 
 ## Critical gotchas
 

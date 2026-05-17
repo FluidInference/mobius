@@ -23,6 +23,8 @@ from .vector_estimator import build_vector_estimator_from_onnx
 
 # --- shared conversion settings ------------------------------------------------
 MIN_DEPLOY = ct.target.iOS18       # ≥ macOS 15, ≥ iOS 18 (multi-enum shapes)
+# FP32 = numerical-parity reference; FP16 = required for ANE residency (3/4
+# modules; vector_estimator still blocked by 1 bool-tile op — see trials.md).
 COMPUTE_PRECISION = ct.precision.FLOAT32
 CONVERT_TO = "mlprogram"
 COMPUTE_UNITS = ct.ComputeUnit.CPU_AND_NE
@@ -183,13 +185,18 @@ def main(onnx_dir: Path, out_dir: Path, only: List[str] | None = None) -> None:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    import sys
+    import argparse
 
-    args = sys.argv[1:]
-    if not args:
-        print("usage: convert_coreml.py <onnx_dir> [out_dir] [stage1 stage2 ...]")
-        sys.exit(1)
-    onnx_dir = Path(args[0])
-    out_dir = Path(args[1]) if len(args) > 1 else onnx_dir.parent / "_mlpackage"
-    only = args[2:] if len(args) > 2 else None
-    main(onnx_dir, out_dir, only)
+    p = argparse.ArgumentParser()
+    p.add_argument("onnx_dir", type=Path)
+    p.add_argument("--out-dir", type=Path, default=None)
+    p.add_argument("--fp16", action="store_true",
+                   help="convert with FLOAT16 precision (required for ANE residency)")
+    p.add_argument("--stage", action="append", default=None,
+                   help="restrict to one or more stages (repeatable)")
+    args = p.parse_args()
+
+    if args.fp16:
+        COMPUTE_PRECISION = ct.precision.FLOAT16  # noqa: F811
+    out_dir = args.out_dir or (args.onnx_dir.parent / ("_mlpackage_fp16" if args.fp16 else "_mlpackage"))
+    main(args.onnx_dir, out_dir, args.stage)

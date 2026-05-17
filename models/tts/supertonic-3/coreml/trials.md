@@ -217,3 +217,89 @@ same RNG-seeded input through both backends, and prints
 `max_abs / mean_abs / shape`. Run after every conversion change. The
 verification numbers above were produced with FP32 + `CPU_AND_NE` compute
 units; FP16 would relax tolerances by ~10×.
+
+## ANE residency profiling (Apple M2, macOS 26.5)
+
+Profiled via mobius `tools/coreml-cli` (MLComputePlan + MLE5Engine private APIs).
+
+### FP32 baseline — ALL modules 0% ANE
+
+ANE requires FP16; FP32 ops are rejected with `Invalid output tensor format: fp32`
+and `Unsupported tensor data type: int32`. So FP32 mlpackages fall back to CPU
+on every compute-unit config.
+
+### FP16 reconvert — flip `COMPUTE_PRECISION = ct.precision.FLOAT16`
+
+`convert_coreml.py` defaults to FP32. Monkey-patch or pass `--fp16` to use
+FP16 + `compute_precision=ct.precision.FLOAT16`. Sizes drop ~2×:
+
+| Module             | FP32   | FP16   |
+| ------------------ | ------ | ------ |
+| duration_predictor | 3.5 MB | 1.8 MB |
+| text_encoder       | 35 MB  | 17 MB  |
+| vocoder            | 97 MB  | 48 MB  |
+| vector_estimator   | 244 MB | 122 MB |
+
+### Profile results (FP16, M2, `cpu_and_neural_engine`)
+
+| Module                              | CPU%  | GPU% | ANE%  | Predict | Notes |
+| ----------------------------------- | ----- | ---- | ----- | ------- | ----- |
+| duration_predictor                  | 100   | 0    | 0     | 0.82 ms | tiny, CPU-bound (~1ms, no point pushing to ANE) |
+| text_encoder (fixed T=128)          | 38    | 0    | 62    | 2.15 ms | partial ANE; CPU ops are LayerNorm reshapes |
+| vocoder (RangeDim L 4..512)         | 0     | 0    | 100   | 1.17 ms | 4× faster vs FP32; full ANE despite RangeDim |
+| vector_estimator (RangeDim 17..512) | —     | —    | —     | —       | **ANE compile fails — see below** |
+| vector_estimator (EnumeratedShapes) | —     | —    | —     | —       | converts but coreml-cli runtime hits stride/`FlexibleShapeInfo` error |
+| vector_estimator (fixed L=128 T=128)| 0     | 0    | 0     | 8.32 ms | 89.6% ops *eligible* for ANE, but ANE plan build fails on 1 `bool` `tile` op (see below) |
+
+### vector_estimator ANE blocker — bool `tile` for style-attention mask
+
+Even with fixed shapes (`L=128, T=128`), the FP16 vector_estimator fails
+ANE plan build:
+
+```
+[espresso] In 'tile' operations, tensors parameter x[0], and output at index 0
+must have the same data type.
+[coreml] E5RT: MILCompilerForANE error: failed to compile ANE model using ANEF.
+       Error=_ANECompiler : ANECCompile() FAILED
+```
+
+`--fallback` analysis shows **614/685 ops (89.6%) are ANE-eligible**, blocked
+by exactly **1 `tile` op** in the style cross-attention:
+
+```mil
+// model.mil:478  (style block, 50-frame style attention)
+tensor<bool, [2, 1, 128, 1]> var_549_cast_fp16 = equal(x = mask_3_cast_fp16, y = 0)
+tensor<bool, [2, 2, 128, 50]> var_549_after_broadcast =
+    tile(reps = [1, 2, 1, 50], x = var_549_cast_fp16)
+tensor<fp16, [2, 2, 128, 50]> attn_5_cast_fp16 =
+    select(a = const_neginf_mask, b = attn_3_cast_fp16, cond = var_549_after_broadcast)
+```
+
+ANE's `tile` op does not support `bool` dtype. The fix is to keep the mask
+as fp16 and use additive (`-inf` * mask) masking instead of bool `select`,
+which would require modifying the `StyleAttention` block in `vector_estimator.py`
+(the cond mask comes from `latent_mask == 0`). Punted for now; the model is
+still usable on CPU+GPU.
+
+### Dynamic shapes vs ANE
+
+ANE prefers fixed shapes. Observed:
+- **RangeDim**: Vocoder works (100% ANE with RangeDim 4..512). Vector estimator
+  fails ANE compile with `Espresso: 'Invalid blob shape': Data-dependent shapes
+  were disabled`.
+- **EnumeratedShapes**: Converts and saves successfully, but coreml-cli's
+  MLMultiArray inputs trip `tensor_buffer has known strides while the model has
+  FlexibleShapeInfo. Strides must be unknown on all dimensions` at predict time.
+  Workaround: feed via `MLMultiArray(shape:, dataType:, strides:)` with `nil`
+  strides, or per coremltools warning, use `row_alignment_in_bytes` property.
+  coreml-cli's PyObjC bridge currently passes known strides.
+
+### Practical configuration (per module)
+
+- **duration_predictor**: leave on CPU (fixed T=128, ~1ms)
+- **text_encoder**: fixed T=128 → cpu_and_neural_engine (62% ANE, 2.15 ms)
+- **vocoder**: RangeDim L=4..512 → cpu_and_neural_engine (100% ANE, 1.17 ms)
+- **vector_estimator**: until bool-tile fix lands, use `cpu_and_gpu` or `all`
+  (falls back to GPU). For ANE, would need to: (1) fix bool tile in
+  `StyleAttention`, and (2) compile multiple fixed-L variants (e.g.,
+  L ∈ {32, 64, 128, 256}).
