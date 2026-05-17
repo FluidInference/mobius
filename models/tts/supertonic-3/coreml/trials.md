@@ -301,20 +301,51 @@ fp32/fp16-boundary set: `cast`, `concat`, `mul`, `expand_dims`, `sin`, `cos`,
        Error=_ANECompiler : ANECCompile() FAILED (11)
 ```
 
-- `--fallback` no longer names a specific blocking op (the 48 CPU ops are
-  expected fp32/fp16-boundary casts and the timestep-embedding sin/cos chain).
-- Reducing the fixed shape to `L=64, T=64` gives identical eligibility (93.0%)
-  and the identical `ANECCompile() FAILED (11)` — not a size/complexity issue.
-- The model loads and runs on `CPU_AND_NE` (predict succeeds), but the ANE
-  partition gets rejected and everything falls back to CPU.
-- Error code 11 is opaque without Apple internals; likely candidates are
-  the batch-2 CFG structure, the 144-channel non-power-of-2 dim, or a
-  specific op-fusion pattern the ANE compiler's pattern matcher rejects.
+Experiments tried (all fail with identical opaque error 11):
+
+| Variant                       | ANE-eligible | Predict (CPU fallback) | Notes |
+| ----------------------------- | ------------:| ----------------------:| ----- |
+| `L=64,  T=64`                 | 93.0%        | 4.75 ms                | smaller shape, no help |
+| `L=128, T=128` (baseline)     | 93.0%        | 9.29 ms                | reference |
+| `L=256, T=256`                | 93.0%        | 17.58 ms               | larger shape, no help |
+| `L=128`, `iOS17` target       | 93.0%        | 13.90 ms               | older op dialect, no help |
+| `L=128`, FP16 inputs+outputs  | 94.1%        |       —                | eliminates 8 boundary cast ops, no help |
+
+So size, deployment target, and FP16 I/O are all unrelated to the failure.
+GPU is also no faster than CPU (`cpu_and_gpu` = 32.5 ms vs `cpu_only` = 31.2 ms
+at `L=128`), so there's no easy "fall back to GPU" win either.
+
+**Diagnosis: ANE↔CPU partition islands.** The 40-48 CPU-fallback ops cluster
+into two non-ANE-eligible subgraphs that force the compiler to interleave
+ANE↔CPU passes:
+
+1. **Timestep embedding head** (`real_div(1/total) → sin/cos(phase) → linear →
+   softplus → tanh → linear → expand_dims`), called once per forward.
+2. **Rotary positional encoding** (`real_div → sin/cos → cast` per Q/K block,
+   inside cross-attention).
+
+Error 11 from `ANECCompile()` is opaque without Apple internals, but the
+pattern matches partition-rejection (a single big body would compile, but
+the head + rotary islands force a multi-region plan that ANE refuses).
+
+**Next-step candidate (NOT tried; significant engineering)**: precompute
+both subgraphs on CPU outside the model and pass them in as extra inputs:
+- `time_emb: [1, 144]` instead of `current_step, total_step` scalars.
+- `rotary_cos_q/sin_q: [1, L, head_dim]` and `cos_k/sin_k: [1, T, head_dim]`
+  instead of computing rotary angles from masks.
+
+This would make the model body a single ANE-pure subgraph, but requires
+modifying `vector_estimator.py` to accept the precomputed tensors, retracing,
+re-running validate.py for parity, and re-converting. No guarantee error 11
+isn't masking a deeper blocker (e.g., the 144-channel non-power-of-2 dim or
+the batch-2 CFG structure). Cost: 1-2 hours of work; payoff: maybe 50 ms /
+generation (8 × ~6 ms saved on ANE vs CPU); E2E RTFx 17 → ~22.
 
 **Quality-check passed** post-refactor: end-to-end CoreML FP16 inference
 produces clean audio ("Hello world, this is the float mask FP16 build.",
 ASR transcribed by FluidAudio Parakeet TDT at 0.939 confidence).
-Vector estimator runs on CPU+GPU (`cpu_and_gpu` or `all` compute unit).
+Vector estimator currently runs on CPU+GPU (`cpu_and_gpu` or `all` compute
+unit) — the pipeline still hits RTFx ≈ 17-19 end-to-end.
 
 ### Dynamic shapes vs ANE
 
