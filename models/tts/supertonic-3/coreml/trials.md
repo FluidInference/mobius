@@ -328,18 +328,47 @@ Error 11 from `ANECCompile()` is opaque without Apple internals, but the
 pattern matches partition-rejection (a single big body would compile, but
 the head + rotary islands force a multi-region plan that ANE refuses).
 
-**Next-step candidate (NOT tried; significant engineering)**: precompute
-both subgraphs on CPU outside the model and pass them in as extra inputs:
-- `time_emb: [1, 144]` instead of `current_step, total_step` scalars.
-- `rotary_cos_q/sin_q: [1, L, head_dim]` and `cos_k/sin_k: [1, T, head_dim]`
-  instead of computing rotary angles from masks.
+**Round 3 — precompute refactor: islands eliminated, error 11 persists.**
+Authored `Scripts/supertonic3_port/vector_estimator_ane.py` (parallel module,
+shares weights with the original). The refactor moves three subgraphs out
+to the host:
 
-This would make the model body a single ANE-pure subgraph, but requires
-modifying `vector_estimator.py` to accept the precomputed tensors, retracing,
-re-running validate.py for parity, and re-converting. No guarantee error 11
-isn't masking a deeper blocker (e.g., the 144-channel non-power-of-2 dim or
-the batch-2 CFG structure). Cost: 1-2 hours of work; payoff: maybe 50 ms /
-generation (8 × ~6 ms saved on ANE vs CPU); E2E RTFx 17 → ~22.
+- TimeEncoder MLP (`real_div → sin/cos → linear → softplus → tanh → linear`).
+- Rotary cos/sin tables for Q and K (`real_div → sin → cos`).
+- CFG inverse (`1/total_step`).
+
+New model signature accepts 6 extra inputs: `time_emb [2,64,1]`,
+`cos_q,sin_q [2,1,L,32]`, `cos_k,sin_k [2,1,T,32]`, `inv_total_step [1,1,1]`.
+Parity vs original is bit-exact (`max_abs = 0.000e+00`).
+
+Result at `L=128, T=128, FP16 I/O, iOS18`:
+
+```
+644/644 ops on ANE (100.0%), 0 on CPU
+No CPU fallback ops.
+E5RT: MILCompilerForANE error: Error=_ANECompiler : ANECCompile() FAILED
+```
+
+So **the partition-island hypothesis was wrong**. Even a single, fully
+ANE-pure subgraph with zero CPU fallback ops trips the same opaque error 11
+at the ANE codegen stage. Predict on `cpu_and_neural_engine` falls back
+silently to CPU at **23.1 ms** (a regression vs the 9.29 ms of the original,
+because of the extra input plumbing); `all` lands on CPU at **9.59 ms**.
+
+Remaining hypotheses (none cheap to confirm without Apple-internal tooling):
+
+- Total weight footprint (~122 MB FP16) exceeds an undocumented ANE plan
+  budget (vocoder at 48 MB compiles cleanly).
+- Some specific fused op (transposed matmul shape, layer_norm over 512×128,
+  reshape from heads to channels) hits an ANE codegen pattern bug.
+- Batch-2 CFG duplication (`2×144×128` activations through 4 main blocks
+  each running text_attn + style_attn + ConvNeXt stacks) blows an ANE
+  intermediate-buffer size limit.
+
+This is now Apple-side. No model-side change short of restructuring the
+network architecture itself is likely to land it. Leave `VectorEstimator`
+on `cpu_and_gpu` or `all` (CPU fallback) and route the other three modules
+to ANE via `cpu_and_neural_engine`.
 
 **Quality-check passed** post-refactor: end-to-end CoreML FP16 inference
 produces clean audio ("Hello world, this is the float mask FP16 build.",
@@ -366,8 +395,10 @@ ANE prefers fixed shapes. Observed:
 - **text_encoder**: fixed T=128 → cpu_and_neural_engine (62% ANE, 2.15 ms)
 - **vocoder**: RangeDim L=4..512 → cpu_and_neural_engine (100% ANE, 1.17 ms)
 - **vector_estimator**: bool-tile fixed via float-mask refactor (93.0% ops
-  ANE-eligible, parity preserved), but ANE plan build still fails with
-  opaque `ANECCompile() FAILED (11)` at both `L=128` and `L=64`. Use
-  `cpu_and_gpu` or `all` (falls back to GPU). Further ANE landing would
-  need: (a) deeper diagnosis of the opaque ANECCompile error (likely
-  batch-2 CFG or 144-channel pattern), or (b) Apple-side compiler fix.
+  ANE-eligible, parity preserved). Precompute refactor (`vector_estimator_ane.py`)
+  pushes eligibility to **100% (644/644 ops on ANE, 0 CPU fallback)** while
+  preserving bit-exact parity, yet `ANECCompile() FAILED (11)` still blocks
+  plan build. Falls back silently to CPU. Use `cpu_and_gpu` or `all`.
+  Further ANE landing requires an Apple-side compiler fix or a network
+  architecture restructure (likely the batch-2 CFG duplication or the
+  weight footprint).
