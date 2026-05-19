@@ -1,0 +1,25 @@
+[project]
+name = "supertonic-3-coreml"
+version = "0.1.0"
+description = "ONNX -> PyTorch -> CoreML port of Supertone Supertonic-3 (v1.7.3) multilingual TTS."
+# coremltools ships native libcoremlpython / libmilstoragepython wheels for
+# 3.10-3.12 only; Python 3.14 has no BlobWriter. Pin <3.13.
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    # Hand-port targets PyTorch 2.5+ (works through 2.7); higher is fine for
+    # eager inference but coremltools.convert is tested up to 2.7.
+    "torch>=2.5.0",
+    "numpy>=1.24",
+    "soundfile>=0.12.0",
+    "onnx>=1.15",
+    "onnxruntime>=1.17",
+    # iOS 18 deploy target requires coremltools >= 8.0 (multi-input
+    # EnumeratedShapes, ct.precision.FLOAT32 with mlprogram).
+    "coremltools>=8.0",
+    "huggingface-hub>=0.20",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

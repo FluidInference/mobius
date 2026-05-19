@@ -1,0 +1,7 @@
+# Downloaded ONNX / mlpackage / voice-style assets
+build/
+.venv/
+__pycache__/
+*.pyc
+results/
+*.wav
