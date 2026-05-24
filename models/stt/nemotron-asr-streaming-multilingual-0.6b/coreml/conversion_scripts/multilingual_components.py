@@ -62,15 +62,28 @@ class PromptWrapperConfig:
 
 
 class PromptIdToOneHot(torch.nn.Module):
-    """Convert int32 prompt_id [B] to one-hot [B, num_prompts] float32."""
+    """Convert int32 prompt_id [B] to one-hot [B, num_prompts] float32.
+
+    Uses gather from a precomputed identity matrix instead of `F.one_hot`,
+    because `one_hot` is one of the MIL ops that doesn't have an ANE
+    implementation (forces CPU fallback). Gather over a constant is
+    ANE-compatible and produces identical output.
+    """
 
     def __init__(self, num_prompts: int = NUM_PROMPTS) -> None:
         super().__init__()
         self.num_prompts = int(num_prompts)
+        # Precomputed identity matrix; row p is the one-hot of prompt id p.
+        self.register_buffer(
+            "identity_table",
+            torch.eye(self.num_prompts, dtype=torch.float32),
+            persistent=False,
+        )
 
     def forward(self, prompt_id: torch.Tensor) -> torch.Tensor:
-        # prompt_id: [B] int32  ->  [B, num_prompts] float32
-        return F.one_hot(prompt_id.to(torch.long), self.num_prompts).to(torch.float32)
+        # prompt_id: [B] int32 -> [B, num_prompts] float32 via index_select
+        idx = prompt_id.to(torch.long).flatten()
+        return torch.index_select(self.identity_table, 0, idx)
 
 
 class EncoderStreamingWithPostPrompt(torch.nn.Module):

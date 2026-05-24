@@ -1,17 +1,28 @@
 #!/usr/bin/env python3
-"""Export Nemotron-3.5-ASR-Streaming-Multilingual 0.6B to CoreML.
+"""Export Nemotron-3.5-ASR-Multilingual 0.6B to CoreML — UNIQUE-BIAS variant.
 
-Reuses the English Nemotron preprocessor/decoder/joint wrappers from
-the sibling `nemotron-speech-streaming-0.6b` conversion package. The
-only delta is the encoder, which now takes an extra `prompt_id` int32
-input for language conditioning.
+Same as `convert_nemotron_multilingual.py` but applies `patch_uniquebias`
+to the encoder before tracing. This perturbs each conformer layer's FFN
+biases by ~1e-3 in a per-(layer,ffn,linear)-unique pattern, breaking the
+`linear_1_bias_0_to_fp16` shared-constant dedup that coremltools applies
+to identical FP16 values across layers.
+
+Why this exists: layer-position mixed-precision quantization
+(`mixed_layerpos.py`) was blocked at coremltools 8.3 because shared
+biases prevented op_name_configs from assigning different compression
+configs to different linear ops within a single pass. With unique-valued
+biases, that block is removed and layer-position mixed becomes possible.
+
+Expected WER impact of the bias perturbation: << 0.1pp. The perturbation
+is well below model noise; the goal is just to make FP16 const bytes
+differ per location.
 
 Run:
     uv sync
-    uv run python convert_nemotron_multilingual.py \
-        --nemo-path /path/to/multilingual.nemo \
-        --output-dir ./build_fp16 \
-        --precision FLOAT16 \
+    uv run python convert_nemotron_multilingual_uniquebias.py \\
+        --nemo-path /path/to/multilingual.nemo \\
+        --output-dir ./build_fp16_tmp_1120ms_ios18_uniquebias \\
+        --precision FLOAT16 \\
         --att-context "56,0"
 """
 from __future__ import annotations
@@ -139,16 +150,14 @@ def convert(
     mel_features = int(model.cfg.preprocessor.features)
 
     encoder = model.encoder
-    # NeMo's `setup_streaming_params(chunk_size, left_chunks, ...)` blows up
-    # when `left_chunks=None` (it does `chunk_size - shift_size` where
-    # `shift_size` was derived from None). Cache-aware streaming uses
-    # `att_context_size` only; pass that and let everything else default.
+    # === UNIQUE-BIAS PATCH ===
+    from patch_uniquebias import patch_and_log
+    patch_and_log(encoder)
+    # === END PATCH ===
+
     parsed_att_ctx = _parse_att_context(att_context)
-    # CRITICAL: setup_streaming_params only mutates streaming_cfg (chunk/shift
-    # sizes), NOT the attribute the attention layers read to build their mask
-    # at forward time. Without setting encoder.att_context_size directly, the
-    # right-context lookahead is silently dropped to [56,0] regardless of
-    # what's passed to setup_streaming_params. Diagnosed 2026-05-22.
+    # CRITICAL: set att_context_size attribute directly (setup_streaming_params
+    # is insufficient — see comment in convert_nemotron_multilingual.py).
     encoder.att_context_size = list(parsed_att_ctx)
     encoder.setup_streaming_params(att_context_size=parsed_att_ctx)
 
