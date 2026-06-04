@@ -1,0 +1,20 @@
+[project]
+name = "nemotron-multilingual-inference"
+version = "0.1.0"
+description = "Inference + FLEURS benchmark for Nemotron Multilingual Streaming 0.6B CoreML"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    # CoreML inference path (runs on macOS, doesn't need NeMo)
+    "coremltools==8.3",
+    "soundfile>=0.12.0",
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",        # resampling FLEURS audio to 16 kHz
+    "datasets>=2.18.0",     # google/fleurs streaming
+]
+
+# NeMo PyTorch reference (nemo_reference.py) is run from the
+# conversion_scripts/ env on Linux. Keep this env CoreML-only so it can
+# be installed cleanly on macOS without the NeMo dependency tree.
+
+[tool.uv]
+dev-dependencies = []
