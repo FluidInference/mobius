@@ -22,7 +22,8 @@ class FusedStreaming(NemotronCoreMLStreaming):
         md = Path(model_dir)
         cu = ct.ComputeUnit.CPU_AND_NE
         self.preprocessor = ct.models.MLModel(str(md / "preprocessor.mlpackage"), compute_units=cu)
-        self.encoder = ct.models.MLModel(str(md / "encoder.mlpackage"), compute_units=cu)
+        ecu = getattr(ct.ComputeUnit, getattr(self,"_ecu","CPU_AND_NE"))
+        self.encoder = ct.models.MLModel(str(md / "encoder.mlpackage"), compute_units=ecu)
         self.fused = ct.models.MLModel(str(md / "decoder_joint.mlpackage"), compute_units=cu)
 
     def transcribe_streaming(self, audio: np.ndarray) -> str:
@@ -82,9 +83,11 @@ def main():
     ap.add_argument("--dataset", required=True)
     ap.add_argument("--num-files", type=int, default=100)
     ap.add_argument("--warmup", type=int, default=3)
+    ap.add_argument("--encoder-cu", default="CPU_AND_NE")
     args = ap.parse_args()
 
     inf = FusedStreaming(args.model_dir)
+    inf._ecu = args.encoder_cu
     inf.load_fused(args.model_dir)
     gt = load_ground_truth(args.dataset)
     files = sorted(glob.glob(f"{args.dataset}/**/*.flac", recursive=True))[: args.num_files + args.warmup]
