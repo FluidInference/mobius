@@ -147,3 +147,35 @@ def parity_check():
 
 if __name__ == "__main__":
     parity_check()
+
+
+class FrontEndShard(torch.nn.Module):
+    """Preamble only: pre_encode + pos_enc + masks. No conformer layers.
+    Outputs the intermediates the conformer shard needs, plus cache_len_out."""
+    def __init__(self, enc):
+        super().__init__()
+        self.enc = enc
+
+    def forward(self, features, length, cache_len_in):
+        enc = self.enc
+        clcl = cache_len_in.to(torch.int64)
+        audio_signal = torch.transpose(features, 1, 2)
+        audio_signal, length = enc.pre_encode(x=audio_signal, lengths=length.to(torch.int64))
+        if enc.streaming_cfg.drop_extra_pre_encoded > 0:
+            audio_signal = audio_signal[:, enc.streaming_cfg.drop_extra_pre_encoded:, :]
+            length = (length - enc.streaming_cfg.drop_extra_pre_encoded).clamp(min=0)
+        max_audio_length = audio_signal.size(1)
+        cache_len = enc.streaming_cfg.last_channel_cache_size
+        cache_keep_size = max_audio_length - enc.streaming_cfg.cache_drop_size
+        max_audio_length = max_audio_length + cache_len
+        padding_length = length + cache_len
+        offset = torch.neg(clcl) + cache_len
+        audio_signal, pos_emb = enc.pos_enc(x=audio_signal, cache_len=cache_len)
+        pad_mask, att_mask = enc._create_masks(
+            att_context_size=enc.att_context_size, padding_length=padding_length,
+            max_audio_length=max_audio_length, offset=offset, device=audio_signal.device)
+        pad_mask = pad_mask[:, cache_len:]
+        if att_mask is not None:
+            att_mask = att_mask[:, cache_len:]
+        cache_len_out = torch.clamp(clcl + cache_keep_size, max=cache_len).to(torch.int32)
+        return audio_signal, pos_emb, att_mask, pad_mask, cache_len_out
