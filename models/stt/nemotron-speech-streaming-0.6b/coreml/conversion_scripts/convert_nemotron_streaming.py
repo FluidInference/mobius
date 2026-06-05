@@ -60,9 +60,29 @@ def convert(
     output_dir: Path = typer.Option(Path("nemotron_coreml"), help="Output directory"),
     encoder_cu: str = typer.Option("CPU_AND_NE", help="Encoder compute units"),
     precision: str = typer.Option("FLOAT32", help="FLOAT32 or FLOAT16"),
+    chunk_mel_frames: int = typer.Option(
+        CHUNK_MEL_FRAMES,
+        help="Mel frames per streaming chunk. 112=1120ms (default/shipped), 224=2240ms tier. "
+        "Must be a clean multiple of the trained 112 (=14 encoder frames) to keep the "
+        "chunked-attention mask aligned.",
+    ),
 ) -> None:
     """Export Nemotron Streaming to CoreML."""
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Derive chunk geometry from the requested mel-chunk size.
+    if chunk_mel_frames % 112 != 0:
+        typer.echo(
+            f"WARNING: chunk_mel_frames={chunk_mel_frames} is not a multiple of 112 "
+            "(the trained 14-encoder-frame chunk); the attention mask may misalign."
+        )
+    chunk_mel = chunk_mel_frames
+    total_mel = chunk_mel + PRE_ENCODE_CACHE
+    chunk_enc_frames = chunk_mel // 8  # subsampling factor 8
+    typer.echo(
+        f"Chunk geometry: chunk_mel={chunk_mel} (~{chunk_mel * 10}ms), "
+        f"total_mel={total_mel}, chunk_enc_frames={chunk_enc_frames}"
+    )
 
     typer.echo("Loading model...")
     model = nemo_asr.models.EncDecRNNTBPEModel.from_pretrained(DEFAULT_MODEL_ID, map_location="cpu")
@@ -97,7 +117,7 @@ def convert(
         compute_precision=ct.precision.FLOAT16 if precision.upper() == "FLOAT16" else ct.precision.FLOAT32,
         max_audio_seconds=30.0,
         max_symbol_steps=1,
-        chunk_size_frames=14,
+        chunk_size_frames=chunk_enc_frames,
         cache_size=cache_channel.shape[2],
     )
 
@@ -122,8 +142,8 @@ def convert(
     # === Encoder (streaming) ===
     typer.echo("Exporting encoder...")
     mel_features = int(model.cfg.preprocessor.features)  # 128 for this model
-    mel = torch.randn(1, mel_features, TOTAL_MEL_FRAMES)
-    mel_len = torch.tensor([TOTAL_MEL_FRAMES], dtype=torch.int32)
+    mel = torch.randn(1, mel_features, total_mel)
+    mel_len = torch.tensor([total_mel], dtype=torch.int32)
 
     traced = torch.jit.trace(
         encoder_streaming,
@@ -205,9 +225,9 @@ def convert(
         "model": DEFAULT_MODEL_ID,
         "sample_rate": sample_rate,
         "mel_features": mel_features,
-        "chunk_mel_frames": CHUNK_MEL_FRAMES,
+        "chunk_mel_frames": chunk_mel,
         "pre_encode_cache": PRE_ENCODE_CACHE,
-        "total_mel_frames": TOTAL_MEL_FRAMES,
+        "total_mel_frames": total_mel,
         "vocab_size": vocab_size,
         "blank_idx": int(model.decoder.blank_idx),
         "cache_channel_shape": list(cache_channel_b.shape),
