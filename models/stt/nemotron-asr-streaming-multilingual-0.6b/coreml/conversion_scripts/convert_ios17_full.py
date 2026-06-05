@@ -1,28 +1,17 @@
 #!/usr/bin/env python3
-"""Export Nemotron-3.5-ASR-Multilingual 0.6B to CoreML — UNIQUE-BIAS variant.
+"""Export Nemotron-3.5-ASR-Streaming-Multilingual 0.6B to CoreML.
 
-Same as `convert_nemotron_multilingual.py` but applies `patch_uniquebias`
-to the encoder before tracing. This perturbs each conformer layer's FFN
-biases by ~1e-3 in a per-(layer,ffn,linear)-unique pattern, breaking the
-`linear_1_bias_0_to_fp16` shared-constant dedup that coremltools applies
-to identical FP16 values across layers.
-
-Why this exists: layer-position mixed-precision quantization
-(`mixed_layerpos.py`) was blocked at coremltools 8.3 because shared
-biases prevented op_name_configs from assigning different compression
-configs to different linear ops within a single pass. With unique-valued
-biases, that block is removed and layer-position mixed becomes possible.
-
-Expected WER impact of the bias perturbation: << 0.1pp. The perturbation
-is well below model noise; the goal is just to make FP16 const bytes
-differ per location.
+Reuses the English Nemotron preprocessor/decoder/joint wrappers from
+the sibling `nemotron-speech-streaming-0.6b` conversion package. The
+only delta is the encoder, which now takes an extra `prompt_id` int32
+input for language conditioning.
 
 Run:
     uv sync
-    uv run python convert_nemotron_multilingual_uniquebias.py \\
-        --nemo-path /path/to/multilingual.nemo \\
-        --output-dir ./build_fp16_tmp_1120ms_ios18_uniquebias \\
-        --precision FLOAT16 \\
+    uv run python convert_nemotron_multilingual.py \
+        --nemo-path /path/to/multilingual.nemo \
+        --output-dir ./build_fp16 \
+        --precision FLOAT16 \
         --att-context "56,0"
 """
 from __future__ import annotations
@@ -125,14 +114,8 @@ def convert(
         112, "--chunk-mel-frames", help="Mel frames per chunk (subsamples by 8)."
     ),
     pre_encode_cache: int = typer.Option(9, "--pre-encode-cache"),
-    prune_corpus_jsonl: Path = typer.Option(
-        ...,
-        "--prune-corpus-jsonl",
-        help="JSONL file with hyp_raw/ref_raw fields; used to build the "
-        "English keep-set for vocab pruning.",
-    ),
 ) -> None:
-    """Export the multilingual streaming model to CoreML — VOCAB-PRUNED + unique-bias + [56,*] fix."""
+    """Export the multilingual streaming model to CoreML."""
 
     import nemo.collections.asr as nemo_asr
 
@@ -156,53 +139,18 @@ def convert(
     mel_features = int(model.cfg.preprocessor.features)
 
     encoder = model.encoder
-    # === UNIQUE-BIAS PATCH ===
-    from patch_uniquebias import patch_and_log
-    patch_and_log(encoder)
-    # === END PATCH ===
-
+    # NeMo's `setup_streaming_params(chunk_size, left_chunks, ...)` blows up
+    # when `left_chunks=None` (it does `chunk_size - shift_size` where
+    # `shift_size` was derived from None). Cache-aware streaming uses
+    # `att_context_size` only; pass that and let everything else default.
     parsed_att_ctx = _parse_att_context(att_context)
-    # CRITICAL: set att_context_size attribute directly (setup_streaming_params
-    # is insufficient — see comment in convert_nemotron_multilingual.py).
+    # CRITICAL: setup_streaming_params only mutates streaming_cfg (chunk/shift
+    # sizes), NOT the attribute the attention layers read to build their mask
+    # at forward time. Without setting encoder.att_context_size directly, the
+    # right-context lookahead is silently dropped to [56,0] regardless of
+    # what's passed to setup_streaming_params. Diagnosed 2026-05-22.
     encoder.att_context_size = list(parsed_att_ctx)
     encoder.setup_streaming_params(att_context_size=parsed_att_ctx)
-
-    # === ENGLISH VOCAB PRUNE ===
-    # Slice decoder.embed and joint.output_proj to keep only tokens needed
-    # for English transcription. Pre-tracing so the converter sees a
-    # smaller model.
-    from patch_vocab_prune import (
-        build_english_keep_set,
-        prune_vocab_english,
-    )
-    import json as _json
-    texts = []
-    with open(prune_corpus_jsonl) as f:
-        for line in f:
-            r = _json.loads(line)
-            for k in ("hyp_raw", "ref_raw"):
-                t = r.get(k)
-                if t:
-                    texts.append(t)
-    old_blank = int(model.decoder.blank_idx)
-    old_lang_tag_ids = _lang_tag_token_ids(model)
-    keep_ids = build_english_keep_set(
-        model.tokenizer,
-        texts,
-        lang_tag_ids=old_lang_tag_ids,
-        old_blank_idx=old_blank,
-    )
-    typer.echo(
-        f"  [vocab-prune] keeping {len(keep_ids)} of 13088 tokens "
-        f"({100 * (1 - len(keep_ids)/13088):.1f}% pruned)"
-    )
-    id_map = prune_vocab_english(model, keep_ids)
-    # Cache mapping data for the post-conversion metadata writes
-    _pruned_vocab_size = len(keep_ids) - 1  # exclude blank
-    _pruned_blank_idx = len(keep_ids) - 1
-    _pruned_lang_tag_ids = sorted({id_map[i] for i in old_lang_tag_ids if i in id_map})
-    _pruned_id_map = id_map
-    # === END PRUNE ===
 
     # Initial cache state from NeMo (shape [L, B, ...])
     cache_channel, cache_time, cache_len = encoder.get_initial_cache_state(
@@ -237,13 +185,13 @@ def convert(
     settings = ExportSettings(
         output_dir=output_dir,
         compute_units=ct.ComputeUnit.CPU_ONLY,
-        deployment_target=ct.target.iOS18,
+        deployment_target=ct.target.iOS17,
         compute_precision=(
             ct.precision.FLOAT16
             if precision.upper() == "FLOAT16"
             else ct.precision.FLOAT32
         ),
-        max_audio_seconds=80.0,
+        max_audio_seconds=30.0,
         max_symbol_steps=1,
         chunk_size_frames=chunk_mel_frames // 8,
         cache_size=cache_channel.shape[2],
@@ -386,11 +334,10 @@ def convert(
     )
     mlmodel.save(str(output_dir / "joint.mlpackage"))
 
-    # === 5. Metadata + tokenizer (VOCAB-PRUNED) ===
-    # All vocab/blank/lang_tag fields use the REMAPPED IDs from prune.
-    vocab_size = _pruned_vocab_size  # was model.tokenizer.vocab_size (13087)
+    # === 5. Metadata + tokenizer ===
+    vocab_size = int(model.tokenizer.vocab_size)
     prompt_dict = dict(model.cfg.model_defaults.prompt_dictionary)
-    lang_tag_ids = _pruned_lang_tag_ids  # already remapped to new IDs
+    lang_tag_ids = _lang_tag_token_ids(model)
 
     metadata = {
         "model": "nvidia/nemotron-asr-streaming-multilingual-0.6b",
@@ -402,9 +349,7 @@ def convert(
         "total_mel_frames": total_mel_frames,
         "att_context_size": _parse_att_context(att_context),
         "vocab_size": vocab_size,
-        "blank_idx": _pruned_blank_idx,
-        "vocab_pruned": True,
-        "vocab_pruned_original_size": 13087,
+        "blank_idx": int(model.decoder.blank_idx),
         "cache_channel_shape": list(cache_channel_b.shape),
         "cache_time_shape": list(cache_time_b.shape),
         "decoder_hidden": decoder_hidden,
@@ -417,21 +362,10 @@ def convert(
     }
     (output_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
 
-    # Tokenizer: rewrite with NEW IDs mapping to original BPE pieces.
-    # _pruned_id_map: old_id -> new_id. We invert and build new-id -> piece.
-    new_id_to_piece = {}
-    for old_id, new_id in _pruned_id_map.items():
-        # blank (last kept entry) gets a sentinel piece; downstream Swift
-        # filters blank by id anyway, so the string is informational
-        piece = (
-            "<blank>"
-            if new_id == _pruned_blank_idx
-            else model.tokenizer.ids_to_tokens([old_id])[0]
-        )
-        new_id_to_piece[str(new_id)] = piece
-    (output_dir / "tokenizer.json").write_text(
-        json.dumps(new_id_to_piece, indent=2, ensure_ascii=False)
-    )
+    tokenizer = {
+        str(i): model.tokenizer.ids_to_tokens([i])[0] for i in range(vocab_size)
+    }
+    (output_dir / "tokenizer.json").write_text(json.dumps(tokenizer, indent=2))
 
     typer.echo(f"Done. Exported to {output_dir}")
 

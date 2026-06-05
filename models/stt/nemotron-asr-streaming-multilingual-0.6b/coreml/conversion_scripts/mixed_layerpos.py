@@ -78,7 +78,7 @@ def main():
         s = in_dir / name
         if s.exists():
             shutil.copy(s, out_dir / name)
-    for c in ["preprocessor", "encoder", "decoder", "joint"]:
+    for c in ["preprocessor", "encoder", "decoder", "joint", "decoder_joint"]:
         src = in_dir / f"{c}.mlpackage"
         dst = out_dir / f"{c}.mlpackage"
         if not src.exists():

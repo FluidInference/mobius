@@ -175,23 +175,44 @@ def convert(
         build_english_keep_set,
         prune_vocab_english,
     )
-    import json as _json
-    texts = []
-    with open(prune_corpus_jsonl) as f:
-        for line in f:
-            r = _json.loads(line)
-            for k in ("hyp_raw", "ref_raw"):
-                t = r.get(k)
-                if t:
-                    texts.append(t)
+    # SCRIPT-BASED keep-set (domain-independent, no corpus, no overfitting):
+    # keep every token whose characters are Latin/Greek or shared
+    # (digits/punct/symbols/special) and drop all other scripts (CJK,
+    # Hangul, Cyrillic, Arabic, ...). prune_corpus_jsonl is ignored here.
+    import unicodedata as _ud
+    _OTHER = ("CJK", "HIRAGANA", "KATAKANA", "HANGUL", "CYRILLIC", "ARABIC",
+              "HEBREW", "DEVANAGARI", "THAI", "BENGALI", "TAMIL", "TELUGU",
+              "GEORGIAN", "ARMENIAN")
+
+    def _latin_or_shared(piece: str) -> bool:
+        for ch in piece.replace("▁", ""):
+            cat = _ud.category(ch)
+            if ch.isdigit() or ch.isspace() or cat[0] in ("P", "S", "Z", "C"):
+                continue
+            try:
+                nm = _ud.name(ch)
+            except ValueError:
+                continue
+            if any(s in nm for s in _OTHER):
+                return False
+        return True
+
     old_blank = int(model.decoder.blank_idx)
     old_lang_tag_ids = _lang_tag_token_ids(model)
-    keep_ids = build_english_keep_set(
-        model.tokenizer,
-        texts,
-        lang_tag_ids=old_lang_tag_ids,
-        old_blank_idx=old_blank,
-    )
+    _vsz = int(model.tokenizer.vocab_size)
+    _keep = set()
+    for _i in range(_vsz):
+        if _i == old_blank:
+            continue
+        try:
+            _p = model.tokenizer.ids_to_tokens([_i])[0]
+        except Exception:
+            continue
+        if _latin_or_shared(_p):
+            _keep.add(_i)
+    _keep.update(old_lang_tag_ids)
+    _keep.discard(old_blank)
+    keep_ids = sorted(_keep) + [old_blank]
     typer.echo(
         f"  [vocab-prune] keeping {len(keep_ids)} of 13088 tokens "
         f"({100 * (1 - len(keep_ids)/13088):.1f}% pruned)"
@@ -237,7 +258,7 @@ def convert(
     settings = ExportSettings(
         output_dir=output_dir,
         compute_units=ct.ComputeUnit.CPU_ONLY,
-        deployment_target=ct.target.iOS18,
+        deployment_target=ct.target.iOS17,
         compute_precision=(
             ct.precision.FLOAT16
             if precision.upper() == "FLOAT16"
