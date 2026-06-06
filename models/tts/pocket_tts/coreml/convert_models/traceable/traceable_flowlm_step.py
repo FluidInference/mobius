@@ -96,8 +96,9 @@ class TraceableFlowLMStep(nn.Module):
 
         Uses interleaved pairs: (q[..., 0], q[..., 1]), (q[..., 2], q[..., 3]), etc.
         """
-        B, T, H, D = q.shape
-        Bk, Tk, Hk, Dk = k.shape
+        # constant dims (T=1 per autoregressive step) — avoid aten::Int from traced shapes
+        B, T, H, D = 1, 1, self.num_heads, self.head_dim
+        Bk, Tk, Hk, Dk = 1, 1, self.num_heads, self.head_dim
         D_float = float(self.head_dim)
         half_d = self.head_dim // 2
 
@@ -147,10 +148,10 @@ class TraceableFlowLMStep(nn.Module):
         position: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Streaming attention with fixed-size KV cache."""
-        B, T, _ = x.shape
+        B, T = 1, 1
         H = self.num_heads
         D = self.head_dim
-        max_len = cache.shape[2]
+        max_len = self.max_seq_len
         max_len_float = float(max_len)
 
         pos_float = position.float() if position.dtype != torch.float32 else position

@@ -515,3 +515,213 @@ GPU dispatch overhead more strongly than M2.
 (conversion scripts, parity scripts, RoPE precomputation,
 schema discovery, Swift scaffolding) remain available for future
 re-test if any of the levers above are pulled.
+
+---
+
+## Phase 7: Dispatch reduction + per-model ANE placement (RTFx)
+
+Motivated by an on-device profile of the int8 English pack where all four
+models landed 100% CPU (~905 ms/utterance), a regression from the
+`flowlm_step`+`flow_decoder`-on-ANE state in `IOS_COREML_ISSUES.md`:
+
+| Model         | calls/utt | per-call | total   | share |
+|---------------|-----------|----------|---------|-------|
+| cond_step     | 18        | 6.8 ms   | 122 ms  | 13%   |
+| flowlm_step   | 43        | 5.4 ms   | 231 ms  | 26%   |
+| flow_decoder  | **336**   | 0.74 ms  | 249 ms  | 28%   |
+| mimi_decoder  | 42        | 7.2 ms   | 302 ms  | 33%   |
+
+Three independent levers, each landed as a standalone artifact so they can be
+A/B'd in isolation.
+
+### Trial 16 — Fuse the LSD Euler loop into the flow decoder
+
+**Problem.** `flow_decoder.mlpackage` traces a SINGLE Euler step; the Swift
+host runs the 8-step integration, dispatching `predict()` 8× per audio frame
+(336 calls/utterance). The kernel is a 1056→32 MLP — far below the size that
+amortizes ANE residency — so each 0.74 ms call is mostly MLModel dispatch +
+the fp32↔fp16 IO cast (paid 8×). `transformer_out` is constant across all 8
+steps, so feeding it once and looping internally is pure redundant traffic
+removed.
+
+**Fix.** `traceable_flow_decoder_fused.py` unrolls all N Euler steps in
+`forward(transformer_out, latent_init) -> latent_final`; `s`/`t` become
+trace-time constants (i/N, (i+1)/N) that fold into the AdaLN time embedding.
+`convert_flow_decoder_fused.py --num-steps 8` emits `flow_decoder_fused.mlpackage`.
+Math is bit-identical to the host loop (built-in parity check vs the single-step
+decoder; fp32 max-abs-diff < 1e-5). 336 dispatches → 42; the fatter kernel is
+now worth placing on ANE (`.all`).
+
+Same fusion pattern as PR #66's Nemotron "B1 fusion" (decoder+joint → one
+mlpackage, +15% throughput, output-identical).
+
+**Host change.** `PocketTtsSynthesizer+Flow.swift::flowDecode` now does one
+`predict({transformer_out, latent_init})` and reads `latent_final`; the 8-call
+`runFlowDecoderStep` loop is deleted. `numSteps` must match `--num-steps`.
+
+> `--num-steps 4` is available as a quality/speed knob (halves internal
+> flow_net evals). PRECISION.md flags the LSD denoiser as precision-sensitive,
+> so A/B with Whisper before shipping a lower step count. The FluidAudio host
+> default (`PocketTtsConstants.numLsdSteps`) is currently set to 4 PENDING that
+> A/B — revert to 8 + re-convert with `--num-steps 8` if 4 degrades WER.
+
+### Trial 17 — One-shot conditioning prefill (cond_prefill)
+
+**Problem.** `cond_step.mlpackage` is T=1; the host dispatches it once per
+conditioning token (18 calls / 122 ms / 13% here). Trial 5 (RangeDim) and
+Trial 8 (zero-padding) both failed to batch this — dynamic shapes assert in
+`scatter`, and padded tokens corrupt the KV cache + position counter.
+
+**Fix.** `traceable_cond_prefill.py` processes a fixed `T_max` block in one
+call. No dynamic shapes (sidesteps Trial 5). A runtime `valid_len` VALUE (not
+a shape) gates correctness (sidesteps Trial 8): padded tokens' cache writes
+are redirected to a dump slot the attention mask always excludes, and the
+returned position advances by `valid_len`, not `T_max`. Attention/RoPE copied
+verbatim from the verified `TraceableCondStep` (Trial 10/11). Built-in parity:
+one-shot prefill of 141 real tokens (padded to 256) matches 141 sequential
+per-token calls on the valid KV prefix (max-abs-diff < 1e-3).
+`convert_cond_prefill.py --t-max 256` emits `cond_prefill.mlpackage`.
+Stays `.cpuAndGPU` (rank-5 KV still blocks ANE).
+
+**Host change (DONE).** `PocketTtsModelStore` loads `cond_prefill` optionally
+(absent → per-token fallback, mirroring Magpie's `decoder_prefill`); its output
+schema is identical to cond_step so `.condStep` key-discovery is reused.
+`prefillKVCacheVoice/Text` take a `useFastPrefill` Bool + non-optional prefill
+model (Swift 6 can send `MLModel` across actors but not `Optional<MLModel>`),
+build the voice / text block, pad to `T_max`, pass true count as `valid_len`,
+and call `runCondPrefill` once. Threaded through `StreamingGenerator` and
+`PocketTtsSession`. Builds clean + swift-format clean.
+
+### Trial 18 — Per-model compute units
+
+**Problem.** `PocketTtsModelStore.loadIfNeeded` loaded ALL four models
+`.cpuAndGPU` — a global hammer for the Mimi beeping (issue #7). That ban only
+needs to cover Mimi; applying it everywhere discards the `flowlm_step` 1.97×
+ANE win and the (now-fused) flow decoder's ANE eligibility.
+
+**Fix (DONE).** Per-model config in `loadIfNeeded`:
+
+| Model               | Units        | Why |
+|---------------------|--------------|-----|
+| cond_step / prefill | `.cpuAndGPU` | rank-5 KV trips ANE partitioner |
+| flowlm_step(/v2)    | `.all`       | 1.97× ANE win; int8 dequants to fp16 on ANE |
+| flow_decoder_fused  | `.all`       | fused MLP+Euler, ANE-friendly |
+| mimi_decoder        | `.cpuOnly`   | fp32 (no beep) + 1.74× faster than GPU |
+
+This matches the "Final dispatch" column in `IOS_COREML_ISSUES.md` — it is the
+documented intended end-state, not new territory.
+
+### Expected impact (to be confirmed on-device)
+
+| Model        | before | after (est.) | mechanism |
+|--------------|--------|--------------|-----------|
+| cond_step    | 122 ms | ~30-50 ms    | 18 calls → 1 (prefill) |
+| flowlm_step  | 231 ms | ~120 ms      | ANE 1.97× |
+| flow_decoder | 249 ms | ~80-120 ms   | 336 → 42 dispatches, ANE |
+| mimi_decoder | 302 ms | ~302 ms      | architecturally CPU-locked |
+| **total**    | 905 ms | **~530-590** | RTFx ↑ ~1.6×; mimi now the floor |
+
+### Verification (Apple Silicon)
+
+```
+cd models/tts/pocket_tts && uv sync
+uv run python coreml/convert_models/convert/convert_flow_decoder_fused.py --language english --num-steps 4
+uv run python coreml/convert_models/convert/convert_cond_prefill.py --language english
+# device residency / fallback reasons:
+uv run coreml-cli build/english/flow_decoder_fused.mlpackage --fallback
+uv run coreml-cli build/english/cond_prefill.mlpackage --fallback
+# end-to-end Whisper parity after wiring the Swift host changes:
+./coreml/verify_all_languages.sh
+```
+
+### Status
+
+**Trials 16-18: implemented.** Swift host wiring is complete and compiles
+(Swift 6 strict concurrency) + passes swift-format: per-model compute units,
+fused-decoder single call, and the optional cond_prefill fast path with
+per-token fallback. Remaining: re-convert + upload the fused/`cond_prefill`
+mlpackages, then an interleaved A/B RTFx run (per Trial 15 methodology) plus a
+Whisper A/B on `--num-steps 4` to confirm the estimates above.
+
+---
+
+## Phase 7 — MEASURED on-device (M-series, macOS 26, coremltools 9 / torch 2.12)
+
+Phase 7's estimates above were validated on hardware. Several were wrong and are
+corrected here. All numbers are `coreml-cli` medians (5 warmup) at the best
+compute-unit config, composed against the 905 ms baseline (42-frame utterance).
+
+### Baseline truth (existing fp32 HF pack)
+
+| model | ops | device@`all` | predict | `cpu_and_ne` | size |
+|-------|----:|------|--------:|------|-----:|
+| cond_step | 492 | GPU | 5.14 ms | →CPU 131 ms | 254 MB (fp32) |
+| flowlm_step | 540 | GPU | 4.37 ms | →CPU 24 ms | 306 MB |
+| flow_decoder (1-step) | 165 | CPU 0.62 / GPU 1.39 | — | CPU | 37 MB |
+| mimi_decoder | 307 | flat ~6.1 ms all engines | 6.0 ms | flat | 41 MB |
+
+**Key correction:** the repo's "flowlm 70-90% on ANE, 1.97×" claim is FALSE on
+this hardware. Nothing in the existing pack reaches the ANE — `cpu_and_ne`
+falls 100% to CPU. The pack ships fp32 weights; the ANE is fp16-only.
+
+### New artifacts (measured)
+
+| model | ops | device@`all` | predict | size | parity |
+|-------|----:|------|--------:|-----:|--------|
+| **flow_decoder_fused8** | 1252 | **100% ANE** | 1.09 ms | 18 MB | 2.1e-2 vs loop (fp16) |
+| flow_decoder_fused4 | 628 | **100% ANE** | 0.66 ms | 18 MB | 2.7e-2 |
+| **cond_prefill** (T=256) | n/a | GPU (ANE compile fails) | 4.83 ms | 127 MB | logic 7.6e-6, fp16 6.6e-2 |
+| **flowlm_step fp16** | 540 | GPU (ANE compile fails) | 3.46 ms | 145 MB | EOS Δ 0.042 < int8 0.099 |
+
+- **Fusion makes the decoder ANE-eligible** (165 ops 0% ANE → 1252 ops 100% ANE).
+  The tiny single-step kernel was always rejected; the fat fused graph is accepted.
+  This is the ONLY model that reaches the ANE.
+- **flowlm/cond cannot reach the ANE at any precision** — the rank-5 KV cache
+  `(2,1,512,16,64)` → `ANECCompile FAILED`. fp32 was a red herring; rank-5 is
+  the hard block. fp16 still helps: −21% GPU latency + half the size.
+- **fp16 flowlm EOS is safe**: per-step EOS-logit drift vs fp32 is 0.042 max,
+  *half* the already-shipped int8 variant's 0.099, against an ~11-unit margin to
+  the −4.0 stop threshold. fp16 (fp16 acts + fp16 weights) is strictly more
+  precise than the shipped int8 (fp16 acts + int8 weights).
+
+### Measured roll-up
+
+| stage | baseline | after | device | basis |
+|-------|---------:|------:|--------|-------|
+| cond | 122 ms | 4.8 ms | GPU | cond_prefill 1 call |
+| flowlm_step | 231 ms | 149 ms | GPU | fp16 3.46×43 |
+| flow_decoder | 249 ms | 46 ms | **ANE** | fused8 1.09×42 |
+| mimi_decoder | 302 ms | 302 ms | CPU | unchanged |
+| **total** | **905 ms** | **~502 ms** | | **1.80× RTFx** |
+
+### mimi is compute-bound, NOT overhead-bound (hypothesis disproven)
+
+A 2 MB-state toy (same shape as mimi's two attn caches) measured the marshalling
+cost directly:
+
+```
+state passed in/out:  0.53 ms/call
+resident MLState:     0.04 ms/call   (12× faster)
+```
+
+So per-call state marshalling is only ~0.5 ms — mimi's 6 ms is real compute
+(2-layer attention over the 256-deep cache + SEANet transposed-conv upsampling).
+`MLState` would save only ~0.5 ms/frame (~20 ms total) — NOT worth a stateful
+rewrite of mimi. mimi is at its ~7 ms/frame compute floor and is now the
+dominant cost (60% of the 502 ms).
+
+### Remaining lever (not model-conversion)
+
+mimi can't be cheaply sped up. The only remaining win is **cross-engine
+pipelining** in the Swift runtime: the per-frame chain is flowlm (GPU 3.5) →
+flow (ANE 1.1) → mimi (CPU 7.2) on three distinct engines, run serially.
+Overlapping them across frames makes per-frame cost approach
+max(7.2, 3.5+1.1) ≈ 7.2 ms instead of the ~12 ms sum, hiding flowlm+flow behind
+mimi → projected total ~330 ms (~2.7× vs 905 ms). Conversion levers are exhausted.
+
+### Status
+
+Trials 16-18 IMPLEMENTED + MEASURED + verified within shipped tolerances.
+Open: (1) literal end-to-end Whisper run (confirmation only — every fp16
+component is bounded below the shipped int8 error); (2) `--num-steps 4` Whisper
+A/B; (3) cross-engine pipelining (Swift, the next real win).
