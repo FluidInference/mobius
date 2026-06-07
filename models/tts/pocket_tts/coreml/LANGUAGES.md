@@ -23,8 +23,10 @@ Notes:
 
 - Upstream did NOT ship a 6-layer French pack; only `french_24l` is available.
 - 24-layer variants are ~4× larger and ~3× slower than 6-layer variants at
-  conversion time. Runtime latency on ANE is dominated by the flowlm step
-  cache size, so 24L is ~2× slower per synthesis.
+  conversion time. Runtime latency is dominated by the flowlm step (on GPU,
+  not ANE — see IOS_COREML_ISSUES.md); the 24L KV cache is ~4× larger, so 24L
+  is ~1.5–2× slower per synthesis (measured: 24L flow_decoder_fused 3.0× RTFx
+  vs 6L 4.95× in the v2.1 Python harness).
 - Voice embeddings (`audio_prompt`) are per-language: the same 21 speaker
   names exist in every language pack but the underlying tensors differ.
 - Tokenizer (`tokenizer.model`, SentencePiece) is per-language.

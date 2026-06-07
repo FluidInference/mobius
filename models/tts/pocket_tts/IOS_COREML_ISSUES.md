@@ -4,6 +4,32 @@ Document of issues encountered while bringing PocketTTS CoreML models to iOS.
 
 ---
 
+## ⚠️ MEASURED CORRECTION (v2.1, M-series / macOS 26)
+
+The "ANE Dispatch Status Summary" below is **partly wrong** — corrected here by
+on-device `coreml-cli` profiling during the v2.1 work:
+
+- **flowlm_step is NOT on the ANE.** It runs on **GPU** (fp16 3.4 ms @ `.all`).
+  The claimed "70–90% ANE / 1.97× ANE win" did **not** reproduce. Forcing
+  `.cpuAndNeuralEngine` → `ANECCompile() FAILED`. The blocker is the rank-5 KV
+  cache **`scatter`**, which the ANE compiler rejects at any precision (fp32,
+  fp16, int8) — NOT the rank-5 shape per se (a rank-4 split still fails: scatter
+  is unsupported).
+- **flow_decoder (1-step) is NOT on the ANE either** — GPU/CPU. The kernel is
+  too small for the partitioner to accept. **Only the v2.1 `flow_decoder_fused`
+  reaches the ANE (0%→100%)**: fusing the 8 Euler steps yields a fat,
+  scatter-free, fp16 MLP/AdaLN graph the partitioner accepts (1.09 ms/8 steps).
+- **cond_step / cond_prefill: GPU** (rank-5 scatter → no ANE), as stated.
+- **mimi_decoder: CPU** — correct, but it is **compute-bound** (~6 ms/frame
+  real conv/attention work), not overhead-bound. An MLState micro-benchmark
+  showed state marshalling is only ~0.5 ms/call, so keeping state resident would
+  not meaningfully help. ANE still off-limits (fp16 streaming feedback beeps).
+
+**Net: exactly one model reaches the ANE — the fused flow decoder.** The pre-v2.1
+table below is retained for history.
+
+---
+
 ## ANE Dispatch Status Summary
 
 Final compute-unit assignment for the 4 PocketTTS inference models, with the

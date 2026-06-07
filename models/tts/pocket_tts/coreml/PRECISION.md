@@ -25,6 +25,13 @@ Per HF language pack we ship five `.mlmodelc` artifacts:
 | `flowlm_stepv2.mlmodelc`| **selective int8** | Drop-in replacement for `flowlm_step`     |
 | `mimi_decoder.mlmodelc` | fp16             | Audio synthesis (Mimi VAE decoder, conv-heavy) |
 
+> **v2.1 note:** the optimized v2.1 packs add `flow_decoder_fused` (fp16, the
+> 8-step LSD loop unrolled — the only model that reaches the ANE) and
+> `cond_prefill` (fp16, one-shot conditioning). Same weights, re-converted for
+> speed. The fastest *flowlm* on-device is the existing int8 `flowlm_stepv2`
+> (3.16 ms @ cpuAndGpu); 4-bit palettization shrinks size further but is slower
+> (dequant overhead > bandwidth saved) — int4 is a size lever, not a speed one.
+
 Only `flowlm_stepv2.mlmodelc` is int8-quantized. `cond_step`, `flow_decoder`,
 `mimi_decoder`, and the legacy `flowlm_step` are pure fp16. The Swift loader
 defaults to `flowlm_step.mlmodelc`; callers opt into the int8 variant by
