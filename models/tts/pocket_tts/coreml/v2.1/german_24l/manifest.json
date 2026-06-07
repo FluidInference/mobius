@@ -1,0 +1,27 @@
+{
+  "version": "2.1",
+  "base": "v2",
+  "kind": "optimization-reconvert",
+  "self_contained": true,
+  "note": "Same weights as v2. Re-converted for speed: fused flow decoder (100% ANE), one-shot cond prefill, fp16 flowlm. NOT a finetune.",
+  "new": [
+    "flow_decoder_fused",
+    "cond_prefill",
+    "flowlm_step"
+  ],
+  "copied_from_v2": [
+    "flowlm_stepv2.mlpackage",
+    "flowlm_stepv2.mlmodelc",
+    "mimi_decoder.mlpackage",
+    "mimi_decoder.mlmodelc",
+    "constants",
+    "constants_bin"
+  ],
+  "compute_units": {
+    "flow_decoder_fused": "all (ANE)",
+    "cond_prefill": "all (GPU)",
+    "flowlm_step": "all (GPU, fp16)",
+    "flowlm_stepv2": "cpuAndGpu (GPU, int8 \u2014 fastest flowlm)",
+    "mimi_decoder": "cpuOnly"
+  }
+}
