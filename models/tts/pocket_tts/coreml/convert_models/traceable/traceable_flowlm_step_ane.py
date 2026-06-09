@@ -33,11 +33,16 @@ only the formulation:
    fresh caches (`PocketTtsSynthesizer+KVCache.swift::emptyKVCacheState`),
    so the `isnan` scrub of K/V in the original trace is dead weight on
    the host path. REQUIREMENT: unwritten cache slots must be 0, not NaN.
-   (The NaN-BOS `sequence` replacement IS kept — the host sends NaN
-   latents to signal BOS.)
+6. **No NaN-BOS protocol.** The rank-5 packs signal BOS with a NaN-filled
+   `sequence` that the graph replaces via `where(isnan(...), bos_emb, ...)`.
+   The ANE mangles NaN inputs BEFORE `isnan` evaluates (measured: CPU-only
+   matches torch at 3e-2 with NaN BOS; cpuAndNeuralEngine diverges at 2.9,
+   BOS silently dropped). This graph therefore has NO `bos_emb` input and
+   no isnan. HOST CONTRACT: pass the BOS latent embedding itself as
+   `sequence` on the first generation step; never pass NaN.
 
 I/O contract (per layer i in 0..5):
-    inputs : sequence [1, 1, 32], bos_emb [32],
+    inputs : sequence [1, 1, 32]  (BOS step: the BOS latent, NOT NaN),
              k_cache{i} [1, L, H, D], v_cache{i} [1, L, H, D],
              position{i} [1]
     outputs: transformer_out [1, 1, 1024], is_eos [1, 1, 1],
@@ -201,8 +206,7 @@ class TraceableFlowLMStepANE(nn.Module):
 
     def forward(
         self,
-        sequence: torch.Tensor,  # [1, 1, 32] input latent (NaN for BOS)
-        bos_emb: torch.Tensor,  # [32] BOS embedding
+        sequence: torch.Tensor,  # [1, 1, 32] input latent (BOS latent on step 0)
         *cache_and_positions: torch.Tensor,
     ):
         """One generation step.
@@ -211,12 +215,14 @@ class TraceableFlowLMStepANE(nn.Module):
         (k_cache0, v_cache0, position0, k_cache1, v_cache1, position1, ...).
         Length must be 3*num_layers.
 
+        BOS: the host passes the BOS latent embedding as `sequence` on the
+        first step (no NaN protocol — see module docstring, item 6).
+
         Returns:
             transformer_out: [1, 1, 1024]
             is_eos: [1, 1, 1]
             then per layer (new_k_cache{i}, new_v_cache{i}, new_position{i}).
         """
-        sequence = torch.where(torch.isnan(sequence), bos_emb, sequence)
         x = self.input_linear(sequence)  # [1, 1, 1024]
 
         k_caches = list(cache_and_positions[0::3])
@@ -295,7 +301,11 @@ def test_parity_vs_original():
     ane_positions = [torch.tensor([float(prefix_len)]) for _ in range(num_layers)]
 
     num_steps = 5
-    sequence = torch.full((1, 1, 32), float("nan"))  # BOS first
+    # BOS protocols differ: the original takes NaN + bos_emb and substitutes
+    # in-graph; the ANE wrapper takes the BOS latent directly (host contract
+    # — the ANE mangles NaN inputs, see module docstring item 6).
+    sequence_orig = torch.full((1, 1, 32), float("nan"))
+    sequence_ane = bos_emb.view(1, 1, 32).clone()
     worst = 0.0
 
     for step in range(num_steps):
@@ -307,8 +317,8 @@ def test_parity_vs_original():
             ane_args.extend([k, v, p])
 
         with torch.no_grad():
-            ref = original(sequence, bos_emb, *orig_args)
-            got = ane(sequence, bos_emb, *ane_args)
+            ref = original(sequence_orig, bos_emb, *orig_args)
+            got = ane(sequence_ane, *ane_args)
 
         ref_out, ref_eos = ref[0], ref[1]
         got_out, got_eos = got[0], got[1]
@@ -338,7 +348,8 @@ def test_parity_vs_original():
         # Next step input: feed the (shared) transformer_out projected back is
         # not the real pipeline (flow decode happens outside) — a random
         # latent is fine for math parity.
-        sequence = torch.randn(1, 1, 32)
+        sequence_orig = torch.randn(1, 1, 32)
+        sequence_ane = sequence_orig.clone()
 
     print(f"\nworst abs diff across {num_steps} steps (outs + caches): {worst:.3e}")
     assert worst < 1e-4, f"ANE wrapper diverged from original: {worst}"

@@ -914,3 +914,100 @@ the `numSteps` Euler loop count is baked in at conversion (8).
 **Trial 21: CONVERTED + PARITY-VERIFIED (0.0e+00) + 100% ANE.**
 Artifact: `coreml/build/<lang>/flowlm_flow_fused.mlpackage` via
 `convert_flowlm_flow_fused.py`. Swift host wiring not yet done.
+
+### Trial 22 — cache-bandwidth levers: L-bucket + MLState (evidence)
+
+**Problem.** Trials 19/21 both hit the same wall: per-call medians for the
+step model are dominated not by compute but by the fp32 KV-cache round-trip
+through the MLModel boundary — 12 tensors of `[1, L, 16, 64]` in AND out,
+~50.3 MB/call at L=512. Two levers, evidence only (no host integration):
+(a) an L=256 bucket that halves the boundary IO, (b) MLState-resident
+caches (iOS18) that eliminate it.
+
+**Part A — L=256 bucket.** `convert_flowlm_step_ane.py` gains
+`--max-seq-len` (default 512; non-default saves as
+`flowlm_step_ane_l{L}.mlpackage`, no clobber). L=256 english converts
+clean and compiles to **100% ANE, 462 ops** — identical placement to
+L=512. Benchmark: `bench_flowlm_lbucket.py` (10 warmup + 200 timed,
+median/p95, 136-token prefix in the caches at position 136, zeros
+elsewhere, no bos_emb input).
+
+| model | cache IO/call | units | median | p95 |
+|-------|--------------:|-------|-------:|----:|
+| L=512 | 50.3 MB | CPU_AND_NE | 3.66 ms | 3.82 ms |
+| L=512 | 50.3 MB | ALL | 3.49 ms | 4.96 ms |
+| **L=256** | 25.2 MB | CPU_AND_NE | **2.44 ms** | 2.51 ms |
+| **L=256** | 25.2 MB | ALL | **2.44 ms** | 2.54 ms |
+
+L=256 saves **1.22 ms/call (33%) @ CPU_AND_NE**, 1.05 ms @ ALL — i.e.
+halving the boundary IO removes ~1.1-1.2 ms, so marshalling is roughly
+**0.048 ms/MB** and accounts for ~2/3 of the L=512 median's non-compute
+share. Hypothesis (a) confirmed.
+
+**Part B — MLState-resident caches.** `bench_flowlm_mlstate.py` converts
+a stateful variant of the REAL graph (`StatefulFlowLMStepANE` subclasses
+`TraceableFlowLMStepANE`; attention math is the parent's verbatim): the
+12 cache tensors become `ct.StateType` fp16 buffers (iOS18 target),
+written via slice assignment (`buf[:] = new` — the only in-place pattern
+the jit frontend lowers to `coreml_update_state`; whole-buffer `copy_`
+fails with "No matching select or slice"). Inputs shrink to `sequence` +
+one shared `position`; outputs to `transformer_out` + `is_eos`.
+coremltools 9.0 drives `make_state()` + `predict(..., state=st)` fine.
+
+Parity (state-resident vs host-carried caches, CPU_ONLY, 3 autoregressive
+steps from empty caches): **0.0e+00** — the state graph provably
+accumulates the cache across calls. Placement: **100% ANE, 367 ops**
+(~100 ops fewer than the IO variant: the 12 output-side cache passthroughs
+are gone).
+
+| variant | cache IO/call | units | median | p95 |
+|---------|--------------:|-------|-------:|----:|
+| cache-as-IO (fp32, L=512) | 50.3 MB | CPU_AND_NE | 3.67 ms | 3.78 ms |
+| cache-as-IO (fp32, L=512) | 50.3 MB | ALL | 2.96 ms | 3.33 ms |
+| **MLState-resident (fp16)** | 0 MB | CPU_AND_NE | **2.06 ms** | 2.10 ms |
+| **MLState-resident (fp16)** | 0 MB | ALL | 2.08 ms | 2.13 ms |
+
+MLState saves **1.60 ms/call (44%) @ CPU_AND_NE**, 0.88 ms @ ALL.
+(Sub-linear vs the 0.048 ms/MB extrapolation — 50.3 MB "should" be
+~2.4 ms — because the numpy-dict predict path keeps some fixed per-call
+cost; the marshalling share it can remove, it removes.) Hypothesis (b)
+confirmed: the residual 2.06 ms is compute + dispatch, and it beats the
+L=256 bucket while keeping the full 512-position context.
+
+**Verdicts (threshold: ≥0.5 ms/frame).**
+- **L=256 bucket: WORTH IT** (+1.2 ms/frame @ CPU_AND_NE) — but only as a
+  per-utterance-length bucket choice à la Supertonic's VectorEstimator
+  buckets: L=256 caps prefill+generated frames at 256 positions. Typical
+  usage (~126-token prefill + ~43 frames) fits; long cloned voices
+  (~250-token prefill) do NOT once generation starts, so the host must
+  pick the bucket per utterance and keep L=512 as the fallback.
+- **MLState: WORTH IT, and the better lever** (+1.6 ms/frame @ CPU_AND_NE,
+  full 512 context, no bucket logic; ~69 ms/utt over 43 frames). The two
+  levers overlap — state-resident caches make the L-bucket's marshalling
+  win moot (a smaller L then only trims attention compute + state memory).
+
+**Caveats.**
+- MLState requires iOS18+/macOS15+, and FluidAudio's ANE_Profiler.md
+  gotcha list notes `MLState` is ANE-incompatible on iOS 18 for some
+  configs. Here (macOS 26, M-series) the stateful graph profiles 100%
+  ANE, but on-device iOS verification is mandatory before shipping.
+- coremltools states must be fp16; cache precision at the boundary drops
+  fp32→fp16. Compute was already fp16 internally, and the 3-step parity
+  vs the fp32-IO model is exact, so no observable cost in this check.
+- Integration cost is real: the host cannot write into an opaque MLState,
+  so cond_prefill/cond_step must ALSO become stateful against the SAME
+  state (or prefill must be replayed through the stateful step model),
+  and the Trial 21 fused model would need the same treatment. That is a
+  pipeline-wide cache-layout change, not a drop-in swap.
+- Python-harness numbers (numpy marshals every call); the Swift host with
+  reused MLMultiArrays pays less on the IO path, so on-device deltas will
+  be somewhat smaller. L=512 @ ALL wobbles run-to-run (3.49 vs 2.96 ms —
+  GPU scheduler), so compare within a run.
+
+### Status
+
+**Trial 22: EVIDENCE COLLECTED, no host integration.** Scripts:
+`bench_flowlm_lbucket.py`, `bench_flowlm_mlstate.py`;
+`convert_flowlm_step_ane.py --max-seq-len`. Artifacts (not committed):
+`build/english/flowlm_step_ane_l256.mlpackage`,
+`build/english/flowlm_step_ane_state.mlpackage` (+ mlmodelc).

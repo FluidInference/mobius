@@ -36,6 +36,7 @@ def convert_flowlm_step_ane(
     language: str,
     compute_precision: str = "fp16",
     compute_units: str = "ALL",
+    max_seq_len: int = 512,
 ):
     print(f"Loading model (language={language})...")
     from pocket_tts import TTSModel
@@ -44,7 +45,6 @@ def convert_flowlm_step_ane(
     model.eval()
 
     print("Creating ANE step model...")
-    max_seq_len = 512
     step_model = TraceableFlowLMStepANE.from_flowlm(model.flow_lm, max_seq_len=max_seq_len)
     step_model.eval()
     num_layers = step_model.num_layers
@@ -54,10 +54,9 @@ def convert_flowlm_step_ane(
 
     print("Creating example inputs...")
     sequence = torch.randn(1, 1, 32)
-    bos_emb = model.flow_lm.bos_emb.data
 
     prefix_len = 136
-    trace_inputs = [sequence, bos_emb]
+    trace_inputs = [sequence]
     for _ in range(num_layers):
         k_cache = torch.zeros(1, max_seq_len, H, D)
         v_cache = torch.zeros(1, max_seq_len, H, D)
@@ -75,9 +74,11 @@ def convert_flowlm_step_ane(
     # with `MLMultiArrayDataType.float32` buffers (the macOS MLE5 binder
     # rejects fp16 MLMultiArrays).
     print("Converting to CoreML (precision={}, IO=fp32)...".format(compute_precision))
+    # No bos_emb input: the NaN-BOS protocol is host-side now (the ANE
+    # mangles NaN inputs before isnan can see them — see the traceable's
+    # docstring, item 6).
     inputs = [
-        ct.TensorType(name="sequence", shape=(1, 1, 32), dtype=np.float32),
-        ct.TensorType(name="bos_emb", shape=(32,), dtype=np.float32),
+        ct.TensorType(name="sequence", shape=(1, 1, 32), dtype=np.float32)
     ]
     for i in range(num_layers):
         inputs.append(
@@ -110,7 +111,13 @@ def convert_flowlm_step_ane(
 
     output_dir = build_output_dir(_COREML_DIR, language)
     os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, "flowlm_step_ane.mlpackage")
+    # Non-default L gets its own filename so cache-bandwidth experiments
+    # (Trial 22) never clobber the shipped L=512 artifact.
+    if max_seq_len == 512:
+        artifact_name = "flowlm_step_ane.mlpackage"
+    else:
+        artifact_name = f"flowlm_step_ane_l{max_seq_len}.mlpackage"
+    output_path = os.path.join(output_dir, artifact_name)
     print(f"Saving to {output_path} (precision={compute_precision})...")
     mlmodel.save(output_path)
 
@@ -118,9 +125,8 @@ def convert_flowlm_step_ane(
     print(f"\nTesting CoreML model (compute_units={compute_units})...")
     coreml_model = ct.models.MLModel(output_path, compute_units=resolve_compute_units(compute_units))
 
-    feed = {"sequence": np.random.randn(1, 1, 32).astype(np.float32),
-            "bos_emb": bos_emb.numpy().astype(np.float32)}
-    torch_inputs = [torch.from_numpy(feed["sequence"]), bos_emb]
+    feed = {"sequence": np.random.randn(1, 1, 32).astype(np.float32)}
+    torch_inputs = [torch.from_numpy(feed["sequence"])]
     rng = np.random.default_rng(0)
     for i in range(num_layers):
         k = np.zeros((1, max_seq_len, H, D), dtype=np.float32)
@@ -157,5 +163,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     add_language_arg(parser)
     add_compute_args(parser)
+    parser.add_argument(
+        "--max-seq-len",
+        type=int,
+        default=512,
+        help=(
+            "KV-cache length L baked into the graph (caps prefill+generated "
+            "frames at L positions before the circular buffer wraps). "
+            "Non-default values are saved as flowlm_step_ane_l{L}.mlpackage. "
+            "Default: 512."
+        ),
+    )
     args = parser.parse_args()
-    convert_flowlm_step_ane(args.language, args.compute_precision, args.compute_units)
+    convert_flowlm_step_ane(
+        args.language, args.compute_precision, args.compute_units, args.max_seq_len
+    )
