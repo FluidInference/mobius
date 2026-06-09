@@ -796,3 +796,56 @@ buffer is contiguous with K at offset 0 and V at offset L*H*D).
 **Trial 19: CONVERTED + PARITY-VERIFIED + 100% ANE.** Swift host wiring
 not yet done; artifact is `coreml/build/<lang>/flowlm_step_ane.mlpackage`
 via `convert_flowlm_step_ane.py`.
+
+### Trial 20 — `cond_prefill_ane`: same treatment, honest split verdict
+
+**Fix.** `traceable_cond_prefill_ane.py` + `convert_cond_prefill_ane.py` —
+the Trial 19 rewrite applied to the Trial 17 prefill: rank-4 k/v cache
+split, the one-hot write generalized to a `[T_max, L]` assignment matrix
+applied as a matmul (dump-slot redirect preserved; the dump slot
+accumulates instead of last-write-wins, unobservable through the mask),
+rank-4 RoPE, additive mask, no NaN scrub. Plus one new trick: the RoPE
+rotations / assign matrix / coverage / mask bias are **layer-invariant**
+(they depend only on position + valid_len), so they are hoisted out of
+the 6-layer loop into a single prologue — without the hoist the
+scalar-driven ops the ANE compiler rejects (`sin`/`cos`/`equal`/
+`less_equal`) are rebuilt per layer and force six CPU<->ANE transitions
+(measured 17.0 ms forced-ANE; hoisted: 9.6 ms, op count 477 -> 371, and
+the partition-level `ANECCompile FAILED` disappears).
+
+**Parity.** fp32 vs `TraceableCondPrefill` on the valid prefix:
+**0.0e+00** (bit-identical), all 6 layers. fp16 CoreML: 6.99e-2 — same
+band as Trial 17's shipped 6.6e-2.
+
+**Measured (same harness as Trial 19, median of 100 warm calls):**
+
+| config | cond_prefill (rank-5) | cond_prefill_ane (rank-4, hoisted) |
+|--------|--------------------:|-------------------:|
+| device @ `cpu_and_ne` | GPU-only model: falls to CPU | **92% ANE** (371 ops) |
+| `all` | 4.86 ms (GPU) | 4.49 ms (scheduler picks GPU) |
+| `cpu_and_ne` (forced) | — | 9.57 ms |
+
+**Verdict.** ANE-*capable* (0% -> 92%) but on M-series the GPU stays
+~2x faster for this single fat T=256 call, and `MLComputePlan` under
+`.all` prefers GPU for BOTH new models (flowlm_step_ane included —
+ANE residency requires loading `.cpuAndNeuralEngine`, the same
+capability-vs-shipped split as Parakeet v3's encoder). Ship
+`cond_prefill_ane` anyway:
+
+1. its k/v-split rank-4 I/O matches `flowlm_step_ane`, so the host
+   keeps ONE cache layout end-to-end (no split/stack between prefill
+   and decode);
+2. prefill runs once per utterance — 4.5 vs 4.9 ms is a wash on Mac,
+   and on iOS (weak GPU, power budget) the `.cpuAndNeuralEngine`
+   option now exists at all.
+
+**Compute-unit recommendation (Mac):** cond_prefill_ane `.all` (GPU),
+flowlm_step_ane `.cpuAndNeuralEngine` (3.68 ms vs 3.04 GPU — pay ~0.6
+ms/frame to keep the GPU free and the decode loop ANE+CPU only) or
+`.all` if raw Mac RTFx is the only goal. iPhone numbers TBD.
+
+### Status
+
+**Trial 20: CONVERTED + PARITY-VERIFIED + 92% ANE (hoisted).** Artifact:
+`coreml/build/<lang>/cond_prefill_ane.mlpackage`. Swift host wiring for
+the k/v split (shared with Trial 19) still open.
