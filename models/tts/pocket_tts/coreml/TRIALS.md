@@ -849,3 +849,68 @@ ms/frame to keep the GPU free and the decode loop ANE+CPU only) or
 **Trial 20: CONVERTED + PARITY-VERIFIED + 92% ANE (hoisted).** Artifact:
 `coreml/build/<lang>/cond_prefill_ane.mlpackage`. Swift host wiring for
 the k/v split (shared with Trial 19) still open.
+
+### Trial 21 — flowlm+flowdec fusion
+
+**Problem.** Trial 19's follow-up: `flowlm_step_ane` and
+`flow_decoder_fused` are both 100% ANE, but the host still pays TWO
+MLModel dispatches per audio frame plus a full fp32 round-trip of the
+`[1, 1, 1024]` `transformer_out` tensor between them — produced and
+consumed on the same engine, so the boundary is pure overhead (cast to
+fp32, copy out, copy back in, cast to fp16, plus one extra dispatch +
+ANE request per frame × 43 frames/utt).
+
+**Fix.** `traceable_flowlm_flow_fused.py` — `TraceableFlowLMFlowFused`
+composes the two verified modules as submodules (no re-implementation:
+`TraceableFlowLMStepANE.from_flowlm` + `TraceableFlowDecoderFused.from_flowlm`
+on the same `flow_lm`) and calls them back-to-back in one `forward`.
+`transformer_out` becomes an internal fp16 tensor that never crosses the
+IO boundary. I/O: inputs gain `latent_init [1, 32]`; outputs swap
+`transformer_out` for `latent_final [1, 32]` (is_eos + per-layer
+k/v/position unchanged from Trial 19's contract).
+`convert_flowlm_flow_fused.py --num-steps 8` emits
+`flowlm_flow_fused.mlpackage` (fp32 IO, fp16 internal, iOS17).
+
+**Parity.** fp32 torch fused vs the two modules called back-to-back:
+**0.0e+00** (bit-identical — it is the literal graph concatenation)
+across 3 autoregressive steps: latent_final, EOS, all caches, positions.
+fp16 CoreML vs fp32 torch: d_latent 6.6e-3, d_eos 7.2e-4 — same band as
+Trial 19 (8.2e-3 / 5.5e-3) since no new math was added.
+
+**Measured (same harness as Trial 19; ane_profile on the compiled
+mlmodelc; Python predict, 10 warmup + 100 timed, per-frame = one fused
+call vs step+flowdec back-to-back):**
+
+| model | ops | device@`cpu_and_ne` |
+|-------|----:|------|
+| flowlm_step_ane + flow_decoder_fused | 466 + 1252 | 100% ANE each (2 dispatches) |
+| **flowlm_flow_fused** | 1717 | **100% ANE** (1 dispatch) |
+
+| config | fused (median / p95) | separate pair (median / p95) |
+|--------|---------------------:|-----------------------------:|
+| `all` | 5.00 / 6.51 ms | 4.65 / 5.36 ms |
+| `cpu_and_ne` | **4.61 / 4.74 ms** | 4.67 / 4.79 ms |
+
+**Verdict.** Placement win is clean (100% ANE, one dispatch/frame, the
+transformer_out boundary gone); the Python-harness latency delta is a
+wash because each call marshals ~50 MB of fp32 cache IO, which dominates
+the saved dispatch. `cpu_and_ne` fused is the best config measured
+(4.61 ms, tightest p95) and beats fused@`all`, where the scheduler's
+GPU routing costs ~0.4 ms — load this model `.cpuAndNeuralEngine`.
+The real win is structural: the per-frame decode loop collapses to
+fused(ANE) → mimi(CPU), no GPU and no intra-frame engine hop, which is
+exactly the shape Phase 7's cross-engine pipelining lever wants. The
+Swift host should also see more than the harness does, since its cache
+buffers can be reused MLMultiArrays rather than fresh numpy marshals.
+
+**Host changes required (FluidAudio).** Replace the per-frame
+flowlm_step_ane + flow_decoder_fused pair with one
+`flowlm_flow_fused.predict()`: pass `latent_init` (z_0 noise) alongside
+the Trial 19 inputs, read `latent_final` instead of `transformer_out`;
+the `numSteps` Euler loop count is baked in at conversion (8).
+
+### Status
+
+**Trial 21: CONVERTED + PARITY-VERIFIED (0.0e+00) + 100% ANE.**
+Artifact: `coreml/build/<lang>/flowlm_flow_fused.mlpackage` via
+`convert_flowlm_flow_fused.py`. Swift host wiring not yet done.
