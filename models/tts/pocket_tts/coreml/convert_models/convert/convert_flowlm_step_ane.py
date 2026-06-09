@@ -87,8 +87,18 @@ def convert_flowlm_step_ane(
         inputs.append(ct.TensorType(name=f"position{i}", shape=(1,), dtype=np.float32))
 
     # Outputs: (x, is_eos, then per layer (new_k, new_v, new_position)).
-    n_outputs = 2 + 3 * num_layers
-    ct_outputs = [ct.TensorType(dtype=np.float32) for _ in range(n_outputs)]
+    # EXPLICIT names (positional match against the traced return tuple): the
+    # k/v caches share one shape, so the Swift host cannot disambiguate them
+    # by shape-bucketing the way it does for the rank-5 packs — stable names
+    # replace discovery entirely.
+    ct_outputs = [
+        ct.TensorType(name="transformer_out", dtype=np.float32),
+        ct.TensorType(name="is_eos", dtype=np.float32),
+    ]
+    for i in range(num_layers):
+        ct_outputs.append(ct.TensorType(name=f"new_k_cache{i}", dtype=np.float32))
+        ct_outputs.append(ct.TensorType(name=f"new_v_cache{i}", dtype=np.float32))
+        ct_outputs.append(ct.TensorType(name=f"new_position{i}", dtype=np.float32))
 
     mlmodel = ct.convert(
         traced,
@@ -127,14 +137,15 @@ def convert_flowlm_step_ane(
     with torch.no_grad():
         ref = step_model(*torch_inputs)
 
-    # Output names are anonymous (var_*); match by shape: transformer_out is
-    # the only [1, 1, 1024], is_eos the only [1, 1, 1].
-    by_shape = {tuple(v.shape): v for v in outputs.values() if isinstance(v, np.ndarray)}
-    got_out = by_shape.get((1, 1, 1024))
-    got_eos = by_shape.get((1, 1, 1))
-    assert got_out is not None and got_eos is not None, f"output shapes: {list(by_shape)}"
+    got_out = outputs["transformer_out"]
+    got_eos = outputs["is_eos"]
     d_out = np.abs(ref[0].numpy() - got_out).max()
     d_eos = np.abs(ref[1].numpy() - got_eos).max()
+    # Layer-output naming check: caches/positions must map positionally.
+    for li in range(num_layers):
+        d_k = np.abs(ref[2 + 3 * li].numpy() - outputs[f"new_k_cache{li}"]).max()
+        d_p = np.abs(ref[4 + 3 * li].numpy() - outputs[f"new_position{li}"]).max()
+        assert d_k < 0.25 and d_p < 1e-3, f"layer {li} output name mismatch (d_k={d_k}, d_p={d_p})"
     print(f"CoreML vs torch: d_transformer_out={d_out:.3e}, d_eos={d_eos:.3e}")
     print(f"Output keys: {list(outputs.keys())}")
 

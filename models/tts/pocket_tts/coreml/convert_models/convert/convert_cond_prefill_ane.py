@@ -79,8 +79,14 @@ def convert_cond_prefill_ane(
             ct.TensorType(name=f"v_cache{i}", shape=(1, max_seq_len, H, D), dtype=np.float32))
         inputs.append(ct.TensorType(name=f"position{i}", shape=(1,), dtype=np.float32))
 
-    n_outputs = 3 * num_layers  # (new_k, new_v, new_position) per layer
-    ct_outputs = [ct.TensorType(dtype=np.float32) for _ in range(n_outputs)]
+    # (new_k, new_v, new_position) per layer. EXPLICIT names (positional
+    # match against the traced return tuple): the k/v caches share a shape,
+    # so the Swift host needs stable names instead of shape-bucket discovery.
+    ct_outputs = []
+    for i in range(num_layers):
+        ct_outputs.append(ct.TensorType(name=f"new_k_cache{i}", dtype=np.float32))
+        ct_outputs.append(ct.TensorType(name=f"new_v_cache{i}", dtype=np.float32))
+        ct_outputs.append(ct.TensorType(name=f"new_position{i}", dtype=np.float32))
 
     mlmodel = ct.convert(
         traced,
@@ -117,16 +123,15 @@ def convert_cond_prefill_ane(
     with torch.no_grad():
         ref = prefill(*torch_inputs)
 
-    # Anonymous output names; the K/V caches are the only [1, L, H, D]
-    # tensors. Compare the worst-case diff over all of them on [0, N).
-    cache_outs = [v for v in outputs.values()
-                  if isinstance(v, np.ndarray) and v.shape == (1, max_seq_len, H, D)]
-    assert len(cache_outs) == 2 * num_layers, f"got {len(cache_outs)} cache outputs"
-    ref_caches = [ref[3 * li + j].numpy() for li in range(num_layers) for j in (0, 1)]
+    # Named outputs: compare each layer's K/V on the valid prefix directly —
+    # this also verifies the positional name mapping is correct.
     worst = 0.0
-    for got in cache_outs:
-        best = min(np.abs(r[:, :N] - got[:, :N]).max() for r in ref_caches)
-        worst = max(worst, best)
+    for li in range(num_layers):
+        d_k = np.abs(ref[3 * li].numpy()[:, :N] - outputs[f"new_k_cache{li}"][:, :N]).max()
+        d_v = np.abs(ref[3 * li + 1].numpy()[:, :N] - outputs[f"new_v_cache{li}"][:, :N]).max()
+        d_p = np.abs(ref[3 * li + 2].numpy() - outputs[f"new_position{li}"]).max()
+        assert d_p < 1e-3, f"layer {li} position name mismatch"
+        worst = max(worst, d_k, d_v)
     print(f"CoreML vs torch, worst valid-prefix cache diff: {worst:.3e}")
     print(f"Output keys: {list(outputs.keys())}")
 
