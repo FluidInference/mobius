@@ -725,3 +725,74 @@ Trials 16-18 IMPLEMENTED + MEASURED + verified within shipped tolerances.
 Open: (1) literal end-to-end Whisper run (confirmation only — every fp16
 component is bounded below the shipped int8 error); (2) `--num-steps 4` Whisper
 A/B; (3) cross-engine pipelining (Swift, the next real win).
+
+---
+
+## Phase 8: flowlm on the ANE (rank-4 + scatter-free rewrite)
+
+### Trial 19 — `flowlm_step_ane`: the rank-5 block is breakable
+
+**Problem.** Phase 7 concluded flowlm "cannot reach the ANE at any
+precision — the rank-5 KV cache `(2,1,512,16,64)` → `ANECCompile FAILED`"
+and declared conversion levers exhausted. But rank-5 is a *formulation*
+property, not a model property. The graph had three ANE-hostile
+constructs: the rank-5 cache I/O, a second rank-5 tensor inside RoPE
+(the `[B,T,H,32,2]` interleaved view), and the circular-buffer `scatter`
+write.
+
+**Fix.** `traceable_flowlm_step_ane.py` — the Trial 16 playbook applied
+to the step model. Math identical, formulation changed:
+
+1. Each `cache{i} [2,1,512,16,64]` split into `k_cache{i}` / `v_cache{i}`
+   `[1,512,16,64]` (rank-4 I/O; same slot layout, so cond_step /
+   cond_prefill caches feed in directly after splitting the K/V axis).
+2. T=1 specialization (generation is always one frame/call): RoPE pairs
+   via a rank-4 `[1,H,32,2]` reshape; valid+causal masks collapse to
+   one comparison.
+3. Scatter-free write: `onehot = (arange(L) == pos % L)`;
+   `new_k = k_cache*(1-onehot) + k*onehot`. Bit-identical circular-buffer
+   semantics including the modulo wrap.
+4. Additive mask (`(mask-1)*1e4`) instead of `masked_fill(-inf)`.
+5. Cache NaN-scrub dropped — the Swift host zero-fills caches
+   (`emptyKVCacheState`), so unwritten slots are 0 by contract. The
+   NaN-BOS `sequence` replacement is kept.
+
+**Parity.** fp32 torch wrapper vs `TraceableFlowLMStep`: **0.0e+00**
+(bit-identical) across 5 autoregressive steps — outputs, EOS, caches,
+positions. fp16 CoreML vs fp32 torch: d_out 8.2e-3, d_EOS 5.5e-3 (vs the
+0.042 fp16 EOS drift already accepted in Phase 7).
+
+**Measured (Apple Silicon, macOS 26, MLComputePlan + same-harness A/B,
+coremltools predict, median of 200 warm calls):**
+
+| model | ops | device@`cpu_and_ne` | predict@`all` |
+|-------|----:|------|--------:|
+| flowlm_step (rank-5) | 567 | ANECCompile FAILED → 100% CPU | 3.32 ms (GPU) |
+| **flowlm_step_ane** | 466 | **100% ANE** | **3.04 ms** |
+
+~8% faster in the Python harness — which marshals ~25 MB of cache I/O
+per call, so the compute-only delta is larger than it reads. The real
+wins are placement, not the median: the GPU is now fully free per frame
+(flowlm ANE → flowdec ANE → mimi CPU), which both simplifies
+cross-engine pipelining (Phase 7's "remaining lever") and removes the
+GPU↔ANE ping-pong; on iOS it moves 26% of utterance compute off the GPU.
+
+**Host changes required (FluidAudio).** Per-layer cache I/O becomes
+`k_cache{i}`/`v_cache{i}` (two rank-4 buffers instead of one rank-5) and
+outputs gain `new_v_cache{i}`; cond_step/cond_prefill output caches must
+be split once after prefill (zero-copy view is possible: the rank-5
+buffer is contiguous with K at offset 0 and V at offset L*H*D).
+
+**Follow-ups.**
+- Fuse `flowlm_step_ane` + `flow_decoder_fused` into one ANE dispatch per
+  frame (both are now 100% ANE; saves one MLModel boundary per frame).
+- Same treatment for `cond_prefill` (T=256 block; the one-hot write
+  generalizes to a T×L comparison matrix — bigger, but prefill runs once).
+- On-device Swift A/B (Trial 15 methodology) before shipping; Whisper
+  end-to-end as usual.
+
+### Status
+
+**Trial 19: CONVERTED + PARITY-VERIFIED + 100% ANE.** Swift host wiring
+not yet done; artifact is `coreml/build/<lang>/flowlm_step_ane.mlpackage`
+via `convert_flowlm_step_ane.py`.
