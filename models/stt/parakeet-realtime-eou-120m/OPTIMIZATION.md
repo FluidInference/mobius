@@ -198,3 +198,30 @@ swiftc -O coreml/conversion_scripts/bench_fused_decode.swift -o /tmp/bench_eou
 /tmp/bench_eou "$MODELS" /tmp/eou_fused/decoder_joint_decision_pipeline.mlpackage \
     /tmp/eou_fused/decoder_joint_decision_fused.mlpackage
 ```
+
+## Full-scale head-to-head WER gate (2026-06-10, all 2,620 LibriSpeech test-clean files)
+
+One harness, shared cached encoder outputs, three decode variants:
+
+| variant | WER | Δ vs ref | seq-diff files | >+20pp files |
+|---|---|---|---|---|
+| reference pair | 35.646% (18,741 err / 52,576 words) | — | — | — |
+| traced fused (fp16) | 35.689% | +0.043 pp | 278/2620 | 4 |
+| lean fused (fp16) | 35.689% | +0.043 pp | 278/2620 | 4 |
+
+**traced == lean on 2,620/2,620 token sequences.** The traced build's earlier
+"bit-exact" parity was fp32-vs-fp32 only; in deployment fp16 both fusions are
+the identical behavioral change. There is no "safe fused fallback" — the
+choice is fused (1.59× decode e2e) or not fused.
+
+Blowup files: 1221-135766-0015 is a tiny-file artifact (8 words, +2 errors);
+1188-133604-0009 (+15 err/70w), 6930-75918-0020 (+12/38), 908-157963-0019
+(+11/43) are real near-tie cascades on already-noisy files. 4/2620 = 0.15%
+of files carry the whole +0.043 pp.
+
+### VERDICT: ship the lean fusion; retire the traced build (strictly dominated
+— same outputs on every file, slower). Gate result: aggregate ΔWER +0.043 pp
+(rule bar +0.10), blowups present but inherent to fp16 fusion itself, not the
+lean variant. Maintainer sign-off on the 4-outlier trade is the remaining
+ship condition; Swift integration is the documented one-line RnntDecoder
+change.
