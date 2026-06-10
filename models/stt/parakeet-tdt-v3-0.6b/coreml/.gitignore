@@ -8,3 +8,4 @@ compiled/
 compute_unit_sweep.json
 fallback.json
 encoder_variants_summary.json
+build/
