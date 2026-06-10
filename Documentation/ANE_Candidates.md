@@ -129,7 +129,7 @@ go/no-go gate, so future work starts from data instead of rediscovery.
 | Model/stage | Verdict | Why |
 |---|---|---|
 | PocketTTS mimi | CPU forever | fp16 state-feedback artifacts + compute-bound + split regressed (Trials 15/22) |
-| PocketTTS flowlm/prefill/flowdec | done | 100%/92%/100% ANE (Trials 19–21); MLState design shipped-ready (Trial 23, iOS18 gate) |
+| PocketTTS flowlm/prefill/flowdec | done | 100%/92%/100% ANE (Trials 19–21); MLState pipeline Swift-wired 2026-06-10 (`.aneState`, FluidAudio feat/pocket-tts-mlstate): **−14.9% e2e measured**, −1.66 ms/frame (matches Trial 23's python −1.69 exactly — mimi dilutes the −36% flowlm-only headline, as predicted), WER 0, bit-identical seeded WAVs, MLState×multifunction clean on macOS. Remaining gates: iPhone ANE check + artifact publication |
 | Kokoro Noise | GPU (#677) | fp32 by necessity (`sin(cumsum)` phase overflows fp16); full-ANE hybrid ceiling 3–4.5% — declined |
 | Kokoro PostAlbert | CPU | `ios17.lstm` has no ANE kernel; GPU planner rejects its dynamic shapes; 1.2% of synth |
 | Kokoro Tail | GPU | fp32 iSTFT; ANE rejects exp/sin/iSTFT; BNNS segfaults (#667) |
