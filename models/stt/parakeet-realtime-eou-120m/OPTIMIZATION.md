@@ -172,8 +172,108 @@ One RNNT decode step (the unit that runs ~229×/utt):
   Swift integration is small: `RnntDecoder` drops the inner `joint` call,
   feeds `encoder_step` into the fused model (no `target_length` input), and
   reads the same `token_id`/`h_out`/`c_out`.
+  **Update: the full-scale gate + head-to-head vs the traced fusion is in
+  §6** (2,620-file WER, +0.043 pp; traced fusion output-identical and
+  strictly dominated).
 
-## 6. Repro
+## 6. Head-to-head vs the traced fusion + full-scale WER gate (2026-06-09/10)
+
+Deciding run for which fused artifact (if any) ships. Two candidate fusions
+existed, measured in different harnesses on different machines:
+
+- **lean** (this branch, `fuse_decoder_joint_decision.py`): MIL-builder
+  rebuild from the shipped fp16 blobs, drops the unused top-k outputs.
+  Claimed −41.6%/step (Swift harness, M5).
+- **traced** (`feat/parakeet-decode-fusion`, `fuse_decoder_joint.py`):
+  torch.jit re-export from the NeMo checkpoint, full I/O superset
+  (keeps top_k_ids/top_k_logits), fp16. Claimed 1.23–1.24×/step (Python
+  harness, M4 Pro) with fp32-vs-fp32 parity ≤1.2e-7.
+
+Both candidates were run through ONE harness (`wer_three_way.py` /
+`bench_three_way.py`, this dir) against the shipped two-model reference.
+Encoder outputs are computed once per file and cached (`.npy`), so all three
+decode paths consume bit-identical encoder frames. M5 Pro, macOS 26.5,
+coremltools 9.0b1.
+
+### 6a. Speed, same process, interleaved (10 warmup + 200 timed)
+
+One RNNT decode step, real encoder frame, zero state, blank token:
+
+| CU | variant | median ms | p95 ms | × vs ref |
+|---|---|---:|---:|---:|
+| CPU_ONLY | ref (2 dispatches) | 0.2431 | 0.2854 | 1.00 |
+| CPU_ONLY | traced fused | 0.2002 | 0.2297 | 1.21 |
+| CPU_ONLY | lean + topk | 0.1742 | 0.1962 | 1.40 |
+| CPU_ONLY | **lean** | **0.1448** | 0.1637 | **1.68** |
+| CPU_AND_NE | ref | 0.2358 | 0.2673 | 1.00 |
+| CPU_AND_NE | traced fused | 0.1906 | 0.2173 | 1.24 |
+| CPU_AND_NE | lean + topk | 0.1661 | 0.1862 | 1.42 |
+| CPU_AND_NE | **lean** | **0.1378** | 0.1551 | **1.71** |
+
+This settles the 1.21× vs 1.59× discrepancy: both prior numbers reproduce in
+one harness. The traced fusion really is only ~1.2×; the lean build is
+~1.7×/step. The gap splits roughly evenly between the tighter MIL graph
+(traced 1.24 → lean+topk 1.42 at identical I/O) and dropping the 1027-way
+top-k sort the Swift host never reads (1.42 → 1.71).
+
+### 6b. WER gate — full LibriSpeech test-clean (2,620 files, 52,576 words)
+
+All 2,620 files, full-length audio, identical cached encoder frames for all
+three variants (`wer_three_way.py`, ~0.46 s/file, ~20 min wall):
+
+| decode path | WER | errors | token-seq diff vs ref |
+|---|---:|---:|---:|
+| ref (shipped pair) | 35.646% | 18,741 | — |
+| traced fused fp16 | 35.689% | 18,764 | 278/2,620 files |
+| lean fused | 35.689% | 18,764 | 278/2,620 files |
+
+(Absolute WER is high for the harness reason in §3: simplified
+non-overlapping 160 ms chunking, not the production overlap schedule. All
+variants consume identical frames, so deltas are valid.)
+
+**Key finding: traced ≡ lean.** Direct re-decode of all 278 divergent files
+shows the traced and lean artifacts emit **identical token sequences on all
+2,620 files** — same diff set, same error counts, identical hypotheses.
+The traced fusion's "bit-exact" parity claim was fp32-fused vs fp32-separate
+in its own harness; at fp16 against the *shipped* two-model pair it drifts
+exactly like the lean build. This independently confirms §2c: the divergence
+is introduced by E5RT kernel selection for the single-graph layout, below
+MIL, and is a property of *any* fp16 decoder+joint fusion — not of the lean
+rebuild.
+
+Per-file tail (identical for both fused variants): 4/2,620 files where fused
+WER exceeds ref by >20 pp — 6930-75918-0020 (+31.6 pp), 908-157963-0019
+(+25.6), 1221-135766-0015 (+25.0), 1188-133604-0009 (+21.4). All four are
+utterances where the harness reference is already degenerate (ref WER 50–68%
+under the non-overlap chunking); the failure mode is early truncation (a
+tie-level blank/EOU flip ends emission early), not hallucination. Worth
+re-checking under production overlap chunking before relying on it either way.
+
+### 6c. Verdict (decision rule, applied)
+
+Rule set before the run: *lean ships if (1) WER delta vs ref ≤ +0.10 pp
+absolute on the gated set AND (2) no file where lean exceeds ref by >20 pp;
+otherwise the traced fusion is the recommendation.*
+
+- Clause 1: **PASS** — +0.043 pp (35.689 vs 35.646) on 2,620 files.
+- Clause 2: **FAIL** — 4 files above +20 pp (max +31.6 pp).
+- Rule output as written: traced fusion becomes the recommendation. **But
+  the run invalidated the rule's premise**: the traced artifact emits
+  token-for-token identical output to lean on every gated file, so it fails
+  the identical blowup clause and offers zero quality protection while being
+  1.38–1.41× slower than lean per step.
+
+**Final recommendation:** the traced fusion is strictly dominated — never
+ship it (same outputs, slower, and its export needs a multi-GB NeMo+torch
+toolchain vs blob-rebuild). The real decision is fusion-vs-reference, and it
+is the maintainer call already flagged in §5, now with full-scale evidence:
+fusion buys 1.7×/step (≈1.6× e2e for this decode-dominated pipeline) at
++0.043 pp aggregate WER, with a 4/2,620 (0.15%) early-truncation tail on
+already-degenerate utterances. If that tail is acceptable — or production
+overlap chunking makes it moot — ship **lean**; if bit-exactness is a hard
+requirement, ship nothing (the bit-exact pipeline variant is 0% faster, §4).
+
+## 7. Repro
 
 ```bash
 VENVPY=<python with coremltools==8.3.0 + numpy + soundfile>
@@ -197,6 +297,18 @@ $VENVPY coreml/conversion_scripts/wer_ref_vs_fused.py --model-dir "$MODELS" \
 swiftc -O coreml/conversion_scripts/bench_fused_decode.swift -o /tmp/bench_eou
 /tmp/bench_eou "$MODELS" /tmp/eou_fused/decoder_joint_decision_pipeline.mlpackage \
     /tmp/eou_fused/decoder_joint_decision_fused.mlpackage
+
+# §6 head-to-head (traced artifact from feat/parakeet-decode-fusion,
+# build/fused/decoder_joint_decision_fp16.mlpackage via fuse_decoder_joint.py export)
+$VENVPY coreml/conversion_scripts/wer_three_way.py --model-dir "$MODELS" \
+    --traced <traced>/decoder_joint_decision_fp16.mlpackage \
+    --lean /tmp/eou_fused/decoder_joint_decision_fused.mlpackage \
+    --librispeech-root "$HOME/Library/Application Support/FluidAudio/Datasets/LibriSpeech/test-clean" \
+    --cache-dir /tmp/eou_enc_cache --results /tmp/eou_three_way_full.jsonl --num-files 0
+$VENVPY coreml/conversion_scripts/bench_three_way.py --model-dir "$MODELS" \
+    --traced <traced>/decoder_joint_decision_fp16.mlpackage \
+    --lean /tmp/eou_fused/decoder_joint_decision_fused.mlpackage \
+    --enc-frame /tmp/eou_enc_cache/<any>.npy
 ```
 
 ## Full-scale head-to-head WER gate (2026-06-10, all 2,620 LibriSpeech test-clean files)
