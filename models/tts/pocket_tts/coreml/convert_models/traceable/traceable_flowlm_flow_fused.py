@@ -18,10 +18,16 @@ per frame. The math is the bit-identical concatenation of the two graphs:
         latent += flow_net(transformer_out, s, t, latent) / N
 
 I/O contract (per layer i in 0..5):
-    inputs : sequence [1, 1, 32], bos_emb [32], latent_init [1, 32],
+    inputs : sequence [1, 1, 32], latent_init [1, 32],
              k_cache{i} [1, L, H, D], v_cache{i} [1, L, H, D], position{i} [1]
     outputs: latent_final [1, 32], is_eos [1, 1, 1],
              then per layer (new_k_cache{i}, new_v_cache{i}, new_position{i})
+
+BOS: Trial 22 removed the NaN-BOS protocol from `TraceableFlowLMStepANE`
+(the ANE mangles NaN inputs before `isnan` evaluates); this fused wrapper
+follows the same host contract — pass the BOS latent embedding itself as
+`sequence` on the first generation step, never NaN, and there is no
+`bos_emb` input.
 """
 import os
 import sys
@@ -64,8 +70,7 @@ class TraceableFlowLMFlowFused(nn.Module):
 
     def forward(
         self,
-        sequence: torch.Tensor,  # [1, 1, 32] input latent (NaN for BOS)
-        bos_emb: torch.Tensor,  # [32] BOS embedding
+        sequence: torch.Tensor,  # [1, 1, 32] input latent (BOS latent on step 0, never NaN)
         latent_init: torch.Tensor,  # [1, 32] initial noise z_0 for the Euler loop
         *cache_and_positions: torch.Tensor,
     ):
@@ -80,7 +85,7 @@ class TraceableFlowLMFlowFused(nn.Module):
             is_eos: [1, 1, 1]
             then per layer (new_k_cache{i}, new_v_cache{i}, new_position{i}).
         """
-        step_out = self.flowlm_step(sequence, bos_emb, *cache_and_positions)
+        step_out = self.flowlm_step(sequence, *cache_and_positions)
         transformer_out = step_out[0]  # [1, 1, 1024]
         is_eos = step_out[1]
         cache_tail = step_out[2:]
@@ -141,7 +146,9 @@ def test_parity_vs_separate():
         fused_pos.append(torch.tensor([float(prefix_len)]))
 
     num_ar_steps = 3
-    sequence = torch.full((1, 1, 32), float("nan"))  # BOS first
+    # No-NaN-BOS host contract (Trial 22): the BOS latent itself is the
+    # first `sequence`, there is no bos_emb input.
+    sequence = bos_emb.view(1, 1, 32).clone()
     worst = 0.0
 
     for step in range(num_ar_steps):
@@ -155,9 +162,9 @@ def test_parity_vs_separate():
             fused_args.extend([k, v, p])
 
         with torch.no_grad():
-            ref_step = sep_step(sequence, bos_emb, *sep_args)
+            ref_step = sep_step(sequence, *sep_args)
             ref_latent = sep_flow(ref_step[0].reshape(1, 1024), latent_init.clone())
-            got = fused(sequence, bos_emb, latent_init.clone(), *fused_args)
+            got = fused(sequence, latent_init.clone(), *fused_args)
 
         d_latent = (ref_latent - got[0]).abs().max().item()
         d_eos = (ref_step[1] - got[1]).abs().max().item()

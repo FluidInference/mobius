@@ -1011,3 +1011,198 @@ L=256 bucket while keeping the full 512-position context.
 `convert_flowlm_step_ane.py --max-seq-len`. Artifacts (not committed):
 `build/english/flowlm_step_ane_l256.mlpackage`,
 `build/english/flowlm_step_ane_state.mlpackage` (+ mlmodelc).
+
+### Trial 23 — full-pipeline MLState design
+
+**Problem.** Trial 22 proved MLState-resident caches are the biggest
+remaining lever (−1.6 ms/frame, −44% on the step model) but flagged the
+integration wall: an MLState is opaque to the host, so EVERY producer of
+the KV cache — voice-snapshot load, cond_prefill, and the per-frame step —
+must read/write the SAME state, or the design collapses. Three open
+questions: (1) can prefill + the Trial 21 fused step share one state
+across CoreML functions/models, (2) how does the host inject the
+pre-baked v2 voice snapshot into an opaque state, (3) does the win
+survive a full utterance including the per-utterance reset cost.
+
+**Design chosen: one multifunction mlpackage, three functions, one
+12-buffer fp16 state.** `bench_pipeline_mlstate.py` converts three
+stateful functions over identical `ct.StateType` buffers
+(`k_cache0..v_cache5`, each `[1, 512, 16, 64]` fp16, iOS18):
+
+- `write_state` — `KVStateWriter`, 12 fp16 inputs slice-assigned over the
+  ENTIRE state (`buf[:] = input`). One call = voice injection AND
+  utterance reset (it overwrites all slots, so no per-utterance
+  `make_state`). fp16 inputs are load-bearing: with fp32 inputs the
+  in-graph fp32→fp16 boundary cast rounds 1 ULP differently from numpy on
+  18/524288 real-snapshot values — fp16-in is a pure copy, bit-exact, and
+  halves the marshalled bytes (25.2 → 12.6 MB).
+- `prefill` — Trial 20's hoisted `cond_prefill_ane` graph writing the
+  state; cache I/O (24 tensors, ~100 MB/call fp32 round-trip) replaced by
+  one shared `position` input + `new_position` output.
+- `generate` — Trial 21's fused flowlm+flowdec writing the state; I/O
+  shrinks to `sequence`/`latent_init`/`position` →
+  `latent_final`/`is_eos` (+ `transformer_out` kept as a 4 KB debug
+  output for parity; drop for ship).
+
+Merged via `ct.utils.MultiFunctionDescriptor` + `save_multifunction`
+(coremltools 9.0 handles stateful functions fine). Weight dedup works:
+prefill (132.3 MB) + generate (170.6 MB) + writer (0.04 MB) merge to
+**170.7 MB** — the shared 6-layer transformer is stored once.
+
+**Q1 — state sharing across functions/models (measured, macOS 26, M-series,
+ct 9.0).**
+
+- One `MLState` across the three functions of the multifunction package:
+  **works** (`make_state()` from any function instance; predict on the
+  others accepts it; writer→prefill→generate accumulate into the same
+  buffers — the full-utterance parity below is the functional proof).
+- One `MLState` across two SEPARATE stateful mlpackages (Trial 22's
+  `flowlm_step_ane_state` + the new fused model): **unexpectedly also
+  works** — accepted, functional, and bit-identical (0.0e+00) vs the
+  model's own state once both are seeded identically; predictions update
+  the foreign state. This contradicts the "almost certainly not" prior,
+  but it is UNDOCUMENTED behavior (states appear to bind by
+  name/shape/dtype at the runtime level). Do not design around it; ship
+  the multifunction package, which is the documented pattern (Apple's
+  on-device-Llama writeup) and also buys the 132 MB dedup.
+- Alternatives rejected: a single function with a `mode` selector would
+  run the T=256 prefill graph every frame (measured 6.9 ms prefill vs
+  3.0 ms/frame generate — 2.3× per-frame cost); replaying prefill through
+  the step model costs ~3 ms/token (~21-token text = ~63 ms, and a
+  126-token voice = ~380 ms) vs 6.9 ms one-shot.
+
+**Q2 — voice-snapshot injection (real alba v2 snapshot, 126 positions).**
+Two working mechanisms, both verified bit-exact round-trip
+(`st.read_state(name) == fp16(snapshot)` for all 12 buffers):
+
+| mechanism | ms (warm median) | notes |
+|-----------|---:|-------|
+| `write_state` function call | 2.18 | model-side contract, 12.6 MB fp16 in |
+| `MLState.write_state` ×12 (python) | 1.56 | Swift: `MLState.withMultiArray(for:)` gives the same mutable access |
+
+The "host cannot write an opaque MLState" premise is wrong on iOS18+:
+`MLState.withMultiArray(for:)` is read-write. Recommend the host-side
+write (faster, no extra dispatch); keep the 0.04 MB writer function in the
+package as the contract-explicit fallback. After injection, one `generate`
+step vs the IO models fed the same caches (CPU_AND_NE):
+d_transformer_out 9.3e-3, d_eos 2.3e-2 (logit; decision margin ≫),
+d_latent 3.9e-3 — Trial 19's fp16 band.
+
+**Q3 — endgame benchmark** (one simulated utterance: voice reset + 1
+prefill (21 real text tokens) + 40 generation frames with latent
+feedback; real alba snapshot; median of 15 utterances, 2 warmup;
+CPU_AND_NE except io-prefill@ALL per Trial 20's Mac ship rec):
+
+| variant | reset | prefill | frames | ms/frame | total |
+|---------|------:|--------:|-------:|---------:|------:|
+| A io-pair (prefill + step + flowdec) | 0.41 | 12.51 | 187.9 | 4.70 | 200.8 |
+| B io-fused (prefill + flowlm_flow_fused) | 0.41 | 12.56 | 186.0 | 4.65 | 199.0 |
+| **C state (writer + prefill + generate)** | 2.18 | 6.94 | 120.6 | **3.01** | **129.7** |
+| C' state (reset via write_state) | 1.56 | 7.01 | 120.4 | 3.01 | 129.0 |
+
+**−71.8 ms/utterance vs the io-pair (−35.8%); −1.69 ms/frame (−36%).**
+The fused-IO variant (B) is a wash, confirming Trial 21: without state,
+cache marshalling dominates and fusion can't help the median. With state,
+the fused step drops to 3.01 ms/frame (Trial 22's step-only 2.06 ms + the
+~1 ms flow decode that B paid anyway). Stateful prefill is also ~2×
+cheaper in-run (6.9 vs 12.5 ms — it no longer round-trips ~100 MB of
+fp32 cache I/O; io-prefill@ALL wobbles with the GPU scheduler, Trial 20
+saw 4.5–9.6 ms, so read the delta as in-run only). `make_state()`:
+**0.22 ms** median — and not needed per utterance at all, since
+`write_state` overwrites every slot.
+
+**Q4 — parity over the full 40-frame utterance** (same per-frame inputs
+both sides; worst across frames):
+
+| flavor | d_transformer_out | d_eos | d_latent_final |
+|--------|---:|---:|---:|
+| algorithmic (CPU_ONLY, fp16-rounded snapshot both sides) | **0.0e+00** | **0.0e+00** | 1.45e-2 |
+| deployment (CPU_AND_NE, each side's shipped inputs) | 1.69e-2 | 2.34e-2 | 4.99e-2 |
+
+The transformer path is bit-identical when inputs are identical — the
+state graph IS the IO graph. The deployment numbers fold in the inherent
+fp32(IO)-vs-fp16(state) snapshot difference and ANE op-fusion reordering;
+at observed magnitudes (|transformer_out| ~10, EOS logit margin ~5)
+these are fp16 ULP-band, but the worst frame is marginally above the
+1e-2 absolute target — flagging honestly; Whisper end-to-end before ship
+as usual. d_latent at CPU_ONLY (1.45e-2) comes from different op fusion
+inside the 8-step Euler loop when its conditioning arrives as an internal
+tensor vs a model input (same band Trial 21 accepted).
+
+**Placement (/tmp/ane_profile on compiled mlmodelc):**
+
+| artifact | device | ops |
+|----------|--------|----:|
+| cond_prefill_ane_state | 92% ANE / 8% CPU | 368 |
+| flowlm_fused_state | **100% ANE** | 1619 |
+| kv_state_writer | 100% ANE | 39 |
+| pocket_flowlm_mf_state (default fn = generate) | **100% ANE** | 1619 |
+
+Same partitions as the IO models (prefill's 8% CPU is the Trial 20
+scalar prologue); the state versions are ~100 ops lighter (output-side
+cache passthroughs gone). The profiler only sees the default function of
+a multifunction mlmodelc — profile the per-function packages too.
+
+**Q5 — risk register.**
+- **iOS18/macOS15 minimum** (both MLState and multifunction). Current
+  packs ship iOS17. Shipping this is a deployment-target bump for the
+  PocketTTS pack — either v3-pack-for-iOS18+ alongside the v2.1 IO pack
+  (host picks at runtime), or drop iOS17 for PocketTTS.
+- **MLState ANE-compatibility on iOS 18 devices.** FluidAudio's
+  ANE_Profiler gotcha list reports MLState forcing CPU on some iOS 18
+  configs. Everything here is macOS-measured (100% ANE); macOS placement
+  is necessary but NOT sufficient — on-device iPhone verification is a
+  ship gate.
+- **Utterance reset cost: retired.** make_state is 0.22 ms and is not
+  even needed per utterance — the writer/`withMultiArray` overwrite (1.6–
+  2.2 ms) doubles as the reset and replaces variant A's 0.4 ms numpy
+  cache copy + snapshot re-pad. Net reset overhead ~1.5 ms/utterance vs
+  a 72 ms win at 40 frames; breakeven is ~1 frame.
+- **Cross-model state sharing is undocumented** — works today on
+  macOS 26/ct 9.0, must not be load-bearing.
+- **fp16 state precision**: snapshot and inter-frame caches drop
+  fp32→fp16 at rest. Compute was always fp16; algorithmic parity is
+  exact; deployment parity above.
+- Python-harness numbers (numpy marshalling every call); Swift reuses
+  MLMultiArrays so the IO baselines pay somewhat less in production —
+  expect the on-device delta to land between Trial 22's compute-only
+  −1.6 ms/frame and the −1.69 ms/frame measured here.
+
+**Host changes required (FluidAudio).**
+1. Download/compile ONE `pocket_flowlm_mf_state.mlmodelc`; load three
+   `MLModel` instances from it with `MLModelConfiguration.functionName`
+   = `prefill` / `generate` / `write_state`, all `.cpuAndNeuralEngine`.
+2. Create one `MLState` per session (`model.makeState()`); keep it across
+   utterances.
+3. Voice load: convert the v2 snapshot to fp16 zero-padded
+   `[1, 512, 16, 64]` arrays ONCE; per utterance write them via
+   `MLState.withMultiArray(for:)` (or the `write_state` function) — this
+   replaces `emptyKVCacheState` + snapshot seeding.
+4. Prefill: one call with `conditioning`/`valid_len`/`position` (single
+   shared position replaces the 6 per-layer ones; host already keeps them
+   equal).
+5. Frame loop: `generate(sequence, latent_init, position)` →
+   `latent_final`/`is_eos`; host increments a position counter. All
+   24-tensor cache plumbing (`PocketTtsSynthesizer+KVCache.swift`)
+   deletes; BOS = pass the BOS latent as `sequence` (no NaN).
+6. Keep the v2.1 IO pack for iOS17 fallback if the deployment floor
+   stays.
+
+Also fixed in this trial: `traceable_flowlm_flow_fused.py` +
+`convert_flowlm_flow_fused.py` still passed `bos_emb` into the step
+module after Trial 22 removed it from `TraceableFlowLMStepANE.forward`
+— the fused converter was broken at HEAD (re-verified 0.0e+00 parity
+after the fix).
+
+### Status
+
+**Trial 23: DESIGN VALIDATED — multifunction + shared MLState works
+end-to-end; −71.8 ms/utterance (−35.8%) vs the shipped IO pipeline at 40
+frames; bit-exact snapshot injection; algorithmic parity 0.0e+00.
+Recommendation: SHIP for iOS18+/macOS15+ behind a capability check, after
+(a) on-device iPhone placement verification (MLState×ANE gotcha) and
+(b) Whisper end-to-end on the stateful pack.** Script:
+`bench_pipeline_mlstate.py` (phases: convert, merge, share, writer,
+bench, parity, profile). Artifacts (not committed):
+`build/english/{cond_prefill_ane_state,flowlm_fused_state,kv_state_writer,pocket_flowlm_mf_state}.mlpackage`
+(+ mlmodelc).

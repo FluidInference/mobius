@@ -60,11 +60,10 @@ def convert_flowlm_flow_fused(
 
     print("Creating example inputs...")
     sequence = torch.randn(1, 1, 32)
-    bos_emb = model.flow_lm.bos_emb.data
     latent_init = torch.randn(1, 32)
 
     prefix_len = 136
-    trace_inputs = [sequence, bos_emb, latent_init]
+    trace_inputs = [sequence, latent_init]
     for _ in range(num_layers):
         k_cache = torch.zeros(1, max_seq_len, H, D)
         v_cache = torch.zeros(1, max_seq_len, H, D)
@@ -83,9 +82,11 @@ def convert_flowlm_flow_fused(
     # rejects fp16 MLMultiArrays). Fusion removes the [1, 1, 1024]
     # transformer_out from the IO surface entirely.
     print("Converting to CoreML (precision={}, IO=fp32)...".format(compute_precision))
+    # No bos_emb input: Trial 22's no-NaN-BOS host contract (the ANE
+    # mangles NaN inputs) — the host passes the BOS latent as `sequence`
+    # on the first generation step.
     inputs = [
         ct.TensorType(name="sequence", shape=(1, 1, 32), dtype=np.float32),
-        ct.TensorType(name="bos_emb", shape=(32,), dtype=np.float32),
         ct.TensorType(name="latent_init", shape=(1, 32), dtype=np.float32),
     ]
     for i in range(num_layers):
@@ -118,10 +119,9 @@ def convert_flowlm_flow_fused(
     coreml_model = ct.models.MLModel(output_path, compute_units=resolve_compute_units(compute_units))
 
     feed = {"sequence": np.random.randn(1, 1, 32).astype(np.float32),
-            "bos_emb": bos_emb.numpy().astype(np.float32),
             "latent_init": np.random.randn(1, 32).astype(np.float32)}
     torch_inputs = [
-        torch.from_numpy(feed["sequence"]), bos_emb, torch.from_numpy(feed["latent_init"])]
+        torch.from_numpy(feed["sequence"]), torch.from_numpy(feed["latent_init"])]
     rng = np.random.default_rng(0)
     for i in range(num_layers):
         k = np.zeros((1, max_seq_len, H, D), dtype=np.float32)
