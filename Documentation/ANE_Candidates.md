@@ -113,10 +113,16 @@ go/no-go gate, so future work starts from data instead of rediscovery.
 - Nemotron EN's loop (67 ms/utt) is the same shape — same lean fusion
   applies, but price it at ~5–10% e2e, not the per-step number.
 
-### 5. Supertonic VectorEstimator loop fusion — garnish
-- Today: 94% ANE but the host dispatches the 8-step denoising loop (8×3.8 ms).
-- Action: Trial-16 fusion → 1 dispatch/chunk. Ceiling ~5–10% of an 81 ms
-  synth; do it opportunistically, not as a project.
+### 5. Supertonic VectorEstimator loop fusion — RESOLVED 2026-06-10 (DECLINED)
+- Built and measured (mobius feat/supertonic-ve-fusion): fused graph reaches
+  99.5% ANE but saves only ~2–3 ms/chunk over the 8-call loop — and
+  final-latent parity is **1.469 max_abs, 30× outside the 0.05 band**. The
+  host loop's per-step fp32 IO casts act as error-containment barriers for
+  the precision-sensitive LSD denoiser; the fused fp16 graph compounds.
+- Playbook corollary: loop fusion is NOT free when the looped graph is
+  precision-sensitive — the IO boundary being fused away may be doing
+  numerical work. (Contrast: PocketTTS flow decoder fused cleanly because
+  its Euler updates tolerate fp16.)
 
 ## Settled — do not revisit without new hardware/OS facts
 
@@ -131,6 +137,7 @@ go/no-go gate, so future work starts from data instead of rediscovery.
 | Parakeet EOU joint_decision (standalone) | CPU forever | zero ANE segments under ALL or CPU_AND_NE — 3 MB small-graph floor confirmed empirically; flat across all compute units |
 | Nemotron ML `decoder_joint` | 54% ANE is the ceiling | per-op dump 2026-06-10: CPU 46% = the LSTM prediction network (2× `ios18.lstm`, no ANE kernel) + inseparable state glue; the joint half (3 linears incl. 640→13088 logits) is already 100% ANE in the fused graph. No fixable constructs. Per-language variants (vocab ≤2829) are 100% CPU — under the worth-it floor, leave alone |
 | Pyannote segmentation | GPU already (0% win) | plan says CPU but dispatches GPU under `.all` (52.9 vs 145.5 ms true-CPU); all-fp32 graph + 4× `ios17.lstm` make ANE doubly impossible; FBank/PldaRho correctly CPU (under floor) |
+| Supertonic VE loop fusion | declined | 99.5% ANE but ~2–3 ms/chunk and parity 30× outside band — the loop's fp32 IO casts are error containment for the LSD denoiser (mobius feat/supertonic-ve-fusion) |
 | SenseVoice / Paraformer encoders | done | 97–99% ANE already |
 | Silero VAD, preprocessors, G2P, Supertonic DurationPredictor | CPU | under the ~50 MB transfer-overhead floor, or measured fastest on CPU |
 
