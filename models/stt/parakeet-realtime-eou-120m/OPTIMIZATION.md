@@ -242,12 +242,14 @@ MIL, and is a property of *any* fp16 decoder+joint fusion — not of the lean
 rebuild.
 
 Per-file tail (identical for both fused variants): 4/2,620 files where fused
-WER exceeds ref by >20 pp — 6930-75918-0020 (+31.6 pp), 908-157963-0019
-(+25.6), 1221-135766-0015 (+25.0), 1188-133604-0009 (+21.4). All four are
-utterances where the harness reference is already degenerate (ref WER 50–68%
-under the non-overlap chunking); the failure mode is early truncation (a
-tie-level blank/EOU flip ends emission early), not hallucination. Worth
-re-checking under production overlap chunking before relying on it either way.
+WER exceeds ref by >20 pp — 6930-75918-0020 (+31.6 pp, +12 err/38 w),
+908-157963-0019 (+25.6, +11/43), 1221-135766-0015 (+25.0, +2/8 — tiny-file
+artifact), 1188-133604-0009 (+21.4, +15/70). All four are utterances where
+the harness reference is already degenerate (ref WER 50–68% under the
+non-overlap chunking); the failure mode is early truncation (a tie-level
+blank/EOU flip ends emission early), not hallucination. These 4 files carry
+essentially the whole +0.043 pp aggregate delta. Worth re-checking under
+production overlap chunking before relying on it either way.
 
 ### 6c. Verdict (decision rule, applied)
 
@@ -310,30 +312,3 @@ $VENVPY coreml/conversion_scripts/bench_three_way.py --model-dir "$MODELS" \
     --lean /tmp/eou_fused/decoder_joint_decision_fused.mlpackage \
     --enc-frame /tmp/eou_enc_cache/<any>.npy
 ```
-
-## Full-scale head-to-head WER gate (2026-06-10, all 2,620 LibriSpeech test-clean files)
-
-One harness, shared cached encoder outputs, three decode variants:
-
-| variant | WER | Δ vs ref | seq-diff files | >+20pp files |
-|---|---|---|---|---|
-| reference pair | 35.646% (18,741 err / 52,576 words) | — | — | — |
-| traced fused (fp16) | 35.689% | +0.043 pp | 278/2620 | 4 |
-| lean fused (fp16) | 35.689% | +0.043 pp | 278/2620 | 4 |
-
-**traced == lean on 2,620/2,620 token sequences.** The traced build's earlier
-"bit-exact" parity was fp32-vs-fp32 only; in deployment fp16 both fusions are
-the identical behavioral change. There is no "safe fused fallback" — the
-choice is fused (1.59× decode e2e) or not fused.
-
-Blowup files: 1221-135766-0015 is a tiny-file artifact (8 words, +2 errors);
-1188-133604-0009 (+15 err/70w), 6930-75918-0020 (+12/38), 908-157963-0019
-(+11/43) are real near-tie cascades on already-noisy files. 4/2620 = 0.15%
-of files carry the whole +0.043 pp.
-
-### VERDICT: ship the lean fusion; retire the traced build (strictly dominated
-— same outputs on every file, slower). Gate result: aggregate ΔWER +0.043 pp
-(rule bar +0.10), blowups present but inherent to fp16 fusion itself, not the
-lean variant. Maintainer sign-off on the 4-outlier trade is the remaining
-ship condition; Swift integration is the documented one-line RnntDecoder
-change.
