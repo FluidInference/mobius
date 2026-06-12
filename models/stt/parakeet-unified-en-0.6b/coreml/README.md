@@ -98,6 +98,22 @@ The streaming simulation mirrors NeMo's `StreamingBatchedAudioBuffer`: feed
 `right` frames (re-encoded with more future context next step); RNNT decoder
 LSTM state and last token persist across chunks.
 
+### LibriSpeech test-clean WER (full CoreML chain, greedy)
+
+```bash
+uv run --no-sync python benchmark_wer.py --mode both
+```
+
+| Mode | WER | Files | RTFx (Python loop) |
+|------|-----|-------|--------------------|
+| Offline (15 s window) | **1.82%** | 2382 (238 files > 15 s skipped) | 117 |
+| Streaming [70,13,13], 2.08 s latency | **2.15%** | all 2620 | 54 |
+
+Reference: NVIDIA claims 1.63% offline on full-length audio (no 15 s cap).
+Text normalization: strip punctuation, lowercase (same as the nemotron
+benchmark). RTFx is bounded by the single-threaded Python decode loop, not
+the models.
+
 ### Latency (median of 5, after warmup)
 
 | Component | CPU+ANE | CPU+GPU |
@@ -111,11 +127,25 @@ single-digit ms on CPU.
 Benign noise: `E5RT ... zero shape error` prints at process exit when the
 RangeDim preprocessor has been loaded; predictions are unaffected.
 
+## Stage for HuggingFace / Swift
+
+```bash
+uv run --no-sync python stage_hf.py   # → build/hf-staging/
+```
+
+Compiles each `.mlpackage` to `.mlmodelc`, exports `vocab.json`
+(`{id: piece}`, the format FluidAudio's Swift `Tokenizer` reads), and copies
+`metadata.json`. Upload of the staged directory to
+`FluidInference/parakeet-unified-en-0.6b-coreml` is user-run.
+
 ## Files
 
 - `convert-coreml.py` — export CLI (offline + streaming variants)
 - `components.py` — torch wrappers (RNNT: no duration head, unlike TDT v3)
+- `coreml_rnnt.py` — shared greedy RNNT decode + buffered streaming loop
 - `compare-models.py` — parity + E2E greedy decode validation, offline & streaming
+- `benchmark_wer.py` — LibriSpeech test-clean WER benchmark
+- `stage_hf.py` — compile mlmodelc + vocab.json for HF upload / Swift host
 - `inspect_model.py` — config dump + NeMo reference transcription
 
 ## Host integration notes (FluidAudio)
