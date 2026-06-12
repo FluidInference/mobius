@@ -93,7 +93,7 @@ class CoreMLRnnt:
         h, c, last_token = state
         if dec_out is None:
             dec_out, h, c = self.decoder_step(last_token, h, c)
-        tokens: List[int] = []
+        tokens: List[Tuple[int, int]] = []  # (token, local frame)
         for t in range(frame_offset, frame_offset + num_frames):
             enc_step = encoder_out[:, :, t : t + 1].astype(np.float32)
             for _ in range(MAX_SYMBOLS_PER_FRAME):
@@ -103,7 +103,7 @@ class CoreMLRnnt:
                 token = int(jd["token_id"].reshape(-1)[0])
                 if token == self.blank_idx:
                     break
-                tokens.append(token)
+                tokens.append((token, t))
                 last_token = token
                 dec_out, h, c = self.decoder_step(token, h, c)
         return tokens, (h, c, last_token), dec_out
@@ -116,7 +116,7 @@ def offline_transcribe(cm: CoreMLRnnt, audio: np.ndarray) -> List[int]:
     window[: audio.size] = audio
     encoder_out, enc_len = cm.encode(window, audio.size)
     tokens, _, _ = cm.decode_frames(encoder_out, enc_len, cm.init_state(), None)
-    return tokens
+    return [t for t, _ in tokens]
 
 
 def stream_transcribe(cm: CoreMLRnnt, audio: np.ndarray, context: Tuple[int, int, int]) -> List[int]:
@@ -161,7 +161,181 @@ def stream_transcribe(cm: CoreMLRnnt, audio: np.ndarray, context: Tuple[int, int
         if n_frames <= 0:
             continue
         tokens, state, dec_out = cm.decode_frames(encoder_out, n_frames, state, dec_out, frame_offset=local_start)
-        all_tokens.extend(tokens)
+        all_tokens.extend(t for t, _ in tokens)
         decoded_frames += n_frames
 
     return all_tokens
+
+
+# --- Offline overlapping-batch mode (long audio) -----------------------------
+#
+# Mirrors FluidAudio's UnifiedAsrManager / ChunkProcessor: frame-aligned
+# 14.96 s windows with 2 s overlap, each decoded independently from a fresh
+# RNNT state with global frame timestamps, then merged on the overlap with
+# time-tolerant token matching (LCS) and SentencePiece word-boundary splicing.
+
+BATCH_CHUNK_SAMPLES = 239_360  # 187 encoder frames
+BATCH_OVERLAP_SAMPLES = 32_000  # 25 frames = 2 s
+BATCH_STRIDE_SAMPLES = BATCH_CHUNK_SAMPLES - BATCH_OVERLAP_SAMPLES
+FRAME_SECONDS = ENCODER_FRAME_SAMPLES / SAMPLE_RATE  # 0.08
+
+
+def batch_chunk_starts(total_samples: int) -> List[int]:
+    if total_samples <= 0:
+        return []
+    starts = [0]
+    start = BATCH_STRIDE_SAMPLES
+    while start < total_samples:
+        if start + BATCH_OVERLAP_SAMPLES < total_samples:
+            starts.append(start)
+        start += BATCH_STRIDE_SAMPLES
+    return starts
+
+
+def merge_token_windows(
+    left: List[Tuple[int, int]],
+    right: List[Tuple[int, int]],
+    splice_safe: Optional[set] = None,
+) -> List[Tuple[int, int]]:
+    """Merge two (token, global_frame) streams whose audio overlapped by 2 s."""
+    if not left:
+        return right
+    if not right:
+        return left
+
+    overlap_dur = 2.0
+    tol = overlap_dur / 2
+
+    def start_time(tw):
+        return tw[1] * FRAME_SECONDS
+
+    left_end = start_time(left[-1]) + FRAME_SECONDS
+    right_start = start_time(right[0])
+    if left_end <= right_start:
+        return left + right
+
+    overlap_left = [
+        (i, tw) for i, tw in enumerate(left) if start_time(tw) + FRAME_SECONDS > right_start - overlap_dur
+    ]
+    overlap_right = [(i, tw) for i, tw in enumerate(right) if start_time(tw) < left_end + overlap_dur]
+
+    def midpoint_merge():
+        cutoff = (left_end + right_start) / 2
+        left_cut = next((i for i, tw in enumerate(left) if start_time(tw) >= cutoff), len(left))
+        right_cut = next((i for i, tw in enumerate(right) if start_time(tw) >= cutoff), len(right))
+        if splice_safe is not None:
+            # Do not split a word: extend left to finish its word, drop
+            # orphaned continuation pieces from right's head.
+            if left_cut > 0:
+                while left_cut < len(left) and left[left_cut][0] not in splice_safe:
+                    left_cut += 1
+            while right_cut < len(right) and right[right_cut][0] not in splice_safe:
+                right_cut += 1
+        return left[:left_cut] + right[right_cut:]
+
+    if len(overlap_left) < 2 or len(overlap_right) < 2:
+        return midpoint_merge()
+
+    # LCS over the overlap with time-tolerant token matching.
+    n, m = len(overlap_left), len(overlap_right)
+    lcs = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n - 1, -1, -1):
+        for j in range(m - 1, -1, -1):
+            li, lt = overlap_left[i]
+            ri, rt = overlap_right[j]
+            if lt[0] == rt[0] and abs(start_time(lt) - start_time(rt)) < tol:
+                lcs[i][j] = lcs[i + 1][j + 1] + 1
+            else:
+                lcs[i][j] = max(lcs[i + 1][j], lcs[i][j + 1])
+    matches = []
+    i = j = 0
+    while i < n and j < m:
+        li, lt = overlap_left[i]
+        ri, rt = overlap_right[j]
+        if lt[0] == rt[0] and abs(start_time(lt) - start_time(rt)) < tol:
+            matches.append((li, ri))
+            i += 1
+            j += 1
+        elif lcs[i + 1][j] >= lcs[i][j + 1]:
+            i += 1
+        else:
+            j += 1
+
+    if not matches:
+        return midpoint_merge()
+
+    result = list(left[: matches[0][0]])
+    for k, (li, ri) in enumerate(matches):
+        result.append(left[li])
+        if k + 1 < len(matches):
+            nli, nri = matches[k + 1]
+            gap_left = left[li + 1 : nli]
+            gap_right = right[ri + 1 : nri]
+            result.extend(gap_right if len(gap_right) > len(gap_left) else gap_left)
+
+    last_li, last_ri = matches[-1]
+    tail = right[last_ri + 1 :]
+    if splice_safe is not None and tail and tail[0][0] not in splice_safe:
+        # Seam lands mid-word. Prefer the right window's segmentation of the
+        # seam word (it usually heard the word from its start): pop the seam
+        # word from the result and resume right at the word-initial piece.
+        word_start = None
+        for idx in range(last_ri, -1, -1):
+            if right[idx][0] in splice_safe:
+                word_start = idx
+                break
+        popped = False
+        if word_start is not None:
+            for back in range(1, min(12, len(result)) + 1):
+                if result[-back][0] in splice_safe:
+                    del result[-back:]
+                    popped = True
+                    break
+        if word_start is not None and popped:
+            result.extend(right[word_start:])
+        else:
+            # Right began mid-word: left owns the seam word — finish it from
+            # left's continuation pieces, resume right at its next word start.
+            cursor = last_li + 1
+            while cursor < len(left) and left[cursor][0] not in splice_safe:
+                result.append(left[cursor])
+                cursor += 1
+            resume = next((idx for idx, tw in enumerate(tail) if tw[0] in splice_safe), None)
+            if resume is not None:
+                result.extend(tail[resume:])
+    else:
+        result.extend(tail)
+    return result
+
+
+def batch_transcribe(
+    cm: CoreMLRnnt, audio: np.ndarray, splice_safe: Optional[set] = None
+) -> List[int]:
+    """Offline overlapping-batch transcription for audio of any length."""
+    merged: List[Tuple[int, int]] = []
+    for chunk_start in batch_chunk_starts(audio.size):
+        chunk = audio[chunk_start : chunk_start + BATCH_CHUNK_SAMPLES]
+        window = np.zeros(OFFLINE_WINDOW_SAMPLES, dtype=np.float32)
+        window[: chunk.size] = chunk
+        encoder_out, enc_len = cm.encode(window, chunk.size)
+        tokens, _, _ = cm.decode_frames(encoder_out, enc_len, cm.init_state(), None)
+        global_tokens = [(t, f + chunk_start // ENCODER_FRAME_SAMPLES) for t, f in tokens]
+        merged = (
+            global_tokens if not merged else merge_token_windows(merged, global_tokens, splice_safe)
+        )
+    merged.sort(key=lambda tw: tw[1])
+    return [t for t, _ in merged]
+
+
+def splice_safe_token_ids(sp) -> set:
+    """SentencePiece word-initial (▁-prefixed) or punctuation-only pieces."""
+    import unicodedata
+
+    safe = set()
+    for i in range(sp.get_piece_size()):
+        piece = sp.id_to_piece(i)
+        if piece.startswith("▁"):
+            safe.add(i)
+        elif piece and all(unicodedata.category(ch)[0] in ("P", "S") for ch in piece):
+            safe.add(i)
+    return safe

@@ -31,7 +31,9 @@ from coreml_rnnt import (
     OFFLINE_WINDOW_SAMPLES,
     SAMPLE_RATE,
     CoreMLRnnt,
+    batch_transcribe,
     offline_transcribe,
+    splice_safe_token_ids,
     stream_transcribe,
 )
 
@@ -84,19 +86,23 @@ def run_mode(
 
     hyps: List[str] = []
     refs: List[str] = []
-    skipped = 0
+    long_files = 0
     audio_seconds = 0.0
     decode_seconds = 0.0
+    splice_safe = splice_safe_token_ids(sp) if mode == "offline" else None
 
     for i, (flac, ref) in enumerate(files):
         audio, sr = sf.read(str(flac), dtype="float32")
         assert sr == SAMPLE_RATE
-        if mode == "offline" and audio.size > OFFLINE_WINDOW_SAMPLES:
-            skipped += 1
-            continue
         t0 = time.time()
         if mode == "offline":
-            tokens = offline_transcribe(cm, audio)
+            # Files beyond the 15 s window use overlapping-batch windows
+            # (mirrors FluidAudio's UnifiedAsrManager).
+            if audio.size > OFFLINE_WINDOW_SAMPLES:
+                long_files += 1
+                tokens = batch_transcribe(cm, audio, splice_safe)
+            else:
+                tokens = offline_transcribe(cm, audio)
         else:
             tokens = stream_transcribe(cm, audio, context)
         decode_seconds += time.time() - t0
@@ -111,7 +117,11 @@ def run_mode(
     print(f"\n=== {mode.upper()} ===")
     if mode == "streaming":
         print(f"context [L,C,R] = {list(context)} (latency {(context[1] + context[2]) * 0.08:.2f} s)")
-    print(f"files: {len(hyps)} (skipped {skipped} > 15 s)" if mode == "offline" else f"files: {len(hyps)}")
+    print(
+        f"files: {len(hyps)} ({long_files} > 15 s via overlapping batch)"
+        if mode == "offline"
+        else f"files: {len(hyps)}"
+    )
     print(f"WER: {wer * 100:.2f}%")
     print(f"audio: {audio_seconds / 60:.1f} min, decode: {decode_seconds / 60:.1f} min, RTFx: {rtfx:.1f}")
 

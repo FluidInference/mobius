@@ -106,13 +106,18 @@ uv run --no-sync python benchmark_wer.py --mode both
 
 | Mode | WER | Files | RTFx (Python loop) |
 |------|-----|-------|--------------------|
-| Offline (15 s window) | **1.82%** | 2382 (238 files > 15 s skipped) | 117 |
+| Offline batch (15 s windows, 2 s overlap merge) | **1.86%** | all 2620 (238 > 15 s via overlapping batch) | 124 |
+| Offline, single window (≤ 15 s files only) | 1.82% | 2382 | 117 |
 | Streaming [70,13,13], 2.08 s latency | **2.15%** | all 2620 | 54 |
 
-Reference: NVIDIA claims 1.63% offline on full-length audio (no 15 s cap).
-Text normalization: strip punctuation, lowercase (same as the nemotron
-benchmark). RTFx is bounded by the single-threaded Python decode loop, not
-the models.
+int8 encoders score identically (batch 1.86%, streaming 2.14%). Long files
+use overlapping 14.96 s windows merged on the 2 s overlap (time-tolerant
+token LCS + SentencePiece word-boundary splicing — mirrors FluidAudio's
+`UnifiedAsrManager`/`ChunkProcessor`). Reference: NVIDIA claims 1.63%
+offline with unbounded attention (no 15 s window); the +0.23 gap is the
+fixed-window cost, not the merge. Text normalization: strip punctuation,
+lowercase (same as the nemotron benchmark). RTFx is bounded by the
+single-threaded Python decode loop, not the models.
 
 ### Latency (median of 5, after warmup)
 
