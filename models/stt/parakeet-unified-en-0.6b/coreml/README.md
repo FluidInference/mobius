@@ -127,6 +127,20 @@ single-digit ms on CPU.
 Benign noise: `E5RT ... zero shape error` prints at process exit when the
 RangeDim preprocessor has been loaded; predictions are unaffected.
 
+## Quantize (int8)
+
+```bash
+uv run --no-sync python quantize_int8.py   # → build/parakeet_unified_coreml_int8/
+```
+
+Per-channel linear-symmetric int8 weights on both encoders (same recipe as
+the nemotron pipeline). **WER-lossless on full test-clean**: offline 1.83%
+(fp16 1.82%), streaming 2.14% (fp16 2.15%). ANE latency identical on M-series
+(12.3 vs 12.4 ms streaming window); the win is size — 1.1 GB → ~565 MB per
+encoder. Caveat for hosts: int8 must not route to the GPU — under CoreML's
+`.all` compute units MPSGraph fails its MLIR pass and aborts; load with
+CPU+ANE (the FluidAudio managers coerce this automatically).
+
 ## Stage for HuggingFace / Swift
 
 ```bash
@@ -145,7 +159,8 @@ Compiles each `.mlpackage` to `.mlmodelc`, exports `vocab.json`
 - `coreml_rnnt.py` — shared greedy RNNT decode + buffered streaming loop
 - `compare-models.py` — parity + E2E greedy decode validation, offline & streaming
 - `benchmark_wer.py` — LibriSpeech test-clean WER benchmark
-- `stage_hf.py` — compile mlmodelc + vocab.json for HF upload / Swift host
+- `quantize_int8.py` — int8 weight quantization of both encoders
+- `stage_hf.py` — compile mlmodelc (+ *_int8 variants) + vocab.json for HF upload / Swift host
 - `inspect_model.py` — config dump + NeMo reference transcription
 
 ## Host integration notes (FluidAudio)

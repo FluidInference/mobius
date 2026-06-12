@@ -39,14 +39,27 @@ def export_vocab(nemo_path: Path, out_path: Path) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--coreml-dir", type=Path, default=Path("build/parakeet_unified_coreml"))
+    parser.add_argument(
+        "--int8-dir",
+        type=Path,
+        default=Path("build/parakeet_unified_coreml_int8"),
+        help="quantize_int8.py output; its encoders are staged as *_int8.mlmodelc",
+    )
     parser.add_argument("--output-dir", type=Path, default=Path("build/hf-staging"))
     parser.add_argument("--nemo-path", type=Path, default=Path("parakeet-unified-en-0.6b.nemo"))
     args = parser.parse_args()
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    for pkg in sorted(args.coreml_dir.glob("*.mlpackage")):
-        target = args.output_dir / (pkg.stem + ".mlmodelc")
+    jobs = [(pkg, pkg.stem) for pkg in sorted(args.coreml_dir.glob("*.mlpackage"))]
+    if args.int8_dir.exists():
+        jobs += [
+            (pkg, pkg.stem + "_int8")
+            for pkg in sorted(args.int8_dir.glob("parakeet_unified_encoder*.mlpackage"))
+        ]
+
+    for pkg, stem in jobs:
+        target = args.output_dir / (stem + ".mlmodelc")
         if target.exists():
             print(f"exists, skipping: {target.name}")
             continue
