@@ -119,6 +119,22 @@ fixed-window cost, not the merge. Text normalization: strip punctuation,
 lowercase (same as the nemotron benchmark). RTFx is bounded by the
 single-threaded Python decode loop, not the models.
 
+### Hour-scale audio (benchmark_longform.py)
+
+444 test-clean utterances concatenated into one 60-minute wav with an exact
+reference (0.4 s gaps). The delta vs the same utterances scored individually
+isolates what hour-scale processing adds (window seams, state, merge):
+
+| Path | WER | Δ vs per-utterance | RTFx |
+|------|-----|--------------------|------|
+| Per-utterance baseline (same 444 files) | 1.38% | — | — |
+| Offline batch, one 60-min file (278 windows / 277 seams) | **1.79%** | +0.41 | 161 |
+| Streaming, one 60-min session | **1.83%** | +0.45 | 49 |
+
+Seam cost is constant per seam (~0.14 word errors/seam; +0.26 abs on a 5-min
+composite) — it does not compound with duration. Streaming decoder state is
+stable over the full hour.
+
 ### Latency (median of 5, after warmup)
 
 | Component | CPU+ANE | CPU+GPU |
