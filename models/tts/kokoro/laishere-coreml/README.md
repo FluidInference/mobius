@@ -126,6 +126,37 @@ cp build/laishere-kokoro/{vocab.json,af_heart.bin} build/laishere-kokoro-hf/ANE/
 #       ./build/laishere-kokoro-hf/ANE/ ANE/
 ```
 
+## Noise v2 — `atan2` phase fix (HF-noise / "sharpness")
+
+The original `KokoroNoise` stage computed the noise-source STFT phase as plain
+`atan2(imag, real)`, hitting a CoreML branch bug at the DC/Nyquist bins
+(`real<0, imag≈0` returns `0` instead of `+π`). That π flip smears
+broad-spectrum high-frequency noise through `noise_convs[0]` into all 256
+channels of `x_source_0` — audible as sharp/clicky speech. en + ja exhibited
+it; zh (`kokoro-v1.1-zh`) already shipped the fix. See
+`docs/trials-and-errors.md` → "Noise-stage `atan2` phase bug".
+
+Fix lives in `CoreMLForwardSTFT.transform` (`convert-coreml.py`). Rebuild only
+the noise stage and verify the HF drop (≥10 kHz band, −3 to −5 dB):
+
+```bash
+uv run python convert-coreml.py --output-dir build/noise-fix --stages noise
+```
+
+**Deployed as `KokoroNoise_v2.mlmodelc` (renamed, not overwritten)** so cached
+clients re-download instead of silently keeping the buggy file. The Swift
+loader points at the v2 name (`ModelNames.KokoroAne.noise`,
+`KokoroAneSynthesizer+Types.swift bundleName`). The noise stage is
+language-agnostic — `model.mil` + `weight.bin` are byte-identical across `ANE/`
+and `ANE-ja/`, so one rebuilt bundle serves both; `ANE-zh/` keeps its own
+already-correct model, re-exported under the same v2 name. Upload all three:
+
+```bash
+#   ANE/KokoroNoise_v2.{mlmodelc,mlpackage}
+#   ANE-ja/KokoroNoise_v2.{mlmodelc,mlpackage}
+#   ANE-zh/KokoroNoise_v2.{mlmodelc,mlpackage}
+```
+
 ## License
 
 MIT — see `LICENSE`. Original work © laishere; adaptations © FluidInference.

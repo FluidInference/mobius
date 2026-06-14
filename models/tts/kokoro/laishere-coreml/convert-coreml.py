@@ -148,6 +148,19 @@ class CoreMLCustomSTFT(nn.Module):
         backward_imag = original.weight_backward_imag.clone()
         backward_real[1:-1] *= 2.0
         backward_imag[1:-1] *= 2.0
+        # Overlap-add (COLA) normalization that torch.istft applies but this
+        # conv-transpose iSTFT omitted — leaving the output a constant 1.5x too
+        # loud (measured: interior per-sample ratio 1.5000, std 0, corr 1.0 vs
+        # torch.istft). Divide by the steady-state sum of squared synthesis
+        # windows so the reconstruction matches torch.istft exactly.
+        w = original.window.detach().cpu().numpy().astype(np.float64)
+        n_frames = 2 * (self.n_fft // self.hop_length) + 4
+        env = np.zeros((n_frames - 1) * self.hop_length + self.n_fft)
+        for i in range(n_frames):
+            env[i * self.hop_length:i * self.hop_length + self.n_fft] += w ** 2
+        cola = float(env[len(env) // 2])
+        backward_real /= cola
+        backward_imag /= cola
         self.deconv_real.weight = nn.Parameter(backward_real, requires_grad=False)
         self.deconv_imag.weight = nn.Parameter(backward_imag, requires_grad=False)
 
@@ -431,8 +444,22 @@ class CoreMLForwardSTFT(nn.Module):
         x = waveform.unsqueeze(1)
         real_out = self.conv_real(x)
         imag_out = self.conv_imag(x)
-        magnitude = torch.sqrt(real_out ** 2 + imag_out ** 2 + 1e-14)
-        phase = torch.atan2(imag_out, real_out)
+        # Two-stage atan2 correction (ported from kokoro-v1.1-zh, TRIALS Trial 11):
+        # CoreML's atan2 returns 0 (not +pi) when real<0 and imag is exactly 0
+        # (DC bin) or at the fp32 noise floor ~1e-15 (Nyquist bin). That phase
+        # error propagates through noise_convs[0] into all 256 channels of
+        # x_source_0, producing broad-spectrum HF noise (the "sharp/clicky"
+        # artifact). Clip computational-zero imag, then apply PyTorch's atan2
+        # branch convention for (imag==0, real<0). eps=1e-5 sits above the conv
+        # rounding floor and below any legitimate spectral imag value.
+        eps = 1e-5
+        imag_clipped = torch.where(imag_out.abs() < eps,
+                                   torch.zeros_like(imag_out), imag_out)
+        magnitude = torch.sqrt(real_out ** 2 + imag_clipped ** 2 + 1e-14)
+        phase = torch.atan2(imag_clipped, real_out)
+        correction_mask = (imag_clipped == 0) & (real_out < 0)
+        phase = torch.where(correction_mask,
+                            torch.full_like(phase, math.pi), phase)
         return magnitude, phase
 
 

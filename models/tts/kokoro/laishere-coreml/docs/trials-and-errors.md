@@ -67,6 +67,35 @@ Keep the dual output (`anchor` + `x_pre`) — `anchor` is unused at inference
 but its presence prevents a coremltools trace bug where single-output traces
 of the body lose static-shape inference.
 
+## Noise-stage `atan2` phase bug → broad-spectrum HF noise ("sharp/clicky")
+
+`CoreMLForwardSTFT.transform` (the noise-source SineGen STFT) computed phase as
+plain `torch.atan2(imag_out, real_out)`. CoreML's `atan2` returns `0` instead of
+`+π` when `real < 0` and `imag` is exactly 0 (DC bin) or at the fp32 noise floor
+~1e-15 (Nyquist bin) — a full π phase flip on those bins. It propagates through
+`noise_convs[0]` (strided conv mixing ~11 freq bins) into all 256 channels of
+`x_source_0`, smearing broad-spectrum HF noise across the output. Audible as
+sharpness/sibilant clicks, strongest in the top octave; en + ja both exhibited
+it, zh did not (the `kokoro-v1.1-zh` chain already carried the fix).
+
+Fix (ported from `kokoro-v1.1-zh` TRIALS Trial 11), `convert-coreml.py:440` —
+clip computational-zero imag (`eps=1e-5`), then apply PyTorch's branch
+convention for `(imag==0, real<0) → π`:
+
+```python
+imag_clipped = torch.where(imag_out.abs() < eps, torch.zeros_like(imag_out), imag_out)
+phase = torch.atan2(imag_clipped, real_out)
+phase = torch.where((imag_clipped == 0) & (real_out < 0),
+                    torch.full_like(phase, math.pi), phase)
+```
+
+Verified E2E (reconvert `--stages noise` → recompile → swap cached
+`KokoroNoise.mlmodelc`): output bytes change, HF ≥10 kHz band power drops
+−3.2 dB rel / −4.7 dB abs (en) and −4.7 dB rel / −3.5 dB abs (ja). The noise
+stage is the language-agnostic kokoro decoder source module — `model.mil` +
+`weight.bin` are byte-identical across `ANE/` and `ANE-ja/`, so one rebuilt
+`KokoroNoise.mlpackage` serves both. zh is unaffected (already fixed).
+
 ## RangeDim cap (don't try to support arbitrary length)
 
 Set `--max-frames 2000` (T_a). Higher values blow up the alignment matrix
