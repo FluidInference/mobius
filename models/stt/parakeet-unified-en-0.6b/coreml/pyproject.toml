@@ -1,0 +1,26 @@
+[project]
+name = "parakeet-unified-coreml"
+version = "0.1.0"
+description = "CoreML conversion pipeline for nvidia/parakeet-unified-en-0.6b (Unified FastConformer-RNNT, offline + chunked streaming)"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "torch==2.7.0",
+    # chunked_limited_with_rc + dynamic chunked conv (dcc) only exist on NeMo main,
+    # not in the 2.7.3 PyPI release. The released package provides the dependency
+    # tree; after `uv sync`, overlay NeMo from git (its pyproject pins torch to the
+    # PyTorch CPU index, which conflicts with uv resolution, hence --no-deps):
+    #   uv pip install --no-deps --force-reinstall \
+    #     "nemo_toolkit @ git+https://github.com/NVIDIA-NeMo/NeMo.git@95f92737cfb8ee0123bb328b07a2d24c6d859aff"
+    # IMPORTANT: always use `uv run --no-sync` afterwards — a plain `uv run`
+    # re-syncs the env and silently reverts the overlay to the 2.7.3 wheel.
+    "nemo_toolkit[asr]==2.7.3",
+    "coremltools>=9.0",
+    "soundfile>=0.12.0",
+    "librosa>=0.10.0",
+    "numpy>=1.24.0,<2.0",
+    "huggingface-hub>=0.30.0",
+    "jiwer>=3.0.0",
+]
+
+[tool.uv]
+dev-dependencies = []
