@@ -281,7 +281,11 @@ def convert(
     # === 5. Vocab + metadata (no prompt fields) ===
     vocab_size = int(model.tokenizer.vocab_size)
     vocab = {str(i): model.tokenizer.ids_to_tokens([i])[0] for i in range(vocab_size)}
-    (output_dir / "nemotron_vocab.json").write_text(json.dumps(vocab, ensure_ascii=False, indent=2))
+    # encoding="utf-8": pieces contain U+2581 / non-ASCII; write_text defaults to
+    # the locale codec (cp1252 on Windows) and would crash.
+    (output_dir / "nemotron_vocab.json").write_text(
+        json.dumps(vocab, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     metadata = {
         "model": model_id,
@@ -300,7 +304,7 @@ def convert(
         "decoder_layers": dec_layers,
         "encoder_dim": int(enc_out.shape[1]),
     }
-    (output_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
+    (output_dir / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     print(f"Done. Exported OpenVINO IR to {output_dir}")
 
 
