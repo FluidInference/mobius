@@ -1,0 +1,15 @@
+{
+  "mode": "forced",
+  "results": [
+    {
+      "fleurs_lang": "ja_jp",
+      "nemo_lang": "ja-JP",
+      "files": 650,
+      "metric": "CER",
+      "value": 15.12,
+      "rtfx": 3.45,
+      "detect_acc": null,
+      "audio_seconds": 8511.1
+    }
+  ]
+}

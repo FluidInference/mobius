@@ -1,0 +1,15 @@
+{
+  "mode": "forced",
+  "results": [
+    {
+      "fleurs_lang": "cmn_hans_cn",
+      "nemo_lang": "zh-CN",
+      "files": 945,
+      "metric": "CER",
+      "value": 20.94,
+      "rtfx": 2.73,
+      "detect_acc": null,
+      "audio_seconds": 11065.2
+    }
+  ]
+}
