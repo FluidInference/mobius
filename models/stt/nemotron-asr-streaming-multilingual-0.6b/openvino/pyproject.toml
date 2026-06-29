@@ -1,0 +1,23 @@
+[project]
+name = "nemotron-multilingual-openvino"
+version = "0.1.0"
+description = "OpenVINO IR export + INT8 quantization + FLEURS benchmark for Nemotron Multilingual Streaming 0.6B (CPU/NPU)"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "openvino>=2026.2.0",   # IR convert/compile/runtime (CPU; NPU on supported HW)
+    "nncf>=2.12.0",         # weight-only INT8 compression (quantize_int8_wo.py)
+    "soundfile>=0.12.0",
+    "numpy>=1.24.0",
+    "typer>=0.12.0",
+    "datasets>=2.18.0",     # google/fleurs streaming (benchmark_fleurs_ov.py)
+    "scipy>=1.11.0",        # resampling FLEURS audio to 16 kHz
+]
+
+# export_openvino.py traces the *same* backend-agnostic TorchScript wrappers as
+# the CoreML pipeline (imported from ../coreml/conversion_scripts via sys.path),
+# so exporting also needs NeMo + torch in the environment:
+#   uv pip install "nemo_toolkit[asr]" torch
+# Pure OV inference / quantization / benchmarking does not need NeMo.
+
+[tool.uv]
+dev-dependencies = []

@@ -1,0 +1,14 @@
+# Exported OpenVINO IR (large binaries — regenerate via export_openvino.py,
+# or download from HuggingFace FluidInference)
+build_ov/
+build_ov_fp16/
+build_ov_int8/
+*.xml
+*.bin
+
+# Scratch IR + source checkpoint
+scratch_*
+*.nemo
+
+# Benchmark run logs (noisy HF progress bars + stack traces); JSON results kept
+*.log

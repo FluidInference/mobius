@@ -1,0 +1,15 @@
+{
+  "mode": "forced",
+  "results": [
+    {
+      "fleurs_lang": "fr_fr",
+      "nemo_lang": "fr-FR",
+      "files": 676,
+      "metric": "WER",
+      "value": 12.92,
+      "rtfx": 3.57,
+      "detect_acc": null,
+      "audio_seconds": 7024.1
+    }
+  ]
+}
