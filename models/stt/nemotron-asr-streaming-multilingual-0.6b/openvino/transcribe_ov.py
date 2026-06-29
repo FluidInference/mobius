@@ -20,8 +20,11 @@ import soundfile as sf
 class NemotronOV:
     def __init__(self, model_dir: str, device: str = "CPU"):
         d = Path(model_dir)
-        self.metadata = json.loads((d / "metadata.json").read_text())
-        self.tokenizer = json.loads((d / "nemotron_vocab.json").read_text())
+        # encoding="utf-8": the vocab contains non-ASCII (U+2581, CJK) pieces;
+        # Path.read_text() defaults to the locale codec (cp1252 on Windows) and
+        # raises UnicodeDecodeError otherwise.
+        self.metadata = json.loads((d / "metadata.json").read_text(encoding="utf-8"))
+        self.tokenizer = json.loads((d / "nemotron_vocab.json").read_text(encoding="utf-8"))
 
         core = ov.Core()
         print(f"Loading OpenVINO IR on {device} ...")

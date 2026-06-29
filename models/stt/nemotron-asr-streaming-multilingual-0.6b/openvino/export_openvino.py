@@ -32,6 +32,8 @@ from typing import List, Tuple
 
 import numpy as np
 import openvino as ov
+import openvino.runtime.opset13 as _ovops
+from openvino.runtime.utils import replace_node as _ov_replace_node
 import torch
 import typer
 
@@ -74,6 +76,27 @@ def _lang_tag_token_ids(model) -> List[int]:
     return ids
 
 
+def _make_npu_safe(ov_model: ov.Model) -> int:
+    """Rewrite BitwiseNot(bool) -> LogicalNot so the IR runs on the OpenVINO NPU.
+
+    The NPU plugin miscompiles BitwiseNot on a boolean tensor: it performs an
+    integer bitwise complement, so ~0 = -1 and ~1 = -2 are *both* nonzero
+    ("true"). The FastConformer attention mask is built with `~` over a bool, so
+    on NPU the mask becomes all-true -> every key masked -> uniform softmax ->
+    the encoder output collapses to ~0 and every transcript is empty. LogicalNot
+    is semantically identical on a boolean and compiles correctly on NPU; it is a
+    no-op for CPU/GPU correctness. Returns the number of nodes rewritten.
+    """
+    n = 0
+    for op in list(ov_model.get_ordered_ops()):
+        if op.get_type_name() == "BitwiseNot":
+            repl = _ovops.logical_not(op.input_value(0))
+            repl.get_output_tensor(0).set_names(op.get_output_tensor(0).get_names())
+            _ov_replace_node(op, repl)
+            n += 1
+    return n
+
+
 def _save_ir(
     traced: torch.jit.ScriptModule,
     example_input: tuple,
@@ -94,6 +117,9 @@ def _save_ir(
         port.get_tensor().set_names({name})
     for port, name in zip(ov_model.outputs, output_names):
         port.get_tensor().set_names({name})
+    n_fixed = _make_npu_safe(ov_model)
+    if n_fixed:
+        print(f"  NPU-safe: rewrote {n_fixed} BitwiseNot -> LogicalNot")
     ov_model.validate_nodes_and_infer_types()
     ov.save_model(ov_model, str(out_path), compress_to_fp16=fp16)
     print(f"  saved {out_path.name}  inputs={[i.get_any_name() for i in ov_model.inputs]}"
