@@ -263,6 +263,9 @@ def convert(
         "decoder_layers": dec_layers,
         "encoder_dim": int(enc_out.shape[1]),
         "subsampling_factor": subsampling,
+        # NeMo preprocessor normalization mode; the eddy C++ featurizer applies
+        # per-feature mean/std normalization when this is true.
+        "feature_normalize": str(getattr(model.cfg.preprocessor, "normalize", "")) == "per_feature",
     }
     if ctx is not None:
         left, chunk, right = ctx
