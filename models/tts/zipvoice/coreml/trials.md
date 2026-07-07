@@ -118,3 +118,14 @@ multi-sentence content preserved. Decoder step scaling (GPU): 14.0ms @1024
 [1,2,4,2,1] downsampled stacks). 14.4s utterance e2e wall ~0.3-0.4s with
 torch vocoder (~40x realtime). Enumerated buckets remain the plan for a
 Swift integration; per-bucket compiled variants work today.
+
+### RSS measurements (python host, minus 348MB harness baseline)
+
+Steady-state: 1024/GPU ~480MB (mlpackage load) / ~1.1GB (CompiledMLModel);
+2048/GPU ~800MB / ~3.6GB; 1024/ANE ~220MB (weights in ANE-managed memory).
+Load/compile peak (transient): 1.5GB @1024, 4.3GB @2048, 1.2GB @1024-ANE.
+CompiledMLModel python loads hold 2-3x more resident than mlpackage loads
+- treat all as macOS upper bounds; measure in Swift on device.
+iPhone guidance: 1024 bucket max (chunk long text at sentence boundaries),
+consider 512 bucket + 6-bit palettization; 2048 compile peak (4.3GB) will
+not fit older-device jetsam limits.
