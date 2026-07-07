@@ -190,3 +190,33 @@ sentence-chunked synthesis at ~17x realtime core (4x40ms for ~2.7s) is
 already usable where power matters, and the ANE/GPU gap will narrow on
 iPhone (weaker GPU, comparable ANE). System view: FluidAudio's other
 models occupy ANE; TTS-on-GPU diversifies the load.
+
+### ANE rewrite feasibility (module benchmarks @T=1024, stack0 dim512)
+
+| module | ANE (T,B,C) | GPU | ANE (B,C,1,S) recast |
+|---|---|---|---|
+| attention (weights+apply) | 5.08 ms | 2.39 ms | - |
+| feedforward | 6.85 ms | 1.37 ms | **0.50 ms (13.7x)** |
+| conv_module | 2.52 ms | 1.41 ms | - |
+
+Summed over 16 layers x per-stack T, the seq-first module costs fully
+account for the 286ms whole-model step - it is not partition overhead;
+EVERY module pays the (T,B,C) layout tax uniformly (ff worst at 5x vs
+GPU). The 1x1-conv2d recast of feedforward (same weights, channels-first)
+runs 13.7x faster on ANE, confirming the ane-transformers thesis.
+
+Projected full rewrite: ff-class modules ~0.5ms, attention needs the
+(B,C,1,S) QKV + last-axis softmax + constant-matrix rel-pos treatment
+=> plausible 286 -> ~40-60ms/step ANE @1024 (4 steps ~200ms core,
+~28x RT, 658MB, low power) - iPhone-viable ANE-first TTS.
+
+Trial plan (next session):
+1. ANE-canonical TTSZipformer forward (weights reused, no retrain):
+   linear->conv2d(1x1), norms on channel dim, bypass/downsample
+   channel-first, SwooshL/R kept elementwise.
+2. Attention: per-head qkv via conv, softmax over last (S) axis,
+   rel->abs positional via constant banded matrix (fixed shapes).
+3. Per-module parity gates vs torch (the quick ff recast above skipped
+   submodule details - do it exactly), then whole-decoder parity + wav.
+4. coreml-cli --fallback loop per playbook; target zero CPU ops and
+   subquadratic-ish scaling to 1024f.
