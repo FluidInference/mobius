@@ -167,3 +167,26 @@ share, and revisit ANE layouts (658MB + lowest power, but 20x slower today).
   with per_grouped_channel group_size=16 under an iOS18+ target.
 - Palettized variants land LuxTTS below every existing FluidAudio TTS
   backend's peak RSS except Supertonic-3 (197 MB).
+
+### ANE deep-dive
+
+Fallback is NOT the problem: 2285/2297 ops on ANE (99.5%); the 12 CPU ops
+(depthwise convs, kernel 31/15 "grouped conv with large kernel size")
+cost 0.6ms. Quantization does NOT help: fp16/int8/6bit/int4 all 286ms
+@1024 - ANE is not weight-bandwidth-bound here.
+
+Bucket scaling shows the real issue - ANE time grows superlinearly
+(doubling frames: x2.3, x3.2, x3.5) while GPU stays near-linear:
+256f: ANE 40ms vs GPU 5.9ms (6.8x) | 512f: 91 vs 7.9 (11.4x)
+1024f: 286 vs 14.1 (20.3x) | 2048f: 1009 vs 34.3 (29.4x)
+=> the O(T^2) rel-pos attention (softmax + gather at [heads,B,T,T],
+seq-first permutes) tiles catastrophically on ANE at T>=512. Classic
+ane-transformers territory: needs (B,C,1,S) QKV restructuring, split
+softmax, and replacing the rel-pos gather - a dedicated trial per the
+ANE playbook, not a conversion flag.
+
+Interim ANE options: 256-frame buckets are only 6.8x off GPU - ANE-only
+sentence-chunked synthesis at ~17x realtime core (4x40ms for ~2.7s) is
+already usable where power matters, and the ANE/GPU gap will narrow on
+iPhone (weaker GPU, comparable ANE). System view: FluidAudio's other
+models occupy ANE; TTS-on-GPU diversifies the load.
