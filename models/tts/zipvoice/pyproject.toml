@@ -1,0 +1,20 @@
+[project]
+name = "zipvoice-coreml"
+version = "0.1.0"
+description = "CoreML conversion for ZipVoice / LuxTTS (flow-matching zero-shot TTS)"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "zipvoice",
+    "coremltools>=8.1",
+    "soundfile",
+    "onnx",
+    "onnxruntime",
+    "setuptools<81",
+]
+
+[tool.uv]
+find-links = ["https://k2-fsa.github.io/icefall/piper_phonemize.html"]
+required-environments = ["sys_platform == 'darwin' and platform_machine == 'arm64'"]
+
+[tool.uv.sources]
+zipvoice = { path = "upstream/luxtts", editable = true }
