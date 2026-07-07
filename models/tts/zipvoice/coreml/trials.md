@@ -275,3 +275,84 @@ Caveats for the whole-decoder rewrite:
   there is smaller); 4 steps ~150-250 ms core, iPhone-viable ANE-first.
 
 Template for the full rewrite: coreml/ane/layer.py.
+
+### ANE full-decoder rewrite (trial 3) — AneFmDecoder, all 16 layers, (1,C,1,S)
+
+coreml/ane/decoder.py: full TTSZipformer fm_decoder in ANE-canonical form —
+in/out proj as 1x1 convs, t + guidance_scale sinusoidal embedding ported to
+(1,C,1,1) (cos/sin cat on the channel axis, MLPs as 1x1 convs), per-stack
+time projections, SimpleDownsample as a strided depthwise conv with
+softmax(bias) taps, SimpleUpsample as nearest upsample, stack out-combiners
+as channel-axis Bypass, per-stack cnn kernels 31/15/7/15/31 (31 split
+15+15+1; 15 and 7 place directly). Same I/O contract as the original
+FmDecoder (t, x, text_condition, speech_condition, guidance_scale,
+padding_mask -> v), so coreml/parity.py-style feeds and swift/RssBench work
+unchanged. Mask ported as float bias: -1000 added pre-softmax on keys +
+zeroing before the depthwise convs + [::ds] subsampling — exactly upstream's
+masked_fill semantics.
+
+**pos_abs sharing**: linear_pos weights are NOT shared across layers, so the
+folded per-layer (H,phd,S,S) buffer of trial 2 would cost ~260 MB
+decoder-wide. Every layer's posproj = PE @ W_l^T lies in col(PE) (pos_dim
+48), and the SVD of the per-seq-len concatenated posprojs has numerical rank
+~27: an R=32 orthonormal basis reconstructs all of them to <=3.7e-8
+relative. One pos_basis[r,q,j] = U_R[S-1-q+j, r] constant per distinct S
+(1024: 67 MB, 512: 16.8 MB, 256: 4.2 MB fp16 = **88 MB total, 3 buffers**),
+with the per-layer basis coefficients folded into that layer's attention
+in_proj (p block 16 -> H*R=128 channels). mlpackage: 313 MB vs 238 MB orig.
+
+**Eager fp32 parity** (oracle inputs, 4-step loop): vs torch @1024+mask
+max_abs <= 3.8e-4, cos = 1.00000000 every step, final mel cos 1.00000000.
+vs the 751-exact oracle path: cos 0.9990-0.9997 — that is the pure-torch
+padding-leak floor, NOT the rewrite: upstream SimpleDownsample folds frame
+751 (computed garbage in the padded region) into downsampled frame 375 and
+mask[::2] keeps it, so torch@1024+mask itself differs from torch@751 by
+max_abs 1-2 / cos 0.9991-0.9997. The shipped FmDecoder bucket pays the same
+floor (its trial-1 step cos 0.999 was mostly this, not fp16).
+
+**Consolidated results** (M5 Pro, S=1024 bucket, oracle utterance 469
+prompt + 282 gen frames = 3.008 s, whisper-base, 3 warmup + 10 timed):
+
+| metric | AneFmDecoder ANE | AneFmDecoder GPU | AneFmDecoder CPU | orig ANE | orig GPU |
+|---|---|---|---|---|---|
+| fm step (python) | **54.6 ms** | 23.5 ms | 145 ms | 286 ms | 14.2 ms |
+| fm step (Swift) | 54.5 ms | - | - | 286 ms | 14.7 ms |
+| core te+4 steps | 223 ms | 96 ms | 586 ms | 1149 ms | 62 ms |
+| core RTFx (3.0 s oracle) | **13.5x** | 31.3x | 5.1x | 2.6x | 48x |
+| core RTFx (5.9 s full bucket) | **26.6x** | 61.7x | - | 5.2x | 92x |
+| per-step cos vs torch | 0.978-0.985 | - | 0.9986-0.9990 | 0.904-0.930 | 0.999 |
+| final mel cos | 0.9750 | - | 0.99868 | **0.6814** | 0.9988 |
+| log-mel cos (wav) | 0.96426 | - | 0.99889 | (wav cos -0.04) | 0.99925 |
+| RMS delta | -0.54 dB | - | -0.10 dB | - | -0.09 dB |
+| transcript (whisper-base) | "brown fox jumps over the lazy dog and honestly it felt great." | - | identical | GARBLED: "they pack or burn fast, jump through the lazy guards. Usley." | identical |
+| ANE placement | **2591/2591 (100%), 0 CPU** | - | - | 2285/2297 (12 CPU) | - |
+| Swift phys_footprint steady | **25.5 MB** | - | - | 658 MB | 996 MB |
+| model load | 13.7 s py / 11.9 s Swift | 1.4 s | - | 16.5 s | 8.5 s |
+
+Transcript matches the oracle modulo casing ("Brown Fox jumps...") — the
+known prompt-boundary elision, not a regression.
+
+Takeaways:
+
+- ANE step 286 -> **54.6 ms (5.2x)**, 100% ANE placement, zero fallback —
+  inside the 40-60 ms projection from trial 2.
+- The rewrite is not just faster on ANE, it is the difference between
+  broken and shippable there: the ORIGINAL graph on ANE produces garbled
+  audio (mel cos 0.68, unintelligible whisper transcript). The seq-first
+  gather/as_strided rel-pos path loses precision on ANE (trial 2 saw the
+  same per-layer: orig 0.980 vs ane 1.000000).
+- Remaining ANE-vs-CPU quality gap (log-mel 0.964 vs 0.999, -0.54 dB,
+  transcript intact) is fp16 accumulation compounded over 16 layers x 4
+  solver steps on the ANE path — the same package at CPU_ONLY matches the
+  shipped conversion exactly, and eager fp32 parity is exact.
+- phys_footprint 25.5 MB steady (vs 658 MB orig-ANE / 996 MB GPU): with
+  100% ANE placement, weights + activations live in ANE-managed memory
+  outside the jetsam-counted footprint. Combined with 54.6 ms steps this is
+  the iPhone path: ANE-first, low power, no jetsam pressure.
+- GPU step of the ANE-canonical graph is 23.5 ms vs 14.2 ms original (the
+  R=32 broadcast reduce costs more on GPU) — keep the original conversion
+  for the macOS GPU path, ship AneFmDecoder where ANE/power/memory matter.
+- Harnesses: coreml/ane/decoder_parity.py (eager gate),
+  coreml/ane/convert_decoder.py (build/coreml-ane, compiles
+  FmDecoder.mlmodelc for rss_bench), coreml/ane/pipeline.py (quality +
+  whisper + latency).
