@@ -25,8 +25,8 @@ from zipvoice.tokenizer.tokenizer import EmiliaTokenizer
 from zipvoice.utils.checkpoint import load_checkpoint
 from zipvoice.utils.scaling_converter import convert_scaled_to_non_scaled
 
-MAX_TOKENS = 256  # fixed token bucket (prompt + text)
-MAX_FRAMES = 1024  # fixed feature bucket (~10.9 s at 93.75 Hz)
+MAX_TOKENS = 256  # default fixed token bucket (prompt + text)
+MAX_FRAMES = 1024  # default fixed feature bucket (~10.9 s at 93.75 Hz)
 FEAT_DIM = 100
 
 
@@ -163,11 +163,11 @@ def load_model():
     return model, tokenizer
 
 
-def convert_text_encoder(model, out_dir: Path):
+def convert_text_encoder(model, out_dir: Path, max_tokens: int = MAX_TOKENS):
     wrapper = CoreMLTextEncoder(model).eval()
-    tokens = torch.zeros(1, MAX_TOKENS, dtype=torch.int32)
+    tokens = torch.zeros(1, max_tokens, dtype=torch.int32)
     tokens[0, :10] = torch.arange(2, 12, dtype=torch.int32)
-    mask = torch.zeros(1, MAX_TOKENS)
+    mask = torch.zeros(1, max_tokens)
     mask[0, 10:] = 1.0
 
     patch_pos_encodings(wrapper, (tokens, mask))
@@ -177,8 +177,8 @@ def convert_text_encoder(model, out_dir: Path):
     mlmodel = ct.convert(
         traced,
         inputs=[
-            ct.TensorType(name="tokens", shape=(1, MAX_TOKENS), dtype=np.int32),
-            ct.TensorType(name="padding_mask", shape=(1, MAX_TOKENS), dtype=np.float32),
+            ct.TensorType(name="tokens", shape=(1, max_tokens), dtype=np.int32),
+            ct.TensorType(name="padding_mask", shape=(1, max_tokens), dtype=np.float32),
         ],
         outputs=[ct.TensorType(name="token_embeds", dtype=np.float32)],
         minimum_deployment_target=ct.target.iOS17,
@@ -190,15 +190,15 @@ def convert_text_encoder(model, out_dir: Path):
     print(f"saved {path}")
 
 
-def convert_fm_decoder(model, out_dir: Path):
+def convert_fm_decoder(model, out_dir: Path, max_frames: int = MAX_FRAMES):
     wrapper = CoreMLFmDecoder(model).eval()
     t = torch.tensor([0.5])
-    x = torch.randn(1, MAX_FRAMES, FEAT_DIM)
-    text_cond = torch.randn(1, MAX_FRAMES, FEAT_DIM)
-    speech_cond = torch.randn(1, MAX_FRAMES, FEAT_DIM)
+    x = torch.randn(1, max_frames, FEAT_DIM)
+    text_cond = torch.randn(1, max_frames, FEAT_DIM)
+    speech_cond = torch.randn(1, max_frames, FEAT_DIM)
     guidance = torch.tensor([3.0])
-    mask = torch.zeros(1, MAX_FRAMES)
-    mask[0, 900:] = 1.0
+    mask = torch.zeros(1, max_frames)
+    mask[0, max_frames - 124:] = 1.0
 
     patch_pos_encodings(wrapper, (t, x, text_cond, speech_cond, guidance, mask))
     with torch.no_grad():
@@ -208,11 +208,11 @@ def convert_fm_decoder(model, out_dir: Path):
         traced,
         inputs=[
             ct.TensorType(name="t", shape=(1,), dtype=np.float32),
-            ct.TensorType(name="x", shape=(1, MAX_FRAMES, FEAT_DIM), dtype=np.float32),
-            ct.TensorType(name="text_condition", shape=(1, MAX_FRAMES, FEAT_DIM), dtype=np.float32),
-            ct.TensorType(name="speech_condition", shape=(1, MAX_FRAMES, FEAT_DIM), dtype=np.float32),
+            ct.TensorType(name="x", shape=(1, max_frames, FEAT_DIM), dtype=np.float32),
+            ct.TensorType(name="text_condition", shape=(1, max_frames, FEAT_DIM), dtype=np.float32),
+            ct.TensorType(name="speech_condition", shape=(1, max_frames, FEAT_DIM), dtype=np.float32),
             ct.TensorType(name="guidance_scale", shape=(1,), dtype=np.float32),
-            ct.TensorType(name="padding_mask", shape=(1, MAX_FRAMES), dtype=np.float32),
+            ct.TensorType(name="padding_mask", shape=(1, max_frames), dtype=np.float32),
         ],
         outputs=[ct.TensorType(name="v", dtype=np.float32)],
         minimum_deployment_target=ct.target.iOS17,
@@ -229,6 +229,8 @@ def main():
     parser.add_argument("--output-dir", default="build/coreml")
     parser.add_argument("--skip-text-encoder", action="store_true")
     parser.add_argument("--skip-fm-decoder", action="store_true")
+    parser.add_argument("--max-tokens", type=int, default=MAX_TOKENS)
+    parser.add_argument("--max-frames", type=int, default=MAX_FRAMES)
     args = parser.parse_args()
 
     out_dir = Path(args.output_dir)
@@ -238,9 +240,9 @@ def main():
     patch_simple_downsample()
     model, _ = load_model()
     if not args.skip_text_encoder:
-        convert_text_encoder(model, out_dir)
+        convert_text_encoder(model, out_dir, max_tokens=args.max_tokens)
     if not args.skip_fm_decoder:
-        convert_fm_decoder(model, out_dir)
+        convert_fm_decoder(model, out_dir, max_frames=args.max_frames)
 
 
 if __name__ == "__main__":

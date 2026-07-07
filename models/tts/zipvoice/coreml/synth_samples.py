@@ -27,28 +27,29 @@ TEXTS = [
 ]
 
 
-def synth(text, tokenizer, te, fm, prompt_tokens, prompt_features, prompt_len, prompt_rms, vocos, seed=42, speed=1.3):
+def synth(text, tokenizer, te, fm, prompt_tokens, prompt_features, prompt_len, prompt_rms, vocos, seed=42, speed=1.3,
+          max_tokens=MAX_TOKENS, max_frames=MAX_FRAMES):
     text_tokens = tokenizer.texts_to_token_ids([text])[0]
     cat = prompt_tokens + text_tokens
     S = len(cat)
-    assert S + 1 <= MAX_TOKENS, f"{S + 1} tokens > {MAX_TOKENS}"
+    assert S + 1 <= max_tokens, f"{S + 1} tokens > {max_tokens}"
 
-    tok_in = np.zeros((1, MAX_TOKENS), dtype=np.int32)
+    tok_in = np.zeros((1, max_tokens), dtype=np.int32)
     tok_in[0, :S] = cat
-    tmask = np.zeros((1, MAX_TOKENS), dtype=np.float32)
+    tmask = np.zeros((1, max_tokens), dtype=np.float32)
     tmask[0, S:] = 1.0
     embeds = te.predict({"tokens": tok_in, "padding_mask": tmask})["token_embeds"]
     embeds = torch.from_numpy(embeds[:, : S + 1, :].astype(np.float32))
 
     # speed: generate() default is 1.0 * 1.3
     features_len = prompt_len + int(np.ceil(prompt_len / len(prompt_tokens) * len(text_tokens) / speed))
-    assert features_len <= MAX_FRAMES, f"{features_len} frames > {MAX_FRAMES}"
+    assert features_len <= max_frames, f"{features_len} frames > {max_frames}"
 
     text_cond = expand_text_condition(embeds, S, features_len)
     speech_cond = torch.nn.functional.pad(prompt_features, (0, 0, 0, features_len - prompt_features.size(1)))
 
-    pad = lambda z: torch.nn.functional.pad(z, (0, 0, 0, MAX_FRAMES - z.size(1))).numpy().astype(np.float32)
-    fmask = np.zeros((1, MAX_FRAMES), dtype=np.float32)
+    pad = lambda z: torch.nn.functional.pad(z, (0, 0, 0, max_frames - z.size(1))).numpy().astype(np.float32)
+    fmask = np.zeros((1, max_frames), dtype=np.float32)
     fmask[0, features_len:] = 1.0
 
     timesteps = get_time_steps(num_step=4, t_shift=0.5)

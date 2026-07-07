@@ -106,3 +106,15 @@ ratio-based duration estimate; at 1.3 the elision grows from "The" to
 Swift integration guidance: trim reference clips at a VAD pause boundary
 (Silero VAD already in FluidAudio) instead of a fixed duration; expose
 speed, default 1.0.
+
+### Long-sentence test (2048-frame / 512-token variant)
+
+Converter now takes --max-tokens/--max-frames; long variant at
+build/coreml-long (FmDecoder same 238MB weights). Three texts, 10.2-14.4s
+generated audio, sentence-end prompt, speed 1.0: CoreML and PyTorch
+transcribe word-for-word identically, sentence onsets intact, full
+multi-sentence content preserved. Decoder step scaling (GPU): 14.0ms @1024
+-> 35.4ms @2048 frames (2.5x for 2x frames - subquadratic thanks to the
+[1,2,4,2,1] downsampled stacks). 14.4s utterance e2e wall ~0.3-0.4s with
+torch vocoder (~40x realtime). Enumerated buckets remain the plan for a
+Swift integration; per-bucket compiled variants work today.
