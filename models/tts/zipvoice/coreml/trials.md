@@ -129,3 +129,21 @@ CompiledMLModel python loads hold 2-3x more resident than mlpackage loads
 iPhone guidance: 1024 bucket max (chunk long text at sentence boundaries),
 consider 512 bucket + 6-bit palettization; 2048 compile peak (4.3GB) will
 not fit older-device jetsam limits.
+
+### Swift harness (swift/RssBench.swift, CoreML.framework, phys_footprint)
+
+| config | load | steady footprint | fm step | core RTFx |
+|---|---|---|---|---|
+| 1024 all(GPU) | 8.5s | 996 MB | 14.7 ms | 92x (5.9s gen) |
+| 1024 ane | 16.5s | 658 MB | 286 ms | 5.2x |
+| 2048 all(GPU) | 22.4s | 3059 MB | 34.3 ms | 114x (16.8s gen) |
+
+Latency matches the python host exactly. Memory is the real story:
+phys_footprint (jetsam metric) is ~1.0GB at the 1024 bucket steady -
+activation arenas are preallocated at load for the fixed max shape
+(652MB after load, +340MB after first predict). 2048 bucket = 3.0GB
+steady: not iPhone-viable. Python mlpackage-path RSS (~480MB) undercounted;
+the CompiledMLModel path (~1.1GB) was the honest one.
+iPhone plan: 1024 bucket max + sentence chunking, add a 512 bucket
+(~2.9s gen) for short utterances, 6-bit palettization to cut the weight
+share, and revisit ANE layouts (658MB + lowest power, but 20x slower today).
