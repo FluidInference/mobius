@@ -76,3 +76,12 @@ divergence only — energy and spectrum are match-grade.
   scales; parity run used 3.0 (LuxTTS default).
 - **ZipVoice upstream variants**: same script should convert zipvoice /
   zipvoice_distill / dialog checkpoints (24k vocoder, different tokens.txt).
+
+### Transcription sanity check (whisper-base on generated wavs)
+
+All CoreML samples intelligible; CoreML and PyTorch oracle transcribe
+identically. Onset clipping ("The quick" -> "Brown Fox...") reproduces in
+the PYTORCH oracle too - it's LuxTTS's `speed * 1.3` duration squeeze in
+generate(), not a conversion artifact. speed=1.0 recovers "Quick Brown
+Fox...", speed=0.9 recovers the full sentence with punctuation. A Swift
+integration should expose speed and default nearer 1.0.
