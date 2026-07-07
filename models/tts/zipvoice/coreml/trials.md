@@ -81,7 +81,28 @@ divergence only — energy and spectrum are match-grade.
 
 All CoreML samples intelligible; CoreML and PyTorch oracle transcribe
 identically. Onset clipping ("The quick" -> "Brown Fox...") reproduces in
-the PYTORCH oracle too - it's LuxTTS's `speed * 1.3` duration squeeze in
-generate(), not a conversion artifact. speed=1.0 recovers "Quick Brown
-Fox...", speed=0.9 recovers the full sentence with punctuation. A Swift
-integration should expose speed and default nearer 1.0.
+the PYTORCH oracle too - not a conversion artifact.
+
+### Onset-clipping root cause (debugged)
+
+Hypotheses tested, in order:
+1. Whisper missing the onset - NO: +0.5s silence pad changes nothing;
+   onset RMS shows speech at full level ~50ms in. Words acoustically absent.
+2. Uniform avg-duration alignment mapping leading text tokens into the
+   prompt region (at speed 1.3 the first 47 text tokens land inside the
+   469 prompt frames) - NO: a two-segment expansion (prompt tokens pinned
+   to prompt frames) produces byte-identical transcripts. The flow model
+   self-aligns; text_condition alignment is a soft hint.
+3. PROMPT BOUNDARY CONTINUATION - YES: the model continues speech
+   seamlessly from the prompt. A prompt hard-cut mid-phrase (fixed 5.000s
+   slice) makes the model elide sentence-initial function words. Same
+   text/seed/speed with a prompt ending at a natural sentence boundary
+   synthesizes the complete sentence including "The".
+
+Amplifier: generate() silently multiplies speed by 1.3, squeezing the
+ratio-based duration estimate; at 1.3 the elision grows from "The" to
+"The quick". speed<=1.0 + clean prompt boundary = full sentence.
+
+Swift integration guidance: trim reference clips at a VAD pause boundary
+(Silero VAD already in FluidAudio) instead of a fixed duration; expose
+speed, default 1.0.
