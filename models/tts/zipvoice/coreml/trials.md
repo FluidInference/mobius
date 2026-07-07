@@ -220,3 +220,58 @@ Trial plan (next session):
    submodule details - do it exactly), then whole-decoder parity + wav.
 4. coreml-cli --fallback loop per playbook; target zero CPU ops and
    subquadratic-ish scaling to 1024f.
+
+### ANE layer rewrite (trial 2) — one full Zipformer2EncoderLayer, (1,C,1,S)
+
+coreml/ane/: AneZipformerLayer imports weights from the post
+convert_scaled_to_non_scaled layer (enc0.layers[0], dim 512, H=4, qhd=32,
+phd=4, vhd=12) into ANE-canonical form: every Linear -> 1x1 conv2d,
+BiasNorm/Bypass on the channel axis, per-head attention with S on the
+last softmax axis, SwooshL/R elementwise (logaddexp_onnx form).
+
+Parity (fp32 eager, S=1024, real pos_emb, coreml/ane/parity.py) —
+numerically exact, every submodule and the whole layer:
+
+| submodule | max_abs_diff | cos |
+|---|---|---|
+| self_attn_weights | 2.4e-07 | 1.0 |
+| feed_forward1/2/3 | <2e-06 | 1.0 |
+| nonlin_attention, self_attn1/2 | 0.0 | 1.0 |
+| conv_module1/2 | 1.9e-06 | 1.0 |
+| norm, bypass, bypass_mid | <2e-06 | 1.0 |
+| WHOLE LAYER | 2.4e-06 | 1.00000000 |
+
+CoreML (iOS17 fp16 mlprogram, S=1024, M5 Pro, coreml/ane/bench.py):
+
+| layer | ANE | GPU | ANE placement |
+|---|---|---|---|
+| original (T,B,C) | 35.9 ms | 2.2 ms | 136/138 ops (2 dw convs CPU) |
+| ANE-canonical | **4.14 ms (8.7x)** | 2.1 ms | **166/166 ops, zero fallback** |
+
+fp16 CoreML (ANE) vs torch fp32: cos = 1.000000, max_abs 0.015
+(orig layer converted the same way: cos 0.980 — the gather rel->abs
+path costs accuracy too).
+
+What it took (each step verified by --fallback + latency):
+1. Baseline recast (skew-trick rel->abs via pad+reshape+slice): 13.6 ms,
+   11 CPU ops. The 2*S*S flatten exceeds ANE dim limits -> reshape/slice
+   on CPU; BiasNorm ** -0.5 pow also CPU.
+2. pow -> rsqrt, and rel->abs baked into a constant buffer
+   pos_abs[h,c,q,j] = linear_pos(pos_emb)[h,c,S-1-q+j] consumed as
+   broadcast-mul + channel reduce (no gather/as_strided/flatten): 5.35 ms.
+3. Depthwise k=31 conv: ANE limit is kernel width <= 15 (16 falls back,
+   15 places). Split exactly into k=15 + k=15 + k=1 with symmetric conv
+   padding + output slices (standalone pad ops are not ANE-placeable and
+   drag neighbors to CPU): 4.14 ms, 100% ANE.
+
+Caveats for the whole-decoder rewrite:
+- pos_abs is (H, phd, S, S) per layer: 33.5 MB fp16 at S=1024. Fine per
+  layer; naive replication over all layers/stacks adds ~100-300 MB
+  (smaller S per downsampled stack shrinks it 4x/16x...). If footprint
+  matters, revisit a chunked skew or share pos_abs where linear_pos
+  weights allow folding.
+- Projection: dominant stack layer 8.7x faster => 286 ms/step scales to
+  ~35-60 ms/step ANE @1024 (smaller stacks saw less ANE penalty, so gain
+  there is smaller); 4 steps ~150-250 ms core, iPhone-viable ANE-first.
+
+Template for the full rewrite: coreml/ane/layer.py.
