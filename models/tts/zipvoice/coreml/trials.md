@@ -147,3 +147,23 @@ the CompiledMLModel path (~1.1GB) was the honest one.
 iPhone plan: 1024 bucket max + sentence chunking, add a 512 bucket
 (~2.9s gen) for short utterances, 6-bit palettization to cut the weight
 share, and revisit ANE layouts (658MB + lowest power, but 20x slower today).
+
+### Quantization matrix (FmDecoder, 1024 bucket; TextEncoder stays fp16)
+
+| variant | weights | GPU step | steady footprint | log-mel cos | RMS delta | transcript |
+|---|---|---|---|---|---|---|
+| fp16 | 249 MB | 14.7 ms | 996 MB | 0.99925 | -0.09 dB | identical |
+| int8 linear | 131 MB | CRASHES on GPU | 674 MB (ane) / 48 MB (cpu) | 0.99870 | -0.05 dB | identical |
+| 6-bit palettize | 101 MB | 15.0 ms | 419 MB | 0.99829 | -0.45 dB | identical |
+| int4 palettize (per-tensor) | 72 MB | 14.1 ms | 420 MB | 0.93412 | -2.07 dB | intelligible, degraded |
+
+- int8 linear_symmetric hits an OS bug on GPU: MPSGraph "MLIR pass manager
+  failed" assertion at first predict (macOS 26.5, M5 Pro). Works on
+  ane (286ms) and cpu (152ms). Do not ship int8 for the GPU path.
+- 6-bit per-tensor palettization is the ship candidate: transparent
+  transcript, -0.45dB, full GPU speed, footprint 996 -> 419 MB (2.4x),
+  weights 249 -> 101 MB. Same recipe class as Supertonic-3 int4.
+- int4 per-tensor is a bridge too far without grouped channels; retry
+  with per_grouped_channel group_size=16 under an iOS18+ target.
+- Palettized variants land LuxTTS below every existing FluidAudio TTS
+  backend's peak RSS except Supertonic-3 (197 MB).
