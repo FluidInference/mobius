@@ -398,6 +398,68 @@ accumulation floor: final mel cos 0.9038, log-mel 0.93490, RMS -1.77 dB
 lays dog...". Roughly additive in dB — do NOT ship int4g on the ANE path;
 if ANE memory matters it's already 25 MB at fp16.
 
+### Vocoder CoreML port (2026-07-07)
+
+coreml/vocoder/: the 48 kHz dual-head linacodec Vocos vocoder (the e2e
+bottleneck: torch cpu 77-81 ms) fully in-graph as Vocoder.mlpackage —
+backbone (8 ConvNeXt), UpSamplerBlock [2,1], BOTH ISTFT heads including the
+ISTFT itself, the 24k->48k resample, and the crossover. mel (1,100,S) fp32 ->
+audio (1,(S-1)*512) @48k; iOS17 fp16 mlprogram, 33 MB. Variants: S=282
+(oracle gen region, build/coreml-vocoder) and S=555 (1024-bucket gen region,
+build/coreml-vocoder-f555) via --frames.
+
+Reimplementations (fixed shapes, all constants precomputed):
+
+- **ISTFT (center)**: linear head -> clamp(logmag, max=ln 100) BEFORE exp
+  (fp16-safe, identical to upstream clip(mag, 1e2)) -> mag*cos/sin(phase) ->
+  irfft as constant DFT matmul (Hermitian-weighted cos/sin bases, hann window
+  folded in) -> overlap-add as 4 shifted-chunk pads+adds (n_fft/hop = 4) ->
+  precomputed 1/window-envelope constant, center-trimmed. Standalone vs
+  torch.istft: **SNR 127.4 dB** (both 282 and 565 frame counts).
+- **Resample 24k->48k**: torchaudio's sinc_interp_hann kernel (2 phases x 15
+  taps) as conv1d + interleave — SNR inf (bit-exact) vs AF.resample.
+- **Crossover IN-GRAPH**: linkwitz.py is not IIR — it's an rfft over the
+  whole waveform with a ~2.6 Hz cubic-fade brickwall at 12 kHz. Rewritten as
+  merged = low + FIR_hp(high - low) (single filter, branches exactly
+  complementary); 511-tap linear-phase highpass by spectral inversion of
+  scipy firwin. Tap sweep vs torch on the real oracle signal: 255 -> 59.6 dB,
+  511 -> 62.2, 1023 -> 64.3, 2047 -> 65.6; 511 chosen (already ~20 dB above
+  the fp16 noise floor). Eager fp32 wrapper vs vocos.decode: 62.2 dB.
+- Snake1d's jit-scripted helper monkey-patched to drop its no-op reshapes.
+
+Parity (coreml/vocoder/parity_vocoder.py — oracle mel regenerated through the
+pure-torch reference path, torch vocos.decode vs CoreML Vocoder, S=282):
+
+| compute units | wav SNR | wav cos | log-mel cos | RMS delta | whisper-base |
+|---|---|---|---|---|---|
+| CPU_AND_GPU | **43.1 dB** | 0.999975 | 0.99982 | +0.000 dB | identical |
+| CPU_AND_NE  | 34.0 dB | 0.999801 | 0.99866 | -0.007 dB | - |
+| CPU_ONLY    | 29.1 dB | 0.999387 | 0.99926 | +0.019 dB | - |
+
+ISTFT is deterministic, so unlike the decoder this is waveform-level
+agreement, all fp16 rounding.
+
+Latency (coreml/vocoder/bench.py, CompiledMLModel, 3 warmup + 10 runs,
+M5 Pro; torch cpu baseline 77-81 ms):
+
+| variant | CPU_AND_GPU | CPU_AND_NE | rss delta |
+|---|---|---|---|
+| S=282 (3.0 s audio) | **2.34 ms (RTFx 1281x, 33x vs torch)** | 10.56 ms (284x) | +77 MB gpu / +44 MB ane |
+| S=555 (5.9 s audio) | **2.93 ms (RTFx 2014x)** | 19.36 ms (305x) | +80 MB gpu / +69 MB ane |
+
+coreml-cli --fallback (mlmodelc): 160/228 ops ANE (70.2%), 68 CPU
+(slice_by_index x10, reshape x9, pad x9, sin x7, add x7, mul x6, pow x5, ...)
+— the OLA pad/slice tail and snake sin/pow land on CPU, and one ANE segment
+hits "ANECCompile() FAILED" at load (runtime falls back, results above
+include it). GPU is the design target (pairs with the GPU decoder graph);
+ANE at 10.6 ms is already 7x faster than torch, left as-is per the playbook.
+
+Pipeline impact: core 62 ms (GPU) + vocoder 2.3 ms = **~64 ms e2e** vs 139 ms
+with the torch vocoder — oracle RTFx 21.5x -> **~47x**, full-bucket ~91x.
+The vocoder is no longer the bottleneck (3.6% of e2e). Open: enumerated
+frame buckets for the vocoder to match the decoder buckets, and Swift-side
+wiring.
+
 ### Decision: int4 scrapped (2026-07-07)
 
 All int4 variants dropped from the lineup and build artifacts deleted.
