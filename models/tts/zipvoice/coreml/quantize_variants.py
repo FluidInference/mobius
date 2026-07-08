@@ -35,19 +35,11 @@ def main():
     )
     variants["int8"] = cto.linear_quantize_weights(fm, cfg8)
 
-    # int4: k-means palettization. Grouped-channel LUT needs iOS18; fall back
-    # to per-tensor (iOS16-compatible) if the target blocks it.
-    try:
-        cfg4 = cto.OptimizationConfig(
-            global_config=cto.OpPalettizerConfig(
-                nbits=4, mode="kmeans", granularity="per_grouped_channel", group_size=16
-            )
-        )
-        variants["int4"] = cto.palettize_weights(fm, cfg4)
-    except Exception as e:
-        print(f"grouped-channel palettization failed ({e}); falling back to per_tensor")
-        cfg4 = cto.OptimizationConfig(global_config=cto.OpPalettizerConfig(nbits=4, mode="kmeans"))
-        variants["int4"] = cto.palettize_weights(fm, cfg4)
+    # 6-bit: k-means palettization, per-tensor (iOS16+). int4 was evaluated and
+    # scrapped - see trials.md quantization matrix (per-tensor: -2.1dB; grouped
+    # needs iOS18 and still ~2x the 6-bit error; nothing gained on the ANE path).
+    cfg6 = cto.OptimizationConfig(global_config=cto.OpPalettizerConfig(nbits=6, mode="kmeans"))
+    variants["6bit"] = cto.palettize_weights(fm, cfg6)
 
     for name, model in variants.items():
         out = src.parent / f"{src.name}-{name}"

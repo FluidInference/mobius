@@ -397,3 +397,14 @@ accumulation floor: final mel cos 0.9038, log-mel 0.93490, RMS -1.77 dB
 (fp16 ANE was 0.96426 / -0.54 dB), and whisper drops a word: "...over the
 lays dog...". Roughly additive in dB — do NOT ship int4g on the ANE path;
 if ANE memory matters it's already 25 MB at fp16.
+
+### Decision: int4 scrapped (2026-07-07)
+
+All int4 variants dropped from the lineup and build artifacts deleted.
+Rationale: per-tensor loses 2.1dB; grouped-channel (iOS18) is verbatim-
+transcript but still ~2x the 6-bit error and forces an iOS18 floor; on
+the ANE graph it degrades quality (word error) with zero latency/memory
+win (fp16 ANE graph is already 25.5MB). Ship set: fp16 ANE graph
+(iPhone), fp16 or 6-bit original graph (macOS GPU). int8 parked on the
+MPSGraph GPU bug. Numbers retained above for the record;
+quantize_int4_grouped.py removed (recoverable from git history).
