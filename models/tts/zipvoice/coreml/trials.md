@@ -470,3 +470,12 @@ win (fp16 ANE graph is already 25.5MB). Ship set: fp16 ANE graph
 (iPhone), fp16 or 6-bit original graph (macOS GPU). int8 parked on the
 MPSGraph GPU bug. Numbers retained above for the record;
 quantize_int4_grouped.py removed (recoverable from git history).
+
+### HF release
+
+https://huggingface.co/FluidInference/luxtts-coreml — compiled .mlmodelc
+layout: gpu/ (fp16 original graph, 1024f), gpu-6bit/, gpu-long/ (2048f),
+ane/ (ANE-canonical graph), vocoder/ (Vocoder282 + Vocoder555), plus
+tokens.txt + config.json from upstream. Model card carries the benchmark
+matrix, the do-not-run-gpu-graph-on-ANE warning, and integration notes
+(VAD prompt trim, speed 1.0, host-side solver).
