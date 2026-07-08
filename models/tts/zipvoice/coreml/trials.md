@@ -356,3 +356,44 @@ Takeaways:
   coreml/ane/convert_decoder.py (build/coreml-ane, compiles
   FmDecoder.mlmodelc for rss_bench), coreml/ane/pipeline.py (quality +
   whisper + latency).
+
+### int4 grouped-channel (iOS18)
+
+Retry of int4 with per_grouped_channel kmeans palettization (group_size=16,
+Supertonic-3's recipe class) — needs an iOS18-target source package, so the
+original-graph FmDecoder was reconverted with iOS18 (convert_coreml.py grew a
+--deployment-target flag; default stays iOS17, existing packages untouched)
+to build/coreml-ios18, then coreml/quantize_int4_grouped.py ->
+build/coreml-int4g. Quality gauntlet identical to the quantization matrix
+(coreml/parity.py CPU_ONLY + 128-mel log-mel cos + whisper-base).
+
+| variant | weights | GPU step | steady footprint | final mel cos | log-mel cos | RMS delta | transcript |
+|---|---|---|---|---|---|---|---|
+| 6-bit palettize (iOS17) | 101 MB | 15.0 ms | 419 MB | 0.98501 | 0.99829 | -0.45 dB | identical |
+| int4 per-tensor (iOS17) | 72 MB | 14.1 ms | 420 MB | - | 0.93412 | -2.07 dB | intelligible, degraded |
+| **int4 grouped g=16 (iOS18)** | 72.7 MB | 16.1 ms | **243.8 MB** | 0.92336 | 0.98589 (80-mel) / 0.98437 (128-mel) | -0.90 dB | **identical** |
+
+(6-bit final-mel cos measured this session for comparison: its per-step cos
+is 0.977-0.988 vs int4g's 0.939-0.964.)
+
+- Grouped channels recover most of per-tensor's loss (-2.07 -> -0.90 dB,
+  log-mel 0.934 -> 0.984, transcript garble -> verbatim "Brown Fox jumps
+  over the lazy dog and honestly it felt great.") at the same 72 MB — but
+  it is NOT transparent: still 2x the 6-bit level error and audibly softer.
+- Footprint surprise: 243.8 MB steady on GPU vs 419 MB for 6-bit — the
+  iOS18 runtime keeps the grouped-LUT weights compressed in the arena
+  (6-bit/iOS17 decompresses to fp16 at load). ANE run: 287 ms step
+  (unchanged, not weight-bound), 121 MB.
+- Verdict: 6-bit stays the quality ship candidate on iOS17; int4 grouped is
+  the memory-floor option (72 MB weights / 244 MB steady, -0.45 extra dB)
+  if we accept iOS18 minimum.
+
+**Stacked on the ANE-canonical graph** (AneFmDecoder reconverted iOS18 ->
+build/coreml-ane-ios18, palettized -> build/coreml-ane-int4g; pipeline.py
+CPU_AND_NE + rss_bench ane): weights 328 -> 149.9 MB (pos_basis constants
+resist palettization), step 55.5 ms / footprint 34.8 MB (both ~unchanged vs
+fp16's 54.6 ms / 25.5 MB). But quantization error stacks on the fp16-ANE
+accumulation floor: final mel cos 0.9038, log-mel 0.93490, RMS -1.77 dB
+(fp16 ANE was 0.96426 / -0.54 dB), and whisper drops a word: "...over the
+lays dog...". Roughly additive in dB — do NOT ship int4g on the ANE path;
+if ANE memory matters it's already 25 MB at fp16.

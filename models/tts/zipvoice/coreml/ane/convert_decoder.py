@@ -10,6 +10,7 @@ FmDecoder.mlmodelc so rss_bench finds it).
 Run: .venv/bin/python -m coreml.ane.convert_decoder
 """
 
+import argparse
 import shutil
 import sys
 from pathlib import Path
@@ -24,7 +25,6 @@ from coreml.ane.decoder import AneFmDecoder, AneFmDecoderIO
 from coreml.convert_coreml import FEAT_DIM, load_model, patch_coremltools_int
 
 SEQ_LEN = 1024
-OUT_DIR = Path("build/coreml-ane")
 SRC_DIR = Path("build/coreml")
 
 
@@ -37,7 +37,16 @@ def compile_to(mlpackage: Path, dest: Path):
 
 
 def main():
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--out-dir", default="build/coreml-ane")
+    parser.add_argument(
+        "--deployment-target", default="iOS17", choices=["iOS17", "iOS18"],
+        help="iOS18 enables grouped-channel palettization downstream",
+    )
+    args = parser.parse_args()
+    out_dir = Path(args.out_dir)
+
+    out_dir.mkdir(parents=True, exist_ok=True)
     patch_coremltools_int()
     model, _ = load_model()
 
@@ -72,11 +81,11 @@ def main():
             ct.TensorType(name="padding_mask", shape=(1, SEQ_LEN), dtype=np.float32),
         ],
         outputs=[ct.TensorType(name="v", dtype=np.float32)],
-        minimum_deployment_target=ct.target.iOS17,
+        minimum_deployment_target=getattr(ct.target, args.deployment_target),
         compute_precision=ct.precision.FLOAT16,
         convert_to="mlprogram",
     )
-    pkg = OUT_DIR / "AneFmDecoder.mlpackage"
+    pkg = out_dir / "AneFmDecoder.mlpackage"
     if pkg.exists():
         shutil.rmtree(pkg)
     mlmodel.save(str(pkg))
@@ -100,12 +109,12 @@ def main():
     print(f"CoreML fp16 (CPU) vs torch fp32: cos={c:.6f} max_abs={np.abs(a - b).max():.4f}")
 
     # TextEncoder + compiled models.
-    te_dst = OUT_DIR / "TextEncoder.mlpackage"
+    te_dst = out_dir / "TextEncoder.mlpackage"
     if not te_dst.exists():
         shutil.copytree(SRC_DIR / "TextEncoder.mlpackage", te_dst)
         print(f"copied {te_dst}")
-    compile_to(pkg, OUT_DIR / "FmDecoder.mlmodelc")
-    compile_to(te_dst, OUT_DIR / "TextEncoder.mlmodelc")
+    compile_to(pkg, out_dir / "FmDecoder.mlmodelc")
+    compile_to(te_dst, out_dir / "TextEncoder.mlmodelc")
 
 
 if __name__ == "__main__":

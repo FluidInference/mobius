@@ -163,7 +163,7 @@ def load_model():
     return model, tokenizer
 
 
-def convert_text_encoder(model, out_dir: Path, max_tokens: int = MAX_TOKENS):
+def convert_text_encoder(model, out_dir: Path, max_tokens: int = MAX_TOKENS, target=ct.target.iOS17):
     wrapper = CoreMLTextEncoder(model).eval()
     tokens = torch.zeros(1, max_tokens, dtype=torch.int32)
     tokens[0, :10] = torch.arange(2, 12, dtype=torch.int32)
@@ -181,7 +181,7 @@ def convert_text_encoder(model, out_dir: Path, max_tokens: int = MAX_TOKENS):
             ct.TensorType(name="padding_mask", shape=(1, max_tokens), dtype=np.float32),
         ],
         outputs=[ct.TensorType(name="token_embeds", dtype=np.float32)],
-        minimum_deployment_target=ct.target.iOS17,
+        minimum_deployment_target=target,
         compute_precision=ct.precision.FLOAT16,
         convert_to="mlprogram",
     )
@@ -190,7 +190,7 @@ def convert_text_encoder(model, out_dir: Path, max_tokens: int = MAX_TOKENS):
     print(f"saved {path}")
 
 
-def convert_fm_decoder(model, out_dir: Path, max_frames: int = MAX_FRAMES):
+def convert_fm_decoder(model, out_dir: Path, max_frames: int = MAX_FRAMES, target=ct.target.iOS17):
     wrapper = CoreMLFmDecoder(model).eval()
     t = torch.tensor([0.5])
     x = torch.randn(1, max_frames, FEAT_DIM)
@@ -215,7 +215,7 @@ def convert_fm_decoder(model, out_dir: Path, max_frames: int = MAX_FRAMES):
             ct.TensorType(name="padding_mask", shape=(1, max_frames), dtype=np.float32),
         ],
         outputs=[ct.TensorType(name="v", dtype=np.float32)],
-        minimum_deployment_target=ct.target.iOS17,
+        minimum_deployment_target=target,
         compute_precision=ct.precision.FLOAT16,
         convert_to="mlprogram",
     )
@@ -231,7 +231,12 @@ def main():
     parser.add_argument("--skip-fm-decoder", action="store_true")
     parser.add_argument("--max-tokens", type=int, default=MAX_TOKENS)
     parser.add_argument("--max-frames", type=int, default=MAX_FRAMES)
+    parser.add_argument(
+        "--deployment-target", default="iOS17", choices=["iOS17", "iOS18"],
+        help="iOS18 enables grouped-channel palettization downstream",
+    )
     args = parser.parse_args()
+    target = getattr(ct.target, args.deployment_target)
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -240,9 +245,9 @@ def main():
     patch_simple_downsample()
     model, _ = load_model()
     if not args.skip_text_encoder:
-        convert_text_encoder(model, out_dir, max_tokens=args.max_tokens)
+        convert_text_encoder(model, out_dir, max_tokens=args.max_tokens, target=target)
     if not args.skip_fm_decoder:
-        convert_fm_decoder(model, out_dir, max_frames=args.max_frames)
+        convert_fm_decoder(model, out_dir, max_frames=args.max_frames, target=target)
 
 
 if __name__ == "__main__":
