@@ -40,6 +40,32 @@ sharpens two positions we currently hold:
    is dominated by weight bytes ÷ DRAM bandwidth, dropping weights to int8 is the direct
    attack, independent of compute unit.
 
+## If proven right: on-device LLM on the ANE
+
+The reason this lead is worth tracking beyond a footnote: it reopens **on-device LLM
+inference on the ANE**, which the prevailing view (and the Surgical Inference paper
+itself) writes off. mobius currently has no LLM model class — `stt`, `tts`, `vad`,
+`speaker-diarization`, `emb`, `segment-text` — partly because the ANE has been assumed
+useless for autoregressive transformers. If the CPU-scheduled matmul path holds, the map
+changes:
+
+- **Prefill on ANE, decode wherever.** Prefill (compute-bound, dominates long-context and
+  RAG / tool-use prompts) could move to the ANE and off the GPU; decode (bandwidth-bound)
+  stays on GPU or CPU. A split-phase LLM, not an all-or-nothing placement — the same
+  decompose-and-place logic mobius already applies to STT/TTS pipelines.
+- **The GPU stays free.** The payoff is the same architectural argument as our audio
+  pipelines: keep the GPU available for the UI and other work while the ANE carries the
+  compute-bound phase. For an agentic on-device assistant (LLM + STT + TTS co-resident),
+  that is the difference between "runs" and "thermally impossible."
+- **int8 weight streaming compounds it.** Decode's bandwidth wall is exactly where int8
+  transfer (point 2 above) bites, so the two claims reinforce rather than compete.
+
+**This does not yet change mobius scope.** It is a conditional: *if* the API surface is
+real, shippable, and the prefill number reproduces, then an `llm` class (or an
+LLM-prefill accelerator stage) becomes a concrete direction. Until the verification
+checklist below clears, treat on-device LLM-on-ANE as a hypothesis this lead would
+unlock, not a committed roadmap item.
+
 ## What to verify before relying on this
 
 - Locate the actual API surface (the `ds4-ssd` repo is the pointer). Determine whether it

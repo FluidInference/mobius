@@ -3,7 +3,7 @@
 This folder aggregates third-party knowledge bases and tooling snapshots that support our Core ML agent workflows. Each snapshot captures an upstream repository or release alongside local notes for attribution, updates, and usage.
 
 ## Current snapshots
-- `ane-cpu-scheduled-matmul.md` — research lead (unverified): private ANE matmul op schedulable from CPU with no Core ML recompile, int8 weight transfers for bandwidth-bound stages, and the prefill/decode distinction for LLMs. Sourced from a reviewer comment (author of the `ds4-ssd` repo, ~20 TOPS on M4, claims to beat M3 Ultra GPU on prefill). Lists what to verify before relying on it.
+- `ane-cpu-scheduled-matmul.md` — research lead (unverified): private ANE matmul op schedulable from CPU with no Core ML recompile, int8 weight transfers for bandwidth-bound stages, and the prefill/decode distinction that — if it holds — reopens **on-device LLM inference on the ANE** (prefill-on-ANE / decode-elsewhere, a potential future `llm` class). Sourced from a reviewer comment (author of the `ds4-ssd` repo, ~20 TOPS on M4, claims to beat M3 Ultra GPU on prefill). Lists what to verify before relying on it.
 - `core-ml-on-device-llama.md` — Apple ML Research highlight detailing the Llama-3.1-8B-Instruct Core ML export, GPU tuning, KV-cache support, and Int4 quantization strategy for ~33 tok/s on M1 Max-class devices.
 - `neural-engine/` — Vendored documentation from [hollance/neural-engine](https://github.com/hollance/neural-engine) at commit [`10d30481b21ef12e88ca5cea2c886bb72b297de4`](https://github.com/hollance/neural-engine/commit/10d30481b21ef12e88ca5cea2c886bb72b297de4).
   - Reference: `neural-engine/AGENTS.md` for the full file index, summaries, and re-vendoring workflow.
