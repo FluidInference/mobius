@@ -55,6 +55,29 @@ Two findings:
    (the ~19 MB cache-out `PERF.md` flags). decode runs 50–200×/utterance, so this is a
    direct RTFx lever on top of being the portable ANE-safe formulation.
 
+## Can §6.3 cut AR *iterations* (unroll)? No — the sampler is the blocker (`exp_unroll.py`)
+
+The 40% per-step win doesn't change that Magpie is autoregressive (a frame at a time). The
+only lever for a bigger gain is an N-frame in-graph unroll (mobius Trial 4a,
+`convert_decoder_step_n2.py`, which "ANEF compile fails"). Reconverting that unroll with the
+§6.3 decoder isolates the real blocker:
+
+| §6.3 unroll | ANE placement | CPU_AND_NE | CPU-only /frame |
+|---|---|---|---|
+| N=1 (decoder + LT sampler fused) | **74% ANE** — 200 ops → CPU | fails to bind | 7.6 ms |
+| N=2 (2 frames/call) | 71% ANE — 436 ops → CPU | fails to bind | 5.3 ms |
+
+The ~200 CPU ops are the local-transformer **sampling tail** (`topk` / `cumsum` /
+`cumsum==1` argmax / one-hot). The §6.3 decoder stays ANE-clean; **fusing the sampler is what
+drops the graph off the ANE** and makes `CPU_AND_NE` fail to bind — the same reason Trial 4a
+failed, and a reason §6.3 does not address.
+
+Conclusion: the right architecture is exactly what the per-step §6.3 rewrite gives — **§6.3
+decoder on ANE (6.0 ms) + sampler on the host (1.6 ms), NOT fused.** The ~2.4×→3.0× RTFx from
+§6.3 is the achievable ANE ceiling for Magpie's AR loop. Beating it requires an ANE-friendly
+sampler (the int32 topk/cumsum tail is the hard part) or frame-stacking (retraining) — neither
+is a reconversion.
+
 ## Status / caveats
 
 - **Proof-of-concept, not a production converter.** Random weights → this proves ANE
