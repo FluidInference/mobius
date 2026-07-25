@@ -64,8 +64,15 @@ uv run python inference.py --lm-dir ./build/lm-fp16 \
 - Teacher-forced replay of the 301-token PyTorch reference: 98.7 % of
   reference tokens inside the CoreML top-50 sampling support; final audio
   SNR 41.5 dB vs the PyTorch waveform.
-- Sampled end-to-end run: 13 ms/token decode (≈77 tok/s vs 50 needed for
-  real-time), prefill 169 ms, codec 2.7–9.6× RT (ComputeUnit.ALL).
+- Sampled end-to-end run (warm): decode 9.2 ms/token (109 tok/s vs 50 needed
+  for real-time; LM on GPU), prefill 33 ms, codec 12.7–27× RT on ANE.
+  Compute units: LM decode best on ALL/CPU_AND_GPU (CPU_AND_NE breaks the
+  coremltools state API; CPU_ONLY still real-time at 58 tok/s); codec ~2×
+  faster on CPU_AND_NE than GPU. `inference.py` defaults to this split.
+- Streaming (`--stream`, upstream 25-frame windowed overlap-add over the
+  flexible-length codec): TTFA ≈ 650 ms at every text length, steady-state
+  inter-chunk ≈ 340 ms against the 500 ms budget, 1.36–1.47× RT overall,
+  0 % WER (transcribes identically to batch).
 
 ## Conversion gotchas (also see git history)
 
@@ -89,26 +96,41 @@ uv run python inference.py --lm-dir ./build/lm-fp16 \
 
 ## Comparison vs FluidAudio TTS engines (M5 Pro, 2026-07-25)
 
-Same 14-word sentence ("I can't believe it's finally here! The whole team
-worked so hard on this."), warm runs (mean of 3), WER via parakeet-tdt-v3
-round-trip. FluidAudio engines measured with
-`fluidaudiocli tts --backend <x> --metrics` (release build); NeuTTS-2E via
-`inference.py` (Python coremltools host — a Swift host would shave per-step
-overhead).
+Three text lengths — S: 5 words (~2 s), M: 14 words (~5 s), L: 53-word
+paragraph (~23 s) — warm runs (mean of 3 per cell), WER via parakeet-tdt-v3
+round-trip. FluidAudio engines via `fluidaudiocli tts --metrics` (release);
+NeuTTS-2E via `inference.py` (LM on GPU, codec on ANE).
 
-| Engine | RTFx | WER | Disk | Notes |
-|---|---|---|---|---|
-| Supertonic-3 | 44× | ~5 % ("works"/"worked" in 2/3 runs) | 284 MB | 44.1 kHz, fastest |
-| KokoroAne | 6.3× | 0 % | 782 MB | ANE-resident |
-| PocketTTS | 4.8× | 2 % | 866 MB | streaming |
-| **NeuTTS-2E (this)** | **1.06×** | **0 % (3/3 exact)** | 1.28 GB | only emotional-control engine; decode 11.9 ms/tok (84 tok/s vs 50 real-time), codec 3.2× RT |
-| StyleTTS2 | 7.5× (short text only) | high | 452 MB | hosted sized BERT/diffusion mlmodelc are missing model.mil → texts beyond ~t32 fail (`corruptedModel`); needs re-upload |
+RTFx (inference speed vs audio duration):
 
-NeuTTS-2E is the slowest (autoregressive LM at 50 codes/s + full-sequence
-vocoder) but the only engine with emotion control, and its intelligibility
-matched the best engines. Batch RTFx 1.06× means marginally real-time; chunked
-streaming decode (upstream's 25-frame windows) would cut time-to-first-audio
-to well under a second.
+| Engine | S | M | L | WER S/M/L | Disk | TTFA |
+|---|---|---|---|---|---|---|
+| Supertonic-3 | 20× | 43× | 87× | 0 / 4.8 / 1.2 % | 284 MB | ≈ batch (fast) |
+| KokoroAne | 1.9× | 6.5× | 19× | 0 / 0 / 0 % | 782 MB | — |
+| StyleTTS2 | 4.6× | 11.3× | 18× | 80 / 0 / 12.7 % | 452 MB | — |
+| PocketTTS | 3.4× | 5.7× | 6.2× | 0 / 0 / 0 % | 866 MB | streaming-capable |
+| **NeuTTS-2E batch** | 1.3× | 1.5× | 1.7× | 6.7 / 0 / 0 % | 1.28 GB | n/a |
+| **NeuTTS-2E stream** | 1.4× | 1.4× | 1.5× | 0 / 0 / 0 % | 1.28 GB | **650 ms** |
+
+Notes:
+
+- NeuTTS-2E is the only engine with emotion control, and (with KokoroAne and
+  PocketTTS) one of three that stayed fully intelligible on the long
+  paragraph. Its S-column WER is one sampled insertion in one of three seeds
+  ("…finally here **and**") — autoregressive variance, not corruption.
+- The streaming mode holds TTFA at ~650 ms independent of text length while
+  batch latency grows with duration; steady-state chunk cadence 340 ms vs the
+  500 ms real-time budget.
+- StyleTTS2 initially failed all M/L texts with `corruptedModel`: the
+  FluidAudio downloader materializes the sized `bert_fp16_t*` /
+  `fused_diffusion_sampler_fp16_t*` mlmodelc **without `model.mil`** (the
+  hosted files in `FluidInference/StyleTTS-2-coreml/iteration_3/compiled/`
+  are complete — likely the HF listing pagination gap from the download
+  refactor, issue #765). Benchmarked after curling the six missing
+  `model.mil` files into the cache. Its 80 % WER at S ("Elon is Mahir") is
+  the unsized short-window path, unrelated to that bug.
+- Cross-host caveat: NeuTTS-2E timings are from the Python coremltools host;
+  the others ran the release Swift CLI.
 
 ## Follow-ups
 

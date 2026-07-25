@@ -101,6 +101,89 @@ class PassthroughDecoder:
         return out["logits"][0]
 
 
+def linear_overlap_add(frames: list[np.ndarray], stride: int) -> np.ndarray:
+    """Upstream neutts._linear_overlap_add (triangular weights)."""
+    assert len(frames)
+    total_size = 0
+    for i, frame in enumerate(frames):
+        total_size = max(total_size, stride * i + frame.shape[-1])
+    sum_weight = np.zeros(total_size, dtype=frames[0].dtype)
+    out = np.zeros(total_size, dtype=frames[0].dtype)
+    offset = 0
+    for frame in frames:
+        n = frame.shape[-1]
+        t = np.linspace(0, 1, n + 2, dtype=frames[0].dtype)[1:-1]
+        weight = 0.5 - np.abs(t - 0.5)
+        out[offset : offset + n] += weight * frame
+        sum_weight[offset : offset + n] += weight
+        offset += stride
+    assert sum_weight.min() > 0
+    return out / sum_weight
+
+
+class StreamingVocoder:
+    """Upstream _infer_stream_ggml windowing over the CoreML codec.
+
+    The speaker's reference codes provide lookback context for the first
+    windows, exactly as upstream does; emitted samples cover only newly
+    generated codes.
+    """
+
+    CHUNK = 25       # frames yielded per step (0.5 s)
+    LOOKBACK = 50
+    LOOKFORWARD = 5
+    OVERLAP = 1
+
+    def __init__(self, codec: ct.models.MLModel, ref_codes: list[int]):
+        self.codec = codec
+        self.stride = self.CHUNK * 480
+        self.token_cache: list[int] = list(ref_codes)
+        self.n_decoded_tokens = len(ref_codes)
+        self.n_decoded_samples = 0
+        self.audio_cache: list[np.ndarray] = []
+        # One-time warmup at the window size used per chunk — the first
+        # predict at a new RangeDim size pays a specialization cost.
+        w = self.LOOKBACK + self.OVERLAP + self.CHUNK + self.LOOKFORWARD + self.OVERLAP
+        t0 = time.perf_counter()
+        self._decode((self.token_cache * ((w // len(ref_codes)) + 1))[:w])
+        print(f"vocoder warmup: {(time.perf_counter() - t0) * 1000:.0f} ms (one-time)")
+
+    def _decode(self, window: list[int]) -> np.ndarray:
+        return self.codec.predict({"codes": np.array([window], dtype=np.int32)})["audio"][0]
+
+    def push(self, code: int) -> np.ndarray | None:
+        self.token_cache.append(code)
+        if len(self.token_cache) - self.n_decoded_tokens < self.CHUNK + self.LOOKFORWARD:
+            return None
+        start = max(self.n_decoded_tokens - self.LOOKBACK - self.OVERLAP, 0)
+        end = self.n_decoded_tokens + self.CHUNK + self.LOOKFORWARD + self.OVERLAP
+        sample_start = (self.n_decoded_tokens - start) * 480
+        sample_end = sample_start + (self.CHUNK + 2 * self.OVERLAP) * 480
+        recon = self._decode(self.token_cache[start:end])[sample_start:sample_end]
+        self.audio_cache.append(recon)
+        processed = linear_overlap_add(self.audio_cache, self.stride)
+        new_end = len(self.audio_cache) * self.stride
+        out = processed[self.n_decoded_samples : new_end]
+        self.n_decoded_samples = new_end
+        self.n_decoded_tokens += self.CHUNK
+        return out
+
+    def flush(self) -> np.ndarray | None:
+        remaining = len(self.token_cache) - self.n_decoded_tokens
+        if remaining <= 0:
+            return None
+        start = max(
+            len(self.token_cache) - (self.LOOKBACK + self.OVERLAP + remaining), 0
+        )
+        sample_start = (
+            len(self.token_cache) - start - remaining - self.OVERLAP
+        ) * 480
+        recon = self._decode(self.token_cache[start:])[sample_start:]
+        self.audio_cache.append(recon)
+        processed = linear_overlap_add(self.audio_cache, self.stride)
+        return processed[self.n_decoded_samples :]
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--lm-dir", required=True)
@@ -115,11 +198,18 @@ def main() -> None:
     p.add_argument("--passthrough-kv", action="store_true",
                    help="use the macOS14 pass-through-KV decode model instead of stateful")
     p.add_argument("--teacher-force", action="store_true")
+    p.add_argument("--stream", action="store_true",
+                   help="windowed streaming vocoder (upstream 25-frame chunks); reports TTFA")
     p.add_argument("--compute-units", default="ALL",
-                   choices=["ALL", "CPU_AND_GPU", "CPU_ONLY", "CPU_AND_NE"])
+                   choices=["ALL", "CPU_AND_GPU", "CPU_ONLY", "CPU_AND_NE"],
+                   help="LM compute units (stateful decode cannot use CPU_AND_NE)")
+    p.add_argument("--codec-compute-units", default="CPU_AND_NE",
+                   choices=["ALL", "CPU_AND_GPU", "CPU_ONLY", "CPU_AND_NE"],
+                   help="codec compute units (ANE is ~2x faster than GPU here)")
     args = p.parse_args()
 
     cu = getattr(ct.ComputeUnit, args.compute_units)
+    codec_cu = getattr(ct.ComputeUnit, args.codec_compute_units)
     lm_dir = Path(args.lm_dir)
 
     from transformers import AutoTokenizer
@@ -185,6 +275,52 @@ def main() -> None:
               f"{agree_topk}/{n} ({100.0 * agree_topk / n:.1f}%)")
         print(f"decode: {1000.0 * dt / max(n - 1, 1):.1f} ms/token")
         codes = json.loads((HERE / "build" / "ref" / "ref_codes.json").read_text())
+    elif args.stream:
+        from src.prompt import load_speaker
+
+        print("loading codec (streaming)...")
+        codec = ct.models.MLModel(str(Path(args.codec)), compute_units=codec_cu)
+        ref_codes, _ = load_speaker(args.speaker)
+        voc = StreamingVocoder(codec, ref_codes)
+        speech_0 = tokenizer.convert_tokens_to_ids("<|speech_0|>")
+
+        pieces: list[np.ndarray] = []
+        chunk_times: list[float] = []
+        t_start = t_gen0 = time.perf_counter()
+        ttfa = None
+        step_logits = logits
+        while cur_len < MAX_CONTEXT - 1:
+            if len(gen_ids) < MIN_NEW_TOKENS:
+                step_logits[eos_id] = -1e9
+            tok = sample_top_k(step_logits, args.temperature, args.top_k, rng)
+            gen_ids.append(tok)
+            if tok == eos_id:
+                break
+            if speech_0 <= tok < speech_0 + 65_536:
+                piece = voc.push(tok - speech_0)
+                if piece is not None:
+                    now = time.perf_counter()
+                    if ttfa is None:
+                        ttfa = now - t_start
+                    chunk_times.append(now)
+                    pieces.append(piece)
+            step_logits = decoder.step(tok, cur_len)
+            cur_len += 1
+        tail = voc.flush()
+        if tail is not None:
+            pieces.append(tail)
+        dt = time.perf_counter() - t_gen0
+        codes = extract_speech_codes(tokenizer, gen_ids)
+        audio = np.concatenate(pieces) if pieces else np.zeros(0, dtype=np.float32)
+        dur = len(audio) / SAMPLE_RATE
+        gaps = np.diff(chunk_times) if len(chunk_times) > 1 else np.array([0.0])
+        # TTFA includes prefill, which happened before t_start; add it back.
+        print(f"stream: TTFA {(t_pre + (ttfa or 0)) * 1000:.0f} ms "
+              f"(prefill {t_pre * 1000:.0f} + gen-to-first-chunk {(ttfa or 0) * 1000:.0f}), "
+              f"{len(pieces)} chunks, inter-chunk mean {gaps.mean() * 1000:.0f} ms "
+              f"(budget 500 ms), max {gaps.max() * 1000:.0f} ms")
+        print(f"generated {len(codes)} codes ({dur:.2f}s) in {dt:.1f}s wall "
+              f"(incl. interleaved vocoding) → {dur / dt:.2f}x RT overall")
     else:
         t0 = time.perf_counter()
         step_logits = logits
@@ -205,13 +341,14 @@ def main() -> None:
         if not codes:
             raise SystemExit("no speech codes generated")
 
-    print("loading codec...")
-    codec = ct.models.MLModel(str(Path(args.codec)), compute_units=cu)
-    t0 = time.perf_counter()
-    audio = codec.predict({"codes": np.array([codes], dtype=np.int32)})["audio"][0]
-    t_dec = time.perf_counter() - t0
-    dur = len(audio) / SAMPLE_RATE
-    print(f"codec: {t_dec * 1000:.0f} ms for {dur:.2f}s audio ({dur / t_dec:.1f}x RT)")
+    if not args.stream:
+        print("loading codec...")
+        codec = ct.models.MLModel(str(Path(args.codec)), compute_units=codec_cu)
+        t0 = time.perf_counter()
+        audio = codec.predict({"codes": np.array([codes], dtype=np.int32)})["audio"][0]
+        t_dec = time.perf_counter() - t0
+        dur = len(audio) / SAMPLE_RATE
+        print(f"codec: {t_dec * 1000:.0f} ms for {dur:.2f}s audio ({dur / t_dec:.1f}x RT)")
 
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
