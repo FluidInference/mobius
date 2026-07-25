@@ -4,6 +4,9 @@ Conversion of [neuphonic/neutts-2e](https://huggingface.co/neuphonic/neutts-2e)
 (emotional English TTS: Qwen3 236M backbone + [NeuCodec](https://huggingface.co/neuphonic/neucodec))
 to CoreML mlpackages.
 
+Published: [FluidInference/neutts-2e-coreml](https://huggingface.co/FluidInference/neutts-2e-coreml)
+(all six mlpackages + speaker refs + upstream NeuTTS Open License v1.0).
+
 ## Pipeline
 
 ```
