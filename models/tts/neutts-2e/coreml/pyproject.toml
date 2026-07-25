@@ -1,0 +1,23 @@
+[project]
+name = "neutts-2e-coreml"
+version = "0.1.0"
+description = "NeuTTS-2E (Qwen3 backbone + NeuCodec) CoreML conversion"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    # coremltools 9.0 is tested through torch 2.7; newer torch traces
+    # shape-unpacking into aten::Int nodes the MIL frontend cannot fold.
+    "torch>=2.7,<2.8",
+    "torchaudio>=2.7,<2.8",
+    "transformers==5.1.0",
+    "coremltools>=9.0",
+    "neucodec>=0.0.6",
+    "numpy>=2.0.2",
+    "soundfile>=0.13.0",
+    "huggingface-hub>=0.30.0",
+    # torchtune (via neucodec) resolves an ancient `datasets` otherwise,
+    # which breaks against pyarrow>=13 at import time.
+    "datasets>=3.0",
+]
+
+[tool.uv]
+package = false
