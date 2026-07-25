@@ -241,6 +241,7 @@ def main() -> None:
     logits = out["logits_last"][0]
     kv_k, kv_v = out["kv_k"], out["kv_v"]
     num_layers = kv_k.shape[0]
+    max_len = kv_k.shape[3]  # decode state capacity; generation must stop here
     print(f"prefill: {t_pre * 1000:.0f} ms ({num_layers} layers, kv {kv_k.shape})")
 
     print("loading decode...")
@@ -289,7 +290,7 @@ def main() -> None:
         t_start = t_gen0 = time.perf_counter()
         ttfa = None
         step_logits = logits
-        while cur_len < MAX_CONTEXT - 1:
+        while cur_len < min(MAX_CONTEXT, max_len) - 1:
             if len(gen_ids) < MIN_NEW_TOKENS:
                 step_logits[eos_id] = -1e9
             tok = sample_top_k(step_logits, args.temperature, args.top_k, rng)
@@ -324,7 +325,7 @@ def main() -> None:
     else:
         t0 = time.perf_counter()
         step_logits = logits
-        while cur_len < MAX_CONTEXT - 1:
+        while cur_len < min(MAX_CONTEXT, max_len) - 1:
             if len(gen_ids) < MIN_NEW_TOKENS:
                 step_logits[eos_id] = -1e9
             tok = sample_top_k(step_logits, args.temperature, args.top_k, rng)

@@ -64,15 +64,34 @@ uv run python inference.py --lm-dir ./build/lm-fp16 \
 - Teacher-forced replay of the 301-token PyTorch reference: 98.7 % of
   reference tokens inside the CoreML top-50 sampling support; final audio
   SNR 41.5 dB vs the PyTorch waveform.
-- Sampled end-to-end run (warm): decode 9.2 ms/token (109 tok/s vs 50 needed
-  for real-time; LM on GPU), prefill 33 ms, codec 12.7–27× RT on ANE.
-  Compute units: LM decode best on ALL/CPU_AND_GPU (CPU_AND_NE breaks the
-  coremltools state API; CPU_ONLY still real-time at 58 tok/s); codec ~2×
-  faster on CPU_AND_NE than GPU. `inference.py` defaults to this split.
+- Sampled end-to-end run (warm): decode 9.1 ms/token at M=2048, **7.0 ms/token
+  (143 tok/s) at M=1024** (LM on GPU), prefill 33–40 ms, codec 12.7–27× RT on
+  ANE. Compute units: LM decode best on ALL/CPU_AND_GPU (ANE rejects the
+  decode graph outright, ANECCompile error -14, same as Qwen3-0.6B; CPU_ONLY
+  still real-time at 58 tok/s); codec ~2× faster on CPU_AND_NE than GPU.
+  `inference.py` defaults to this split.
 - Streaming (`--stream`, upstream 25-frame windowed overlap-add over the
-  flexible-length codec): TTFA ≈ 650 ms at every text length, steady-state
-  inter-chunk ≈ 340 ms against the 500 ms budget, 1.36–1.47× RT overall,
-  0 % WER (transcribes identically to batch).
+  flexible-length codec): with the M=1024 pair, TTFA ≈ 554 ms, steady-state
+  inter-chunk ≈ 303 ms against the 500 ms budget, 1.6× RT overall; batch ≈
+  2.0× RT. 0 % WER (transcribes identically to batch). M=1024 caps
+  prompt+generation at 1024 tokens (~11 s of audio after the emily prompt) —
+  hosts should pick the M=2048 pair for longer utterances.
+
+### Speed dead-ends (measured, don't retry)
+
+- **int8 weight quantization: zero speedup** (9.5 ms/tok either way) — the
+  one-token step is dispatch-latency-bound (hundreds of small GPU ops), not
+  weight-bandwidth-bound. int8 still halves disk (451→227 MB) at a small
+  quality cost (48/50 top-50 overlap); `compress-lm.py` kept for that.
+- **Pure fp16 (no fp32 op islands): catastrophically wrong** — fp16 RMSNorm
+  overflows on Qwen3 activation outliers (top-50 overlap 0/50). The fp32
+  pow/reduce_mean/rsqrt/softmax islands are load-bearing.
+- **In-model top-k head: slower** (+1.0 ms/tok — topk over 217 232 costs more
+  than shipping the 870 KB logits), and it exposed a CoreML kernel bug: topk
+  over a >2^17-wide *intermediate* tensor returns indices modulo 131072
+  (values correct; both fp16 and fp32; chunked two-stage topk gives the same
+  corruption; the op is fine in a standalone model fed by an input, so it is
+  layout-dependent on the big matmul output).
 
 ## Conversion gotchas (also see git history)
 
@@ -109,8 +128,8 @@ RTFx (inference speed vs audio duration):
 | KokoroAne | 1.9× | 6.5× | 19× | 0 / 0 / 0 % | 782 MB | — |
 | StyleTTS2 | 4.6× | 11.3× | 18× | 80 / 0 / 12.7 % | 452 MB | — |
 | PocketTTS | 3.4× | 5.7× | 6.2× | 0 / 0 / 0 % | 866 MB | streaming-capable |
-| **NeuTTS-2E batch** | 1.3× | 1.5× | 1.7× | 6.7 / 0 / 0 % | 1.28 GB | n/a |
-| **NeuTTS-2E stream** | 1.4× | 1.4× | 1.5× | 0 / 0 / 0 % | 1.28 GB | **650 ms** |
+| **NeuTTS-2E batch** | 1.3× | 1.5× (2.0× @M1024) | 1.7× | 6.7 / 0 / 0 % | 1.28 GB | n/a |
+| **NeuTTS-2E stream** | 1.4× | 1.4× (1.6× @M1024) | 1.5× | 0 / 0 / 0 % | 1.28 GB | **650 ms (554 @M1024)** |
 
 Notes:
 
@@ -134,10 +153,9 @@ Notes:
 
 ## Follow-ups
 
-- ANE profiling (`tools/coreml-cli`) and a fixed-shape codec variant if ANE
-  residency is worth it; LM decode currently runs GPU-dominant.
-- Weight compression: 111 M of the 236 M params are the tied vocab matrix —
-  int8/palettized embedding would roughly halve both LM packages.
+- LM decode is dispatch-latency-bound; the remaining levers are a Swift host
+  (per-step Python overhead ~1–2 ms) and multi-token/speculative decode.
+  ANE rejects the decode graph (-14) and int8 doesn't help speed (see above).
 - Multifunction package (macOS 15+) to share weights between prefill and
   decode (saves ~450 MB on disk).
 - Swift host port (tokenizer + sampling loop + Perth watermark) for FluidAudio.
