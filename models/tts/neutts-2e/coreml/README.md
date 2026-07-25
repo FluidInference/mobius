@@ -87,6 +87,29 @@ uv run python inference.py --lm-dir ./build/lm-fp16 \
   + `ConvTranspose1d` overlap-add with window-envelope division (verified vs
   the library to 1e-3 before conversion).
 
+## Comparison vs FluidAudio TTS engines (M5 Pro, 2026-07-25)
+
+Same 14-word sentence ("I can't believe it's finally here! The whole team
+worked so hard on this."), warm runs (mean of 3), WER via parakeet-tdt-v3
+round-trip. FluidAudio engines measured with
+`fluidaudiocli tts --backend <x> --metrics` (release build); NeuTTS-2E via
+`inference.py` (Python coremltools host — a Swift host would shave per-step
+overhead).
+
+| Engine | RTFx | WER | Disk | Notes |
+|---|---|---|---|---|
+| Supertonic-3 | 44× | ~5 % ("works"/"worked" in 2/3 runs) | 284 MB | 44.1 kHz, fastest |
+| KokoroAne | 6.3× | 0 % | 782 MB | ANE-resident |
+| PocketTTS | 4.8× | 2 % | 866 MB | streaming |
+| **NeuTTS-2E (this)** | **1.06×** | **0 % (3/3 exact)** | 1.28 GB | only emotional-control engine; decode 11.9 ms/tok (84 tok/s vs 50 real-time), codec 3.2× RT |
+| StyleTTS2 | 7.5× (short text only) | high | 452 MB | hosted sized BERT/diffusion mlmodelc are missing model.mil → texts beyond ~t32 fail (`corruptedModel`); needs re-upload |
+
+NeuTTS-2E is the slowest (autoregressive LM at 50 codes/s + full-sequence
+vocoder) but the only engine with emotion control, and its intelligibility
+matched the best engines. Batch RTFx 1.06× means marginally real-time; chunked
+streaming decode (upstream's 25-frame windows) would cut time-to-first-audio
+to well under a second.
+
 ## Follow-ups
 
 - ANE profiling (`tools/coreml-cli`) and a fixed-shape codec variant if ANE
