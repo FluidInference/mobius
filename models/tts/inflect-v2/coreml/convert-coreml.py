@@ -172,7 +172,9 @@ def convert(traced, inputs, outputs, precision):
     )
 
 
-def convert_variant(checkpoint_dir: Path, output_dir: Path, t_text: int, t_frames: int, precision):
+def convert_variant(
+    checkpoint_dir: Path, output_dir: Path, t_text: int, t_frames: int, precision, io_fp16: bool = False
+):
     model, hps = load_synthesizer(checkpoint_dir)
     inter = hps.model.inter_channels
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -205,15 +207,16 @@ def convert_variant(checkpoint_dir: Path, output_dir: Path, t_text: int, t_frame
     z_p = torch.randn(1, inter, t_frames)
     y_mask = torch.zeros(1, 1, t_frames)
     y_mask[:, :, : t_frames // 2] = 1.0
+    io_dtype = np.float16 if io_fp16 else np.float32
     with torch.no_grad():
         traced = torch.jit.trace(synthesizer, (z_p, y_mask))
     ml_synth = convert(
         traced,
         inputs=[
-            ct.TensorType(name="z_p", shape=(1, inter, t_frames), dtype=np.float32),
-            ct.TensorType(name="y_mask", shape=(1, 1, t_frames), dtype=np.float32),
+            ct.TensorType(name="z_p", shape=(1, inter, t_frames), dtype=io_dtype),
+            ct.TensorType(name="y_mask", shape=(1, 1, t_frames), dtype=io_dtype),
         ],
-        outputs=[ct.TensorType(name="audio")],
+        outputs=[ct.TensorType(name="audio", dtype=io_dtype)],
         precision=precision,
     )
     synth_path = output_dir / "synthesizer.mlpackage"
@@ -227,6 +230,7 @@ def main():
     parser.add_argument("--t-text", type=int, default=256, help="fixed interspersed token length")
     parser.add_argument("--t-frames", type=int, default=1024, help="fixed mel-frame length (256 samples each)")
     parser.add_argument("--precision", choices=["fp16", "fp32"], default="fp16")
+    parser.add_argument("--io-fp16", action="store_true", help="fp16 model I/O (skips fp32<->fp16 casts)")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "build")
     args = parser.parse_args()
 
@@ -234,9 +238,10 @@ def main():
     variants = ["micro", "nano"] if args.variant == "all" else [args.variant]
     for variant in variants:
         checkpoint_dir = ROOT / "checkpoints" / f"inflect-{variant}-v2"
-        out = args.output_dir / f"inflect-{variant}-v2-{args.precision}-t{args.t_text}-f{args.t_frames}"
-        print(f"=== converting {variant} (t_text={args.t_text}, t_frames={args.t_frames}, {args.precision}) ===")
-        convert_variant(checkpoint_dir, out, args.t_text, args.t_frames, precision)
+        suffix = "-io16" if args.io_fp16 else ""
+        out = args.output_dir / f"inflect-{variant}-v2-{args.precision}-t{args.t_text}-f{args.t_frames}{suffix}"
+        print(f"=== converting {variant} (t_text={args.t_text}, t_frames={args.t_frames}, {args.precision}{suffix}) ===")
+        convert_variant(checkpoint_dir, out, args.t_text, args.t_frames, precision, io_fp16=args.io_fp16)
 
 
 if __name__ == "__main__":

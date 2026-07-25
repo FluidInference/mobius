@@ -98,21 +98,28 @@ scored with the identical Parakeet TDT + TextNormalizer path via
 `fluidaudio tts-asr-verify --score-only` (added for this purpose).
 
 M5 Pro, macOS 26.6, `ComputeUnit.ALL` (routes to GPU), fp16, one bucket set
-preloaded (cold start = 5-model first compile). FluidAudio rows from
+preloaded (cold start = first compile of all buckets). FluidAudio rows from
 `Documentation/TTS/Benchmarks.md` (Kokoro re-baselined same day, same host):
 
 | Backend | Weights | Synth p50/p95 | Agg RTFx | WER | CER |
 |---|---|---|---|---|---|
-| **Inflect Micro CoreML** | 19 MB fp16 (9.4M) | **37 / 38 ms** | **192×** | 1.43% | 0.42% |
-| **Inflect Nano CoreML** | 8 MB fp16 (4.0M) | **17 / 18 ms** | **402×** | 1.92% | 0.57% |
+| **Inflect Micro CoreML** | 19 MB fp16 (9.4M) | **25.7 / 35.5 ms** | **245×** | 1.43% | 0.44% |
+| **Inflect Nano CoreML** | 8 MB fp16 (4.0M) | **13.2 / 16.9 ms** | **460×** | 1.92% | 0.57% |
 | Kokoro ANE (en) | ~330 MB (82M) | 241 / 305 ms | 31× | 0.68% | 0.15% |
 | PocketTTS (en, streaming) | ~330 MB | 933 / 1233 ms (TTFT 26 ms) | 6.5× | 0.51% | 0.08% |
 | Supertonic-3 (int4) | ~100 MB | 81 / 120 ms | 94× | 1.02% | 0.31% |
 | StyleTTS2 (M2 numbers) | ~670 MB | 1574 / 3088 ms | 4.6× | 9.4% | 4.1% |
 
 Notes:
-- p95 ≈ p50 because synthesizer cost is bucket-quantized — most phrases land
-  in the f1024 bucket, so latency is content-insensitive within a bucket.
+- Synthesizer cost is bucket-quantized and ~linear in frames (micro ≈
+  0.033 ms/frame on GPU). The first run used coarse buckets {256, 512, 1024,
+  2048}; 75% of phrases (p50 = 621 frames) overpaid in f1024 (p50 37 ms /
+  192×). The shipped set {256, 384, 512, 640, 768, 896, 1024, 2048} tracks
+  the corpus distribution — at 128-frame granularity, padding overhead is
+  within ~5% of exact-shape synthesis, so dynamic shapes buy nothing more.
+- fp16 model I/O and `CompiledMLModel` dispatch were A/B'd at f768: both
+  within noise (~25.3 ms either way) — the GPU is compute-bound, casts and
+  dispatch don't matter. Kept fp32 I/O.
 - Upstream claims 6.28× realtime on 4-thread CPU for Micro; the CoreML GPU
   pipeline is ~30× that.
 - The upstream Python frontend costs ~450 ms/phrase constructing a fresh

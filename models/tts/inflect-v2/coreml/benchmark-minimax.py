@@ -66,6 +66,10 @@ def main():
     parser.add_argument("--audio-dir", type=Path, required=True)
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--noise-scale", type=float, default=0.667)
+    parser.add_argument(
+        "--buckets", default="256,512,1024,2048",
+        help="comma-separated synthesizer frame buckets (build dirs must exist)")
+    parser.add_argument("--io-fp16", action="store_true", help="use -io16 fp16-I/O bundles")
     args = parser.parse_args()
 
     phrases = [
@@ -77,14 +81,19 @@ def main():
     args.audio_dir.mkdir(parents=True, exist_ok=True)
 
     prefix = f"build/inflect-{args.variant}-v2-fp16"
+    suffix = "-io16" if args.io_fp16 else ""
+    io_dtype = np.float16 if args.io_fp16 else np.float32
+    bucket_list = sorted(int(b) for b in args.buckets.split(","))
+    # f1024 predates the t512 conversions; the synthesizer is t_text-independent.
+    t_for = lambda frames: 256 if (frames == 1024 and not args.io_fp16) else 512
     cold0 = time.perf_counter()
     encoder = ct.models.MLModel(
         f"{prefix}-t512-f256/encoder.mlpackage", compute_units=ct.ComputeUnit.ALL)
     synths = {
         frames: ct.models.MLModel(
-            f"{prefix}-t{t}-f{frames}/synthesizer.mlpackage",
+            f"{prefix}-t{t_for(frames)}-f{frames}{suffix}/synthesizer.mlpackage",
             compute_units=ct.ComputeUnit.ALL)
-        for frames, t in ((256, 512), (512, 512), (1024, 256), (2048, 512))
+        for frames in bucket_list
     }
     t_text = 512
 
@@ -107,12 +116,13 @@ def main():
         m_exp = enc["m_p"][:, :, :n_tok][:, :, idx]
         logs_exp = enc["logs_p"][:, :, :n_tok][:, :, idx]
         noise = np.random.default_rng(seed).standard_normal(m_exp.shape, dtype=np.float32)
-        z_p = np.zeros((1, m_exp.shape[1], t_frames), dtype=np.float32)
+        z_p = np.zeros((1, m_exp.shape[1], t_frames), dtype=io_dtype)
         z_p[:, :, :y_len] = m_exp + noise * np.exp(logs_exp) * args.noise_scale
-        y_mask = np.zeros((1, 1, t_frames), dtype=np.float32)
+        y_mask = np.zeros((1, 1, t_frames), dtype=io_dtype)
         y_mask[0, 0, :y_len] = 1.0
         out = synths[t_frames].predict({"z_p": z_p, "y_mask": y_mask})
-        audio = np.clip(edge_fade(out["audio"][0, 0, : y_len * HOP]), -1.0, 1.0)
+        audio = out["audio"][0, 0, : y_len * HOP].astype(np.float32)
+        audio = np.clip(edge_fade(audio), -1.0, 1.0)
         return audio, (time.perf_counter() - t0) * 1000
 
     # Cold start = model loads; first synth = first end-to-end call (warm-up).
