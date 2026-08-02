@@ -25,6 +25,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-dir", default="./out")
     parser.add_argument("--block-size", type=int, default=32)
+    parser.add_argument("--models", default="riva4b_decoder_stateful,riva4b_lm_head")
     args = parser.parse_args()
 
     import coremltools as ct
@@ -41,7 +42,7 @@ def main():
         )
     )
 
-    for name in ("riva4b_decoder_stateful", "riva4b_lm_head"):
+    for name in args.models.split(","):
         src = model_dir / f"{name}.mlpackage"
         dst = model_dir / f"{name}_int4.mlpackage"
         print(f"Quantizing {src.name} (block_size={args.block_size})...")

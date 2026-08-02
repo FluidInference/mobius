@@ -162,6 +162,27 @@ class StatefulMistralDecoder(nn.Module):
         return hidden_states
 
 
+class StatefulMistralDecoderFused(StatefulMistralDecoder):
+    """Decoder stack + final RMSNorm + tied lm_head in one graph.
+
+    Emits logits for the LAST query position only ([1, 1, vocab]) so a single
+    model serves prefill (Q=N) and decode (Q=1) with one predict per token and
+    no cross-model handoff (measured ~24ms/step penalty for two-model decode).
+    """
+
+    def __init__(self, layers: nn.ModuleList, norm: nn.Module, head_weight: torch.Tensor, max_seq_len: int):
+        super().__init__(layers, max_seq_len)
+        self.norm = norm
+        self.head = nn.Linear(HIDDEN_SIZE, VOCAB_SIZE, bias=False)
+        with torch.no_grad():
+            self.head.weight.copy_(head_weight)
+
+    def forward(self, hidden_states, position_cos, position_sin, attention_mask):
+        hidden = super().forward(hidden_states, position_cos, position_sin, attention_mask)
+        last = self.norm(hidden[:, -1:, :])
+        return self.head(last)
+
+
 class LmHead(nn.Module):
     """Final RMSNorm + tied-embedding lm_head projection."""
 
@@ -183,6 +204,8 @@ def main():
     parser.add_argument("--output-dir", default=".")
     parser.add_argument("--skip-lm-head", action="store_true")
     parser.add_argument("--skip-decoder", action="store_true")
+    parser.add_argument("--fused", action="store_true",
+                        help="Fuse final norm + lm_head into the decoder (single model per token)")
     args = parser.parse_args()
 
     MAX_SEQ_LEN = args.max_seq_len
@@ -242,13 +265,19 @@ def main():
     if not embed_path.exists():
         np.save(embed_path, model.model.embed_tokens.weight.detach().numpy())
         print(f"Saved host-side embedding table to {embed_path}")
+    head_weight = model.model.embed_tokens.weight.detach() if args.fused else None
     model.model.embed_tokens = None
     model.lm_head = None
     gc.collect()
 
-    print(f"\nCreating stateful decoder (max_seq_len={MAX_SEQ_LEN})...")
-    stateful_model = StatefulMistralDecoder(layers, max_seq_len=MAX_SEQ_LEN)
-    stateful_model.eval()
+    print(f"\nCreating stateful decoder (max_seq_len={MAX_SEQ_LEN}, fused={args.fused})...")
+    if args.fused:
+        stateful_model = StatefulMistralDecoderFused(
+            layers, model.model.norm, head_weight, max_seq_len=MAX_SEQ_LEN
+        )
+    else:
+        stateful_model = StatefulMistralDecoder(layers, max_seq_len=MAX_SEQ_LEN)
+    stateful_model.eval().half()
 
     trace_q, trace_end = 1, 5
     hidden = torch.randn(1, trace_q, HIDDEN_SIZE, dtype=torch.float16)
@@ -272,7 +301,8 @@ def main():
         ct.TensorType("position_sin", shape=(1, query_length, HEAD_DIM), dtype=np.float16),
         ct.TensorType("attention_mask", shape=(1, 1, query_length, end_step_dim), dtype=np.float16),
     ]
-    outputs = [ct.TensorType("output_hidden", dtype=np.float16)]
+    out_name = "logits" if args.fused else "output_hidden"
+    outputs = [ct.TensorType(out_name, dtype=np.float16)]
 
     states = []
     for i in range(NUM_LAYERS):
@@ -299,7 +329,7 @@ def main():
     )
     print(f"CoreML conversion complete in {time.time() - t0:.1f}s")
 
-    out_path = output_dir / "riva4b_decoder_stateful.mlpackage"
+    out_path = output_dir / ("riva4b_decoder_fused.mlpackage" if args.fused else "riva4b_decoder_stateful.mlpackage")
     mlmodel.save(str(out_path))
     print(f"Saved {out_path}")
 
@@ -315,7 +345,7 @@ def main():
         },
         state=state,
     )
-    arr = out["output_hidden"]
+    arr = out[out_name]
     print(f"  output shape {arr.shape}, range [{np.min(arr):.3f}, {np.max(arr):.3f}]")
     print("Done.")
 

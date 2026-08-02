@@ -54,7 +54,10 @@ def main():
     parser.add_argument("--max-new-tokens", type=int, default=32)
     parser.add_argument("--compute-units", default="CPU_AND_GPU",
                         choices=["ALL", "CPU_AND_GPU", "CPU_ONLY", "CPU_AND_NE"])
-    parser.add_argument("--suffix", default="", help="Model filename suffix, e.g. _int4")
+    parser.add_argument("--suffix", default="", help="Decoder filename suffix, e.g. _int4")
+    parser.add_argument("--head-suffix", default=None, help="lm_head suffix (defaults to --suffix)")
+    parser.add_argument("--fused", action="store_true",
+                        help="Use riva4b_decoder_fused (in-graph norm+lm_head, logits output)")
     args = parser.parse_args()
 
     import coremltools as ct
@@ -68,10 +71,17 @@ def main():
     cu = getattr(ct.ComputeUnit, args.compute_units)
     print(f"Loading models (compute_units={args.compute_units})...")
     t0 = time.time()
+    decoder_base = "riva4b_decoder_fused" if args.fused else "riva4b_decoder_stateful"
     decoder = ct.models.MLModel(
-        str(model_dir / f"riva4b_decoder_stateful{args.suffix}.mlpackage"), compute_units=cu
+        str(model_dir / f"{decoder_base}{args.suffix}.mlpackage"), compute_units=cu
     )
-    lm_head = ct.models.MLModel(str(model_dir / f"riva4b_lm_head{args.suffix}.mlpackage"), compute_units=cu)
+    if args.fused:
+        lm_head = None
+    else:
+        head_suffix = args.suffix if args.head_suffix is None else args.head_suffix
+        lm_head = ct.models.MLModel(
+            str(model_dir / f"riva4b_lm_head{head_suffix}.mlpackage"), compute_units=cu
+        )
     embed = np.load(model_dir / "embed_tokens_fp16.npy", mmap_mode="r")
     print(f"Loaded in {time.time() - t0:.1f}s")
 
@@ -91,19 +101,23 @@ def main():
             },
             state=state,
         )
+        if args.fused:
+            return out["logits"].reshape(-1)  # last-position logits
         return out["output_hidden"]  # [1, Q, 3072]
 
-    def logits_for(hidden_last: np.ndarray) -> np.ndarray:
-        out = lm_head.predict({"hidden_states": hidden_last.reshape(1, 1, HIDDEN_SIZE)})
+    def logits_for(dec_out) -> np.ndarray:
+        if args.fused:
+            return dec_out
+        out = lm_head.predict({"hidden_states": dec_out[0, -1].reshape(1, 1, HIDDEN_SIZE)})
         return out["logits"].reshape(-1)
 
     # ---- Prefill ----
     t0 = time.time()
-    hidden = run_decoder(prompt_ids, past_len=0)
+    dec_out = run_decoder(prompt_ids, past_len=0)
     prefill_s = time.time() - t0
     print(f"Prefill: {len(prompt_ids)} tokens in {prefill_s:.2f}s ({len(prompt_ids)/prefill_s:.1f} tok/s)")
 
-    logits = logits_for(hidden[0, -1])
+    logits = logits_for(dec_out)
 
     # First-step logits parity
     ref_logits = ref["first_logits"]
@@ -123,8 +137,8 @@ def main():
         if tok == eos_id:
             break
         t0 = time.time()
-        hidden = run_decoder(np.array([tok]), past_len=past)
-        logits = logits_for(hidden[0, -1])
+        dec_out = run_decoder(np.array([tok]), past_len=past)
+        logits = logits_for(dec_out)
         decode_times.append(time.time() - t0)
         tok = int(np.argmax(logits))
         past += 1

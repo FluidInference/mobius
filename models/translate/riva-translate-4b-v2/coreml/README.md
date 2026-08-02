@@ -69,9 +69,59 @@ Scripts: `convert_stateful_decoder.py` (convert), `quantize_int4.py`
    LLM-on-ANE trial: autoregressive decode of this shape does not benefit
    from the ANE. Output text was still the correct translation.
 
+## Optimization pass (profiling, quant variants, fused model, MLX baseline)
+
+Follow-up pass to find where decode time goes and whether CoreML can approach
+bandwidth-optimal decode. Scripts: `profile_decode.py`, `quantize_variants.py`,
+`convert_stateful_decoder.py --fused`.
+
+Decoder-only latency (Q=1, short context, steady loop, CPU_AND_GPU):
+
+| weights | size | ms/tok | effective BW |
+|---|---|---|---|
+| fp16 | 7.0GB | 58.8 | ~142GB/s |
+| int8 per-channel | 3.5GB | 47.5 | 74GB/s |
+| int4 per-block-32 | 2.0GB | 41.3 | 49GB/s |
+| int4 per-channel | 1.8GB | 39.1 | 46GB/s |
+| 4-bit palettized LUT | 1.8GB | 95.5 | (avoid — slowest) |
+
+Findings, in causal order:
+
+1. **RangeDim shape churn is a non-issue** — growing `end_step` per decode
+   step costs nothing vs constant shape. No need for static-shape decode
+   models or position-input scatter designs.
+2. **CoreML quantized GEMV kernels hit a ~40ms floor** on this GPU: int4
+   moves 4× less data than fp16 but only decodes 1.5× faster. Palettized LUT
+   dequant is pathological (2.3× slower than fp16). fp16 runs at ~52% of
+   chip bandwidth; int4 at ~18%.
+3. **Alternating between two MLModels costs ~24ms/step** (decoder 41.1ms +
+   head 1.5ms alone, but 66.8ms interleaved). Fixed by the `--fused` variant
+   (34 layers + final norm + tied lm_head in one graph, last-position logits
+   output): prefill 228 tok/s, one predict per token.
+4. **Host-side gaps between predicts are nearly free** (busy-wait probe:
+   +0.5→10ms gaps add only 0–3ms net), so a Swift host loop wouldn't beat
+   the Python harness by much — the floor is in the kernels, not the host.
+5. **The machine is bimodal under sustained GPU load**: identical benchmarks
+   oscillate between ~41ms and ~68ms regimes (GPU clock management /
+   thermals). Steady-state best ≈ 24 tok/s; observed sustained ≈ 15 tok/s.
+6. **MLX 4-bit baseline on the same machine: 106.7 tok/s decode**
+   (`out/mlx-4bit`, 4.5 bits/weight, 3.5GB peak memory, same correct
+   translation output). MLX's quantized GEMV runs near bandwidth-optimal —
+   ~4.4× faster than CoreML's best steady-state. CoreML wins only prefill
+   (228 vs ~39 tok/s on this 36-token prompt, where MLX is setup-dominated).
+
+Not pursued (and why): speculative decoding needs a draft model and host
+machinery disproportionate to a probe; chunked multi-model pipelines add
+handoffs (the thing that costs 24ms) without reducing sequential work; ANE
+already shown strictly worse.
+
 ## Verdict
 
-Converting works; running is "fine on Mac, marginal on iOS". For FluidAudio
-purposes a 4B translation LLM remains better served by MLX on macOS; the
-CoreML route offers no advantage for GPU-bound autoregressive decode and the
-ANE does not change the picture for this shape of model.
+Converting works; running is "fine on Mac, marginal on iOS". The optimization
+pass makes the conclusion quantitative: CoreML's quantized GEMV kernels cap
+decode at ~24 tok/s while MLX hits 106.7 tok/s on the same silicon — a 4.4×
+gap that no amount of model restructuring closes, because it lives inside the
+kernels. For FluidAudio purposes a 4B translation LLM is an MLX workload on
+macOS. CoreML remains the right tool for the encoder-heavy sub-1B models the
+framework is built around, and its strong prefill suggests the hybrid worth
+remembering: CoreML/ANE encoders + MLX decoder.
