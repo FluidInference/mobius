@@ -65,6 +65,31 @@ Base-model (not fine-tuned) MLX weights were benchmarked; fine-tuned weights are
 architecture so speed carries over. 6-bit quant (~7 GB, est. ~28 ms/tok) still fits if 4-bit
 hurts quality after fine-tune conversion.
 
+### CoreML 9B floor benchmark (`bench_llm_coreml_floor.py`) — MLX-vs-CoreML revisited
+
+Exact-geometry single-step stacks (random weights, real shapes), int4 per-block
+(linear_symmetric, block 32), measured on M5 Pro:
+
+| Stack | GPU median | ANE |
+|---|---|---|
+| Mamba2 ×9 (of 27) | 3.85 ms | ANEF compile fails → CPU fallback |
+| MLP ×9 (of 25) | 3.43 ms | rejected |
+| Attention ×4 (1024-frame KV window) | 4.01 ms | rejected |
+| lm_head + function_head (2× 4480→131072) | 2.75 ms | rejected |
+| **Full 9B step, sum-of-parts (as-if-fused)** | **≈ 28 ms** | |
+| **Full 9B step, chained 8-model calls (measured)** | **50.6 ms** | ~2.8 ms/dispatch overhead |
+
+Conclusion: **CoreML int4 on the M5 GPU is no longer ruled out** — even the
+worst-case unfused chain fits the 80 ms budget, and a fused (or 2–4-shard)
+model should land ~30–36 ms. The riva-translate-4b 40 ms/tok floor does not
+reproduce at this geometry on M5 (GPU int4 GEMV is much faster here). MLX is
+still faster (21.2 ms) and is the safer default, but a CoreML-only build —
+no MLX dependency — is a live option. Blockers for CoreML-only: fused
+conversion needs a MIL-builder or sharded pipeline (a 56-layer torch trace
+at fp32 exceeds 24 GB RAM), and int4 quality on the fine-tune is unmeasured.
+Note the LLM runs on GPU regardless of runtime; encoder/TTS on ANE — no
+compute-unit contention.
+
 **Conclusion: hybrid execution.** CoreML/ANE for encoder + TTS + codec + RNNT
 (≈ 1.6 B params total, ~all reusable patterns from prior trials), MLX for the
 9B backbone + 3 heads. Memory: 4-bit LLM ≈ 4.7 GB + fp16 rest ≈ 3.5 GB → ~8–9 GB.
