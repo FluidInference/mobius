@@ -1,0 +1,15 @@
+[project]
+name = "nemotron-voicechat-11b-coreml"
+version = "0.1.0"
+description = "Slice + convert NVIDIA NemotronLabs VoiceChat 11B for Apple Silicon (CoreML + MLX)"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "torch>=2.0.0",
+    "safetensors>=0.4.0",
+    "numpy>=1.24.0",
+    "coremltools>=8.0",
+    "typer>=0.9.0",
+]
+
+[tool.uv]
+dev-dependencies = []
