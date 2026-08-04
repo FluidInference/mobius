@@ -15,11 +15,11 @@ model class `nemo/collections/speechlm2/models/nemotron_voicechat.py`.
 |---|---|---:|---|
 | Fast Conformer encoder | `stt_model.perception.encoder.*` | 609 M | CoreML/ANE — same family as shipped `nemotron-speech-streaming-en-0.6b` (24L, d1024, 128 mel, 8x subsampling, cache-aware `chunked_limited` att_context **[70, 0]** = fully causal, 80 ms frames) |
 | Perception proj | `stt_model.perception.proj.*` | 4.6 M | CoreML (1024 → 4480 into LLM embed space) |
-| LLM backbone | `stt_model.llm.layers.*` | 7 714 M | **MLX** — Nemotron Nano v2 9B (NemotronH hybrid Mamba2/attention, hidden 4480); mlx-lm supports the arch (mlx-community ships 4/6-bit quants of the base model) |
+| LLM backbone | `stt_model.llm.layers.*` | 7 714 M | **MLX** — Nemotron Nano v2 9B (NemotronH, hidden 4480; verified from keys: 56 layers = 27 Mamba2 + 25 MLP + 4 attention at indices 14/21/30/39 → tiny KV cache, O(1) Mamba state); mlx-lm supports the arch (mlx-community ships 4/6-bit quants of the base model) |
 | Token embeddings | `stt_model.embed_tokens.weight` | 587 M | MLX (131072 × 4480) |
 | Text head | `stt_model.lm_head.weight` | 587 M | MLX |
 | Function head | `stt_model.function_head.weight` | 587 M | MLX (second lm_head on same hidden state → tool-call channel) |
-| RNNT decoder+joint | `stt_model.rnnt_decoder.*`, `stt_model.rnnt_joint.*` | ~13 M | CoreML — same RNNT prednet/joint shape as nemotron-speech-streaming (pred_hidden 640, vocab 1024, tokenizer in `rnnt_tokenizer/`) |
+| RNNT decoder+joint | `stt_model.rnnt_decoder.*`, `stt_model.rnnt_joint.*` | ~13 M | CoreML — verified from keys: 2-layer LSTM prednet (hidden 640, embed 1025×640), joint enc 1024→640 / pred 640→640 → 1025 logits; same shapes the 0.6b conversion scripts already handle (tokenizer in `rnnt_tokenizer/`) |
 | TTS backbone | `tts_model.tts_model.backbone.*` | 595 M | CoreML/ANE — `gemma3_text` 28L, hidden 1152, per-step decode with KV cache |
 | TTS MoG head | `tts_model.tts_model.mog_head.*` | 159 M | CoreML (mixture-of-gaussians over latent 512, 1024 predictions, low-rank 64) |
 | TTS misc | `embed_subword`, `rvq_embs`, `gated_fusion_audio_text`, `audio_prompt_projection_W` | ~43 M | CoreML |
