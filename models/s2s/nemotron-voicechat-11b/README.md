@@ -83,14 +83,19 @@ whole thing ships as a separate example app. Decide before Swift work starts.
       (mamba-ssm/causal-conv1d are CUDA-only → needs the pure-torch Mamba2 fallback path,
       or capture per-component I/O on a Linux GPU box) to produce golden tensors for
       each component on `turn_taking.wav`.
-- [ ] **Phase 2 — CoreML conversions** (each with parity vs Phase 1 goldens):
-  - encoder: adapt `stt/nemotron-speech-streaming-0.6b/coreml/conversion_scripts/`
-    (identical arch; new: proj to 4480, `asr_emb` second output, chunk=1 frame geometry
-    [70,0] fully-causal — verify streaming cache config vs the 0.6b's [70,13])
-  - rnnt decoder + joint: reuse fused decoder/joint scripts as-is (shape-identical)
-  - tts backbone + MoG head: gemma3 28L×1152 stateful KV single-step, magpie/neutts
-    decoder-step playbook applies (host-cache if needed)
-  - codec decoder (+ prvq dequant): conv stack, straightforward
+- [x] **Phase 2a — encoder + RNNT CoreML** (`convert_encoder.py`, `convert_rnnt.py`):
+  - encoder: **native per-frame streaming confirmed** — `setup_streaming_params()`
+    yields `chunk_size=[1,8]`, 70-frame channel cache, 9-mel pre-encode cache,
+    `valid_out_len=1`. Exported with proj + asr_emb tap. Chained-cache parity
+    torch↔CoreML: fp32 ≤8e-07, fp16 ≤1.05e-02 (25 steps). Per-frame step measured
+    **11.4 ms GPU / 12.3 ms ANE (68% resident)** on M5 Pro.
+  - rnnt: fp32 decoder + joint (fp16 rejected: LSTM state drift → 0.16/9.9 max|Δ|
+    over 20 chained steps; fp32 is 1.4e-05/5.5e-04). Measured **0.37 + 0.13 ms/step**.
+  - env gotchas: `numpy==2.2.6` (2.4.x makes coremltools' `aten::Int` handler throw
+    TypeError on NeMo's size-1 `max_audio_length` array), `torch==2.12.1`.
+- [ ] **Phase 2b — TTS backbone + MoG head**: gemma3 28L×1152 stateful KV single-step,
+  magpie/neutts decoder-step playbook applies (host-cache if needed)
+- [ ] **Phase 2c — codec decoder (+ prvq dequant)**: conv stack, straightforward
 - [ ] **Phase 3 — LLM to MLX**: remap `stt_model.llm.*`/`embed_tokens`/`lm_head` onto
       NemotronH HF layout → `mlx_lm.convert` (4-bit + 6-bit) → custom step runner that
       accepts `inputs_embeds` (fusion output) instead of token ids and returns hidden
@@ -104,8 +109,6 @@ whole thing ships as a separate example app. Decide before Swift work starts.
 
 ## Open questions
 
-- `att_context [70, 0]` here vs `[70, 13]` in the 0.6b ASR release — confirm the
-  exact streaming cache geometry from `perception` config before converting.
 - CFG (guidance_enabled, scale 0.2): 2× TTS backbone evals per step. Check if
   `inference_guidance_enabled: false` degrades quality acceptably, else batch the
   uncond/cond pair through one ANE call.
