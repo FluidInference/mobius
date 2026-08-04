@@ -93,6 +93,10 @@ whole thing ships as a separate example app. Decide before Swift work starts.
     over 20 chained steps; fp32 is 1.4e-05/5.5e-04). Measured **0.37 + 0.13 ms/step**.
   - env gotchas: `numpy==2.2.6` (2.4.x makes coremltools' `aten::Int` handler throw
     TypeError on NeMo's size-1 `max_audio_length` array), `torch==2.12.1`.
+  - **e2e STT validated** (`test_e2e_stt.py`): `sample_general.wav` → mel →
+    CoreML encoder (fp16, 195 per-frame steps) → CoreML RNNT greedy →
+    "Hello, do you know what color the sky is" — token-identical to the torch
+    reference. Real-audio behavioral parity for the full user-transcription chain.
 - [ ] **Phase 2b — TTS backbone + MoG head**: gemma3 28L×1152 stateful KV single-step,
   magpie/neutts decoder-step playbook applies (host-cache if needed)
 - [ ] **Phase 2c — codec decoder (+ prvq dequant)**: conv stack, straightforward
