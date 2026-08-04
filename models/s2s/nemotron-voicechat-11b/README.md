@@ -79,15 +79,26 @@ Exact-geometry single-step stacks (random weights, real shapes), int4 per-block
 | **Full 9B step, sum-of-parts (as-if-fused)** | **≈ 28 ms** | |
 | **Full 9B step, chained 8-model calls (measured)** | **50.6 ms** | ~2.8 ms/dispatch overhead |
 
-Conclusion: **CoreML int4 on the M5 GPU is no longer ruled out** — even the
-worst-case unfused chain fits the 80 ms budget, and a fused (or 2–4-shard)
-model should land ~30–36 ms. The riva-translate-4b 40 ms/tok floor does not
-reproduce at this geometry on M5 (GPU int4 GEMV is much faster here). MLX is
-still faster (21.2 ms) and is the safer default, but a CoreML-only build —
-no MLX dependency — is a live option. Blockers for CoreML-only: fused
-conversion needs a MIL-builder or sharded pipeline (a 56-layer torch trace
-at fp32 exceeds 24 GB RAM), and int4 quality on the fine-tune is unmeasured.
-Note the LLM runs on GPU regardless of runtime; encoder/TTS on ANE — no
+Optimized v2 (`bench_llm_coreml_floor2.py`): iOS18 **stateful** shards — all
+mamba conv/ssm states and the KV window live on-device via `ct.StateType`
+(in-place slice-assignment in the torch source; whole-buffer `.copy_()` is NOT
+matched by the converter pass), layers interleaved into 4 realistic shards
+(7 Mamba2 + 6 MLP + 1 attn each, ~1.0 GB int4/shard) + heads:
+
+| Variant | 9B step |
+|---|---|
+| v1 stateless, 8 calls, ~280 MB/step state I/O | 50.6 ms |
+| v1 sum of isolated stacks (as-if-fused) | ~28 ms |
+| **v2 stateful, 4 shards + heads (5 calls)** | **26.6 ms** |
+| MLX 4-bit reference | 21.2 ms |
+
+Conclusion: **CoreML int4 on the M5 GPU reaches near-parity with MLX** —
+26.6 ms vs 21.2 ms, well inside the 80 ms budget, ~4.7 GB int4 resident.
+The riva-translate-4b 40 ms/tok floor does not reproduce at this geometry on
+M5. A CoreML-only build (no MLX dependency) is now the *leading* option;
+the sharded stateful pipeline also sidesteps the >24 GB fused-trace RAM
+problem entirely. Remaining risk: int4 quality on the fine-tuned weights.
+The LLM runs on GPU (ANE rejects int4 stacks); encoder/TTS on ANE — no
 compute-unit contention.
 
 **Conclusion: hybrid execution.** CoreML/ANE for encoder + TTS + codec + RNNT
