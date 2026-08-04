@@ -179,6 +179,30 @@ whole thing ships as a separate example app. Decide before Swift work starts.
 - [ ] **Phase 5 — publish**: HF `FluidInference/nemotron-voicechat-11b-coreml`
       (CoreML bundles + MLX quant) after confirming repo with Alex.
 
+## Published benchmarks (evaluation targets for the port)
+
+NVIDIA model card + [Artificial Analysis](https://artificialanalysis.ai/articles/nemotron-3-voicechat-leader-speech-pareto):
+
+| Benchmark | VoiceChat score | Context |
+|---|---|---|
+| VoiceBench | #2 open full-duplex | no absolute score published |
+| FDB 1.0 smooth turn-taking | TOR 0.82, **448 ms latency** | our per-frame budget must preserve this |
+| FDB 1.0 user interruption | TOR 1.0, 480 ms, GPT-4o 4.33/5 | barge-in quality |
+| FDB pause handling | TOR 0.153 synth / 0.255 Candor | lower = better |
+| Conversational Dynamics (FDB, AA) | 77.8% | PersonaPlex 91.0 > **VC 77.8** > FLM-Audio 62 > Moshi 61 > Freeze-Omni 58.7 |
+| Big Bench Audio (speech reasoning, AA) | 29.2% | Freeze-Omni 33.9; proprietary 87–96; VC = only open model top-3 on BOTH axes |
+| AU-Harness BFCL-v3 (spoken tool calling) | 56.1% avg | Simple 58.5 / Multiple 62.5 / Parallel 42.5 / Irrelevance 89.6 |
+| FDB-v3 (multi-step tool use) | Tool selection 82.5%, args 44.2%, Pass@1 33% | |
+
+Runnable harnesses for the CoreML port (once TTS+codec+loop exist):
+[VoiceBench](https://github.com/MatthewCYM/VoiceBench) (LLM-judged QA subsets),
+[Full-Duplex-Bench](https://arxiv.org/abs/2503.04721) 1.0/v3 (turn-taking,
+interruption, tool use — needs the interactive loop),
+[AU-Harness](https://github.com/ServiceNow/AU-Harness) (spoken BFCL),
+Big Bench Audio (HF dataset, speech-reasoning QA). Port-acceptance criteria:
+on-device outputs ≈ H100 reference on VoiceBench subset + turn-taking latency
+≤ 448 ms + int8 text-channel parity (already 100% at prefill).
+
 ## Open questions
 
 - CFG (guidance_enabled, scale 0.2): 2× TTS backbone evals per step. Check if
