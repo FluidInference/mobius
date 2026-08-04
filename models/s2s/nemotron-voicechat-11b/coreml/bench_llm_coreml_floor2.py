@@ -165,10 +165,10 @@ class Heads(nn.Module):
         return self.lm_head(x), self.function_head(x)
 
 
-def quantize_and_save(ml, name: str, outdir: Path) -> None:
+def quantize_and_save(ml, name: str, outdir: Path, nbits: int = 4) -> None:
     cfg = cto.OptimizationConfig(
         global_config=cto.OpLinearQuantizerConfig(
-            mode="linear_symmetric", dtype="int4", granularity="per_block", block_size=32
+            mode="linear_symmetric", dtype=f"int{nbits}", granularity="per_block", block_size=32
         )
     )
     ml = cto.linear_quantize_weights(ml, config=cfg)
@@ -177,7 +177,7 @@ def quantize_and_save(ml, name: str, outdir: Path) -> None:
 
 
 @app.command()
-def build(outdir: Path = typer.Option(Path("build/llm_floor2"))) -> None:
+def build(outdir: Path = typer.Option(Path("build/llm_floor2")), nbits: int = typer.Option(4)) -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     torch.manual_seed(0)
     shard = Shard().eval()
@@ -201,7 +201,7 @@ def build(outdir: Path = typer.Option(Path("build/llm_floor2"))) -> None:
         compute_precision=ct.precision.FLOAT16,
         minimum_deployment_target=ct.target.iOS18,
     )
-    quantize_and_save(ml, "shard14_stateful", outdir)
+    quantize_and_save(ml, f"shard14_stateful_int{nbits}" if nbits != 4 else "shard14_stateful", outdir, nbits)
 
     heads = Heads().eval()
     traced_h = torch.jit.trace(heads, (hidden,), strict=False)
@@ -213,14 +213,14 @@ def build(outdir: Path = typer.Option(Path("build/llm_floor2"))) -> None:
         compute_precision=ct.precision.FLOAT16,
         minimum_deployment_target=ct.target.iOS18,
     )
-    quantize_and_save(mlh, "heads", outdir)
+    quantize_and_save(mlh, f"heads_int{nbits}" if nbits != 4 else "heads", outdir, nbits)
 
 
 @app.command()
-def bench(outdir: Path = typer.Option(Path("build/llm_floor2")), steps: int = typer.Option(50)) -> None:
+def bench(outdir: Path = typer.Option(Path("build/llm_floor2")), steps: int = typer.Option(50), suffix: str = typer.Option("")) -> None:
     cu = ct.ComputeUnit.CPU_AND_GPU
-    shards = [ct.models.MLModel(str(outdir / "shard14_stateful.mlpackage"), compute_units=cu) for _ in range(4)]
-    heads = ct.models.MLModel(str(outdir / "heads.mlpackage"), compute_units=cu)
+    shards = [ct.models.MLModel(str(outdir / f"shard14_stateful{suffix}.mlpackage"), compute_units=cu) for _ in range(4)]
+    heads = ct.models.MLModel(str(outdir / f"heads{suffix}.mlpackage"), compute_units=cu)
     states = [s.make_state() for s in shards]
     hidden = np.random.randn(1, D_MODEL).astype(np.float32)
 

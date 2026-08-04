@@ -95,11 +95,36 @@ matched by the converter pass), layers interleaved into 4 realistic shards
 Conclusion: **CoreML int4 on the M5 GPU reaches near-parity with MLX** —
 26.6 ms vs 21.2 ms, well inside the 80 ms budget, ~4.7 GB int4 resident.
 The riva-translate-4b 40 ms/tok floor does not reproduce at this geometry on
-M5. A CoreML-only build (no MLX dependency) is now the *leading* option;
-the sharded stateful pipeline also sidesteps the >24 GB fused-trace RAM
-problem entirely. Remaining risk: int4 quality on the fine-tuned weights.
-The LLM runs on GPU (ANE rejects int4 stacks); encoder/TTS on ANE — no
-compute-unit contention.
+M5. The sharded stateful pipeline also sidesteps the >24 GB fused-trace RAM
+problem entirely. The LLM runs on GPU (ANE rejects int4 stacks);
+encoder/TTS on ANE — no compute-unit contention.
+
+### Quantization quality on the REAL fine-tuned weights (`measure_int4_quality.py`)
+
+Dual-track forward (fp32 baseline vs quantize-dequantize, same code both
+tracks so implementation error cancels), all 56 layers streamed from
+`components/llm.safetensors`, 3 real prompts, coremltools-equivalent
+per-block-32 linear_symmetric RTN:
+
+| Scheme | top-1 agree | top-5 | KL | fn-head top-1 | step latency | LLM weights |
+|---|---|---|---|---|---|---|
+| fp16 cast (noise floor) | 100% | 100% | ~0 | 100% | — (19 GB, doesn't fit) | — |
+| **int8 pb32** | **100%** | **100%** | **0.006** | **100%** | **45.4 ms** (measured, stateful shards) | ~9.4 GB |
+| int4 body + int8 heads | 80.6% | 99.1% | 0.20 | 85.8% | ~28 ms est. | ~5.6 GB |
+| int4 pb16 | 76.3% | 99.1% | 0.19 | 89.4% | ~27 ms est. | ~5.2 GB |
+| int4 pb32 | 74.3% | 99.1% | 0.22 | 85.8% | 26.6 ms (measured) | ~4.7 GB |
+
+Findings: naive int4 RTN is NOT acceptable (flips 1 in 4 tokens; the
+function-head degradation comes from accumulated body drift, not the head
+matrix). **int8 is exactly lossless** and still fits the budget: frame total
+with int8 = encoder 12 + LLM 45.4 + TTS 6–12 + RNNT 0.5 + codec ≈ 65–72 ms
+of 80 ms (thin but real-time on M5 Pro; needs ≥16–24 GB RAM at ~13 GB
+resident). NOTE: naive 4-bit RTN is also what mlx-community quants use — the
+quality problem applies to MLX equally; an MLX 8-bit run (~2× 21.2 ms) would
+land near CoreML int8. Path to recover 4–6-bit quality if headroom is needed:
+GPTQ/AWQ-calibrated int4 (coremltools layerwise compression), 6-bit
+palettization (validate — pal4 was pathological in riva trial), or
+sensitivity-based mixed int8/int4 per layer.
 
 **Conclusion: hybrid execution.** CoreML/ANE for encoder + TTS + codec + RNNT
 (≈ 1.6 B params total, ~all reusable patterns from prior trials), MLX for the
