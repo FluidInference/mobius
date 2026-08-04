@@ -49,12 +49,21 @@ host executes and injects `<TOOL_RESPONSE>` tokens back into the function channe
 
 ## Feasibility
 
-Per-frame budget is **80 ms**. Estimated step costs on M-series:
+Per-frame budget is **80 ms**. Measured on M5 Pro / 24 GB, macOS 26.6 (2026-08-03):
 
-- Conformer chunk step: known-good from nemotron-speech-streaming CoreML (~few ms/chunk on ANE; here 1 LLM frame = 1 encoder frame at 12.5 Hz).
-- 9B LLM step on CoreML: **not viable** — riva-translate-4b trial measured ~40 ms/tok floor from CoreML's quantized GEMV kernels at 4B; 9B ≈ 80–90 ms/tok. On MLX, 4-bit 9B ≈ 10–20 ms/tok on M4/M5-class → fits.
-- TTS backbone (595 M, gemma3) + MoG: comparable to pocket-tts/neutts per-step decoders; ANE-resident should land < 10 ms. CFG doubles backbone cost (batch=2 the backbone step).
-- Codec decoder 108 M convolutional: cheap, chunked decode.
+| Step | Measured | Notes |
+|---|---|---|
+| Conformer encoder chunk (ANE) | **9.5 ms** median | cached `nemotron-multilingual/560ms/encoder.mlmodelc`, CPU_AND_NE (71% ANE); that is per 560 ms chunk (7 frames). Per-80ms-frame geometry unmeasured — overhead-dominated, expect 3–10 ms. `[70,0]` causal means chunked encoding is also an option (adds chunk-length latency). |
+| 9B LLM decode (MLX 4-bit) | **21.2 ms/tok** (47.2 tok/s) | mlx-community/NVIDIA-Nemotron-Nano-9B-v2-4bits via mlx-lm 0.31.3; peak 5.24 GB. Confirms CoreML non-viability call (riva-translate-4b GEMV floor ⇒ 9B ≈ 80–90 ms/tok). |
+| 9B LLM prefill (MLX 4-bit) | **546 tok/s** | 1442-token system prompt ingests in 2.6 s at session start (one-time). |
+| RNNT decoder+joint step | **0.5 ms** (CPU) | cached `decoder_joint.mlmodelc`; negligible. |
+| TTS backbone + MoG step | ~6 ms est. (×2 with CFG ≈ 12 ms) | proxy: magpie decoder_step host-cache rewrite measured 6.0 ms/step 100% ANE on this machine (similar-class decoder). Measure after Phase 2. |
+| Codec decoder | unmeasured | 108 M convnet, expect low single-digit ms per chunk. |
+
+**Frame total ≈ 45–55 ms of an 80 ms budget → real-time viable on M5 Pro (~1.5–1.8× headroom), ~9 GB resident.**
+Base-model (not fine-tuned) MLX weights were benchmarked; fine-tuned weights are the same
+architecture so speed carries over. 6-bit quant (~7 GB, est. ~28 ms/tok) still fits if 4-bit
+hurts quality after fine-tune conversion.
 
 **Conclusion: hybrid execution.** CoreML/ANE for encoder + TTS + codec + RNNT
 (≈ 1.6 B params total, ~all reusable patterns from prior trials), MLX for the
