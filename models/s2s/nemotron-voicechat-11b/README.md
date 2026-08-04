@@ -53,12 +53,12 @@ Per-frame budget is **80 ms**. Measured on M5 Pro / 24 GB, macOS 26.6 (2026-08-0
 
 | Step | Measured | Notes |
 |---|---|---|
-| Conformer encoder chunk (ANE) | **9.5 ms** median | cached `nemotron-multilingual/560ms/encoder.mlmodelc`, CPU_AND_NE (71% ANE); that is per 560 ms chunk (7 frames). Per-80ms-frame geometry unmeasured — overhead-dominated, expect 3–10 ms. `[70,0]` causal means chunked encoding is also an option (adds chunk-length latency). |
+| Conformer encoder chunk (ANE) | **9.5 / 8.6 / 10.3 ms** for 560/1120/2240 ms tiers | cached `nemotron-multilingual` encoders, CPU_AND_NE (71–89% ANE). Latency is **flat across chunk sizes** → fixed-overhead-dominated, so per-80ms-frame stepping also lands ~8–10 ms. Chunked encoding amortizes to <1 ms/frame (1120 ms tier = 8.6 ms/14 frames) at the cost of added response latency; `[70,0]` causal allows either. English 0.6b int8 encoder (560 ms tier, HF): 9.7 ms GPU / 11.9 ms ANE — int8 does not reduce latency. |
 | 9B LLM decode (MLX 4-bit) | **21.2 ms/tok** (47.2 tok/s) | mlx-community/NVIDIA-Nemotron-Nano-9B-v2-4bits via mlx-lm 0.31.3; peak 5.24 GB. Confirms CoreML non-viability call (riva-translate-4b GEMV floor ⇒ 9B ≈ 80–90 ms/tok). |
 | 9B LLM prefill (MLX 4-bit) | **546 tok/s** | 1442-token system prompt ingests in 2.6 s at session start (one-time). |
-| RNNT decoder+joint step | **0.5 ms** (CPU) | cached `decoder_joint.mlmodelc`; negligible. |
+| RNNT decoder+joint step | **0.5 ms** (CPU; 0.23 + 0.27 ms split) | cached `decoder_joint.mlmodelc` / `decoder` / `joint`; negligible. |
 | TTS backbone + MoG step | ~6 ms est. (×2 with CFG ≈ 12 ms) | proxy: magpie decoder_step host-cache rewrite measured 6.0 ms/step 100% ANE on this machine (similar-class decoder). Measure after Phase 2. |
-| Codec decoder | unmeasured | 108 M convnet, expect low single-digit ms per chunk. |
+| Codec decoder | unmeasured | 108 M convnet, expect low single-digit ms per 80 ms frame. (NeuCodec-fp16 batch decode was profiled as a candidate proxy — 366 ms ANE-off — but it is a far heavier vocoder doing whole-utterance decode; not representative.) |
 
 **Frame total ≈ 45–55 ms of an 80 ms budget → real-time viable on M5 Pro (~1.5–1.8× headroom), ~9 GB resident.**
 Base-model (not fine-tuned) MLX weights were benchmarked; fine-tuned weights are the same
