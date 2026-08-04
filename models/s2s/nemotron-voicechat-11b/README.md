@@ -161,10 +161,17 @@ whole thing ships as a separate example app. Decide before Swift work starts.
 - [ ] **Phase 2b — TTS backbone + MoG head**: gemma3 28L×1152 stateful KV single-step,
   magpie/neutts decoder-step playbook applies (host-cache if needed)
 - [ ] **Phase 2c — codec decoder (+ prvq dequant)**: conv stack, straightforward
-- [ ] **Phase 3 — LLM to MLX**: remap `stt_model.llm.*`/`embed_tokens`/`lm_head` onto
-      NemotronH HF layout → `mlx_lm.convert` (4-bit + 6-bit) → custom step runner that
-      accepts `inputs_embeds` (fusion output) instead of token ids and returns hidden
-      state for both heads. Function head = extra 4480×131072 matmul.
+- [x] **Phase 3 — LLM on CoreML (real weights)** (`convert_llm_real.py`): the
+      fine-tuned 9B converted to 4 stateful int8 shards (~1.9 GB each) + heads
+      (1.2 GB) + fp16 embedding table for host-side lookup (1.1 GB, consumes
+      `inputs_embeds` directly — fusion output plugs straight in). Semantics
+      verified against mlx-lm nemotron_h (no RoPE; per-group gated RMSNorm
+      g=1280; eps 1e-5; dt softplus). KV window 1024 with pos-state masking
+      (exact < 1024 ctx, then 82 s sliding window; Mamba carries long-range).
+      **Validated: 100% prefill argmax agreement vs fp32 torch reference;
+      coherent greedy generation ("...Nemotron, created by NVIDIA. You are a
+      helpful, respectful, and honest assistant..."). Step: 43.5 ms.**
+      MLX remap kept as fallback only (not needed).
 - [ ] **Phase 4 — Swift host**: streaming mel (NemotronMelExtractor reusable) →
       encoder step → fusion (tiny, host-side) → MLX step → TTS step → codec chunks;
       barge-in = feed user audio continuously, agent yields when text channel emits EOS.
