@@ -4,6 +4,7 @@ import argparse
 import os
 import numpy as np
 
+from coremltools.optimize.coreml import OpPalettizerConfig, OptimizationConfig, palettize_weights
 from nemo.collections.asr.models import SortformerEncLabelModel
 from coreml_wrappers import PreprocessorWrapper, PreEncoderWrapper, SortformerHeadWrapper
 from config import Config
@@ -95,7 +96,8 @@ def export_pipeline(
         pre_encoder_precision: str = "fp32",
         head_precision: str = "fp16",
         skip_modules: bool = False,
-        verify: bool = False
+        verify: bool = False,
+        palettize_head_nbits: int = 0
 ):
     """
     Export the Sortformer model as a pipeline of separate CoreML models.
@@ -300,9 +302,22 @@ def export_pipeline(
             # Both models now use compute_units=ALL.
             # The pre_encoder uses ANE-safe gather operations in fixed_concat_and_pad
             # to avoid zero-length slices that would crash on ANE.
-            
+
+            # Optional weight palettization of the head (conformer+transformer = ~98% of size).
+            # 6-bit kmeans LUT compression cuts the model ~2.5x (matches Argmax's speakerkit) with
+            # no measurable speed change and preserves speaker-argmax decisions. Palettization (LUT)
+            # is GPU-safe, unlike int8 linear quantization which crashes MPSGraph (#726 RAM on old devices).
+            if palettize_head_nbits > 0:
+                print(f"  Palettizing head weights to {palettize_head_nbits}-bit (kmeans LUT)...")
+                palette_cfg = OptimizationConfig(
+                    global_config=OpPalettizerConfig(
+                        nbits=palettize_head_nbits, mode="kmeans", weight_threshold=512
+                    )
+                )
+                head_mlmodel = palettize_weights(head_mlmodel, palette_cfg)
+
             pipeline_model = ct.utils.make_pipeline(
-                pre_encoder_mlmodel, 
+                pre_encoder_mlmodel,
                 head_mlmodel,
                 compute_units=ct.ComputeUnit.ALL
             )
@@ -372,6 +387,8 @@ if __name__ == "__main__":
                         help="Conformer encoder precision")
     parser.add_argument("--skip_modules", action="store_true", help="Skip modules in pipeline export")
     parser.add_argument("--verify", action="store_true", help="Skip pipeline in pipeline export")
+    parser.add_argument("--palettize_head_nbits", type=int, default=0,
+                        help="If >0, palettize head weights to N-bit kmeans LUT (e.g. 6). ~2.5x smaller, GPU-safe.")
 
     args = parser.parse_args()
 
@@ -385,4 +402,5 @@ if __name__ == "__main__":
         head_precision=args.head_precision,
         skip_modules=args.skip_modules,
         verify=args.verify,
+        palettize_head_nbits=args.palettize_head_nbits,
     )
