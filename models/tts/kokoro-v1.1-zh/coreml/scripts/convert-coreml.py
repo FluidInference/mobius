@@ -102,7 +102,11 @@ class CoreMLVocoderDualOutput(nn.Module):
                     xs = xs + self.resblocks[i * self.num_kernels + j](x, s)
             x = xs / self.num_kernels
         x_pre = F.leaky_relu(x)
-        anchor = x_pre.mean().unsqueeze(0)
+        # Reduce over explicit dims so the MIL keeps rank >= 1 throughout.
+        # mean() -> rank-0 -> unsqueeze lowers to a chain macOS 14's Espresso
+        # runtime mangles into rank 2 ("Output rank has changed after
+        # reshaping"), failing every prediction (FluidAudio#836).
+        anchor = x_pre.mean(dim=(1, 2))
         return anchor, x_pre
 
 
