@@ -157,6 +157,16 @@ class CoreMLCustomSTFT(nn.Module):
         backward_imag = original.weight_backward_imag.clone()
         backward_real[1:-1] *= 2.0
         backward_imag[1:-1] *= 2.0
+        # COLA normalization torch.istft applies but the deconv path omits:
+        # analysis and synthesis each apply the window once, so the
+        # overlap-added output carries a summed-w^2 envelope (constant 1.5 in
+        # the interior for periodic Hann at hop = n_fft/4). Fold it into the
+        # synthesis weights; the edge taps are sliced off by the center pad.
+        window_sq = original.window.float() ** 2
+        cola = window_sq.reshape(self.n_fft // self.hop_length, self.hop_length).sum(dim=0)
+        assert torch.allclose(cola, cola[:1].expand_as(cola), rtol=1e-5), cola
+        backward_real /= cola[0]
+        backward_imag /= cola[0]
         self.deconv_real.weight = nn.Parameter(backward_real, requires_grad=False)
         self.deconv_imag.weight = nn.Parameter(backward_imag, requires_grad=False)
 
