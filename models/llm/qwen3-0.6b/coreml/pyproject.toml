@@ -1,0 +1,16 @@
+[project]
+name = "qwen3-0.6b-coreml"
+version = "0.1.0"
+description = "CoreML conversion + on-device benchmark for standalone Qwen/Qwen3-0.6B (LLM-on-ANE thesis test)"
+requires-python = ">=3.10,<3.12"
+dependencies = [
+    "torch>=2.4",
+    "transformers>=4.51",
+    "coremltools>=9.0",
+    "numpy>=1.24,<2.0",
+    "huggingface-hub>=0.30.0",
+    "safetensors>=0.4.0",
+]
+
+[tool.uv]
+dev-dependencies = []
