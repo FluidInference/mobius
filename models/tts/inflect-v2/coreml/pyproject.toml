@@ -1,0 +1,17 @@
+[project]
+name = "inflect-v2-coreml"
+version = "0.1.0"
+description = "Inflect v2 (Micro/Nano) VITS TTS CoreML conversion"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "coremltools>=8.0",
+    "torch>=2.6,<2.8",
+    "numpy>=1.26,<3",
+    "scipy>=1.13",
+    "soundfile>=0.13",
+    "phonemizer>=3.3",
+    "espeakng-loader>=0.2.4",
+    "num2words>=0.5.14",
+    "Unidecode>=1.3.8",
+    "huggingface-hub>=0.36",
+]
