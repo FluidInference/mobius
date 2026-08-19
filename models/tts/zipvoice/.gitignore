@@ -1,0 +1,5 @@
+.venv/
+build/
+upstream/
+uv.lock
+__pycache__/
