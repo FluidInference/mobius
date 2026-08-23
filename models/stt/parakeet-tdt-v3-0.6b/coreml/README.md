@@ -193,3 +193,38 @@ Examples
 
 - Parakeet‑TDT v3 model from NVIDIA NeMo (`nvidia/parakeet-tdt-0.6b-v3`).
 - This directory provides export/validation utilities and plots to help the community reproduce quality and performance on Apple devices.
+
+## WebGPU/WASM port knowledge (browser)
+
+Parakeet v3 also runs fully in-browser in
+[fluidaudio-web](https://github.com/FluidInference/fluidaudio-web)
+(`src/engines/asr-parakeet/`) — ORT-free: a hand-written WGSL FastConformer
+forward whose config (d_model, layers, heads, d_ff, dw kernel, subsampling
+channels, mel bins) is inferred from the weight manifest, so the same runtime
+serves Parakeet / Nemotron / EOU / Sortformer / VoiceChat. Encoder parity vs
+ORT 5.3e-7; full LibriSpeech test-clean WER **2.15%** = parity with the native
+pipeline; **282× real-time** on a 1-hour file in-browser (GPU encode +
+wasm-SIMD RNNT decode). Weights: `FluidInference/fluidaudio-web` → `parakeet/`
+(int8 encoder 612 MB + fp32 decoder/joint 72 MB; int8 is a download/storage
+format with per-tensor scales, dequantized to fp32 at load — ~2.3 GB → 1.17 GB
+resident).
+
+Load-bearing facts for anyone porting this model to a browser runtime:
+
+- **ORT-web's WebGPU EP has NO int8/int4 kernels.** Int-quantized encoders
+  silently fall back to WASM (or worse, see next) — this is what motivated the
+  raw-WGSL runtime.
+- **The int8 ONNX encoder is degenerate on CPU/WASM execution**: output
+  collapses to ~0 (std 0.017 vs O(1) healthy) → all-blank, empty transcript.
+  It is healthy under fp16 GPU compute. Check encoder output std before
+  blaming the decoder.
+- **Chrome caps ArrayBuffers at ~2 GB**: the fp32 encoder's 2.44 GB external
+  .data cannot load in-browser at all. The self-contained fp16 export
+  (1.24 GB) fits and preserves WER exactly.
+- **Mel frontend is per-feature CMVN with log guard 2^-24** — NOT the NA
+  (un-normalized) frontend of Nemotron (1e-10) or VoiceChat/EOU (NA). Mixing
+  up FastConformer mel frontends produces content-free encoder output that
+  looks exactly like a decode bug.
+- **TDT greedy specifics**: joint emits 8198 = 8193 vocab (blank 8192) + 5
+  duration bins; advance time by the argmax duration; update the prednet LSTM
+  state only on non-blank; cap symbols per step at 10.
