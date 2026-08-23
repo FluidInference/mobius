@@ -137,7 +137,32 @@ exact effective-bits accounting (weight bits + fp16 scale overhead).
 `calib_scales.npz` is the calibration output (scales + sensitivities).
 Gate: **≥98% top-1 at ≤5.0 effective bits** ⇒ sub-8-bit ships (and a
 half-duplex browser LLM becomes plausible); fail ⇒ lossless int8 stands.
-Evaluation in flight — results not yet recorded here.
+
+**Result: GATE FAILED.** Frontier (294 eval positions, 16 prompts, dual-track
+fp32 reference):
+
+| Scheme | top-1 agree | effective bits |
+|---|---|---|
+| RTN int4 pb32 (sanity, matches 2026-08-03 run) | 74.3% | 4.5 |
+| AWQ int4 | 83.9% | 4.5 |
+| GPTQ + AWQ int4 | 87.1% | 4.5 |
+| **GPTQ + AWQ + int8/chan heads (best in budget)** | **88.6%** | **4.963** |
+| int5 | 94.3% | 5.5 |
+| int6 AWQ (~7.1 GB — pragmatic ship candidate) | 96.4% | 6.5 |
+| int8 pb32 | lossless | 8.5 |
+
+Failure mode: distributed hidden-state drift across all 27 Mamba2 layers
+(per-layer cos degrades uniformly to ~0.956), NOT a few outlier layers —
+so mixed-precision promotion cannot buy the accuracy back under the bits
+budget. Consequence: the 9B stays **int8 (lossless, ~9.4 GB)** for native;
+a browser-resident LLM is shelved (int8 ≈ 13 GB resident is not
+browser-deliverable) — browser stays STT (+TTS/codec later), full-duplex
+stays native. Next tiers if ever revisited: palettized K-means LUT,
+QuIP#/SpinQuant-style rotations, QAT on fused embeddings. Caveat: the
+calibration set is plain text, a proxy for the deployed fused
+audio-embedding regime. Harness cost: full GPTQ pass ≈ 14 min / 15 GB RAM
+on M5 Pro (batched layer-major streaming, ~10× faster than the original
+per-sequence harness).
 
 **Conclusion: hybrid execution.** CoreML/ANE for encoder + TTS + codec + RNNT
 (≈ 1.6 B params total, ~all reusable patterns from prior trials), MLX for the
