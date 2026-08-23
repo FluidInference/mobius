@@ -271,6 +271,9 @@ def test(
         cm_argmax.append(int(np.argmax(coreml_step(t))))
     agree = np.mean([a == b for a, b in zip(ref_argmax, cm_argmax)])
     typer.echo(f"prefill argmax agreement (coreml int8 vs torch fp32): {agree:.3f}")
+    if agree < 1.0:  # int8 is exactly lossless — any flip is a regression
+        typer.echo("PARITY FAIL: prefill argmax mismatch")
+        raise typer.Exit(1)
 
     cur = cm_argmax[-1]
     gen = [cur]

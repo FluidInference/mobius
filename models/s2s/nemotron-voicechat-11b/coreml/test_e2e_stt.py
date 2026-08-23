@@ -44,15 +44,23 @@ def make_mel(wav_path: Path) -> torch.Tensor:
 
 
 def mel_windows(mel: torch.Tensor):
-    """Yield 17-mel-frame streaming windows: 9 pre-encode context + 8 new."""
+    """Yield 17-mel-frame streaming windows: 9 pre-encode context + 8 new.
+
+    Context is the real mel history, zero-left-padded only for the frames that
+    don't exist yet (start=8 gets 1 zero + mel[0:8], not 9 zeros). The final
+    partial chunk is zero-right-padded to 8 frames rather than dropped (the
+    export has a fixed [1, mel, 17] shape).
+    """
     T = mel.shape[2]
-    for t in range(T // 8):
-        start = t * 8
-        if start >= 9:
-            ctx = mel[:, :, start - 9 : start]
-        else:
-            ctx = torch.zeros(1, mel.shape[1], 9)
-        yield torch.cat([ctx, mel[:, :, start : start + 8]], dim=2)
+    for start in range(0, T, 8):
+        n_ctx = min(start, 9)
+        ctx = torch.cat(
+            [torch.zeros(1, mel.shape[1], 9 - n_ctx), mel[:, :, start - n_ctx : start]], dim=2
+        )
+        new = mel[:, :, start : start + 8]
+        if new.shape[2] < 8:
+            new = torch.cat([new, torch.zeros(1, mel.shape[1], 8 - new.shape[2])], dim=2)
+        yield torch.cat([ctx, new], dim=2)
 
 
 def load_tokenizer():
@@ -147,22 +155,43 @@ def coreml_pipeline(mel: torch.Tensor) -> list[int]:
     return tokens
 
 
+SAMPLE_EXPECT = "do you know what color the sky is"
+
+
 @app.command()
-def main(wav: Path = typer.Option(SAMPLE_WAV, help="16 kHz mono wav"), skip_torch: bool = typer.Option(False)) -> None:
+def main(
+    wav: Path = typer.Option(SAMPLE_WAV, help="16 kHz mono wav"),
+    skip_torch: bool = typer.Option(False),
+    expect: str = typer.Option("", help="substring the transcript must contain (defaults to the sample's reference)"),
+) -> None:
     sp = load_tokenizer()
     mel = make_mel(wav)
-    typer.echo(f"mel: {tuple(mel.shape)} ({mel.shape[2] // 8} streaming steps)")
+    typer.echo(f"mel: {tuple(mel.shape)} ({-(-mel.shape[2] // 8)} streaming steps)")
 
     if not skip_torch:
         t_tokens = torch_pipeline(mel)
         typer.echo(f"\n[torch ] {sp.decode(t_tokens)}")
 
     c_tokens = coreml_pipeline(mel)
-    typer.echo(f"\n[coreml] {sp.decode(c_tokens)}")
+    text = sp.decode(c_tokens)
+    typer.echo(f"\n[coreml] {text}")
 
+    failed = False
     if not skip_torch:
         match = t_tokens == c_tokens
         typer.echo(f"\ntoken sequences identical: {match} (torch {len(t_tokens)} vs coreml {len(c_tokens)} tokens)")
+        if not match:
+            failed = True
+    if not expect and wav == SAMPLE_WAV:
+        expect = SAMPLE_EXPECT
+    if expect:
+        ok = expect.lower() in text.lower()
+        typer.echo(f"transcript contains {expect!r}: {ok}")
+        if not ok:
+            failed = True
+    if failed:
+        raise typer.Exit(1)
+    typer.echo("E2E STT OK")
 
 
 if __name__ == "__main__":

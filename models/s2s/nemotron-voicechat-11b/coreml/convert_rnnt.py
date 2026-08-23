@@ -156,6 +156,9 @@ def convert(output_dir: Path = typer.Option(Path("build/rnnt"), help="Output dir
         t_h, t_c = t_dec[1], t_dec[2]
         c_h, c_c = c_dec["h_out"].astype(np.float32), c_dec["c_out"].astype(np.float32)
     typer.echo(f"fp32 parity over 20 chained steps: max|Δ| decoder_out={max_dec:.3e}, logits={max_logit:.3e}")
+    if max_dec > 1e-3 or max_logit > 5e-3:  # measured: 1.4e-05 / 5.5e-04
+        typer.echo("PARITY FAIL")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

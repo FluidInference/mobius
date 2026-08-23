@@ -4,7 +4,7 @@ Feasibility trial for running [nvidia/NVIDIA-NemotronLabs-VoiceChat-11B](https:/
 (released 2026-08-03) on Apple Silicon. End-to-end full-duplex speech-to-speech
 model: streaming speech understanding + speech generation + tool calling in one
 unified architecture (~450 ms turn-taking latency, #2 open FD on VoiceBench,
-first open FD model with tool calling). License: OpenMDW-1.1, research only.
+first open FD model with tool calling). License: OpenMDW-1.1 — permissive ("deal in the Model Materials without restriction"; retain the license text and notices in distributions).
 
 Reference implementation: [NVIDIA-NeMo/Speech @ `nemotron-labs-voicechat`](https://github.com/NVIDIA-NeMo/Speech/tree/nemotron-labs-voicechat),
 model class `nemo/collections/speechlm2/models/nemotron_voicechat.py`.
@@ -15,10 +15,10 @@ model class `nemo/collections/speechlm2/models/nemotron_voicechat.py`.
 |---|---|---:|---|
 | Fast Conformer encoder | `stt_model.perception.encoder.*` | 609 M | CoreML/ANE — same family as shipped `nemotron-speech-streaming-en-0.6b` (24L, d1024, 128 mel, 8x subsampling, cache-aware `chunked_limited` att_context **[70, 0]** = fully causal, 80 ms frames) |
 | Perception proj | `stt_model.perception.proj.*` | 4.6 M | CoreML (1024 → 4480 into LLM embed space) |
-| LLM backbone | `stt_model.llm.layers.*` | 7 714 M | **MLX** — Nemotron Nano v2 9B (NemotronH, hidden 4480; verified from keys: 56 layers = 27 Mamba2 + 25 MLP + 4 attention at indices 14/21/30/39 → tiny KV cache, O(1) Mamba state); mlx-lm supports the arch (mlx-community ships 4/6-bit quants of the base model) |
-| Token embeddings | `stt_model.embed_tokens.weight` | 587 M | MLX (131072 × 4480) |
-| Text head | `stt_model.lm_head.weight` | 587 M | MLX |
-| Function head | `stt_model.function_head.weight` | 587 M | MLX (second lm_head on same hidden state → tool-call channel) |
+| LLM backbone | `stt_model.llm.layers.*` | 7 714 M | **CoreML int8** (lossless; 4 stateful shards, 43.5 ms/step measured — Phase 3) — Nemotron Nano v2 9B (NemotronH, hidden 4480; verified from keys: 56 layers = 27 Mamba2 + 25 MLP + 4 attention at indices 14/21/30/39 → tiny KV cache, O(1) Mamba state). MLX remap = fallback only |
+| Token embeddings | `stt_model.embed_tokens.weight` | 587 M | host-side fp16 lookup table (131072 × 4480; shards consume `inputs_embeds` directly) |
+| Text head | `stt_model.lm_head.weight` | 587 M | CoreML (heads shard) |
+| Function head | `stt_model.function_head.weight` | 587 M | CoreML, heads shard (second lm_head on same hidden state → tool-call channel) |
 | RNNT decoder+joint | `stt_model.rnnt_decoder.*`, `stt_model.rnnt_joint.*` | ~13 M | CoreML — verified from keys: 2-layer LSTM prednet (hidden 640, embed 1025×640), joint enc 1024→640 / pred 640→640 → 1025 logits; same shapes the 0.6b conversion scripts already handle (tokenizer in `rnnt_tokenizer/`) |
 | TTS backbone | `tts_model.tts_model.backbone.*` | 595 M | CoreML/ANE — `gemma3_text` 28L, hidden 1152, per-step decode with KV cache |
 | TTS MoG head | `tts_model.tts_model.mog_head.*` | 159 M | CoreML (mixture-of-gaussians over latent 512, 1024 predictions, low-rank 64) |
@@ -60,10 +60,11 @@ Per-frame budget is **80 ms**. Measured on M5 Pro / 24 GB, macOS 26.6 (2026-08-0
 | TTS backbone + MoG step | ~6 ms est. (×2 with CFG ≈ 12 ms) | proxy: magpie decoder_step host-cache rewrite measured 6.0 ms/step 100% ANE on this machine (similar-class decoder). Measure after Phase 2. |
 | Codec decoder | unmeasured | 108 M convnet, expect low single-digit ms per 80 ms frame. (NeuCodec-fp16 batch decode was profiled as a candidate proxy — 366 ms ANE-off — but it is a far heavier vocoder doing whole-utterance decode; not representative.) |
 
-**Frame total ≈ 45–55 ms of an 80 ms budget → real-time viable on M5 Pro (~1.5–1.8× headroom), ~9 GB resident.**
-Base-model (not fine-tuned) MLX weights were benchmarked; fine-tuned weights are the same
-architecture so speed carries over. 6-bit quant (~7 GB, est. ~28 ms/tok) still fits if 4-bit
-hurts quality after fine-tune conversion.
+**Frame total ≈ 45–55 ms of an 80 ms budget with the MLX-4-bit projection above —
+SUPERSEDED by the quant-quality results below**: 4-bit RTN is not shippable on the
+fine-tuned weights, so the shipping configuration is **CoreML int8 (lossless,
+43.5 ms/step) → frame total ≈ 65–72 ms of 80 ms, ~13 GB resident** (thin but
+real-time on M5 Pro). The MLX rows remain as the fallback-path baseline.
 
 ### CoreML 9B floor benchmark (`bench_llm_coreml_floor.py`) — MLX-vs-CoreML revisited
 
@@ -138,8 +139,16 @@ exact effective-bits accounting (weight bits + fp16 scale overhead).
 Gate: **≥98% top-1 at ≤5.0 effective bits** ⇒ sub-8-bit ships (and a
 half-duplex browser LLM becomes plausible); fail ⇒ lossless int8 stands.
 
-**Result: GATE FAILED.** Frontier (294 eval positions, 16 prompts, dual-track
-fp32 reference):
+> **RE-MEASUREMENT IN PROGRESS** — review caught that this harness's Mamba
+> gated norm was full-width with eps 1e-6, while the real model (and the
+> validated converter) uses per-group RMSNorm (8 × 1280) with eps 1e-5. The
+> forward is fixed, `calib_scales.npz` regenerated, and the full frontier is
+> re-running; the numbers below are from the pre-fix forward and will be
+> replaced. The shipped conversion (`convert_llm_real.py`) always had the
+> correct semantics — only this measurement harness was wrong.
+
+**Result (pre-fix, being re-derived): GATE FAILED.** Frontier (294 eval
+positions, 16 prompts, dual-track fp32 reference):
 
 | Scheme | top-1 agree | effective bits |
 |---|---|---|
@@ -164,13 +173,15 @@ audio-embedding regime. Harness cost: full GPTQ pass ≈ 14 min / 15 GB RAM
 on M5 Pro (batched layer-major streaming, ~10× faster than the original
 per-sequence harness).
 
-**Conclusion: hybrid execution.** CoreML/ANE for encoder + TTS + codec + RNNT
-(≈ 1.6 B params total, ~all reusable patterns from prior trials), MLX for the
-9B backbone + 3 heads. Memory: 4-bit LLM ≈ 4.7 GB + fp16 rest ≈ 3.5 GB → ~8–9 GB.
-**macOS-only target** (Apple Silicon ≥ 16 GB); iPhone is out of reach for v1.
-FluidAudio currently has no MLX dependency — the LLM runner either becomes an
-optional SPM product (`FluidAudioVoiceChat`) depending on `mlx-swift`, or the
-whole thing ships as a separate example app. Decide before Swift work starts.
+**Conclusion: CoreML-only execution.** CoreML/ANE for encoder + TTS + codec +
+RNNT (≈ 1.6 B params total, ~all reusable patterns from prior trials) and
+**CoreML int8 stateful shards for the 9B backbone + heads** (lossless at int8;
+int4/int5/int6 fail the quality gate — see above). Memory: int8 LLM ≈ 9.4 GB +
+fp16 rest ≈ 3.5 GB → **~13 GB resident**. **macOS-only target** (Apple Silicon
+≥ 16 GB, realistically 24 GB); iPhone is out of reach for v1. **MLX is
+explicitly fallback-only** (kept as the escape hatch if CoreML shard dispatch
+regresses on some OS); it would add an `mlx-swift` dependency FluidAudio does
+not otherwise carry, which is another reason it is not the primary path.
 
 ## Plan
 
@@ -211,11 +222,14 @@ whole thing ships as a separate example app. Decide before Swift work starts.
       helpful, respectful, and honest assistant..."). Step: 43.5 ms.**
       MLX remap kept as fallback only (not needed).
 - [ ] **Phase 4 — Swift host**: streaming mel (NemotronMelExtractor reusable) →
-      encoder step → fusion (tiny, host-side) → MLX step → TTS step → codec chunks;
+      encoder step → fusion (tiny, host-side) → CoreML int8 LLM step (4 shards +
+      heads, 5 dispatches, states on-device) → TTS step → codec chunks;
       barge-in = feed user audio continuously, agent yields when text channel emits EOS.
       Tool-call channel surfaced as an API callback.
 - [ ] **Phase 5 — publish**: HF `FluidInference/nemotron-voicechat-11b-coreml`
-      (CoreML bundles + MLX quant) after confirming repo with Alex.
+      (CoreML bundles: encoder + RNNT + int8 LLM shards + heads + fp16 embed
+      table + TTS + codec) after confirming repo with Alex. No MLX artifacts
+      unless the fallback is ever needed.
 
 ## WebGPU/WASM port knowledge (browser STT)
 
@@ -275,6 +289,6 @@ on-device outputs ≈ H100 reference on VoiceBench subset + turn-taking latency
   uncond/cond pair through one ANE call.
 - MoG head sampling (`inference_top_p_or_k 0.95`, noise 0.001) — host-side sampling
   from CoreML-emitted mixture params, same pattern as neutts sampling head.
-- Nemotron Mamba2 state handling in MLX single-frame stepping: `use_cache_for_nemotron: false`
+- (fallback path only) Nemotron Mamba2 state handling in MLX single-frame stepping: `use_cache_for_nemotron: false`
   in the NeMo config — read `duplex_stt_model.forward` cache path carefully; full-duplex
   sessions run minutes long, sliding-window attn (if any) + Mamba state should be O(1) memory.

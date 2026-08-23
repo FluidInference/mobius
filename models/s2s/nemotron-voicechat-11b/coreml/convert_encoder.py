@@ -192,6 +192,10 @@ def convert(
                 c_out["new_cache_last_channel_len"].astype(np.int32),
             )
         typer.echo(f"{tag} parity over {parity_steps} steps: max|Δ| audio_embeds={max_emb:.3e}, asr_emb={max_asr:.3e}")
+        thr = 1e-5 if tag == "fp32" else 5e-2  # measured: fp32 8e-07, fp16 1.05e-02
+        if max_emb > thr or max_asr > thr:
+            typer.echo(f"PARITY FAIL: {tag} exceeds {thr:g}")
+            raise typer.Exit(1)
 
 
 if __name__ == "__main__":

@@ -70,7 +70,15 @@ def quant_int4_pb32(w: torch.Tensor, nbits: int | None = None, block: int | None
 
 
 def rms_norm(x, w):
-    return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + 1e-6) * w
+    return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + 1e-5) * w
+
+
+def gated_group_norm(y, z, w):
+    """Mamba gated norm: per-group RMSNorm (8 groups of 1280), eps 1e-5 —
+    matches convert_llm_real.py / mlx-lm nemotron_h, NOT a full-width norm."""
+    g = (y * F.silu(z)).reshape(*y.shape[:-1], N_GROUPS, D_INNER // N_GROUPS)
+    g = g * torch.rsqrt(g.pow(2).mean(-1, keepdim=True) + 1e-5)
+    return g.reshape(*y.shape) * w
 
 
 class LayerRunner:
@@ -124,7 +132,7 @@ class LayerRunner:
             state = state * dA[t][:, None, None] + xs[t][:, :, None] * (dt[t][:, None] * B[t])[:, None, :]
             ys.append((state * C[t][:, None, :]).sum(-1) + D[:, None] * xs[t])
         y = torch.stack(ys).reshape(T, D_INNER)
-        y = rms_norm(y * F.silu(z), gnorm)
+        y = gated_group_norm(y, z, gnorm)
         return h + y @ out_proj.T
 
     def mlp(self, i, h, quant):

@@ -1,0 +1,151 @@
++./rerun_quant_gate.sh:3> dirname ./rerun_quant_gate.sh
++./rerun_quant_gate.sh:3> cd .
++./rerun_quant_gate.sh:4> uv run python measure_calibrated_quant.py calibrate
+warning: The `tool.uv.dev-dependencies` field (used in `pyproject.toml`) is deprecated and will be removed in a future release; use `dependency-groups.dev` instead
+calibrating int4 pb32 on 56 texts, 902 tokens, search on mps
+L00 mamba in_proj   best=act^0.25       rel_err rtn=0.00266 -> awq=0.00252
+L00 mamba out_proj  best=act^0.375      rel_err rtn=0.00689 -> awq=0.00305
+L01 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00124 -> awq=0.00108
+L01 mlp   down_proj best=act^0.25       rel_err rtn=0.00760 -> awq=0.00256
+L02 mamba in_proj   best=act^0.375      rel_err rtn=0.00390 -> awq=0.00335
+L02 mamba out_proj  best=act^0.25       rel_err rtn=0.00743 -> awq=0.00585
+L03 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00169 -> awq=0.00137
+L03 mlp   down_proj best=act^0.25       rel_err rtn=0.00745 -> awq=0.00388
+L04 mamba in_proj   best=act^0.25       rel_err rtn=0.00414 -> awq=0.00351
+L04 mamba out_proj  best=act^0.25       rel_err rtn=0.00803 -> awq=0.00663
+L05 mlp   up_proj   best=act^0.375      rel_err rtn=0.00192 -> awq=0.00164
+L05 mlp   down_proj best=act^0.25       rel_err rtn=0.00721 -> awq=0.00377
+L06 mamba in_proj   best=act^0.375      rel_err rtn=0.00461 -> awq=0.00390
+L06 mamba out_proj  best=act^0.5/w^0.5  rel_err rtn=0.00234 -> awq=0.00015
+L07 mamba in_proj   best=act^0.375      rel_err rtn=0.00510 -> awq=0.00419
+L07 mamba out_proj  best=act^0.375      rel_err rtn=0.00856 -> awq=0.00316
+L08 mlp   up_proj   best=act^0.375      rel_err rtn=0.00200 -> awq=0.00165
+L08 mlp   down_proj best=act^0.25       rel_err rtn=0.00733 -> awq=0.00339
+L09 mamba in_proj   best=act^0.375      rel_err rtn=0.00474 -> awq=0.00409
+L09 mamba out_proj  best=act^0.25       rel_err rtn=0.00857 -> awq=0.00697
+L10 mlp   up_proj   best=act^0.375      rel_err rtn=0.00200 -> awq=0.00162
+L10 mlp   down_proj best=act^0.25       rel_err rtn=0.00783 -> awq=0.00342
+L11 mamba in_proj   best=act^0.375      rel_err rtn=0.00474 -> awq=0.00424
+L11 mamba out_proj  best=act^0.25/w^0.75 rel_err rtn=0.00799 -> awq=0.00635
+L12 mlp   up_proj   best=act^0.375      rel_err rtn=0.00235 -> awq=0.00185
+L12 mlp   down_proj best=act^0.25       rel_err rtn=0.00736 -> awq=0.00321
+L13 mamba in_proj   best=act^0.375      rel_err rtn=0.00463 -> awq=0.00395
+L13 mamba out_proj  best=act^0.25/w^0.75 rel_err rtn=0.01095 -> awq=0.00447
+L14 attn  q_proj    best=act^0.25/w^0.75 rel_err rtn=0.00605 -> awq=0.00481
+L14 attn  k_proj    best=act^0.25/w^0.75 rel_err rtn=0.00506 -> awq=0.00437
+L14 attn  v_proj    best=act^0.25/w^0.75 rel_err rtn=0.00760 -> awq=0.00573
+L14 attn  o_proj    best=act^0.25/w^0.75 rel_err rtn=0.01186 -> awq=0.00849
+L15 mlp   up_proj   best=act^0.375      rel_err rtn=0.00315 -> awq=0.00252
+L15 mlp   down_proj best=act^0.25       rel_err rtn=0.00734 -> awq=0.00411
+L16 mamba in_proj   best=act^0.375      rel_err rtn=0.00587 -> awq=0.00489
+L16 mamba out_proj  best=act^0.25       rel_err rtn=0.00903 -> awq=0.00745
+L17 mlp   up_proj   best=act^0.375      rel_err rtn=0.00324 -> awq=0.00258
+L17 mlp   down_proj best=act^0.25/w^0.75 rel_err rtn=0.00642 -> awq=0.00050
+L18 mamba in_proj   best=act^0.25/w^0.75 rel_err rtn=0.00601 -> awq=0.00435
+L18 mamba out_proj  best=act^0.25       rel_err rtn=0.00880 -> awq=0.00743
+L19 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00384 -> awq=0.00319
+L19 mlp   down_proj best=act^0.25       rel_err rtn=0.00768 -> awq=0.00440
+L20 mamba in_proj   best=act^0.375      rel_err rtn=0.00443 -> awq=0.00355
+L20 mamba out_proj  best=act^0.25/w^0.75 rel_err rtn=0.00879 -> awq=0.00611
+L21 attn  q_proj    best=act^0.25/w^0.75 rel_err rtn=0.00628 -> awq=0.00517
+L21 attn  k_proj    best=act^0.25/w^0.75 rel_err rtn=0.00520 -> awq=0.00452
+L21 attn  v_proj    best=act^0.25/w^0.75 rel_err rtn=0.00628 -> awq=0.00525
+L21 attn  o_proj    best=act^0.25/w^0.75 rel_err rtn=0.00910 -> awq=0.00649
+L22 mlp   up_proj   best=act^0.375      rel_err rtn=0.00346 -> awq=0.00295
+L22 mlp   down_proj best=act^0.25/w^0.75 rel_err rtn=0.00834 -> awq=0.00436
+L23 mamba in_proj   best=act^0.375      rel_err rtn=0.00661 -> awq=0.00482
+L23 mamba out_proj  best=act^0.375      rel_err rtn=0.01070 -> awq=0.00548
+L24 mlp   up_proj   best=act^0.375      rel_err rtn=0.00339 -> awq=0.00277
+L24 mlp   down_proj best=act^0.25       rel_err rtn=0.00870 -> awq=0.00477
+L25 mamba in_proj   best=act^0.375      rel_err rtn=0.00675 -> awq=0.00458
+L25 mamba out_proj  best=act^0.375      rel_err rtn=0.00940 -> awq=0.00768
+L26 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00340 -> awq=0.00284
+L26 mlp   down_proj best=act^0.25       rel_err rtn=0.00838 -> awq=0.00492
+L27 mamba in_proj   best=act^0.375      rel_err rtn=0.00515 -> awq=0.00441
+L27 mamba out_proj  best=act^0.25/w^0.75 rel_err rtn=0.00979 -> awq=0.00778
+L28 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00353 -> awq=0.00297
+L28 mlp   down_proj best=act^0.25/w^0.75 rel_err rtn=0.00785 -> awq=0.00412
+L29 mamba in_proj   best=act^0.375      rel_err rtn=0.00624 -> awq=0.00518
+L29 mamba out_proj  best=act^0.375      rel_err rtn=0.00925 -> awq=0.00513
+L30 attn  q_proj    best=act^0.25/w^0.75 rel_err rtn=0.00678 -> awq=0.00561
+L30 attn  k_proj    best=act^0.25/w^0.75 rel_err rtn=0.00583 -> awq=0.00536
+L30 attn  v_proj    best=act^0.25/w^0.75 rel_err rtn=0.00815 -> awq=0.00681
+L30 attn  o_proj    best=act^0.25/w^0.75 rel_err rtn=0.00881 -> awq=0.00659
+L31 mlp   up_proj   best=act^0.375      rel_err rtn=0.00336 -> awq=0.00297
+L31 mlp   down_proj best=act^0.25       rel_err rtn=0.00766 -> awq=0.00406
+L32 mamba in_proj   best=act^0.375      rel_err rtn=0.00682 -> awq=0.00513
+L32 mamba out_proj  best=act^0.375      rel_err rtn=0.00926 -> awq=0.00759
+L33 mlp   up_proj   best=act^0.375      rel_err rtn=0.00296 -> awq=0.00250
+L33 mlp   down_proj best=act^0.25       rel_err rtn=0.00842 -> awq=0.00459
+L34 mamba in_proj   best=act^0.375      rel_err rtn=0.00707 -> awq=0.00615
+L34 mamba out_proj  best=act^0.375      rel_err rtn=0.00894 -> awq=0.00751
+L35 mlp   up_proj   best=act^0.375      rel_err rtn=0.00277 -> awq=0.00239
+L35 mlp   down_proj best=act^0.25       rel_err rtn=0.00868 -> awq=0.00485
+L36 mamba in_proj   best=act^0.375      rel_err rtn=0.00625 -> awq=0.00511
+L36 mamba out_proj  best=act^0.375      rel_err rtn=0.00925 -> awq=0.00774
+L37 mlp   up_proj   best=act^0.375      rel_err rtn=0.00268 -> awq=0.00238
+L37 mlp   down_proj best=act^0.25       rel_err rtn=0.00846 -> awq=0.00491
+L38 mamba in_proj   best=act^0.375      rel_err rtn=0.00623 -> awq=0.00534
+L38 mamba out_proj  best=act^0.375      rel_err rtn=0.00922 -> awq=0.00648
+L39 attn  q_proj    best=act^0.25/w^0.75 rel_err rtn=0.01107 -> awq=0.00654
+L39 attn  k_proj    best=act^0.25/w^0.75 rel_err rtn=0.00626 -> awq=0.00390
+L39 attn  v_proj    best=act^0.25/w^0.75 rel_err rtn=0.00747 -> awq=0.00607
+L39 attn  o_proj    best=act^0.25/w^0.75 rel_err rtn=0.00860 -> awq=0.00670
+L40 mlp   up_proj   best=act^0.375      rel_err rtn=0.00286 -> awq=0.00256
+L40 mlp   down_proj best=act^0.25       rel_err rtn=0.00887 -> awq=0.00494
+L41 mamba in_proj   best=act^0.25       rel_err rtn=0.00665 -> awq=0.00624
+L41 mamba out_proj  best=act^0.375      rel_err rtn=0.00944 -> awq=0.00800
+L42 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00256 -> awq=0.00230
+L42 mlp   down_proj best=act^0.25       rel_err rtn=0.00882 -> awq=0.00533
+L43 mamba in_proj   best=act^0.25/w^0.75 rel_err rtn=0.00743 -> awq=0.00667
+L43 mamba out_proj  best=act^0.375      rel_err rtn=0.00949 -> awq=0.00843
+L44 mamba in_proj   best=act^0.375      rel_err rtn=0.00751 -> awq=0.00649
+L44 mamba out_proj  best=act^0.375      rel_err rtn=0.00945 -> awq=0.00832
+L45 mlp   up_proj   best=act^0.375      rel_err rtn=0.00239 -> awq=0.00218
+L45 mlp   down_proj best=act^0.25/w^0.75 rel_err rtn=0.00926 -> awq=0.00451
+L46 mamba in_proj   best=act^0.375      rel_err rtn=0.00676 -> awq=0.00529
+L46 mamba out_proj  best=act^0.25/w^0.75 rel_err rtn=0.00898 -> awq=0.00708
+L47 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00247 -> awq=0.00222
+L47 mlp   down_proj best=act^0.25/w^0.75 rel_err rtn=0.00889 -> awq=0.00430
+L48 mamba in_proj   best=act^0.25       rel_err rtn=0.00619 -> awq=0.00565
+L48 mamba out_proj  best=act^0.375      rel_err rtn=0.00807 -> awq=0.00623
+L49 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00244 -> awq=0.00214
+L49 mlp   down_proj best=act^0.25/w^0.75 rel_err rtn=0.00988 -> awq=0.00479
+L50 mamba in_proj   best=act^0.25/w^0.75 rel_err rtn=0.00546 -> awq=0.00504
+L50 mamba out_proj  best=act^0.25/w^0.75 rel_err rtn=0.00832 -> awq=0.00628
+L51 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00236 -> awq=0.00200
+L51 mlp   down_proj best=act^0.25/w^0.75 rel_err rtn=0.00968 -> awq=0.00511
+L52 mamba in_proj   best=act^0.25/w^0.75 rel_err rtn=0.00464 -> awq=0.00424
+L52 mamba out_proj  best=act^0.25/w^0.75 rel_err rtn=0.00787 -> awq=0.00561
+L53 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00244 -> awq=0.00180
+L53 mlp   down_proj best=act^0.25/w^0.75 rel_err rtn=0.00926 -> awq=0.00450
+L54 mamba in_proj   best=act^0.25/w^0.75 rel_err rtn=0.00453 -> awq=0.00373
+L54 mamba out_proj  best=act^0.375      rel_err rtn=0.00424 -> awq=0.00236
+L55 mlp   up_proj   best=act^0.25/w^0.75 rel_err rtn=0.00383 -> awq=0.00251
+L55 mlp   down_proj best=act^0.25       rel_err rtn=0.00386 -> awq=0.00194
+HEAD lm_head        best=act^0.25/w^0.75 rel_err rtn=0.00535 -> awq=0.00251
+HEAD function_head  best=act^0.5/w^0.5  rel_err rtn=0.00843 -> awq=0.00368
+saved 122 scale vectors -> /Users/hanweng/Documents/mobius-voicechat/models/s2s/nemotron-voicechat-11b/coreml/calib_scales.npz
+wall 116s  peak RSS 9.6 GB
++./rerun_quant_gate.sh:5> args=--method fp16 --eval-set both
++./rerun_quant_gate.sh:14> echo '===== evaluate --method fp16 --eval-set both'
+===== evaluate --method fp16 --eval-set both
++./rerun_quant_gate.sh:15> uv run python measure_calibrated_quant.py evaluate --method fp16 --eval-set both
+warning: The `tool.uv.dev-dependencies` field (used in `pyproject.toml`) is deprecated and will be removed in a future release; use `dependency-groups.dev` instead
+method=fp16 body int16 pb32, heads int16 pb32  ->  effective bits/weight = 16.000
+prompt[37 tok]: top1 1.000  top5 1.000  KL -0.0000
+prompt[20 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[18 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[17 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[17 tok]: top1 1.000  top5 1.000  KL -0.0000
+prompt[16 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[19 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[16 tok]: top1 1.000  top5 1.000  KL -0.0000
+prompt[16 tok]: top1 1.000  top5 1.000  KL -0.0000
+prompt[16 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[15 tok]: top1 1.000  top5 1.000  KL -0.0000
+prompt[17 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[20 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[17 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[16 tok]: top1 1.000  top5 1.000  KL 0.0000
+prompt[17 tok]: top1 1.000  top5 1.000  KL -0.0000

@@ -252,7 +252,15 @@ class Quantizer:
 # Model forward (batched version of the validated LayerRunner semantics)
 # ---------------------------------------------------------------------------
 def rms_norm(x, w):
-    return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + 1e-6) * w
+    return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + 1e-5) * w
+
+
+def gated_group_norm(y, z, w):
+    """Mamba gated norm: per-group RMSNorm (8 groups of 1280), eps 1e-5 —
+    matches convert_llm_real.py / mlx-lm nemotron_h, NOT a full-width norm."""
+    g = (y * F.silu(z)).reshape(*y.shape[:-1], N_GROUPS, D_INNER // N_GROUPS)
+    g = g * torch.rsqrt(g.pow(2).mean(-1, keepdim=True) + 1e-5)
+    return g.reshape(*y.shape) * w
 
 
 def fwd_mamba(w, H, collect=None):
@@ -287,7 +295,7 @@ def fwd_mamba(w, H, collect=None):
         state = state * dA[:, t, :, None, None] + xs[:, t].unsqueeze(-1) * dtB[:, t].unsqueeze(2)
         ys[:, t] = (state * Cm[:, t].unsqueeze(2)).sum(-1) + w["D"][:, None] * xs[:, t]
     y = ys.reshape(Bsz, T, D_INNER)
-    y = rms_norm(y * F.silu(z), w["gnorm"])
+    y = gated_group_norm(y, z, w["gnorm"])
     if collect is not None:
         collect["out_proj"] = y
     return H + y @ w["out_proj"].T
