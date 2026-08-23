@@ -366,3 +366,35 @@ See component licenses for details.
 ---
 
 **Version**: v21 (FP32) | **Updated**: 2024-10-06 | **Requires**: iOS 17+, macOS 14+
+
+## WebGPU/WASM port knowledge (browser)
+
+Kokoro 82M runs fully in-browser in
+[fluidaudio-web](https://github.com/FluidInference/fluidaudio-web)
+(`src/engines/tts-kokoro/`, synth core `src/gpu/kokoro-synth.js`) — ORT-free,
+no kokoro-js/transformers.js: the whole StyleTTS2 + iSTFTNet pipeline (ALBERT
+frontend → prosody predictor → SineGen → decoder/generator) hand-ported to raw
+WebGPU/WASM. Parity vs the ONNX model: waveform corr ~0.97, source spectrum
+exact, decoder body 5e-5; ALBERT frontend 4.2e-6. Weights:
+`FluidInference/fluidaudio-web` → `kokoro/` and `kokoro-zh/` (flat fp32 blob +
+manifest + roles map).
+
+Load-bearing facts for porting Kokoro to any hand-written runtime:
+
+- **ALBERT nn.Linear weights are ANONYMOUS initializers** (`onnx::MatMul_*`)
+  — trace each via the *named bias* it feeds (the Add consuming
+  `...query.bias` → its MatMul → the weight); orientation arrives [in, out].
+- **ONNX LSTM gate order is iofc** (PyTorch is ifgo) — reorder at extraction.
+  All 6 Kokoro LSTMs are bidirectional hidden-256, so one kernel covers them.
+- **No FFT kernel is needed**: the exported iSTFT is a Cos/Sin DFT matmul +
+  ConvTranspose overlap-add; SineGen and the STFT recombine are cheap
+  host-side one-shots.
+- **The vocoder is the model**: iSTFTNet decoder ≈ 90% of compute (Conv alone
+  64%); the ALBERT text encoder is only ~5%. Optimize convs or nothing.
+- **Raw WGSL ties kokoro-js (~10× RT), it does not beat it** — the convs are
+  memory/occupancy-bound at thin shapes; see `knowledge/webgpu/` for the
+  portable-WGSL ceiling measurements that closed that investigation.
+- **G2P without espeak**: English is lexicon-first (FluidAudio's
+  `us_lexicon_cache.json`, Kokoro-vocab-exact IPA token arrays, hosted at the
+  kokoro HF repo root); out-of-lexicon words are skipped — there is no espeak
+  fallback in the browser build.

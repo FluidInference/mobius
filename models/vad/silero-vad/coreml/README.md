@@ -100,3 +100,22 @@ uv run python compare-models.py --audio-file ../FluidAudio/yc.wav  --include-256
   email = {hello@fluidinference.com}
 }
 ```
+
+## WebGPU/WASM port knowledge (browser)
+
+Silero VAD v5 runs in
+[fluidaudio-web](https://github.com/FluidInference/fluidaudio-web)
+(`src/engines/vad-silero/`) as a hand-written JS forward of the 16 kHz path —
+no onnxruntime, and the ~1.2 MB extracted weights are bundled with the app
+(zero model download). Parity vs ORT: ~1e-6 on per-window speech probability
+across a full streaming sequence.
+
+- **v5 I/O contract**: `input[1,512]` + `state[2,1,128]` + `sr` (int64
+  **scalar**) → `prob[1,1]` + next state; one probability per 512-sample
+  (32 ms) hop.
+- Segmenter: hysteresis thresholds (0.5 enter / −0.15 exit) + min-speech
+  250 ms / min-silence 100 ms / 30 ms pad merge.
+- Motivation for the raw port: @ricky0123/vad-web's CJS
+  `require("onnxruntime-web/wasm")` is unresolvable under Vite once ORT
+  leaves optimizeDeps — the dependency fought the bundler harder than the
+  2 MB model fought the port.
