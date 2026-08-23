@@ -192,6 +192,33 @@ whole thing ships as a separate example app. Decide before Swift work starts.
 - [ ] **Phase 5 — publish**: HF `FluidInference/nemotron-voicechat-11b-coreml`
       (CoreML bundles + MLX quant) after confirming repo with Alex.
 
+## WebGPU/WASM port knowledge (browser STT)
+
+The user-transcription chain (encoder + RNNT) is ported to the browser as the
+`asr-voicechat` engine in fluidaudio-web
+([PR #48](https://github.com/FluidInference/fluidaudio-web/pull/48)), running on
+the shared FastConformer WGSL runtime (geometry is manifest-compatible; RNNT is
+nemotron-shaped with vocab 1025 / blank 1024, no prompt kernel). Parity-gated
+**byte-identical** to the torch/CoreML reference transcript on
+`sample_general.wav` ("Hello, do you know what color the sky is").
+Load-bearing facts for porting this encoder to any non-NeMo runtime:
+
+- **Attention chunk = 1, not 8.** NeMo `chunked_limited` with att_context
+  `[70, 0]` puts the chunk grid at `right + 1 = 1`. Running the runtime's usual
+  chunk 8 leaks intra-chunk future frames through attention — output degrades
+  subtly instead of failing.
+- **The `batch_norm`-named conv tensors are a LayerNorm.** This config sets
+  `conv_norm_type=layer_norm`, so the conv module is the EOU-style
+  dw-conv → LayerNorm → SiLU path despite the `batch_norm` key names.
+- **LSTM gate order.** RNNT prednet weights are PyTorch `ifgo`; ONNX-style
+  kernels expect `iofc` — reorder at extraction time.
+- **Mel log guard is 2^-24** (NeMo default), not 1e-10; the wrong guard shifts
+  the mel floor in silence and breaks parity.
+
+Extractor: fluidaudio-web `scripts/extract-voicechat-stt.py` (fp16 encoder
+1.22 GB + fp32 decoder 36 MB); smoke test `scripts/ci-smoke-voicechat.mjs`.
+WASM runs ≈ 1.0× real-time; the WebGPU path has not been exercised in-browser yet.
+
 ## Published benchmarks (evaluation targets for the port)
 
 NVIDIA model card + [Artificial Analysis](https://artificialanalysis.ai/articles/nemotron-3-voicechat-leader-speech-pareto):
