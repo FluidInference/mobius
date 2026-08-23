@@ -302,3 +302,44 @@ hint, not as a hard LID.
 ## License & Distribution
 
 The source model is under the **NVIDIA Software and Model Evaluation License** and is currently marked "internal NVIDIA evaluation". Per the upstream README, contact `jaydar@nvidia.com` for access. Do **not** upload converted artifacts publicly without confirming redistribution terms. Local on-device use within VoiceLink is fine per project policy (`/Users/kikow/.claude/CLAUDE.md`, project `CLAUDE.md`).
+
+## WebGPU/WASM port knowledge (browser)
+
+Nemotron 3.5 multilingual runs fully in-browser in
+[fluidaudio-web](https://github.com/FluidInference/fluidaudio-web)
+(`src/engines/asr-nemotron/`) — ORT-free, on the shared WGSL FastConformer
+runtime with the Nemotron streaming config (causal subsampling pad, causal
+depthwise dwK 9, cache-aware attention mask chunk 4 / left 56 / right 3).
+The cache-aware streaming export and offline-with-limited-context-mask compute
+the same function — that equivalence is what made the port tractable and is how
+whole-clip (batch) transcription runs. The shipped engine is additionally TRUE
+streaming: push()/finish() over a streaming mel + cache-carrying encode stream,
+with a 4-chunk provisional-tail lookahead to honor the export's right-context 3
+(fluidaudio-web docs/STREAMING.md). Weights: `FluidInference/fluidaudio-web` → `nemotron/`
+(int8 encoder 630 MB + fp32 decoder 98 MB — the 600M encoder is int8-robust,
+unlike the 120M EOU).
+
+Load-bearing facts:
+
+- **THE lang_id gotcha**: language ids are ordinals of the 40 `<xx-XX>` vocab
+  tokens (`languages.json` promptDictionary; en-US = 24). Defaulting lang_id
+  to 0 selects *Bulgarian*, and the joint then predicts blank on every frame —
+  an EMPTY transcript that was originally misdiagnosed as int4 quantization
+  degeneracy. Before blaming quant, check encoder output std and
+  task-conditioning inputs.
+- **prompt_kernel** (multilingual conditioning): concat conformer_out[1024]
+  with the language one-hot[128] → MLP 1152→2048→1024 → encoded_output.
+  Since one-hot(lang) @ W just selects row 1024+langId, the language half
+  folds into the first layer's bias — no concat needed at runtime.
+- **Mel is NA (no CMVN) with log guard 1e-10** — Nemotron's own choice, vs
+  2^-24 NeMo default used by Parakeet (with CMVN) and VoiceChat (NA). Input
+  is T-major.
+- **RNNT decode**: 2-layer LSTM prednet, joint → 13088 logits, blank 13087;
+  the export does NOT prepend a zero-SOS timestep (single LSTM step per call
+  — unlike the EOU fused export); argmax is invariant to LogSoftmax, so skip
+  it in greedy decode.
+- **ORT-web history that motivated the raw port**: the int4 ONNX encoder is
+  healthy on WASM (output std 0.43) but ORT's WebGPU EP runs its buggy int4
+  MatMulNBits kernel instead of falling back → empty output; and
+  single-threaded WASM (GitHub Pages, no cross-origin isolation) froze the
+  main thread on the 690 MB encoder until the engine was workerized.

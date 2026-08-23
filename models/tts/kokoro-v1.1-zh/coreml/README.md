@@ -181,3 +181,22 @@ cp build/kokoro-v1.1-zh/{zf_001.bin,zm_009.bin} build/kokoro-v1.1-zh-hf/
 MIT — see `LICENSE`. Original conversion © laishere; v1.0 mobius adaptation +
 v1.1-zh switch © FluidInference. Underlying Kokoro-82M-v1.1-zh model
 © hexgrad (Apache-2.0).
+
+## WebGPU/WASM port knowledge (browser)
+
+The browser Chinese voice in
+[fluidaudio-web](https://github.com/FluidInference/fluidaudio-web) uses this
+v1.1 zh model on the same hand-written WGSL synth as English (see
+`models/tts/kokoro/coreml/README.md`), with a JS-only frontend
+(`src/engines/tts-kokoro/zh-frontend-v11.js`):
+
+- **kokoro-js's zh path is broken by construction** — it routes hanzi through
+  espeak with English voices. The fix is phoneme injection: build phonemes
+  yourself and feed them directly, skipping espeak entirely.
+- **Frontend chain**: pinyin-pro (hanzi → pinyin, context polyphones,
+  segmentation, non-zh passthrough) → misaki[zh] **v1.1 format** (Bopomofo +
+  tone digits). misaki[zh] has no JS port — the mapping was precomputed from
+  the misaki oracle and verified byte-exact against it.
+- Native zf_/zm_ voice packs and g2pW-grade polyphone disambiguation remain
+  the quality gaps vs the Python stack (pinyin-pro's dict is the current
+  polyphone source).

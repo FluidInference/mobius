@@ -25,6 +25,9 @@ knowledge/
 │   ├── coremltools/                # Apple coremltools 9.0b1 docs
 │   └── neural-engine/              # Apple Neural Engine reference
 │
+├── webgpu/                         # Browser (WebGPU/WASM) port knowledge
+│   └── index.md                    # fluidaudio-web port index + cross-model runtime findings
+│
 └── AGENTS.md                        # This file
 ```
 
@@ -47,6 +50,11 @@ Key topics:
 - CoVoST 2: Massive multilingual speech translation (21→En, En→15)
 - Token-Duration Transducer: Joint token & duration prediction
 - Canary & Parakeet: Production-ready multilingual ASR (25 languages)
+
+### **Browser (WebGPU/WASM) Ports**
+For running FluidAudio's models in-browser (fluidaudio-web) — port index,
+ORT-web boundaries, portable-WGSL performance ceiling, mel-frontend matrix:
+→ See **[`webgpu/index.md`](./webgpu/index.md)**
 
 ### **CoreML Optimization & Deployment**
 For on-device LLM and neural network deployment:

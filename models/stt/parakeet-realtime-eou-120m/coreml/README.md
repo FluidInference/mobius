@@ -114,3 +114,37 @@ for chunk in chunks[1:]:
 - [Model Card](https://huggingface.co/alexwengg/parakeet-realtime-eou-120m-coreml/tree/main)
 - [FastConformer Paper](https://arxiv.org/abs/2305.05084)
 - [Cache-Aware Streaming](https://arxiv.org/abs/2312.17279)
+
+## WebGPU/WASM port knowledge (browser)
+
+The EOU model also runs fully in-browser in
+[fluidaudio-web](https://github.com/FluidInference/fluidaudio-web)
+(`src/engines/eou-parakeet/`) — ORT-free, on the same shared WGSL
+FastConformer runtime as Parakeet/Nemotron/VoiceChat, with the streaming
+config (causal subsampling pad, causal depthwise conv, conv-module LayerNorm,
+cache-aware chunked attention mask: chunk 2, left context 70). **297×
+real-time** on a 1-hour file (worker-overlapped wasm decode + linear-cost
+streaming encode); TRUE streaming push()/finish() is bit-exact with the
+offline path (cache-carrying encode). Weights:
+`FluidInference/fluidaudio-web` → `eou/` (fp16 encoder 219 MB + fp32 decoder
+21 MB).
+
+Load-bearing facts for anyone porting this model to another runtime:
+
+- **THE gotcha — this model wants NA (un-normalized) log-mel, not Parakeet's
+  per-feature CMVN.** Feeding CMVN mel makes the encoder emit content-free
+  frames (per-frame RMS looks normal but std is nearly flat ~0.04 across the
+  whole clip) → the joint predicts blank on every step → empty transcript
+  that presents exactly like a decode bug. Diagnostic that cracked it: mel
+  bit-identical to reference, decode logic verified against reference, yet
+  all-blank ⇒ the encoder *input contract* is wrong.
+- **fp16 encoder is required — int8 degrades this 120M model** (unlike the
+  0.6B, which tolerates int8). Small models are much more quant-sensitive.
+- **RNNT export shape quirks** (ysdede `parakeet-realtime-eou-120m-v1-onnx`,
+  fused decoder_joint): single-layer LSTM states [1,1,640], NO target_length
+  input; the joint output grid carries size-1 time/label dims — take the LAST
+  1027 values; the exported joint prepends a zero-SOS timestep, so the LSTM
+  steps twice per call.
+- **Control tokens**: eou_id 1024, eob_id 1025, blank 1026 (vocab 1024 text
+  pieces). Ids ≥ 1024 become timestamped events and are dropped from the
+  transcript.

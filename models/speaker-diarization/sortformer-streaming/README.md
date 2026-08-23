@@ -132,3 +132,28 @@ https://github.com/FluidInference/FluidAudio/blob/main/Documentation/Benchmarks.
 
   This project was built upon the foundational work of the NVIDIA NeMo team.
 
+
+## WebGPU/WASM port knowledge (browser)
+
+Sortformer 4-spk v2.1 runs fully in-browser in
+[fluidaudio-web](https://github.com/FluidInference/fluidaudio-web)
+(`src/engines/diarization-sortformer/`) — ORT-free: the shared WGSL
+FastConformer encoder (int8, 17 layers, d512, symmetric Parakeet-style
+subsampling, full attention offline) → Sortformer head (encoder_proj →
+18-layer transformer → single_hidden_to_spks → sigmoid) → per-frame
+4-speaker probs (~12.5 fps) → threshold/merge into segments. mel =
+per-feature CMVN. Parity vs ORT: fp32 maxΔ 1.79e-7, int8 2.3e-3. Weights:
+`FluidInference/fluidaudio-web` → `sortformer/`.
+
+Load-bearing facts:
+
+- **Offline single-chunk (EMPTY spkcache/fifo) only works for short audio.**
+  On long meetings it collapses to the dominant speaker (secondary speakers
+  → 0.000) — the spkcache/fifo streaming state loop is NOT optional there.
+  Valid long-form DER requires porting NeMo's streaming state update.
+- **NeMo's own ONNX export of this model has dynamic-slice issues**;
+  community mirrors (`cgus/diar_streaming_sortformer_4spk-v2.1-onnx`) work.
+- **NeMo xscaling (√512) is a runtime Mul in this export**, not folded into
+  weights — easy to drop when porting from the graph.
+- The fp32 model is CPU-runnable (not precision-gated like the int-quant ASR
+  encoders) → fully verifiable headless before touching a browser.
