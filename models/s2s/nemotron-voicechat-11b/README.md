@@ -126,6 +126,19 @@ GPTQ/AWQ-calibrated int4 (coremltools layerwise compression), 6-bit
 palettization (validate — pal4 was pathological in riva trial), or
 sensitivity-based mixed int8/int4 per layer.
 
+### Calibrated sub-8-bit gate (`measure_calibrated_quant.py`)
+
+Extends the dual-track harness with AWQ-style activation-aware per-input-channel
+scales (grid-searched per linear on a conversational-text calibration set; at
+deployment 1/s folds into the preceding norm weight, so the scheme stays
+coremltools-exact), a per-linear sensitivity proxy recorded during calibration
+that drives mixed int8/int6/int4 promotion under an effective-bits budget, and
+exact effective-bits accounting (weight bits + fp16 scale overhead).
+`calib_scales.npz` is the calibration output (scales + sensitivities).
+Gate: **≥98% top-1 at ≤5.0 effective bits** ⇒ sub-8-bit ships (and a
+half-duplex browser LLM becomes plausible); fail ⇒ lossless int8 stands.
+Evaluation in flight — results not yet recorded here.
+
 **Conclusion: hybrid execution.** CoreML/ANE for encoder + TTS + codec + RNNT
 (≈ 1.6 B params total, ~all reusable patterns from prior trials), MLX for the
 9B backbone + 3 heads. Memory: 4-bit LLM ≈ 4.7 GB + fp16 rest ≈ 3.5 GB → ~8–9 GB.
