@@ -103,9 +103,12 @@ encoder/TTS on ANE — no compute-unit contention.
 ### Quantization quality on the REAL fine-tuned weights (`measure_int4_quality.py`)
 
 Dual-track forward (fp32 baseline vs quantize-dequantize, same code both
-tracks so implementation error cancels), all 56 layers streamed from
-`components/llm.safetensors`, 3 real prompts, coremltools-equivalent
-per-block-32 linear_symmetric RTN:
+tracks), all 56 layers streamed from `components/llm.safetensors`, 3 real
+prompts, coremltools-equivalent per-block-32 linear_symmetric RTN.
+**SUPERSEDED**: these numbers were measured before the gated-norm fix (see the
+calibrated-gate section below); the corrected frontier there replaces them.
+Directionally the conclusions hold, but int8 is ~99% top-1 on the corrected
+forward, not exactly 100%:
 
 | Scheme | top-1 agree | top-5 | KL | fn-head top-1 | step latency | LLM weights |
 |---|---|---|---|---|---|---|
@@ -115,9 +118,11 @@ per-block-32 linear_symmetric RTN:
 | int4 pb16 | 76.3% | 99.1% | 0.19 | 89.4% | ~27 ms est. | ~5.2 GB |
 | int4 pb32 | 74.3% | 99.1% | 0.22 | 85.8% | 26.6 ms (measured) | ~4.7 GB |
 
-Findings: naive int4 RTN is NOT acceptable (flips 1 in 4 tokens; the
-function-head degradation comes from accumulated body drift, not the head
-matrix). **int8 is exactly lossless** and still fits the budget: frame total
+Findings: naive int4 RTN is NOT acceptable; the function-head degradation
+comes from accumulated body drift, not the head matrix. **int8 is
+effectively lossless** (corrected forward: 98.9% top-1, KL 0.0002; the
+shipped conversion separately validates 100% prefill argmax vs fp32 torch on
+its test prompt) and still fits the budget: frame total
 with int8 = encoder 12 + LLM 45.4 + TTS 6–12 + RNNT 0.5 + codec ≈ 65–72 ms
 of 80 ms (thin but real-time on M5 Pro; needs ≥16–24 GB RAM at ~13 GB
 resident). NOTE: naive 4-bit RTN is also what mlx-community quants use — the
@@ -139,44 +144,48 @@ exact effective-bits accounting (weight bits + fp16 scale overhead).
 Gate: **≥98% top-1 at ≤5.0 effective bits** ⇒ sub-8-bit ships (and a
 half-duplex browser LLM becomes plausible); fail ⇒ lossless int8 stands.
 
-> **RE-MEASUREMENT IN PROGRESS** — review caught that this harness's Mamba
-> gated norm was full-width with eps 1e-6, while the real model (and the
-> validated converter) uses per-group RMSNorm (8 × 1280) with eps 1e-5. The
-> forward is fixed, `calib_scales.npz` regenerated, and the full frontier is
-> re-running; the numbers below are from the pre-fix forward and will be
-> replaced. The shipped conversion (`convert_llm_real.py`) always had the
-> correct semantics — only this measurement harness was wrong.
+A first pass of this gate ran with a WRONG forward — full-width gated norm at
+eps 1e-6 instead of the model's per-group (8 × 1280) RMSNorm at eps 1e-5
+(caught in review; the shipped `convert_llm_real.py` always had the correct
+semantics). The forward was fixed, `calib_scales.npz` regenerated, and the
+entire frontier re-measured (`rerun_quant_gate.sh`); everything below is from
+the corrected forward. Sub-5-bit numbers improved by 4–5 points but the
+verdict did not change.
 
-**Result (pre-fix, being re-derived): GATE FAILED.** Frontier (294 eval
-positions, 16 prompts, dual-track fp32 reference):
+**Result: GATE FAILED.** Frontier (294 eval positions, 16 prompts, dual-track
+fp32 reference; fp16 floor = 100%/100%, KL 0):
 
-| Scheme | top-1 agree | effective bits |
-|---|---|---|
-| RTN int4 pb32 (sanity, matches 2026-08-03 run) | 74.3% | 4.5 |
-| AWQ int4 | 83.9% | 4.5 |
-| GPTQ + AWQ int4 | 87.1% | 4.5 |
-| **GPTQ + AWQ + int8/chan heads (best in budget)** | **88.6%** | **4.963** |
-| int5 | 94.3% | 5.5 |
-| int6 AWQ (~7.1 GB — pragmatic ship candidate) | 96.4% | 6.5 |
-| int8 pb32 | lossless | 8.5 |
+| Scheme | top-1 agree | top-5 | KL | fn-head top-1 | effective bits |
+|---|---|---|---|---|---|
+| RTN int4 pb32 | 80.0% | 98.9% | 0.174 | 75.3% | 4.5 |
+| AWQ int4 | 87.4% | 100% | 0.063 | 83.9% | 4.5 |
+| **GPTQ + AWQ int4 (best top-1 in budget)** | **92.2%** | **100%** | **0.032** | 89.6% | **4.5** |
+| GPTQ + AWQ int4 + int8/chan heads | 90.8% | 100% | 0.028 | **90.7%** | 4.963 |
+| GPTQ + AWQ int5 | 94.6% | 100% | 0.007 | 95.5% | 5.5 |
+| AWQ int6 (~7.1 GB — pragmatic ship candidate) | 95.5% | 100% | 0.004 | 97.4% | 6.5 |
+| int8 pb32 | 98.9% | 100% | 0.0002 | 99.6% | 8.5 |
 
-Failure mode: distributed hidden-state drift across all 27 Mamba2 layers
-(per-layer cos degrades uniformly to ~0.956), NOT a few outlier layers —
-so mixed-precision promotion cannot buy the accuracy back under the bits
-budget. Consequence: the 9B stays **int8 (lossless, ~9.4 GB)** for native;
-a browser-resident LLM is shelved (int8 ≈ 13 GB resident is not
-browser-deliverable) — browser stays STT (+TTS/codec later), full-duplex
-stays native. Next tiers if ever revisited: palettized K-means LUT,
-QuIP#/SpinQuant-style rotations, QAT on fused embeddings. Caveat: the
+Best in-budget top-1 is 92.2% at 4.5 effective bits vs the ≥98% bar (the
+int8-heads variant trades ~1.4 pts of top-1 for +1.1 pts of function-head
+accuracy — the drift is in the body either way). The frontier climbs slowly
+and smoothly through 94.6% @ 5.5 and 95.5% @ 6.5 — no small set of promotable
+outlier layers exists, so mixed precision cannot reach the gate under the
+bits budget. Note **even int8 is 98.9%, not exactly 100%**, on this
+294-position eval (the shipped conversion's own validation still shows 100%
+prefill argmax on its test prompt). Consequence: the 9B stays **int8
+(~9.4 GB) for native**; a browser-resident LLM is shelved (int8 ≈ 13 GB
+resident is not browser-deliverable) — browser stays STT (+TTS/codec later),
+full-duplex stays native. Next tiers if ever revisited: palettized K-means
+LUT, QuIP#/SpinQuant-style rotations, QAT on fused embeddings. Caveat: the
 calibration set is plain text, a proxy for the deployed fused
-audio-embedding regime. Harness cost: full GPTQ pass ≈ 14 min / 15 GB RAM
-on M5 Pro (batched layer-major streaming, ~10× faster than the original
-per-sequence harness).
+audio-embedding regime. Harness cost: full GPTQ pass ≈ 14 min / 15 GB RAM on
+M5 Pro (batched layer-major streaming).
 
 **Conclusion: CoreML-only execution.** CoreML/ANE for encoder + TTS + codec +
 RNNT (≈ 1.6 B params total, ~all reusable patterns from prior trials) and
-**CoreML int8 stateful shards for the 9B backbone + heads** (lossless at int8;
-int4/int5/int6 fail the quality gate — see above). Memory: int8 LLM ≈ 9.4 GB +
+**CoreML int8 stateful shards for the 9B backbone + heads** (98.9% top-1 /
+KL 0.0002 at int8 — effectively lossless; int4/int5/int6 fail the quality
+gate — see above). Memory: int8 LLM ≈ 9.4 GB +
 fp16 rest ≈ 3.5 GB → **~13 GB resident**. **macOS-only target** (Apple Silicon
 ≥ 16 GB, realistically 24 GB); iPhone is out of reach for v1. **MLX is
 explicitly fallback-only** (kept as the escape hatch if CoreML shard dispatch
@@ -204,9 +213,12 @@ not otherwise carry, which is another reason it is not the primary path.
   - env gotchas: `numpy==2.2.6` (2.4.x makes coremltools' `aten::Int` handler throw
     TypeError on NeMo's size-1 `max_audio_length` array), `torch==2.12.1`.
   - **e2e STT validated** (`test_e2e_stt.py`): `sample_general.wav` → mel →
-    CoreML encoder (fp16, 195 per-frame steps) → CoreML RNNT greedy →
+    CoreML encoder (fp16, per-frame streaming steps) → CoreML RNNT greedy →
     "Hello, do you know what color the sky is" — token-identical to the torch
-    reference. Real-audio behavioral parity for the full user-transcription chain.
+    reference, asserted with nonzero exit on mismatch. Windowing streams the
+    real mel history (left-padded only for missing frames) and processes the
+    zero-padded final partial chunk. Real-audio behavioral parity for the
+    full user-transcription chain.
 - [ ] **Phase 2b — TTS backbone + MoG head**: gemma3 28L×1152 stateful KV single-step,
   magpie/neutts decoder-step playbook applies (host-cache if needed)
 - [ ] **Phase 2c — codec decoder (+ prvq dequant)**: conv stack, straightforward
