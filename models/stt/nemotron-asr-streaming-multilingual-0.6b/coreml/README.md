@@ -311,8 +311,11 @@ Nemotron 3.5 multilingual runs fully in-browser in
 runtime with the Nemotron streaming config (causal subsampling pad, causal
 depthwise dwK 9, cache-aware attention mask chunk 4 / left 56 / right 3).
 The cache-aware streaming export and offline-with-limited-context-mask compute
-the same function, so the browser runs the model offline and skips the cache
-plumbing entirely. Weights: `FluidInference/fluidaudio-web` → `nemotron/`
+the same function — that equivalence is what made the port tractable and is how
+whole-clip (batch) transcription runs. The shipped engine is additionally TRUE
+streaming: push()/finish() over a streaming mel + cache-carrying encode stream,
+with a 4-chunk provisional-tail lookahead to honor the export's right-context 3
+(fluidaudio-web docs/STREAMING.md). Weights: `FluidInference/fluidaudio-web` → `nemotron/`
 (int8 encoder 630 MB + fp32 decoder 98 MB — the 600M encoder is int8-robust,
 unlike the 120M EOU).
 

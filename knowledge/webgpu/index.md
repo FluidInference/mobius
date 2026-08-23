@@ -23,9 +23,16 @@ across models. Extracted raw weights for every engine are hosted at
 | ACE-Step 1.5 Turbo (3.5B) | `musicgen-acestep` | ~1.9× RT, seed-deterministic | upstream port (Hamza Q.), vendored `packages/acestep` |
 
 One shared hand-written FastConformer forward serves Parakeet / Nemotron /
-EOU / Sortformer / VoiceChat — the config (d_model, layers, heads, d_ff, dw
-kernel, subsampling, mel bins) is **inferred from the weight manifest**, so a
-new FastConformer variant is a weight-extraction job, not a runtime job.
+EOU / Sortformer / VoiceChat. **Geometry** (d_model, layers, heads, d_ff, dw
+kernel, subsampling channels, mel bins) is inferred from the weight manifest,
+but the **non-weight semantics are NOT in the manifest** and must be recovered
+from the NeMo config per variant and passed as an engine config override
+(`VOICECHAT_CFG`, `NEMO_CFG`, …): causal vs symmetric subsampling pad, causal
+vs symmetric depthwise conv, conv-norm type (batch_norm vs layer_norm),
+attention chunking/context ([70,0] ⇒ chunk 1; Nemotron chunk 4 / left 56 /
+right 3), and the mel frontend (matrix below). A new variant is therefore a
+weight-extraction job **plus** a config-recovery job — the runtime code itself
+stays untouched.
 
 ## Cross-cutting runtime findings
 
