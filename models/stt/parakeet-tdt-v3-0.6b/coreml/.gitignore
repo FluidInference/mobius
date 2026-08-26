@@ -3,6 +3,7 @@ parakeet_coreml/
 parakeet_coreml_quantized/
 parakeet_coreml_encoder_only/
 parakeet_coreml_fp32/
+parakeet_coreml_fp16/
 compiled/
 .compiled/
 compute_unit_sweep.json

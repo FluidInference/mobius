@@ -7,6 +7,7 @@ were not part of the original sweep:
   * ``enc8bit-palettize``        - 8-bit kmeans palettize (quality reference vs 6-bit)
   * ``enc-prune+int8``           - 50% threshold prune followed by int8-per-channel
   * ``enc-int4-linear-per-channel``    - int4 symmetric, per-output-channel
+  * ``enc-int4-palettize-grouped-16``  - int4 kmeans palette, grouped-channel-16
   * ``enc-int4-linear-per-block-32``   - int4 symmetric, per-block (block_size=32)
   * ``enc-prune+int4-block``     - 50% prune then int4-per-block-32
 
@@ -141,6 +142,23 @@ def _default_variants() -> List[EncoderVariant]:
             )],
             bump_to_ios18=True,
             description="Encoder: int4 symmetric, per-channel (iOS18)",
+        ),
+        EncoderVariant(
+            name="enc-int4-palettize-grouped-16",
+            steps=[(
+                "palettize",
+                OptimizationConfig(
+                    global_config=OpPalettizerConfig(
+                        mode="kmeans",
+                        nbits=4,
+                        granularity="per_grouped_channel",
+                        group_size=16,
+                        weight_threshold=512,
+                    )
+                ),
+            )],
+            bump_to_ios18=True,
+            description="Encoder: int4 grouped-channel palette, group_size=16 (iOS18)",
         ),
         EncoderVariant(
             name="enc-int4-linear-per-block-32",

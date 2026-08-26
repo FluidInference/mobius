@@ -97,17 +97,18 @@ Quantization plots (ALL)
 
 ## Encoder-only int4/int8 sweep
 
-`extra_encoder_variants.py` extends the recipes in `quantize_coreml.py` with five encoder-scoped variants targeting the disk/RTFx/WER trade space. The encoder dominates the v3 model footprint, so quantizing it alone (without touching preprocessor/decoder/joint, which stay fp16) gives most of the size win without further hurting decoding quality.
+`extra_encoder_variants.py` extends the recipes in `quantize_coreml.py` with six encoder-scoped variants targeting the disk/RTFx/WER trade space. The encoder dominates the v3 model footprint, so quantizing it alone (without touching preprocessor/decoder/joint, which stay fp16) gives most of the size win without further hurting decoding quality.
 
 Variants:
 
 - `enc8bit-palettize` — 8-bit palette on the encoder.
 - `enc-prune+int8` — sparse + int8 linear per-channel.
 - `enc-int4-linear-per-channel` — int4 linear, one scale per output channel. Selected as the FluidAudio v3 default.
+- `enc-int4-palettize-grouped-16` — int4 k-means palette over groups of 16 output channels.
 - `enc-int4-linear-per-block-32` — int4 linear, one scale per 32-element block.
 - `enc-prune+int4-block` — sparse + int4 block-wise.
 
-The three int4 variants explicitly bump `spec.specificationVersion = 9` (iOS18 / macOS 15) after the optimize.coreml pass, since int4 weight payloads require the iOS18 runtime.
+The four int4 variants explicitly bump `spec.specificationVersion = 9` (iOS18 / macOS 15) after the optimize.coreml pass, since int4 weight payloads require the iOS18 runtime.
 
 ```
 uv run python extra_encoder_variants.py run \
