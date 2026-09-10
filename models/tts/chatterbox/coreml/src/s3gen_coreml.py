@@ -61,7 +61,28 @@ class FlowCoreML(nn.Module):
         tok_mask = (self.arange_n < tl).view(1, -1, 1).to(embedding.dtype)
         tok = flow.input_embedding(torch.clamp(tokens.to(torch.int64), min=0)) * tok_mask
 
-        h, _ = flow.encoder(tok, token_len.to(torch.int64).view(1))  # (1, M, 512)
+        # Replicate UpsampleConformerEncoder.forward with one fix: re-zero the
+        # padded positions after each embed stage. embed's Linear+LayerNorm
+        # maps zero rows to a nonzero bias vector; the right-looking
+        # pre_lookahead conv then reads that junk at the tail of the valid
+        # region, which is why a padded bucket diverged from the exact-size
+        # run (bit-exact once re-zeroed — see convert-s3gen.py parity).
+        enc = flow.encoder
+        masks_bool = (self.arange_n < tl).view(1, 1, -1) > 0          # (1, 1, N)
+        xs, pos_emb, masks_e = enc.embed(tok, masks_bool)
+        xs = xs * tok_mask
+        xs = enc.pre_lookahead_layer(xs)
+        xs = enc.forward_layers(xs, masks_e, pos_emb, masks_e)
+
+        xs = xs.transpose(1, 2)
+        xs, _ = enc.up_layer(xs, token_len.to(torch.int64).view(1))
+        xs = xs.transpose(1, 2)
+        mel_mask_col = (self.arange_m < 2.0 * tl).view(1, -1, 1).to(embedding.dtype)
+        masks_up = (self.arange_m < 2.0 * tl).view(1, 1, -1) > 0      # (1, 1, M)
+        xs, pos_emb_up, masks_u = enc.up_embed(xs, masks_up)
+        xs = xs * mel_mask_col
+        xs = enc.forward_up_layers(xs, masks_u, pos_emb_up, masks_u)
+        h = enc.after_norm(xs)                            # (1, M, 512)
         h = flow.encoder_proj(h)                          # (1, M, 80)
 
         # conds: prompt mel prefix, zeros elsewhere (prompt_feat pre-padded by host)

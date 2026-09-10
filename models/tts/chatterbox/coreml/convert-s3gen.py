@@ -68,6 +68,24 @@ def get_speech_tokens(model, cache: Path) -> torch.Tensor:
     return speech_tokens
 
 
+def patch_rel_shift():
+    """coremltools has no `view_as`; swap in an equivalent reshape."""
+    from chatterbox.models.s3gen.transformer.attention import (
+        RelPositionMultiHeadedAttention as RPA)
+    import torch as _t
+
+    def rel_shift(self, x: _t.Tensor) -> _t.Tensor:
+        zero_pad = _t.zeros((x.size(0), x.size(1), x.size(2), 1),
+                            device=x.device, dtype=x.dtype)
+        x_padded = _t.cat([zero_pad, x], dim=-1)
+        x_padded = x_padded.view(x.size(0), x.size(1), x.size(3) + 1, x.size(2))
+        x = x_padded[:, :, 1:].reshape(x.size(0), x.size(1), x.size(2), x.size(3))[
+            :, :, :, : x.size(-1) // 2 + 1]
+        return x
+
+    RPA.rel_shift = rel_shift
+
+
 def zero_sinegen_randomness(s3gen):
     """Monkeypatch SineGen.forward to phase=0 / noise=0 (deterministic ref)."""
     sg = s3gen.mel2wav.m_source.l_sin_gen
@@ -95,6 +113,7 @@ def main():
     args = ap.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
+    patch_rel_shift()
     print("[1/6] loading model...")
     model = load_model()
     s3gen = model.s3gen.float().eval()

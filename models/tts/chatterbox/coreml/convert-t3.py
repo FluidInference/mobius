@@ -26,7 +26,7 @@ import torch
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE))
 
-from src.t3_coreml import ALIGNED_HEADS, T3Decode, T3Prefill  # noqa: E402
+from src.t3_coreml import ALIGNED_HEADS, T3Decode, T3DecodeStateful, T3Prefill  # noqa: E402
 
 T_PREFILL = 256
 MAX_LEN = 1024
@@ -251,6 +251,94 @@ def coreml_parity(p_path, d_path, model, padded, input_len, steps,
     print(f"[coreml] max |dlogits| = {worst_l:.3e}   max |dalign| = {worst_a:.3e}")
 
 
+def convert_stateful(model, padded, input_len, T0, steps, ref_logits, ref_align,
+                     out_dir: Path, fp16: bool):
+    """Convert T3DecodeStateful (macOS 15+/iOS 18+ MLState KV).
+
+    CoreML validation feeds the whole prefix through the stateful decode from
+    an empty state (positions 0..T0-1), then greedy-decodes — no Python-side
+    state seeding required (Swift seeds state from prefill KV via
+    MLState.withMultiArray at runtime; feeding from zero exercises the same
+    write/attend path at every position).
+    """
+    t3 = model.t3
+    wrapper = T3DecodeStateful(t3.tfmr, t3.speech_head, MAX_LEN).eval()
+
+    emb1 = torch.zeros(2, 1, 1024)
+    cur_len = torch.tensor([0], dtype=torch.int32)
+    with torch.no_grad():
+        wrapper(emb1, cur_len)  # warm-up
+    for i in range(wrapper.L):  # reset mutated state before trace
+        getattr(wrapper, f"kv_k_{i}").zero_()
+        getattr(wrapper, f"kv_v_{i}").zero_()
+    with torch.no_grad():
+        traced = torch.jit.trace(wrapper, (emb1, cur_len), strict=False)
+
+    precision = ct.precision.FLOAT16 if fp16 else ct.precision.FLOAT32
+    state_dtype = np.float16 if fp16 else np.float32
+    states = []
+    for i in range(wrapper.L):
+        for kv in ("k", "v"):
+            states.append(ct.StateType(
+                wrapped_type=ct.TensorType(shape=(2, 16, MAX_LEN, 64), dtype=state_dtype),
+                name=f"kv_{kv}_{i}"))
+    mlmodel = ct.convert(
+        traced,
+        inputs=[
+            ct.TensorType(name="inputs_embeds", shape=(2, 1, 1024), dtype=np.float32),
+            ct.TensorType(name="cur_len", shape=(1,), dtype=np.int32),
+        ],
+        outputs=[
+            ct.TensorType(name="logits", dtype=np.float32),
+            ct.TensorType(name="align_attn", dtype=np.float32),
+        ],
+        states=states,
+        compute_precision=precision,
+        minimum_deployment_target=ct.target.iOS18,
+        convert_to="mlprogram",
+    )
+    tag = "fp16" if fp16 else "fp32"
+    s_path = out_dir / f"T3-Decode-M{MAX_LEN}-{tag}-stateful.mlpackage"
+    mlmodel.save(str(s_path))
+    print(f"saved {s_path}")
+
+    import time
+    md = ct.models.MLModel(str(s_path), compute_units=ct.ComputeUnit.CPU_AND_GPU)
+    state = md.make_state()
+    logits = None
+    t_ctx = 0.0
+    for pos in range(T0):
+        t0 = time.perf_counter()
+        out = md.predict({"inputs_embeds": padded[:, pos:pos + 1].numpy(),
+                          "cur_len": np.array([pos], dtype=np.int32)}, state)
+        t_ctx += time.perf_counter() - t0
+        logits = torch.from_numpy(out["logits"])
+    worst_l = (logits - ref_logits[0]).abs().max().item()
+    worst_a = (torch.from_numpy(out["align_attn"])[:, :T0]
+               - ref_align[0][:, -1, :T0]).abs().max().item()
+
+    step_times = []
+    for i in range(steps):
+        tok = int(torch.argmax(logits[0:1], dim=-1))
+        with torch.no_grad():
+            emb = t3.speech_emb(torch.tensor([[tok]])) \
+                + t3.speech_pos_emb.get_fixed_embedding(i + 1)
+        emb = torch.cat([emb, emb]).numpy()
+        t0 = time.perf_counter()
+        out = md.predict({"inputs_embeds": emb,
+                          "cur_len": np.array([T0 + i], dtype=np.int32)}, state)
+        step_times.append(time.perf_counter() - t0)
+        logits = torch.from_numpy(out["logits"])
+        ctx = T0 + i + 1
+        worst_l = max(worst_l, (logits - ref_logits[i + 1]).abs().max().item())
+        worst_a = max(worst_a, (torch.from_numpy(out["align_attn"])[:, :ctx]
+                                - ref_align[i + 1][:, :ctx]).abs().max().item())
+    med = sorted(step_times)[len(step_times) // 2]
+    print(f"[coreml-stateful] max |dlogits| = {worst_l:.3e}   max |dalign| = {worst_a:.3e}")
+    print(f"[coreml-stateful] median decode step = {med * 1000:.1f} ms "
+          f"(ctx feed {t_ctx / T0 * 1000:.1f} ms/pos)")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--output-dir", type=Path, default=Path("build/t3"))
@@ -259,6 +347,8 @@ def main():
     ap.add_argument("--skip-convert", action="store_true")
     ap.add_argument("--parity-only", action="store_true",
                     help="reuse existing mlpackages; skip trace/convert")
+    ap.add_argument("--stateful", action="store_true",
+                    help="convert + validate the MLState decode variant only")
     ap.add_argument("--compute-units", default="CPU_AND_NE",
                     choices=["ALL", "CPU_ONLY", "CPU_AND_NE", "CPU_AND_GPU"])
     args = ap.parse_args()
@@ -283,6 +373,10 @@ def main():
     compare("pytorch", stock_logits, stock_align, wrap_logits, wrap_align, ctx_lens)
 
     if args.skip_convert:
+        return
+    if args.stateful:
+        convert_stateful(model, padded, input_len, T0, args.steps,
+                         wrap_logits, wrap_align, args.output_dir, args.fp16)
         return
     kv_shape = (30, 2, 16, MAX_LEN, 64)
     tag = "fp16" if args.fp16 else "fp32"
