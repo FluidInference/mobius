@@ -23,9 +23,22 @@ was the stated concern).
 | T3 CoreML fp16 (CPU_AND_GPU) vs wrappers | logits 2.6e-02 (range ±15), align 1.4e-03 |
 | Flow wrapper vs stock (padded bucket) | mel 1.0e-05 after embed re-zeroing fix |
 | HiFT wrapper vs stock (zeroed SineGen randomness) | wav 1.3e-05 |
-| Flow CoreML fp16 | TBD |
-| HiFT CoreML fp16 | TBD |
-| e2e CoreML chain (en/de/fr) | TBD |
+| T3 CoreML fp16 stateful (from-zero sequential feed, 80+12 steps) | logits 2.2e-02, align 1.7e-03 |
+| Flow CoreML fp16 (CPU_AND_GPU) | mel max 2.4e-02, mean 2.7e-03 |
+| HiFT CoreML fp16 (CPU_AND_GPU) | wav max 1.7e-02, mean 2.6e-04 |
+| e2e CoreML chain (en/de/fr) | all render; Parakeet-v3 round-trip below |
+
+### e2e ASR round-trip (Parakeet v3 via fluidaudiocli)
+
+| Lang | CoreML e2e transcript | PyTorch baseline transcript |
+|---|---|---|
+| en | "The quick brown fox jumps over the lazy dog near the riverbank." (exact) | identical |
+| de | main sentence correct; same "braune"→"Paune" mispronunciation and same trailing "Ein nein." artifact **as the PyTorch baseline** | same quirks |
+| fr | main sentence correct + small tail artifact | baseline run was worse (forced-EOS fired mid-utterance) |
+
+Sampled decodes are not token-comparable across fp16 vs fp32 logits (RNG
+paths diverge); the comparison shows the CoreML chain reproduces upstream
+per-language behavior including its warts, not bit-identical audio.
 
 ## Gotchas (chronological)
 
@@ -53,10 +66,10 @@ was the stated concern).
 |---|---|
 | T3-Prefill | 977 MB |
 | T3-Decode (I/O or stateful) | 977 MB |
-| Flow-N500 | TBD |
-| HiFT-T1000 | TBD |
-| embedding/pos/head tables | TBD |
-| **Total** | TBD (vs 3.2 GB fp32 checkpoints) |
+| Flow-N500 | 229 MB |
+| HiFT-T1000 | 40 MB |
+| embedding/pos/head tables | ~25 MB |
+| **Total** | ~2.2 GB naive (both T3 copies) / ~1.3 GB with T3 weight sharing (vs 3.2 GB fp32 checkpoints) |
 
 Only ONE T3 weight copy is needed on device if prefill/decode share a
 palettized/linked artifact — not attempted in this trial; the naive bundle
@@ -64,7 +77,21 @@ ships both.
 
 ## Performance
 
-TBD — stateful decode step time, flow, hift on M-series GPU.
+- Stateful T3 decode: **16.8 ms median/step** on CPU_AND_GPU (measured while
+  sharing the GPU with a concurrent job) ≈ 60 tok/s against the 25 Hz speech
+  token rate → ~2.4× real-time for the AR stage. Context feed from zero
+  state: 35 ms/pos (Swift should seed MLState from prefill KV instead).
+- I/O-KV decode (e2e runs): 38–39 ms/step — the 2×[30,2,16,1024,64] fp16
+  round-trip roughly doubles step cost vs stateful.
+- Prefill (T=256): 0.2–0.4 s.
+- Flow-N500: 4.4–4.7 s per call in single-shot processes (includes first-
+  predict compile; steady-state unmeasured — flow is the RTF bottleneck,
+  same as the cosyvoice3 trial where flow ≈ 65% of synth).
+- HiFT-T1000: **0.09 s** per call.
+- e2e wall (I/O decode, cold flow): ~8.8 s for 3.96 s audio (en). With the
+  stateful decode and a warm flow this projects to roughly real-time; ANE
+  work and flow bucket tuning are the obvious next wins.
+- PyTorch CPU reference: ~17 tok/s decode (0.7× real-time for T3 alone).
 
 ## Follow-ups
 

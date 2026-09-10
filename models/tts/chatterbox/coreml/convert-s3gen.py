@@ -110,6 +110,8 @@ def main():
     ap.add_argument("--output-dir", type=Path, default=Path("build/s3gen"))
     ap.add_argument("--fp16", action="store_true")
     ap.add_argument("--skip-convert", action="store_true")
+    ap.add_argument("--parity-only", action="store_true",
+                    help="reuse existing mlpackages; skip trace/convert")
     args = ap.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -117,7 +119,9 @@ def main():
     print("[1/6] loading model...")
     model = load_model()
     s3gen = model.s3gen.float().eval()
-    ref = model.conds.gen  # prompt_token (1,157), prompt_feat (1,314,80), embedding (1,192)
+    # prompt_token (1,157), prompt_feat (1,314,80), embedding (1,192)
+    ref = {k: (v.detach() if torch.is_tensor(v) else v)
+           for k, v in model.conds.gen.items()}
 
     print("[2/6] speech tokens fixture...")
     speech_tokens = get_speech_tokens(model, HERE / "build" / "fixtures" / "speech_tokens.pt")
@@ -195,6 +199,16 @@ def main():
     precision = ct.precision.FLOAT16 if args.fp16 else ct.precision.FLOAT32
     tag = "fp16" if args.fp16 else "fp32"
 
+    if args.parity_only:
+        f_path = args.output_dir / f"Flow-N{N_TOKENS}-{tag}.mlpackage"
+        h_path = args.output_dir / f"HiFT-T{M}-{tag}.mlpackage"
+        mel_pad = torch.zeros(1, 80, M)
+        mel_pad[:, :, :T_mel] = stock_mel
+        noise_pad = torch.zeros(1, 9, M * 480)
+        return coreml_parity(f_path, h_path, tokens, token_len, prompt_len,
+                             prompt_feat, embedding, z_full, wrap_mel, wrap_wav,
+                             mel_pad, noise_pad, phase0, P, T_real, T_mel)
+
     with torch.no_grad():
         traced_f = torch.jit.trace(
             flow_wrap, (tokens, token_len, prompt_len, prompt_feat, embedding, z_full),
@@ -240,23 +254,37 @@ def main():
     mlh.save(str(h_path))
     print(f"      saved {h_path}")
 
-    # ---- CoreML parity ----
+    coreml_parity(f_path, h_path, tokens, token_len, prompt_len, prompt_feat,
+                  embedding, z_full, wrap_mel, wrap_wav, mel_pad, noise_pad,
+                  phase0, P, T_real, T_mel)
+
+
+def coreml_parity(f_path, h_path, tokens, token_len, prompt_len, prompt_feat,
+                  embedding, z_full, wrap_mel, wrap_wav, mel_pad, noise_pad,
+                  phase0, P, T_real, T_mel):
+    import time
     for cu in ("CPU_AND_GPU",):
         mpf = ct.models.MLModel(str(f_path), compute_units=getattr(ct.ComputeUnit, cu))
+        t0 = time.perf_counter()
         out = mpf.predict({
             "tokens": tokens.numpy(), "token_len": token_len.numpy(),
             "prompt_len": prompt_len.numpy(), "prompt_feat": prompt_feat.numpy(),
             "embedding": embedding.numpy(), "z": z_full.numpy()})
+        t_flow = time.perf_counter() - t0
         cm_mel = torch.from_numpy(out["mel"])[:, :, 2 * P:2 * T_real]
         d = (cm_mel - wrap_mel).abs()
-        print(f"[coreml/{cu}] flow mel max|d| = {d.max().item():.3e} mean|d| = {d.mean().item():.3e}")
+        print(f"[coreml/{cu}] flow mel max|d| = {d.max().item():.3e} "
+              f"mean|d| = {d.mean().item():.3e}  ({t_flow:.2f}s)")
 
         mph = ct.models.MLModel(str(h_path), compute_units=getattr(ct.ComputeUnit, cu))
+        t0 = time.perf_counter()
         out = mph.predict({"mel": mel_pad.numpy(), "phase_vec": phase0.numpy(),
                            "noise": noise_pad.numpy()})
+        t_hift = time.perf_counter() - t0
         cm_wav = torch.from_numpy(out["audio"])[:, :T_mel * 480]
         d = (cm_wav - wrap_wav).abs()
-        print(f"[coreml/{cu}] hift wav max|d| = {d.max().item():.3e} mean|d| = {d.mean().item():.3e}")
+        print(f"[coreml/{cu}] hift wav max|d| = {d.max().item():.3e} "
+              f"mean|d| = {d.mean().item():.3e}  ({t_hift:.2f}s)")
 
 
 if __name__ == "__main__":

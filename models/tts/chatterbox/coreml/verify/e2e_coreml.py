@@ -145,7 +145,8 @@ def t3_generate(model, t3_dir: Path, embeds, len_cond, text_len, *,
 
 
 def s3gen_synthesize(model, s3gen_dir: Path, speech_tokens, seed=1234):
-    ref = model.conds.gen
+    ref = {k: (v.detach() if torch.is_tensor(v) else v)
+           for k, v in model.conds.gen.items()}
     P = ref["prompt_token"].shape[1]
     tokens_real = torch.cat([ref["prompt_token"],
                              speech_tokens.view(1, -1)], dim=1)

@@ -58,10 +58,10 @@ def main():
         cond_emb = t3.prepare_conditioning(model.conds.t3)  # (1, 34, 1024)
     ref = model.conds.gen
     voice = {
-        "t3_cond_emb": cond_emb.detach().to(dt),
-        "prompt_token": ref["prompt_token"].detach().to(torch.int32),
-        "prompt_feat": ref["prompt_feat"].detach().to(dt),
-        "embedding": ref["embedding"].detach().to(dt),
+        "t3_cond_emb": cond_emb.detach().to(dt).contiguous(),
+        "prompt_token": ref["prompt_token"].detach().to(torch.int32).contiguous(),
+        "prompt_feat": ref["prompt_feat"].detach().to(dt).contiguous(),
+        "embedding": ref["embedding"].detach().to(dt).contiguous(),
     }
     p = args.out_dir / f"voice-{name}.safetensors"
     save_file(voice, str(p))
