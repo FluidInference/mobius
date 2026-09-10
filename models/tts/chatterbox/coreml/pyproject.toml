@@ -1,0 +1,16 @@
+[project]
+name = "chatterbox-coreml"
+version = "0.1.0"
+description = "Chatterbox Multilingual (23-lang) -> CoreML conversion toolkit"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "chatterbox-tts==0.1.7",
+    "coremltools>=9.0",
+    "soundfile>=0.12",
+    "huggingface-hub>=0.25",
+    # perth (watermarker) imports pkg_resources; removed from setuptools >= 82
+    "setuptools>=70,<81",
+]
+
+[tool.uv]
+package = false
