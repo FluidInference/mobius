@@ -5,6 +5,10 @@ Conversion of [OpenMOSS-Team/MOSS-TTS-Nano-100M](https://huggingface.co/OpenMOSS
 its codec [MOSS-Audio-Tokenizer-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano)
 (22M, causal-transformer codec, 16×1024 RLFQ at 12.5 Hz) to CoreML. Apache-2.0 upstream.
 
+Published: [FluidInference/moss-tts-nano-coreml](https://huggingface.co/FluidInference/moss-tts-nano-coreml)
+(mlpackage + mlmodelc, `config.json` with template ids, tokenizer, preset voices). Swift backend:
+FluidAudio `Sources/FluidAudio/TTS/MossTtsNano` (`--backend moss-tts-nano`).
+
 ## Pipeline
 
 ```
