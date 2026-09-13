@@ -113,6 +113,82 @@ class FlowCoreML(nn.Module):
         return x
 
 
+class FlowMeanCoreML(nn.Module):
+    """Meanflow (Nano/Turbo) variant of ``FlowCoreML``.
+
+    Same UpsampleConformerEncoder path (incl. the padded-position re-zeroing
+    fix), different ODE: the distilled meanflow estimator takes an end-time
+    ``r`` alongside ``t`` and needs no CFG — batch 1, ``n_timesteps`` plain
+    Euler steps (2 for the shipped checkpoints; `basic_euler` upstream).
+    """
+
+    def __init__(self, flow: nn.Module, n_total_tokens: int, n_timesteps: int = 2):
+        super().__init__()
+        self.flow = flow
+        self.N = n_total_tokens
+        self.ratio = flow.token_mel_ratio                 # 2
+        self.M = n_total_tokens * self.ratio
+        self.n_timesteps = n_timesteps
+
+        # meanflow skips the cosine t-scheduler (flow_matching.forward)
+        t_span = torch.linspace(0, 1, n_timesteps + 1, dtype=torch.float32)
+        self.register_buffer("t_span", t_span, persistent=False)
+        self.register_buffer("arange_n", torch.arange(n_total_tokens, dtype=torch.float32),
+                             persistent=False)
+        self.register_buffer("arange_m", torch.arange(self.M, dtype=torch.float32),
+                             persistent=False)
+
+    def forward(
+        self,
+        tokens: torch.Tensor,        # (1, N) int32 — prompt ++ generated, right-padded
+        token_len: torch.Tensor,     # (1,) int32 — number of valid tokens
+        prompt_len: torch.Tensor,    # (1,) int32 — prompt token count
+        prompt_feat: torch.Tensor,   # (1, M, 80) — prompt mel, zero-padded past 2*prompt_len
+        embedding: torch.Tensor,     # (1, 192) — CAMPPlus x-vector
+        z: torch.Tensor,             # (1, 80, M) — CFM initial noise
+    ) -> torch.Tensor:
+        """Returns mel (1, 80, M); valid frames are [2*prompt_len, 2*token_len)."""
+        flow = self.flow
+        tl = token_len.to(torch.float32).view(1)
+
+        emb = F.normalize(embedding, dim=1)
+        emb = flow.spk_embed_affine_layer(emb)            # (1, 80)
+
+        tok_mask = (self.arange_n < tl).view(1, -1, 1).to(embedding.dtype)
+        tok = flow.input_embedding(torch.clamp(tokens.to(torch.int64), min=0)) * tok_mask
+
+        enc = flow.encoder
+        masks_bool = (self.arange_n < tl).view(1, 1, -1) > 0          # (1, 1, N)
+        xs, pos_emb, masks_e = enc.embed(tok, masks_bool)
+        xs = xs * tok_mask
+        xs = enc.pre_lookahead_layer(xs)
+        xs = enc.forward_layers(xs, masks_e, pos_emb, masks_e)
+
+        xs = xs.transpose(1, 2)
+        xs, _ = enc.up_layer(xs, token_len.to(torch.int64).view(1))
+        xs = xs.transpose(1, 2)
+        mel_mask_col = (self.arange_m < 2.0 * tl).view(1, -1, 1).to(embedding.dtype)
+        masks_up = (self.arange_m < 2.0 * tl).view(1, 1, -1) > 0      # (1, 1, M)
+        xs, pos_emb_up, masks_u = enc.up_embed(xs, masks_up)
+        xs = xs * mel_mask_col
+        xs = enc.forward_up_layers(xs, masks_u, pos_emb_up, masks_u)
+        h = enc.after_norm(xs)                            # (1, M, 512)
+        h = flow.encoder_proj(h)                          # (1, M, 80)
+
+        cond = prompt_feat.transpose(1, 2)                # (1, 80, M)
+        mu = h.transpose(1, 2)                            # (1, 80, M)
+        mel_mask = (self.arange_m < 2.0 * tl).view(1, 1, -1).to(embedding.dtype)
+
+        x = z
+        for step in range(self.n_timesteps):
+            t = self.t_span[step].view(1)
+            r = self.t_span[step + 1].view(1)
+            dxdt = flow.decoder.estimator(x, mel_mask, mu, t, emb, cond, r)
+            x = x + (r - t) * dxdt
+
+        return x
+
+
 class SineGenCoreML(nn.Module):
     """Deterministic SineGen: random phase + noise become inputs."""
 

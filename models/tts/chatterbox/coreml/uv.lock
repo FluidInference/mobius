@@ -249,7 +249,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "chatterbox-tts", specifier = "==0.1.7" },
+    { name = "chatterbox-tts", git = "https://github.com/resemble-ai/chatterbox.git?rev=5de7a54aa4e5e2baadb0182dde554908b48b85c2" },
     { name = "coremltools", specifier = ">=9.0" },
     { name = "huggingface-hub", specifier = ">=0.25" },
     { name = "setuptools", specifier = ">=70,<81" },
@@ -259,7 +259,7 @@ requires-dist = [
 [[package]]
 name = "chatterbox-tts"
 version = "0.1.7"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/resemble-ai/chatterbox.git?rev=5de7a54aa4e5e2baadb0182dde554908b48b85c2#5de7a54aa4e5e2baadb0182dde554908b48b85c2" }
 dependencies = [
     { name = "conformer" },
     { name = "diffusers" },
@@ -276,10 +276,6 @@ dependencies = [
     { name = "torch" },
     { name = "torchaudio" },
     { name = "transformers" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/b1/8f1203e868111a45b566a79a4f56cd7843c420dfda709b81cebee55afa10/chatterbox_tts-0.1.7.tar.gz", hash = "sha256:ed8afae83819b40a25927c2ef3bcc67f928bdfcf434c1376c972e6039252a187", size = 84802, upload-time = "2026-03-26T08:43:47.912Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/37/11a7f06983bfd5ebba71eb2caa6660941b17b31f3c49d4a5fe9e1e804d31/chatterbox_tts-0.1.7-py3-none-any.whl", hash = "sha256:83782500e3ad4e7c919132e9d7eb8755f29f57c5bde5ec48c655ca23a4eb113c", size = 108543, upload-time = "2026-03-26T08:43:46.803Z" },
 ]
 
 [[package]]
@@ -1456,11 +1452,16 @@ wheels = [
 
 [[package]]
 name = "resemble-perth"
-version = "1.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d8/02/f9b5adba306b5cd8bc5525f6bcad8f9d6840c6635d74fcf229a45c0dfb56/resemble_perth-1.0.1.tar.gz", hash = "sha256:e4688cfc22e07b2ace567b987eb2c26e4ac19cbc37fbfacfd6794a2933ad2392", size = 34402288, upload-time = "2025-05-23T14:15:52.287Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/77/cc/73226dd776f8e9c2975f64f4efc22988fb37e5b185ba5cccd6f2e7196954/resemble_perth-1.0.1-py3-none-any.whl", hash = "sha256:65e9c37531b1a128a4a56226b75dece4521683cf3611b0b2a5ffe234f00c9342", size = 34404578, upload-time = "2025-05-23T14:15:49.06Z" },
+version = "1.1.0"
+source = { git = "https://github.com/resemble-ai/Perth.git?rev=master#ff1c8ac55a976971245cdd53c18d6131ca00d993" }
+dependencies = [
+    { name = "librosa" },
+    { name = "numpy" },
+    { name = "pydub" },
+    { name = "pyyaml" },
+    { name = "soundfile" },
+    { name = "torch" },
+    { name = "torchaudio" },
 ]
 
 [[package]]

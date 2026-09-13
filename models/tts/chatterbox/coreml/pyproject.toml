@@ -1,10 +1,12 @@
 [project]
 name = "chatterbox-coreml"
 version = "0.1.0"
-description = "Chatterbox Multilingual (23-lang) -> CoreML conversion toolkit"
+description = "Chatterbox Multilingual (23-lang) + Nano -> CoreML conversion toolkit"
 requires-python = ">=3.11,<3.13"
 dependencies = [
-    "chatterbox-tts==0.1.7",
+    # Nano (GPT2-small T3 + meanflow S3Gen) is unreleased on PyPI (0.1.7);
+    # pin the git commit that ships tts_turbo nano=True + S3Gen(meanflow=True)
+    "chatterbox-tts @ git+https://github.com/resemble-ai/chatterbox.git@5de7a54aa4e5e2baadb0182dde554908b48b85c2",
     "coremltools>=9.0",
     "soundfile>=0.12",
     "huggingface-hub>=0.25",
