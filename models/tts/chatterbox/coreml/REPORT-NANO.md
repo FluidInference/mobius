@@ -24,36 +24,77 @@ gelu_new, learned absolute positions — no RoPE), batch-1 everywhere,
 
 | Check | Result |
 |---|---|
-| T3 wrappers vs stock GPT2 path (fp32 PyTorch) | TBD |
-| T3 CoreML fp16 vs wrappers | TBD |
-| Flow wrapper vs stock (padded bucket, captured z) | TBD |
-| HiFT wrapper vs stock (zeroed SineGen randomness) | TBD |
-| Flow CoreML fp16 | TBD |
-| HiFT CoreML fp16 | TBD |
-| e2e CoreML chain | TBD |
+| T3 wrappers vs stock GPT2 path (fp32 PyTorch, 20 cached steps) | logits 1.4e-05 |
+| T3 CoreML fp16 I/O-KV (CPU_AND_GPU) vs wrappers | logits 2.2e-02 |
+| T3 CoreML fp16 stateful (from-zero sequential feed, 391+20 steps) | logits 1.9e-02 |
+| Flow wrapper vs stock (padded bucket, captured z) | mel 1.1e-05 |
+| HiFT wrapper vs stock (zeroed SineGen randomness) | wav 1.1e-06 |
+| Flow CoreML fp16 (CPU_AND_GPU) | mel max 5.9e-02, mean 1.8e-03 |
+| HiFT CoreML fp16 (CPU_AND_GPU) | wav max 3.3e-03, mean 1.2e-04 |
+| e2e CoreML chain | renders; Parakeet-v3 round-trip below |
+
+### e2e ASR round-trip (Parakeet v3 via fluidaudiocli)
+
+| Input | CoreML e2e transcript |
+|---|---|
+| plain sentence | "The quick brown fox jumps over the lazy dog near the riverbank." (verbatim; identical to the PyTorch baseline's transcript) |
+| `[chuckle]` tag sentence | "Hi there, Sarah here from Mocha Phone, calling you back. Have you got one minute to chat about the billing issue?" — tag consumed, chuckle audible; the PyTorch baseline's chuckle was even transcribed as "Huh." |
+
+Sampled decodes are not token-comparable across fp16 vs fp32 logits; the
+comparison shows the CoreML chain reproduces upstream behavior, not
+bit-identical audio.
 
 ## Gotchas
 
-- HF CDN throttles per-connection (~120 KB/s observed); `aria2c -x16` or
-  `CHATTERBOX_NANO_CKPT` local-dir override in `src/nano_ckpt.py`.
+- HF CDN throttled per-connection (~120 KB/s observed); `aria2c -x16` or
+  the `CHATTERBOX_NANO_CKPT` local-dir override in `src/nano_ckpt.py`.
+  Careful: bare multi-URI `aria2c URL1 URL2` treats the URLs as **mirrors
+  of one file** and silently interleaves different files — use `-i list`
+  with per-entry `out=` (or `-Z`).
+- The huggingface_hub Xet path stalled at 0 bytes indefinitely on this
+  network; `HF_HUB_DISABLE_XET=1` alone didn't fix throughput, only aria2.
 - Nano support is not on PyPI (0.1.7) — `chatterbox-tts` is pinned to the
   git commit that ships `tts_turbo(nano=True)` + `S3Gen(meanflow=True)`.
-- TBD
+- Unlike MTL, the tokenizer emits no BOT/EOT wrapping and prefill ends with
+  a **single** BOS speech embed (no double-BOS quirk). Don't copy the MTL
+  host path.
+- Otherwise clean: every wrapper hit parity on the first run — the MTL
+  toolkit's padding re-zeroing and matmul-STFT machinery carried over
+  unchanged.
 
 ## Size
 
 | Artifact | fp16 |
 |---|---|
-| T3Nano-Prefill | TBD |
-| T3Nano-Decode (I/O or stateful) | TBD |
-| FlowMean-N500 | TBD |
-| HiFT-T1000 | TBD |
-| embedding/head tables | TBD |
-| **Total** | TBD |
+| T3Nano-Prefill-T512-M1536 | 173 MB |
+| T3Nano-Decode-M1536 (I/O) | 184 MB |
+| T3Nano-Decode-M1536 (stateful) | 184 MB |
+| FlowMean-N500 | 228 MB |
+| HiFT-T1000 | 40 MB |
+| embedding/head tables + voice | ~88 MB |
+| tokenizer | 1.4 MB |
+| **Total** | 895 MB naive (all three T3 packages) / ~710 MB shipping one decode variant / ~530 MB with T3 weight sharing (vs ~1.9 GB fp32 checkpoint; MTL CoreML bundle is ~2.3 GB) |
 
 ## Performance
 
-- TBD
+(M-series Mac, CPU_AND_GPU compute units, GPU shared with other work.)
+
+- Stateful T3 decode: **3.3 ms median/step** ≈ 300 tok/s against the 25 Hz
+  speech-token rate → **~12× real-time** for the AR stage (MTL: 16.8 ms).
+  Context feed from zero state: 3.5 ms/pos — Swift should still seed
+  MLState from prefill KV.
+- I/O-KV decode (e2e runs): 9 ms/step (MTL: 38 ms).
+- Prefill (T=512): 0.08 s.
+- FlowMean-N500: **0.38 s** warm per call (MTL 10-step CFG flow: 4.4–4.7 s
+  — the meanflow distillation kills the former RTF bottleneck).
+- HiFT-T1000: 0.08–0.10 s.
+- e2e compute (6.36 s audio, I/O-KV): 157×9 ms + 0.38 + 0.09 ≈ 1.9 s →
+  **~3.4× real-time**; with the stateful decode this projects to ~1.0 s →
+  **~6× real-time**. (Wall RTFx in the Python driver is 0.66–1.10 only
+  because it reloads/compiles the MLModels per run; Swift keeps them
+  resident.)
+- PyTorch CPU reference: RTFx 3.1–3.6 (upstream's "3× faster than
+  realtime on 8 cores" reproduces).
 
 ## Follow-ups
 
