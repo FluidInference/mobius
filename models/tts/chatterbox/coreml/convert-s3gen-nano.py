@@ -25,7 +25,7 @@ sys.path.insert(0, str(HERE))
 
 from src.s3gen_coreml import FlowMeanCoreML, HiFTCoreML  # noqa: E402
 
-N_TOKENS = 500          # prompt + generated, static bucket (~13 s of audio)
+N_TOKENS = 500          # default bucket (prompt + generated); see --bucket
 N_TIMESTEPS = 2         # shipped meanflow checkpoints use 2 plain Euler steps
 TEXT = "The quick brown fox jumps over the lazy dog near the river bank."
 
@@ -87,13 +87,19 @@ def zero_sinegen_randomness(s3gen):
 
 
 def main():
+    global N_TOKENS
     ap = argparse.ArgumentParser()
     ap.add_argument("--output-dir", type=Path, default=Path("build/s3gen-nano"))
     ap.add_argument("--fp16", action="store_true")
     ap.add_argument("--skip-convert", action="store_true")
     ap.add_argument("--parity-only", action="store_true",
                     help="reuse existing mlpackages; skip trace/convert")
+    ap.add_argument("--bucket", type=int, default=N_TOKENS,
+                    help="flow token bucket (prompt + generated); 500 ≈ 10 s "
+                         "of generated audio after the built-in voice's 250 "
+                         "prompt tokens, 1000 ≈ 30 s (FluidAudio #924)")
     args = ap.parse_args()
+    N_TOKENS = args.bucket
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     patch_rel_shift()

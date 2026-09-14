@@ -71,9 +71,22 @@ bit-identical audio.
 | T3Nano-Decode-M1536 (stateful) | 184 MB |
 | FlowMean-N500 | 228 MB |
 | HiFT-T1000 | 40 MB |
+| FlowMean-N1000 (extended, opt-in) | 242 MB |
+| HiFT-T2000 (extended, opt-in) | 40 MB |
 | embedding/head tables + voice | ~88 MB |
 | tokenizer | 1.4 MB |
 | **Total** | 895 MB naive (all three T3 packages) / ~710 MB shipping one decode variant / ~530 MB with T3 weight sharing (vs ~1.9 GB fp32 checkpoint; MTL CoreML bundle is ~2.3 GB) |
+
+The extended pair (`convert-s3gen-nano.py --bucket 1000`) exists because
+the default buckets' *usable* budget is much smaller than the raw numbers
+suggest (FluidAudio #924): the built-in voice's 250 prompt tokens + 3
+silence tokens leave N500 with ≤247 generated tokens ≈ 9.9 s of audio per
+call (N1000: ≤747 ≈ 29.9 s), and the 512 prefill holds 376 rows of voice
+conditioning + 1 BOS, leaving ≤135 text BPE tokens. The T3 side needs no
+re-export — M1536 already supports ~1020 generated tokens and the GPT2
+checkpoint's `wpe` is [8196, 768]. N1000 fp16 parity: flow mel max|d|
+1.5e-02 mean 1.7e-03, HiFT wav max|d| 5.5e-03 mean 1.4e-04 (same class as
+N500).
 
 ## Performance
 
