@@ -1,5 +1,11 @@
 # Training-environment implementation report — 2026-09-15
 
+## Later continuation
+
+This is the earlier readiness milestone. The same session subsequently acquired
+real recordings, implemented and ran training, and exported PyTorch weights.
+See the [real-data training report](training-2026-09-15.md) for current status.
+
 ## Outcome and scope
 
 The first readiness milestone is implemented: a locked Linux/CUDA toolkit,

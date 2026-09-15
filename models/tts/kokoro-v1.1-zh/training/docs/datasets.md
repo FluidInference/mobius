@@ -1,5 +1,11 @@
 # Dataset acquisition investigation — 2026-09-15
 
+## Acquisition follow-through
+
+This investigation was followed by actual MF5 acquisition and supervised
+PyTorch adaptation. See the [training report](training-2026-09-15.md) for the
+selected microphone, real splits, targets, runs, and remaining production limits.
+
 The source-workspace handoff confirms that no previous selected dataset,
 recording location, or audited manifest was recovered. The 300 evaluation
 prompts and generated samples are development material, not recordings of the

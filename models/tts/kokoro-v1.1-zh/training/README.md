@@ -1,15 +1,77 @@
-# Kokoro bilingual training readiness
+# Kokoro bilingual PyTorch training
 
-This Linux/CUDA toolkit establishes a reproducible starting point for adapting
-Kokoro v1.1-zh to one female English/Mandarin/code-switching voice. It implements
-pinned baseline acquisition, strict checkpoint mapping, untouched-inference
-parity, and acquisition-manifest auditing. **An optimizer/trainer, validated
-alignment targets, and a trained candidate are not implemented yet.**
+This Linux/CUDA toolkit trains the real Kokoro v1.1-zh model on one female
+English/Mandarin speaker and exports the actual PyTorch weights, configuration,
+vocabulary, and matching voice table. The immediate deliverable is PyTorch;
+Core ML and Apple hardware are outside this run's scope.
 
-Read the [project handoff](../project-handoff.md),
-[implementation report](docs/implementation-2026-09-15.md), and
-[dataset investigation](docs/datasets.md). The source Mac remains for demos;
-this toolkit does not depend on Core ML or MLX.
+Read the [real-data training report](docs/training-2026-09-15.md),
+[earlier parity report](docs/implementation-2026-09-15.md), and
+[project handoff](../project-handoff.md). The acquired EMIME MF5 corpus supports
+a small real-recording adaptation. It does not establish production voice
+consent, real code-switch coverage, session-disjoint testing, or listening
+acceptance; these limitations travel with the exported bundle.
+
+## Train and export
+
+From this directory (Linux, Python 3.12, CUDA; `espeak-ng` installed):
+
+```bash
+uv sync --frozen
+uv run --frozen kokoro-readiness fetch-baseline --assets .artifacts/baseline
+uv run --frozen python -m kokoro_training.acquire data
+uv run --frozen python -m kokoro_training.acquire targets
+uv run --frozen python -m kokoro_training.acquire asr
+uv run --frozen python -m kokoro_training.acquire extract-mf5
+uv run --frozen python -m kokoro_training.prepare --output .runs/mf5-prepared-new
+uv run --frozen python scripts/check-real-training.py \
+  --data .runs/mf5-prepared-new --output .runs/real-checks-new.json
+uv run --frozen python scripts/check-resume.py \
+  --data .runs/mf5-prepared-new --output .runs/resume-new
+uv run --frozen python -m kokoro_training.train \
+  --data .runs/mf5-prepared-new --output .runs/micro-new \
+  --micro 8 --steps 100 --lr 0.0001 --validate-every 50
+uv run --frozen python -m kokoro_training.train \
+  --data .runs/mf5-prepared-new --output .runs/pilot-new \
+  --steps 500 --lr 0.00002 --train-style --style-lr 0.001 \
+  --validate-every 100 --snapshot-every 100
+uv run --frozen python -m kokoro_training.bundle export \
+  --checkpoint .runs/pilot-new/best.pt --output .artifacts/candidate-new
+uv run --frozen python -m kokoro_training.evaluate \
+  --data .runs/mf5-prepared-new --bundle .artifacts/candidate-new \
+  --output .runs/candidate-dev-new --controls
+uv run --frozen python scripts/check-bundle.py \
+  --bundle .artifacts/candidate-new --checkpoint .runs/pilot-new/best.pt \
+  --output .runs/bundle-check-new.json
+```
+
+Use a new output path for independent runs. `--resume` continues `last.pt` in
+the same run with matching data/settings and a larger `--steps` target. The
+`best.pt` filename means lowest development acoustic loss, not automatically
+best speech. Compare free-running development speech before selecting a
+checkpoint, then run `evaluate --split test` once with the frozen selection.
+Do not use test scores to choose another checkpoint.
+
+## Use the weights
+
+The bundle contains `model.pth` (nested upstream-compatible module state
+ dictionaries), `voice.pt` (510 × 1 × 256), `config.json`, `vocab.json`, a SHA-256
+manifest, the exact frontend/source, and pinned environment files. Loading uses
+`weights_only=True` and strict tensor mapping. All bundle files are checked.
+No Hugging Face model download occurs during inference.
+
+```bash
+uv run --frozen python -m kokoro_training.bundle infer \
+  --bundle .artifacts/candidate-new \
+  --text '请打开 API，然后把结果发给我。' \
+  --output .runs/candidate-example.wav --device cuda
+```
+
+CPU inference is supported with `--device cpu`. The output is a float WAV at
+24 kHz plus JSON containing actual tokens, durations, seed, signal statistics,
+and model/audio hashes. Inputs above 510 content tokens fail explicitly;
+callers must split long passages. This command is an inference interface,
+not a production-serving system.
 
 ## Reproduce
 
@@ -111,7 +173,7 @@ unsafe audio paths, wrong hashes/headers, and empty/nonfinite/all-zero audio.
 Audio is read in blocks and peak/clipping are reported. QC thresholds and
 semantic transcript correctness still require a reviewed protocol; no invented
 automatic threshold substitutes for it. Original rates need not be 24 kHz;
-preprocessing/resampling and target grids are a separate, unimplemented stage.
+the experimental MF5 preprocessing path is separately implemented and documented.
 
 `passed` means only the implemented acquisition checks passed. Every report
 still says `training_ready: false`: near-duplicate/paraphrase checks, independent
@@ -120,18 +182,11 @@ remain necessary. Research-only rights never become production voice approval.
 The EMIME command inventories archive headers without extraction or choosing
 a production speaker; microphone views and test segments are not extra hours.
 
-## Next implementation gates
+## Qualification boundary
 
-1. Transfer the source Mac's scoped FluidAudio patch, including untracked
-   bilingual source/tests and evaluator if reused; check provenance hashes.
-2. Fix/version the frontend and match Python/Swift fixtures. Approve and audit
-   real target-speaker recordings, rights, session/passage splits, and coverage.
-3. Implement validated alignment/feature targets and a supervised training
-   forward. The rounded-duration inference graph is not that training path.
-4. Prove real-data gradient coverage, then capped micro-overfit and resume.
-5. Freeze a measured pilot budget/config, evaluate, export the actual candidate,
-   and verify on designated Apple devices before release acceptance.
-
-No command in this toolkit starts an optimizer, uploads recordings, publishes
-weights, or deploys a model. Production-quality thresholds and run budgets
-remain decisions to calibrate, not hardcoded claims.
+The stricter acquisition auditor above retains its original production-data
+checks. The MF5 experiment has a separate, explicit passage-disjoint data
+contract; it does not falsify a session-disjoint production audit. Read the
+[training report](docs/training-2026-09-15.md) for actual optimization and quality
+evidence, including failed checks and their resolution. Nothing in these
+commands publishes recordings/weights or deploys a model.

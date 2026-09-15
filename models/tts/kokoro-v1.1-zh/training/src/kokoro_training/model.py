@@ -166,8 +166,8 @@ class CompatibleGenerator(nn.Module):
         )
         if style.shape != (1, 256) or not torch.isfinite(style).all():
             raise ValueError("Expected finite [1, 256] style")
-        if not math.isfinite(speed) or speed <= 0:
-            raise ValueError("Speed must be finite and positive")
+        if not math.isfinite(speed) or not 0.25 <= speed <= 4:
+            raise ValueError("Speed must be finite and within 0.25..4")
         lengths = torch.tensor([ids.shape[1]], device=ids.device, dtype=torch.long)
         mask = torch.zeros_like(ids, dtype=torch.bool)
         encoded = self.bert(ids, attention_mask=(~mask).int())
@@ -176,6 +176,8 @@ class CompatibleGenerator(nn.Module):
         recurrent, _ = self.predictor.lstm(prosody)
         logits = self.predictor.duration_proj(recurrent)
         durations = (logits.sigmoid().sum(-1) / speed).round().clamp(min=1).long()[0]
+        if int(durations.sum()) > 4000:
+            raise ValueError("Generated duration exceeds the 4000-frame inference limit; split text or increase speed")
         # An explicit one-hot alignment is inference-only. Training needs real targets.
         token_at_frame = torch.repeat_interleave(
             torch.arange(ids.shape[1], device=ids.device), durations

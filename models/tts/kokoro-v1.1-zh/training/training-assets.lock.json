@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "target_model": {
+    "repo": "yl4579/StyleTTS2",
+    "revision": "5cedc71c333f8d8b8551ca59378bdcc7af4c9529",
+    "files": {
+      "Utils/JDC/model.py": {
+        "sha256": "61ae501ab5a967e2988aa8a5498a482dfd7fdd82c040a251003636ec4f08b4aa",
+        "bytes": 7649
+      },
+      "Utils/JDC/bst.t7": {
+        "sha256": "54dc94364b97e18ac1dfa6287714ed121248cfaac4cfd39d061c6e0a089ef169",
+        "bytes": 21029926
+      },
+      "models.py": {
+        "sha256": "d9f54b98514d142dd20663318784a63805b2b718ace7a44b738431c6d0f48daf",
+        "bytes": 26116
+      },
+      "LICENSE": {
+        "sha256": "7f023c12a1d6b25583506f6fc77f5287c7c71b65c0f886922f14153bcc07dfa9",
+        "bytes": 1075
+      }
+    }
+  },
+  "asr_revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+  "files": [
+    {
+      "part": "data",
+      "path": "emime/UEDIN_mandarin_bilingual_data_v1.1.tar.bz2",
+      "url": "https://data.cstr.ed.ac.uk/emime/UEDIN_mandarin_bilingual_data_v1.1.tar.bz2",
+      "sha256": "c6d268abb998172d9ecc7e8bb7080cc51c3e2d3cca758044b99cd39109e14b93",
+      "bytes": 1384527144
+    },
+    {
+      "part": "targets",
+      "path": "targets/model.py",
+      "url": "https://raw.githubusercontent.com/yl4579/StyleTTS2/5cedc71c333f8d8b8551ca59378bdcc7af4c9529/Utils/JDC/model.py",
+      "sha256": "61ae501ab5a967e2988aa8a5498a482dfd7fdd82c040a251003636ec4f08b4aa",
+      "bytes": 7649
+    },
+    {
+      "part": "targets",
+      "path": "targets/bst.t7",
+      "url": "https://raw.githubusercontent.com/yl4579/StyleTTS2/5cedc71c333f8d8b8551ca59378bdcc7af4c9529/Utils/JDC/bst.t7",
+      "sha256": "54dc94364b97e18ac1dfa6287714ed121248cfaac4cfd39d061c6e0a089ef169",
+      "bytes": 21029926
+    },
+    {
+      "part": "targets",
+      "path": "targets/LICENSE",
+      "url": "https://raw.githubusercontent.com/yl4579/StyleTTS2/5cedc71c333f8d8b8551ca59378bdcc7af4c9529/LICENSE",
+      "sha256": "7f023c12a1d6b25583506f6fc77f5287c7c71b65c0f886922f14153bcc07dfa9",
+      "bytes": 1075
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/added_tokens.json",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/added_tokens.json",
+      "bytes": 34648,
+      "sha256": "3c51f66c4c21f9e126970078f11ae77a78c74aee8df606ee9daba86e467108e0"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/config.json",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/config.json",
+      "bytes": 1256,
+      "sha256": "c5b526b3e3cd64cd8940dabb45e8ba726629e22d8ed389c29b552f9140daf04a"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/generation_config.json",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/generation_config.json",
+      "bytes": 3772,
+      "sha256": "cce11bfe3aaa6ae9e072ea2637caaec8795e68d9b67e655a5af16ee509681a4c"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/merges.txt",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/merges.txt",
+      "bytes": 493869,
+      "sha256": "2df2990a395e35e8dfbc7511e08c12d56018d8d04691e0133e5d63b21e154dc6"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/model.safetensors",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/model.safetensors",
+      "bytes": 1617824864,
+      "sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/normalizer.json",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/normalizer.json",
+      "bytes": 52666,
+      "sha256": "bf1c507dc8724ca9cf9903640dacfb69dae2f00edee4f21ceba106a7392f26dd"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/preprocessor_config.json",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/preprocessor_config.json",
+      "bytes": 340,
+      "sha256": "7ccc62c6f2765af1f3b46c00c9b5894426835a05021c8b9c01eecb6dfb542711"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/special_tokens_map.json",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/special_tokens_map.json",
+      "bytes": 2186,
+      "sha256": "baea4ea09372eb4fca86b4e4346139fd73cb807d5087e9de0948e971739c3e74"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/tokenizer.json",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/tokenizer.json",
+      "bytes": 2710337,
+      "sha256": "297b13372ac43916285644fb9687add3cc62ee2a1adb60da3dc25cc94c1871fd"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/tokenizer_config.json",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/tokenizer_config.json",
+      "bytes": 282843,
+      "sha256": "844b642c73a91359722f47b35705f7174686df33d252695d8572cf9ac03a6389"
+    },
+    {
+      "part": "asr",
+      "path": "whisper-turbo/vocab.json",
+      "url": "https://huggingface.co/openai/whisper-large-v3-turbo/resolve/41f01f3fe87f28c78e2fbf8b568835947dd65ed9/vocab.json",
+      "bytes": 1036558,
+      "sha256": "e2aa043ef015641d363d8288e7c241c85e36a5c761fb303598e0710233344387"
+    }
+  ]
+}

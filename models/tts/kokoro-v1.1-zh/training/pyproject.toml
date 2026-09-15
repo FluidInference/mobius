@@ -1,7 +1,7 @@
 [project]
 name = "kokoro-zh-training"
 version = "0.1.0"
-description = "Kokoro bilingual checkpoint parity and training-data readiness tools"
+description = "Real-data bilingual Kokoro PyTorch training, verified weights, and evaluation"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "kokoro",
@@ -10,6 +10,13 @@ dependencies = [
     "numpy==2.2.6",
     "soundfile==0.13.1",
     "jsonschema==4.26.0",
+    "misaki[zh]==0.9.4",
+    "scipy==1.17.1",
+    "librosa==0.11.0",
+    "pypdf==6.0.0",
+    "jiwer==4.0.0",
+    "en-core-web-sm",
+    "opencc-python-reimplemented==0.1.7",
 ]
 
 [dependency-groups]
@@ -28,6 +35,7 @@ packages = ["src/kokoro_training"]
 [tool.uv.sources]
 kokoro = { git = "https://github.com/hexgrad/kokoro", rev = "dfb907a02bba8152ca444717ca5d78747ccb4bec" }
 torch = { index = "pytorch-cu130" }
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
 
 [[tool.uv.index]]
 name = "pytorch-cu130"

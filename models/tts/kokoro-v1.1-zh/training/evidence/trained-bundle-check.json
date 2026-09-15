@@ -1,0 +1,146 @@
+{
+  "passed": true,
+  "checkpoint_tensors_match": true,
+  "voice_table_matches": true,
+  "all_upstream_state_tensors_match": true,
+  "model_sha256": "2c27865b7c794124197e49ab9b7c814da088e9ef87f1dd605f95b87e1458a4c0",
+  "step": 500,
+  "changes_from_baseline": {
+    "bert": {
+      "changed_tensors": 0,
+      "total_tensors": 25,
+      "max_absolute_change": 0.0
+    },
+    "bert_encoder": {
+      "changed_tensors": 2,
+      "total_tensors": 2,
+      "max_absolute_change": 0.002957068383693695
+    },
+    "predictor": {
+      "changed_tensors": 122,
+      "total_tensors": 146,
+      "max_absolute_change": 0.010524146258831024
+    },
+    "text_encoder": {
+      "changed_tensors": 24,
+      "total_tensors": 24,
+      "max_absolute_change": 0.004886416718363762
+    },
+    "decoder": {
+      "changed_tensors": 0,
+      "total_tensors": 491,
+      "max_absolute_change": 0.0
+    }
+  },
+  "cases": [
+    {
+      "id": "mixed-api",
+      "sample_count": 101400,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 4.225,
+      "inference_seconds": 0.23294244520366192,
+      "rtf": 0.05513430655707975,
+      "peak": 0.34877127408981323
+    },
+    {
+      "id": "mixed-github",
+      "sample_count": 99600,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 4.15,
+      "inference_seconds": 0.19708750117570162,
+      "rtf": 0.04749096413872328,
+      "peak": 0.46296337246894836
+    },
+    {
+      "id": "mixed-meeting",
+      "sample_count": 108600,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 4.525,
+      "inference_seconds": 0.18327970802783966,
+      "rtf": 0.040503802879080585,
+      "peak": 0.31320640444755554
+    },
+    {
+      "id": "mixed-coffee",
+      "sample_count": 73800,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 3.075,
+      "inference_seconds": 0.15161238424479961,
+      "rtf": 0.04930484040481288,
+      "peak": 0.3493431806564331
+    },
+    {
+      "id": "mixed-release",
+      "sample_count": 79200,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 3.3,
+      "inference_seconds": 0.15143124293535948,
+      "rtf": 0.04588825543495742,
+      "peak": 0.37669605016708374
+    },
+    {
+      "id": "mixed-price",
+      "sample_count": 88200,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 3.675,
+      "inference_seconds": 0.16059022024273872,
+      "rtf": 0.043698019113670404,
+      "peak": 0.42000916600227356
+    },
+    {
+      "id": "zh-numerals",
+      "sample_count": 109200,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 4.55,
+      "inference_seconds": 0.1520721660926938,
+      "rtf": 0.033422454086306334,
+      "peak": 0.37426844239234924
+    },
+    {
+      "id": "zh-independent-er",
+      "sample_count": 99000,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 4.125,
+      "inference_seconds": 0.14592693839222193,
+      "rtf": 0.0353762274890235,
+      "peak": 0.39765921235084534
+    },
+    {
+      "id": "zh-erhua",
+      "sample_count": 59400,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 2.475,
+      "inference_seconds": 0.13907843362540007,
+      "rtf": 0.05619330651531316,
+      "peak": 0.44103923439979553
+    },
+    {
+      "id": "en-api",
+      "sample_count": 97200,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 4.05,
+      "inference_seconds": 0.15890822187066078,
+      "rtf": 0.03923659799275575,
+      "peak": 0.3277084529399872
+    },
+    {
+      "id": "en-numerals",
+      "sample_count": 81000,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 3.375,
+      "inference_seconds": 0.15133226290345192,
+      "rtf": 0.044839189008430196,
+      "peak": 0.3674556314945221
+    },
+    {
+      "id": "en-question",
+      "sample_count": 63600,
+      "upstream_waveform_max_abs": 0.0,
+      "seconds": 2.65,
+      "inference_seconds": 0.14603195618838072,
+      "rtf": 0.0551063985616531,
+      "peak": 0.395016074180603
+    }
+  ],
+  "timing_scope": "warm GPU inference only, excludes frontend and loading; shared GPU run"
+}

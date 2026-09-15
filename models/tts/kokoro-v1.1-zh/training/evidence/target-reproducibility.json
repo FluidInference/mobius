@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "checks": {
+    "MF5_ENG_0003_0": {
+      "audio": true,
+      "ids": true,
+      "durations": true,
+      "f0": true,
+      "energy": true
+    },
+    "MF5_ENG_0002_0": {
+      "audio": true,
+      "ids": true,
+      "durations": true,
+      "f0": true,
+      "energy": true
+    },
+    "MF5_ENG_0001_0": {
+      "audio": true,
+      "ids": true,
+      "durations": true,
+      "f0": true,
+      "energy": true
+    }
+  }
+}

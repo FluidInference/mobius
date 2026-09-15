@@ -1,0 +1,3263 @@
+{
+  "mf5-micro-eval-v1": {
+    "model_sha256": "2e1b92336c91158bf16c66bb0799d6c18b5b353ae59ec0b917702d18559115dd",
+    "step": 100,
+    "manifest_sha256": "7c70acb06011992e57a77aa5f509ecf0ccefde2a06009b79c4df88771148e7b7",
+    "protocol": "whisper-turbo-greedy-forced-language-v1",
+    "asr": {
+      "repo": "openai/whisper-large-v3-turbo",
+      "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+      "weights_sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"
+    },
+    "normalization": "NFKC, simplified Chinese, lowercase, strip punctuation; WER English, CER Mandarin/mixed",
+    "limitations": [
+      "ASR proxy, not listening/tone/naturalness certification",
+      "mixed forces Chinese transcription; English normalization is not numeral expansion"
+    ],
+    "aggregates": {
+      "dev/en/baseline": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/candidate": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/real_reference": {
+        "utterances": 6,
+        "errors": 2,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.03773584905660377
+      },
+      "dev/zh/baseline": {
+        "utterances": 9,
+        "errors": 17,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.07234042553191489
+      },
+      "dev/zh/candidate": {
+        "utterances": 9,
+        "errors": 19,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.08085106382978724
+      },
+      "dev/zh/real_reference": {
+        "utterances": 9,
+        "errors": 12,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.05106382978723404
+      },
+      "controls/mixed/baseline": {
+        "utterances": 6,
+        "errors": 17,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.13178294573643412
+      },
+      "controls/mixed/candidate": {
+        "utterances": 6,
+        "errors": 35,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.2713178294573643
+      },
+      "controls/zh/baseline": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/zh/candidate": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/en/baseline": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      },
+      "controls/en/candidate": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      }
+    },
+    "raw_report_sha256": "35b27efbf62d4ed39b44c8e49c5c7edbaddfa482def066c3fc72531e005ea476",
+    "controls": [
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API,然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API,然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的PyTools模型上传到Github了。",
+        "error": {
+          "errors": 3,
+          "reference_units": 23,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "error": {
+          "errors": 0,
+          "reference_units": 23,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个密定,请不要迟到。",
+        "error": {
+          "errors": 7,
+          "reference_units": 21,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个密听请不要迟到",
+        "error": {
+          "errors": 7,
+          "reference_units": 21,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "Could you bring两杯咖啡 to the office?",
+        "error": {
+          "errors": 0,
+          "reference_units": 28,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "可你能带两杯咖啡去公司吗?",
+        "error": {
+          "errors": 24,
+          "reference_units": 28,
+          "substitutions": 8,
+          "deletions": 16,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 支持中文和English。",
+        "error": {
+          "errors": 0,
+          "reference_units": 26,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 致持中文和English。",
+        "error": {
+          "errors": 1,
+          "reference_units": 26,
+          "substitutions": 1,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "这个Paket的价格是23元。",
+        "error": {
+          "errors": 7,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 3,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "这个package的价格是23元。",
+        "error": {
+          "errors": 3,
+          "reference_units": 17,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23。",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23。",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "儿童在公园里玩一共有22个人。",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "儿童在公园里玩一共有22个人",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "baseline",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "candidate",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "baseline",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "candidate",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "baseline",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "candidate",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      }
+    ]
+  },
+  "mf5-pilot-step100-eval": {
+    "model_sha256": "6d18f1df651d91748b46dc5e214f7ff95892007b4a9d4ad0049a322d04abc237",
+    "step": 100,
+    "manifest_sha256": "7c70acb06011992e57a77aa5f509ecf0ccefde2a06009b79c4df88771148e7b7",
+    "protocol": "whisper-turbo-greedy-forced-language-v1",
+    "asr": {
+      "repo": "openai/whisper-large-v3-turbo",
+      "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+      "weights_sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"
+    },
+    "normalization": "NFKC, simplified Chinese, lowercase, strip punctuation; WER English, CER Mandarin/mixed",
+    "limitations": [
+      "ASR proxy, not listening/tone/naturalness certification",
+      "mixed forces Chinese transcription; English normalization is not numeral expansion"
+    ],
+    "aggregates": {
+      "dev/en/baseline": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/candidate": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/real_reference": {
+        "utterances": 6,
+        "errors": 2,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.03773584905660377
+      },
+      "dev/zh/baseline": {
+        "utterances": 9,
+        "errors": 17,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.07234042553191489
+      },
+      "dev/zh/candidate": {
+        "utterances": 9,
+        "errors": 20,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.0851063829787234
+      },
+      "dev/zh/real_reference": {
+        "utterances": 9,
+        "errors": 12,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.05106382978723404
+      },
+      "controls/mixed/baseline": {
+        "utterances": 6,
+        "errors": 17,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.13178294573643412
+      },
+      "controls/mixed/candidate": {
+        "utterances": 6,
+        "errors": 38,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.29457364341085274
+      },
+      "controls/zh/baseline": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/zh/candidate": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/en/baseline": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      },
+      "controls/en/candidate": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      }
+    },
+    "raw_report_sha256": "b721b656eb933afcd5c683f87acc1a044e709c9fac0aca84c502a2d9e8c254d5",
+    "controls": [
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API,然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的PyTools模型上传到Github了。",
+        "error": {
+          "errors": 3,
+          "reference_units": 23,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "error": {
+          "errors": 0,
+          "reference_units": 23,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个密定,请不要迟到。",
+        "error": {
+          "errors": 7,
+          "reference_units": 21,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个密宁请不要迟到",
+        "error": {
+          "errors": 7,
+          "reference_units": 21,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "Could you bring两杯咖啡 to the office?",
+        "error": {
+          "errors": 0,
+          "reference_units": 28,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "可你能带两杯咖啡到房间吗",
+        "error": {
+          "errors": 24,
+          "reference_units": 28,
+          "substitutions": 8,
+          "deletions": 16,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 支持中文和English。",
+        "error": {
+          "errors": 0,
+          "reference_units": 26,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 致持中文和English。",
+        "error": {
+          "errors": 1,
+          "reference_units": 26,
+          "substitutions": 1,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "这个Paket的价格是23元。",
+        "error": {
+          "errors": 7,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 3,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "這個Packet的價格是23元。",
+        "error": {
+          "errors": 6,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23。",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "儿童在公园里玩一共有22个人。",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "兒童在公園裡玩一共有22個人",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "baseline",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "candidate",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "baseline",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "candidate",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "baseline",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "candidate",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      }
+    ]
+  },
+  "mf5-pilot-step300-eval": {
+    "model_sha256": "a384e6420b3027274b2b21b0b8e83927473bcb662de675381e97d3c7bfb5e754",
+    "step": 300,
+    "manifest_sha256": "7c70acb06011992e57a77aa5f509ecf0ccefde2a06009b79c4df88771148e7b7",
+    "protocol": "whisper-turbo-greedy-forced-language-v1",
+    "asr": {
+      "repo": "openai/whisper-large-v3-turbo",
+      "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+      "weights_sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"
+    },
+    "normalization": "NFKC, simplified Chinese, lowercase, strip punctuation; WER English, CER Mandarin/mixed",
+    "limitations": [
+      "ASR proxy, not listening/tone/naturalness certification",
+      "mixed forces Chinese transcription; English normalization is not numeral expansion"
+    ],
+    "aggregates": {
+      "dev/en/baseline": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/candidate": {
+        "utterances": 6,
+        "errors": 0,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.0
+      },
+      "dev/en/real_reference": {
+        "utterances": 6,
+        "errors": 2,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.03773584905660377
+      },
+      "dev/zh/baseline": {
+        "utterances": 9,
+        "errors": 17,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.07234042553191489
+      },
+      "dev/zh/candidate": {
+        "utterances": 9,
+        "errors": 14,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.059574468085106386
+      },
+      "dev/zh/real_reference": {
+        "utterances": 9,
+        "errors": 12,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.05106382978723404
+      },
+      "controls/mixed/baseline": {
+        "utterances": 6,
+        "errors": 17,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.13178294573643412
+      },
+      "controls/mixed/candidate": {
+        "utterances": 6,
+        "errors": 4,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.031007751937984496
+      },
+      "controls/zh/baseline": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/zh/candidate": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/en/baseline": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      },
+      "controls/en/candidate": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      }
+    },
+    "raw_report_sha256": "61d19e0d5807f09f418c4d1ec17f17ef08cef66a5d4151f61c3eb52020595650",
+    "controls": [
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API,然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API然后把结果发给我",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的PyTools模型上传到Github了。",
+        "error": {
+          "errors": 3,
+          "reference_units": 23,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的 PyTorch 模型上传到 GitHub 了",
+        "error": {
+          "errors": 0,
+          "reference_units": 23,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个密定,请不要迟到。",
+        "error": {
+          "errors": 7,
+          "reference_units": 21,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午3點有一個meeting請不要遲到",
+        "error": {
+          "errors": 1,
+          "reference_units": 21,
+          "substitutions": 1,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "Could you bring两杯咖啡 to the office?",
+        "error": {
+          "errors": 0,
+          "reference_units": 28,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": " Could you bring 两杯咖啡 to the office?",
+        "error": {
+          "errors": 0,
+          "reference_units": 28,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 支持中文和English。",
+        "error": {
+          "errors": 0,
+          "reference_units": 26,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 支持中文和English",
+        "error": {
+          "errors": 0,
+          "reference_units": 26,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "这个Paket的价格是23元。",
+        "error": {
+          "errors": 7,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 3,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "這個Package的價格是23元",
+        "error": {
+          "errors": 3,
+          "reference_units": 17,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23。",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "儿童在公园里玩一共有22个人。",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "兒童在公園裡玩一共有22個人",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在這兒等了一會兒",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "baseline",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "candidate",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub,",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "baseline",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "candidate",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "baseline",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "candidate",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      }
+    ]
+  },
+  "mf5-pilot-step500-eval": {
+    "model_sha256": "385b96b6027504aa6c08449410356e84a28e0b045baa729891df30615f1cd5c9",
+    "step": 500,
+    "manifest_sha256": "7c70acb06011992e57a77aa5f509ecf0ccefde2a06009b79c4df88771148e7b7",
+    "protocol": "whisper-turbo-greedy-forced-language-v1",
+    "asr": {
+      "repo": "openai/whisper-large-v3-turbo",
+      "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+      "weights_sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"
+    },
+    "normalization": "NFKC, simplified Chinese, lowercase, strip punctuation; WER English, CER Mandarin/mixed",
+    "limitations": [
+      "ASR proxy, not listening/tone/naturalness certification",
+      "mixed forces Chinese transcription; English normalization is not numeral expansion"
+    ],
+    "aggregates": {
+      "dev/en/baseline": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/candidate": {
+        "utterances": 6,
+        "errors": 0,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.0
+      },
+      "dev/en/real_reference": {
+        "utterances": 6,
+        "errors": 2,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.03773584905660377
+      },
+      "dev/zh/baseline": {
+        "utterances": 9,
+        "errors": 17,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.07234042553191489
+      },
+      "dev/zh/candidate": {
+        "utterances": 9,
+        "errors": 14,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.059574468085106386
+      },
+      "dev/zh/real_reference": {
+        "utterances": 9,
+        "errors": 12,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.05106382978723404
+      },
+      "controls/mixed/baseline": {
+        "utterances": 6,
+        "errors": 17,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.13178294573643412
+      },
+      "controls/mixed/candidate": {
+        "utterances": 6,
+        "errors": 27,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.20930232558139536
+      },
+      "controls/zh/baseline": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/zh/candidate": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/en/baseline": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      },
+      "controls/en/candidate": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      }
+    },
+    "raw_report_sha256": "4018880fc0a3ade5c41f672b7e13187ba1cca01f1c9f43b0fde33e71df8234da",
+    "controls": [
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API,然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API 然后把结果发给我",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的PyTools模型上传到Github了。",
+        "error": {
+          "errors": 3,
+          "reference_units": 23,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的 PyTorch 模型上傳到 GitHub 了",
+        "error": {
+          "errors": 0,
+          "reference_units": 23,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个密定,请不要迟到。",
+        "error": {
+          "errors": 7,
+          "reference_units": 21,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三點有一個meeting請不要遲到",
+        "error": {
+          "errors": 0,
+          "reference_units": 21,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "Could you bring两杯咖啡 to the office?",
+        "error": {
+          "errors": 0,
+          "reference_units": 28,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "可你能带两杯咖啡到房间吗",
+        "error": {
+          "errors": 24,
+          "reference_units": 28,
+          "substitutions": 8,
+          "deletions": 16,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 支持中文和English。",
+        "error": {
+          "errors": 0,
+          "reference_units": 26,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release支持中文和English",
+        "error": {
+          "errors": 0,
+          "reference_units": 26,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "这个Paket的价格是23元。",
+        "error": {
+          "errors": 7,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 3,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "這個Package的價格是23元",
+        "error": {
+          "errors": 3,
+          "reference_units": 17,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23。",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等於42加11等於23",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "儿童在公园里玩一共有22个人。",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "兒童在公園裡玩一共有22個人",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在這兒等了一會兒",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "baseline",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "candidate",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "baseline",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "candidate",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "baseline",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "candidate",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      }
+    ]
+  },
+  "mf5-v2-step100-eval": {
+    "model_sha256": "76ab11229ef27720388243bd05da15b5cdd7ffa0b2cc348c6f0f120fd413c70d",
+    "step": 100,
+    "manifest_sha256": "7c70acb06011992e57a77aa5f509ecf0ccefde2a06009b79c4df88771148e7b7",
+    "protocol": "whisper-turbo-greedy-forced-language-v1",
+    "asr": {
+      "repo": "openai/whisper-large-v3-turbo",
+      "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+      "weights_sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"
+    },
+    "normalization": "NFKC, simplified Chinese, lowercase, strip punctuation; WER English, CER Mandarin/mixed",
+    "limitations": [
+      "ASR proxy, not listening/tone/naturalness certification",
+      "mixed forces Chinese transcription; English normalization is not numeral expansion"
+    ],
+    "aggregates": {
+      "dev/en/baseline": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/candidate": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/real_reference": {
+        "utterances": 6,
+        "errors": 2,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.03773584905660377
+      },
+      "dev/zh/baseline": {
+        "utterances": 9,
+        "errors": 17,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.07234042553191489
+      },
+      "dev/zh/candidate": {
+        "utterances": 9,
+        "errors": 20,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.0851063829787234
+      },
+      "dev/zh/real_reference": {
+        "utterances": 9,
+        "errors": 12,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.05106382978723404
+      },
+      "controls/mixed/baseline": {
+        "utterances": 6,
+        "errors": 17,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.13178294573643412
+      },
+      "controls/mixed/candidate": {
+        "utterances": 6,
+        "errors": 31,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.24031007751937986
+      },
+      "controls/zh/baseline": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/zh/candidate": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/en/baseline": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      },
+      "controls/en/candidate": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      }
+    },
+    "raw_report_sha256": "79ed437753a2d494f5ec604ecd7c84a5ac0946de2ed8335c43578abee4a60fc6",
+    "controls": [
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API,然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的PyTools模型上传到Github了。",
+        "error": {
+          "errors": 3,
+          "reference_units": 23,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "error": {
+          "errors": 0,
+          "reference_units": 23,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个密定,请不要迟到。",
+        "error": {
+          "errors": 7,
+          "reference_units": 21,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个meeting,请不要迟到。",
+        "error": {
+          "errors": 0,
+          "reference_units": 21,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "Could you bring两杯咖啡 to the office?",
+        "error": {
+          "errors": 0,
+          "reference_units": 28,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "可你能帮两杯咖啡到房间吗",
+        "error": {
+          "errors": 24,
+          "reference_units": 28,
+          "substitutions": 8,
+          "deletions": 16,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 支持中文和English。",
+        "error": {
+          "errors": 0,
+          "reference_units": 26,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 致持中文和English。",
+        "error": {
+          "errors": 1,
+          "reference_units": 26,
+          "substitutions": 1,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "这个Paket的价格是23元。",
+        "error": {
+          "errors": 7,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 3,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "這個Packet的價格是23元。",
+        "error": {
+          "errors": 6,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23。",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "儿童在公园里玩一共有22个人。",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "兒童在公園裡玩一共有22個人",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "baseline",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "candidate",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "baseline",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "candidate",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "baseline",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "candidate",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      }
+    ]
+  },
+  "mf5-v2-step300-eval": {
+    "model_sha256": "1fe06df979252d186c01880a66cb01c78d2e59bb5fb99048c3de87f8d8b23e3f",
+    "step": 300,
+    "manifest_sha256": "7c70acb06011992e57a77aa5f509ecf0ccefde2a06009b79c4df88771148e7b7",
+    "protocol": "whisper-turbo-greedy-forced-language-v1",
+    "asr": {
+      "repo": "openai/whisper-large-v3-turbo",
+      "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+      "weights_sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"
+    },
+    "normalization": "NFKC, simplified Chinese, lowercase, strip punctuation; WER English, CER Mandarin/mixed",
+    "limitations": [
+      "ASR proxy, not listening/tone/naturalness certification",
+      "mixed forces Chinese transcription; English normalization is not numeral expansion"
+    ],
+    "aggregates": {
+      "dev/en/baseline": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/candidate": {
+        "utterances": 6,
+        "errors": 0,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.0
+      },
+      "dev/en/real_reference": {
+        "utterances": 6,
+        "errors": 2,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.03773584905660377
+      },
+      "dev/zh/baseline": {
+        "utterances": 9,
+        "errors": 17,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.07234042553191489
+      },
+      "dev/zh/candidate": {
+        "utterances": 9,
+        "errors": 14,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.059574468085106386
+      },
+      "dev/zh/real_reference": {
+        "utterances": 9,
+        "errors": 12,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.05106382978723404
+      },
+      "controls/mixed/baseline": {
+        "utterances": 6,
+        "errors": 17,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.13178294573643412
+      },
+      "controls/mixed/candidate": {
+        "utterances": 6,
+        "errors": 26,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.20155038759689922
+      },
+      "controls/zh/baseline": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/zh/candidate": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/en/baseline": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      },
+      "controls/en/candidate": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      }
+    },
+    "raw_report_sha256": "af6bebb918f9dd5a69e70cdb42f2b74d4530823731e31584b051327ba53c5365",
+    "controls": [
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API,然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API然后把结果发给我",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的PyTools模型上传到Github了。",
+        "error": {
+          "errors": 3,
+          "reference_units": 23,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的 PyTorch 模型上传到 GitHub 了",
+        "error": {
+          "errors": 0,
+          "reference_units": 23,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个密定,请不要迟到。",
+        "error": {
+          "errors": 7,
+          "reference_units": 21,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三點有一個meeting請不要遲到",
+        "error": {
+          "errors": 0,
+          "reference_units": 21,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "Could you bring两杯咖啡 to the office?",
+        "error": {
+          "errors": 0,
+          "reference_units": 28,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": " Could you bring Liang Bei Cafe to the office?",
+        "error": {
+          "errors": 12,
+          "reference_units": 28,
+          "substitutions": 4,
+          "deletions": 0,
+          "insertions": 8,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 支持中文和English。",
+        "error": {
+          "errors": 0,
+          "reference_units": 26,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 致持中文和英文",
+        "error": {
+          "errors": 8,
+          "reference_units": 26,
+          "substitutions": 3,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "这个Paket的价格是23元。",
+        "error": {
+          "errors": 7,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 3,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "這個Packet的價格是23元",
+        "error": {
+          "errors": 6,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23。",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "儿童在公园里玩一共有22个人。",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "兒童在公園裡玩一共有22個人",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "baseline",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "candidate",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub,",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "baseline",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "candidate",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "baseline",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "candidate",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      }
+    ]
+  },
+  "mf5-v2-step500-eval": {
+    "model_sha256": "2c27865b7c794124197e49ab9b7c814da088e9ef87f1dd605f95b87e1458a4c0",
+    "step": 500,
+    "precision": {
+      "generator_tensor_dtype": "float32",
+      "asr_tensor_dtype": "torch.float16",
+      "matmul_allow_tf32": false,
+      "cudnn_allow_tf32": true
+    },
+    "manifest_sha256": "7c70acb06011992e57a77aa5f509ecf0ccefde2a06009b79c4df88771148e7b7",
+    "protocol": "whisper-turbo-greedy-forced-language-v1",
+    "asr": {
+      "repo": "openai/whisper-large-v3-turbo",
+      "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+      "weights_sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"
+    },
+    "normalization": "NFKC, simplified Chinese, lowercase, strip punctuation; WER English, CER Mandarin/mixed",
+    "limitations": [
+      "ASR proxy, not listening/tone/naturalness certification",
+      "mixed forces Chinese transcription; English normalization is not numeral expansion"
+    ],
+    "aggregates": {
+      "dev/en/baseline": {
+        "utterances": 6,
+        "errors": 1,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.018867924528301886
+      },
+      "dev/en/candidate": {
+        "utterances": 6,
+        "errors": 0,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.0
+      },
+      "dev/en/real_reference": {
+        "utterances": 6,
+        "errors": 2,
+        "reference_units": 53,
+        "metric": "WER",
+        "rate": 0.03773584905660377
+      },
+      "dev/zh/baseline": {
+        "utterances": 9,
+        "errors": 17,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.07234042553191489
+      },
+      "dev/zh/candidate": {
+        "utterances": 9,
+        "errors": 14,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.059574468085106386
+      },
+      "dev/zh/real_reference": {
+        "utterances": 9,
+        "errors": 12,
+        "reference_units": 235,
+        "metric": "CER",
+        "rate": 0.05106382978723404
+      },
+      "controls/mixed/baseline": {
+        "utterances": 6,
+        "errors": 17,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.13178294573643412
+      },
+      "controls/mixed/candidate": {
+        "utterances": 6,
+        "errors": 25,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.1937984496124031
+      },
+      "controls/zh/baseline": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/zh/candidate": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/en/baseline": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      },
+      "controls/en/candidate": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      }
+    },
+    "raw_report_sha256": "500da57c0ec3f2a59dd8196e4903b500322fad7e55cb23c0ab0c89f518b24402",
+    "controls": [
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API,然后把结果发给我。",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-api",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "请打开 API，然后把结果发给我。",
+        "transcript": "请打开API然后把结果发给我",
+        "error": {
+          "errors": 0,
+          "reference_units": 14,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的PyTools模型上传到Github了。",
+        "error": {
+          "errors": 3,
+          "reference_units": 23,
+          "substitutions": 3,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-github",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "我把新的 PyTorch 模型上传到 GitHub 了。",
+        "transcript": "我把新的 PyTorch 模型上傳到 GitHub 了",
+        "error": {
+          "errors": 0,
+          "reference_units": 23,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三点有一个密定,请不要迟到。",
+        "error": {
+          "errors": 7,
+          "reference_units": 21,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-meeting",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "今天下午三点有一个 meeting，请不要迟到。",
+        "transcript": "今天下午三點有一個meeting請不要遲到",
+        "error": {
+          "errors": 0,
+          "reference_units": 21,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "Could you bring两杯咖啡 to the office?",
+        "error": {
+          "errors": 0,
+          "reference_units": 28,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-coffee",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "Could you bring 两杯咖啡 to the office?",
+        "transcript": "Could you bring Liang Bei Cafe to the office?",
+        "error": {
+          "errors": 12,
+          "reference_units": 28,
+          "substitutions": 4,
+          "deletions": 0,
+          "insertions": 8,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release 支持中文和English。",
+        "error": {
+          "errors": 0,
+          "reference_units": 26,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-release",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "The next release 支持中文和 English。",
+        "transcript": "The next release支持中文和英文。",
+        "error": {
+          "errors": 7,
+          "reference_units": 26,
+          "substitutions": 2,
+          "deletions": 5,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "baseline",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "这个Paket的价格是23元。",
+        "error": {
+          "errors": 7,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 3,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "mixed-price",
+        "language": "mixed",
+        "variant": "candidate",
+        "text": "这个 package 的价格是二十三元。",
+        "transcript": "這個Packet的價格是23元",
+        "error": {
+          "errors": 6,
+          "reference_units": 17,
+          "substitutions": 4,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等于42加11等于23。",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-numerals",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "二加二等于四，十二加十一等于二十三。",
+        "transcript": "2加2等於42加11等於23",
+        "error": {
+          "errors": 10,
+          "reference_units": 16,
+          "substitutions": 8,
+          "deletions": 2,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "儿童在公园里玩一共有22个人。",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-independent-er",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "儿童在公园里玩，一共有二十二个人。",
+        "transcript": "兒童在公園裡玩一共有22個人",
+        "error": {
+          "errors": 3,
+          "reference_units": 15,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "baseline",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在这儿等了一会儿",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "zh-erhua",
+        "language": "zh",
+        "variant": "candidate",
+        "text": "小孩儿在这儿等了一会儿。",
+        "transcript": "小孩在這兒等了一會兒",
+        "error": {
+          "errors": 1,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "CER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "baseline",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub.",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-api",
+        "language": "en",
+        "variant": "candidate",
+        "text": "The API is ready. You can find the code on GitHub.",
+        "transcript": " The API is ready. You can find the code on GitHub,",
+        "error": {
+          "errors": 0,
+          "reference_units": 11,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "baseline",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-numerals",
+        "language": "en",
+        "variant": "candidate",
+        "text": "There are twenty three messages and twelve new files.",
+        "transcript": " There are 23 messages and 12 new files.",
+        "error": {
+          "errors": 3,
+          "reference_units": 9,
+          "substitutions": 2,
+          "deletions": 1,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "baseline",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      },
+      {
+        "id": "en-question",
+        "language": "en",
+        "variant": "candidate",
+        "text": "Would you like to hear the next sentence?",
+        "transcript": " Would you like to hear the next sentence?",
+        "error": {
+          "errors": 0,
+          "reference_units": 8,
+          "substitutions": 0,
+          "deletions": 0,
+          "insertions": 0,
+          "metric": "WER"
+        }
+      }
+    ]
+  }
+}

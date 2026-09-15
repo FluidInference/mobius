@@ -1,0 +1,14 @@
+[
+  {"id": "mixed-api", "text": "请打开 API，然后把结果发给我。", "language": "mixed"},
+  {"id": "mixed-github", "text": "我把新的 PyTorch 模型上传到 GitHub 了。", "language": "mixed"},
+  {"id": "mixed-meeting", "text": "今天下午三点有一个 meeting，请不要迟到。", "language": "mixed"},
+  {"id": "mixed-coffee", "text": "Could you bring 两杯咖啡 to the office?", "language": "mixed"},
+  {"id": "mixed-release", "text": "The next release 支持中文和 English。", "language": "mixed"},
+  {"id": "mixed-price", "text": "这个 package 的价格是二十三元。", "language": "mixed"},
+  {"id": "zh-numerals", "text": "二加二等于四，十二加十一等于二十三。", "language": "zh"},
+  {"id": "zh-independent-er", "text": "儿童在公园里玩，一共有二十二个人。", "language": "zh"},
+  {"id": "zh-erhua", "text": "小孩儿在这儿等了一会儿。", "language": "zh"},
+  {"id": "en-api", "text": "The API is ready. You can find the code on GitHub.", "language": "en"},
+  {"id": "en-numerals", "text": "There are twenty three messages and twelve new files.", "language": "en"},
+  {"id": "en-question", "text": "Would you like to hear the next sentence?", "language": "en"}
+]

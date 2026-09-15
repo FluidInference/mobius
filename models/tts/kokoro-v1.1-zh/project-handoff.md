@@ -1,16 +1,22 @@
 # English–Mandarin single-voice Kokoro: project handoff
 
-Updated: 2026-09-15. Shared requirements and implementation runbook, not evidence
-that a trainer or production model already exists. Start here when continuing
+Updated: 2026-09-15. Shared requirements and implementation runbook. Start here when continuing
 this project in another environment. Internal agent execution plans stay in
 ignored `.mobius/`; this project contract is intentionally tracked.
 
-Receiving-environment implementation now begins in [training/](training/README.md).
-Its [2026-09-15 report](training/docs/implementation-2026-09-15.md) records strict
-checkpoint mapping, exact untouched CUDA inference parity, acquisition-audit
-tooling, and data investigation. Supervised training, real-data gradient/overfit
-proof, formal quality evaluation, export, and device acceptance remain open.
-The historical demo below is preserved unchanged.
+**Latest user decision: create the trained PyTorch model and its weights; do
+not focus on Core ML.** Apple access and the source Mac's uncommitted Swift patch
+are not prerequisites for this deliverable. The historical Apple deployment
+discussion below remains background, not the current training gate.
+
+The receiving environment's [training toolkit](training/README.md) now acquires
+real EMIME MF5 recordings, prepares versioned bilingual targets, runs supervised
+optimization, exports actual PyTorch weights/voice/config, and evaluates generated
+speech. The [real-data report](training/docs/training-2026-09-15.md) records run
+evidence, failures, fixes, and limitations; the [earlier report](training/docs/implementation-2026-09-15.md)
+records strict mapping and exact untouched CUDA parity. A trained experimental
+checkpoint is distinct from production qualification. The historical demo below
+is preserved unchanged.
 
 Jump to [artifact inventory](#2-what-is-actually-available),
 [data requirements](#5-data-establish-what-we-have-the-dataset-means),
@@ -25,7 +31,9 @@ Build a compact, good-quality TTS model with **one female voice that speaks
 English, Mandarin, and natural English–Mandarin code-switching**. Start with
 **Kokoro v1.1-zh**, build a compatible training harness, reproduce the untouched
 checkpoint, and only then fine-tune on verified real bilingual recordings.
-The deployment direction is **FluidAudio / Core ML on Apple devices**.
+The immediate output is **PyTorch weights with reproducible inference**. The
+earlier FluidAudio / Core ML deployment direction is deferred by the latest
+user instruction.
 
 The source Mac is for small samples, demos, code preparation, and lightweight
 tests—not official quality evaluation or training. The receiving environment

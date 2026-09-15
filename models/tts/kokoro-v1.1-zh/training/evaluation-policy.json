@@ -1,0 +1,20 @@
+{
+  "version": "mf5-pilot-v2-selection-v1",
+  "scope": "local experimental PyTorch checkpoint selection; not production acceptance",
+  "run": "mf5-pilot-v2",
+  "optimizer_update_budget": 500,
+  "candidate_steps": [100, 300, 500],
+  "selection_split": "dev",
+  "primary_score": "arithmetic mean of development English WER and Mandarin CER",
+  "tie_break": "lower development supervised total loss",
+  "signal_rejection": "nonfinite waveform, RMS <= 0.001, or clipping fraction >= 0.001",
+  "controls": "report all twelve fixed controls for every candidate; mixed forced-language ASR is diagnostic due documented translation instability",
+  "test_policy": "freeze model hash and selection record before one evaluation on all 74 corpus test utterances; never reselect using test results",
+  "production_qualified": false,
+  "production_limitations": [
+    "production voice rights/consent not certified",
+    "no real same-speaker code-switch training data",
+    "no session-disjoint evaluation",
+    "no bilingual listening/tone/naturalness acceptance"
+  ]
+}

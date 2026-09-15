@@ -1,0 +1,104 @@
+{
+  "initial": {
+    "development": {
+      "total": 5.985551230112711,
+      "mel": 0.8224552313486734,
+      "duration_ce": 0.0919029802083969,
+      "duration": 0.06378623321652413,
+      "f0": 0.19549406667550406,
+      "unvoiced": 0.9997544447580973,
+      "energy": 1.422116525967916,
+      "style": 0.0,
+      "language_total": {
+        "en": 6.479485829671224,
+        "zh": 5.656261497073704
+      }
+    },
+    "micro_train": {
+      "total": 6.79434859752655,
+      "mel": 0.833689734339714,
+      "duration_ce": 0.10027867928147316,
+      "duration": 0.06417104927822948,
+      "f0": 0.23997582495212555,
+      "unvoiced": 0.7666928378748707,
+      "energy": 2.1448051631450653,
+      "style": 0.0,
+      "language_total": {
+        "en": 8.123255491256714,
+        "zh": 5.465441703796387
+      }
+    },
+    "trainable_parameters": 22194740,
+    "frozen_hash": "f703d1da3ad16e961e96873e901b01bbcae89cd5a12783f32a637179f4f1c109",
+    "trainable_hash": "c4d685d7890af15a2f05a7a4f3863d0822f522cee69b908a37f0c1c5a69728f9"
+  },
+  "final": {
+    "completed_steps": 100,
+    "best_development_total": 4.669393730163574,
+    "frozen_parameters_unchanged": true,
+    "trainable_parameters_changed": true,
+    "style_offset_rms": 0.0,
+    "peak_cuda_bytes": 1602351616,
+    "last_sha256": "388d802fff6ae1c5fce7e9a3eb1d7bfdbb7bfd29289a456a90f4db1f7f3276da",
+    "best_sha256": "583b71783a497a1d7a2551f2f7ad3ce7621384946e101b3f4880f7158dec1742",
+    "production_qualified": false,
+    "micro_train_final": {
+      "total": 3.8678985238075256,
+      "mel": 0.6490064337849617,
+      "duration_ce": 0.03599538095295429,
+      "duration": 0.02819772658403963,
+      "f0": 0.05607354547828436,
+      "unvoiced": 0.4250659192330204,
+      "energy": 0.4600932113826275,
+      "style": 0.0,
+      "language_total": {
+        "en": 3.98156201839447,
+        "zh": 3.754235029220581
+      }
+    }
+  },
+  "run_config": {
+    "assets": ".artifacts/baseline",
+    "data": ".runs/mf5-prepared-v1",
+    "output": ".runs/mf5-micro-v1",
+    "steps": 100,
+    "lr": 0.0001,
+    "style_lr": 0.001,
+    "train_style": false,
+    "micro": 8,
+    "accumulation": 2,
+    "crop_frames": 96,
+    "validate_every": 50,
+    "seed": 1729,
+    "device": "cuda",
+    "resume": false,
+    "manifest_sha256": "7c70acb06011992e57a77aa5f509ecf0ccefde2a06009b79c4df88771148e7b7",
+    "train_ids": [
+      "MF5_ENG_0133_0",
+      "MF5_ENG_0144_0",
+      "MF5_ENG_0128_0",
+      "MF5_ENG_0141_0",
+      "MF5_MAN_0167_0",
+      "MF5_MAN_0150_0",
+      "MF5_MAN_0141_0",
+      "MF5_MAN_0062_0"
+    ],
+    "dev_ids": [
+      "MF5_ENG_0038_0",
+      "MF5_ENG_0064_0",
+      "MF5_ENG_0095_0",
+      "MF5_ENG_0113_0",
+      "MF5_ENG_0131_0",
+      "MF5_ENG_0136_0",
+      "MF5_MAN_0037_0",
+      "MF5_MAN_0041_0",
+      "MF5_MAN_0048_0",
+      "MF5_MAN_0052_0",
+      "MF5_MAN_0093_0",
+      "MF5_MAN_0103_0",
+      "MF5_MAN_0146_0",
+      "MF5_MAN_0160_0",
+      "MF5_MAN_0161_0"
+    ]
+  }
+}
