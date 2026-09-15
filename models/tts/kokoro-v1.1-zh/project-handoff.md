@@ -5,6 +5,13 @@ that a trainer or production model already exists. Start here when continuing
 this project in another environment. Internal agent execution plans stay in
 ignored `.mobius/`; this project contract is intentionally tracked.
 
+Receiving-environment implementation now begins in [training/](training/README.md).
+Its [2026-09-15 report](training/docs/implementation-2026-09-15.md) records strict
+checkpoint mapping, exact untouched CUDA inference parity, acquisition-audit
+tooling, and data investigation. Supervised training, real-data gradient/overfit
+proof, formal quality evaluation, export, and device acceptance remain open.
+The historical demo below is preserved unchanged.
+
 Jump to [artifact inventory](#2-what-is-actually-available),
 [data requirements](#5-data-establish-what-we-have-the-dataset-means),
 [implementation gates](#6-harness-work-packages-and-required-gates),
@@ -294,12 +301,13 @@ independent recognition or a pronunciation-accuracy score.
 
 ## 6. Harness work packages and required gates
 
-**These are implementation requirements, not existing commands.** There is no
-working `train.py`, data-audit CLI, or CUDA scorer delivered by this handoff.
-Put the future self-contained PyTorch toolkit under a sibling `training/`
-directory, following Mobius layout conventions. Give it its own `pyproject.toml`,
-lockfile, documented Python/CUDA matrix, configurations, tests, and CLIs. Do not
-force a Linux trainer to import Core ML or MLX dependencies.
+**These remain the required gates.** The sibling [training/](training/README.md)
+toolkit now implements pinned acquisition, strict checkpoint loading,
+untouched-inference parity, and an initial data-audit CLI, with its own locked
+environment and tests. It does not yet implement a supervised training forward,
+optimizer, aligner, or CUDA quality scorer. Consult its implementation report
+for measured results and limits; do not force Linux tools to import Core ML
+or MLX dependencies.
 
 Use explicit stages (audit, preprocess, parity, gradient check, micro-overfit,
 pilot, evaluate, export), each with input/output schemas and failure exit codes.

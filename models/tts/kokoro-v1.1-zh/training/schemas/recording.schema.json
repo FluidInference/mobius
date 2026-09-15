@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Original real recording acquisition record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "corpus", "speaker_id", "speaker_gender", "speaker_evidence_ref", "session_id", "passage_id", "duplicate_group", "language", "origin", "audio_path", "audio_sha256", "sample_rate", "channels", "duration_seconds", "raw_text", "normalized_text", "split", "rights", "qc"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+$"},
+    "corpus": {"type": "string", "minLength": 1},
+    "speaker_id": {"type": "string", "minLength": 1},
+    "speaker_gender": {"enum": ["female", "male", "unknown"]},
+    "speaker_evidence_ref": {"type": "string", "minLength": 1},
+    "session_id": {"type": "string", "minLength": 1},
+    "passage_id": {"type": "string", "minLength": 1},
+    "duplicate_group": {"type": "string", "minLength": 1},
+    "language": {"enum": ["en", "zh", "mixed"]},
+    "origin": {"enum": ["real_recording", "generated", "unknown"]},
+    "audio_path": {"type": "string", "minLength": 1},
+    "audio_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "sample_rate": {"type": "integer", "minimum": 8000},
+    "channels": {"type": "integer", "minimum": 1},
+    "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "raw_text": {"type": "string", "minLength": 1},
+    "normalized_text": {"type": "string", "minLength": 1},
+    "split": {"enum": ["train", "dev", "test", "unassigned"]},
+    "rights": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "evidence_ref", "scope"],
+      "properties": {
+        "status": {"enum": ["approved", "pending", "denied"]},
+        "evidence_ref": {"type": "string", "minLength": 1},
+        "scope": {"enum": ["research_only", "production_voice", "unknown"]}
+      }
+    },
+    "qc": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "evidence_ref"],
+      "properties": {
+        "status": {"enum": ["reviewed", "pending", "rejected"]},
+        "evidence_ref": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
