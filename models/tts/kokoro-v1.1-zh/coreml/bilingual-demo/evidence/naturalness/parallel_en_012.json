@@ -1,0 +1,10 @@
+{
+  "id": "parallel_en_012",
+  "audio_sha256": "9c34791113dd08acd93baec5a6e38b240814c61805ce8a2e3c6eda745934f8aa",
+  "config_sha256": "d5cf0a493b8900fcec7442f5b63bfc9406d6c2dead235fe91e20869cb050e31a",
+  "status": "ok",
+  "result": {
+    "predicted_mos": 3.355036497116089
+  },
+  "elapsed_seconds": 0.34938295802567154
+}

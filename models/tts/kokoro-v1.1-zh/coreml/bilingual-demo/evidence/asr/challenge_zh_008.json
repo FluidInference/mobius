@@ -1,0 +1,65 @@
+{
+  "id": "challenge_zh_008",
+  "audio_sha256": "6a77641921d04b0ac183621ba6622a2780f969e001550bf114e7de74f6baa1bd",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": "银行的行长走过人行道,来到旅行社。",
+    "detected_language": "zh",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 3.64,
+        "text": "银行的行长走过人行道,来到旅行社。",
+        "avg_logprob": -0.06813752132913341,
+        "no_speech_prob": 7.154777638407328e-12
+      }
+    ],
+    "metric": "CER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "银行的行长走过人行道 来到旅行社",
+    "hypothesis_normalized": "银行的行长走过人行道 来到旅行社",
+    "reference_units": [
+      "银",
+      "行",
+      "的",
+      "行",
+      "长",
+      "走",
+      "过",
+      "人",
+      "行",
+      "道",
+      "来",
+      "到",
+      "旅",
+      "行",
+      "社"
+    ],
+    "hypothesis_units": [
+      "银",
+      "行",
+      "的",
+      "行",
+      "长",
+      "走",
+      "过",
+      "人",
+      "行",
+      "道",
+      "来",
+      "到",
+      "旅",
+      "行",
+      "社"
+    ],
+    "errors": 0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "reference_tokens": 15,
+    "hypothesis_tokens": 15,
+    "rate": 0.0
+  },
+  "elapsed_seconds": 0.21770579204894602
+}

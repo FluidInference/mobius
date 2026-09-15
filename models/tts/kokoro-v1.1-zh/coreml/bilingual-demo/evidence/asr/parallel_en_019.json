@@ -1,0 +1,49 @@
+{
+  "id": "parallel_en_019",
+  "audio_sha256": "31d886baf8311602ee5fc08acfc1e310a8997f36c62ee7548f46cd7f28de32ca",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": " Please check whether the microphone is connected.",
+    "detected_language": "en",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 2.54,
+        "text": " Please check whether the microphone is connected.",
+        "avg_logprob": -0.293647592717951,
+        "no_speech_prob": 7.164351577271244e-12
+      }
+    ],
+    "metric": "WER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "please check whether the microphone is connected",
+    "hypothesis_normalized": "please check whether the microphone is connected",
+    "reference_units": [
+      "please",
+      "check",
+      "whether",
+      "the",
+      "microphone",
+      "is",
+      "connected"
+    ],
+    "hypothesis_units": [
+      "please",
+      "check",
+      "whether",
+      "the",
+      "microphone",
+      "is",
+      "connected"
+    ],
+    "errors": 0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "reference_tokens": 7,
+    "hypothesis_tokens": 7,
+    "rate": 0.0
+  },
+  "elapsed_seconds": 0.23761054093483835
+}

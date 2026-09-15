@@ -1,0 +1,22 @@
+{
+  "id": "challenge_mixed_001",
+  "audio_sha256": "9325a9b12e9b329d21ea5cd01fe4c7bb75815d4b21a095c3c2c7612d90533548",
+  "config_sha256": "c9e72296d7e6503b2d46a5581b3addc610553c53cd64e07a4c70904f084fd397",
+  "status": "ok",
+  "result": {
+    "duration_seconds": 5.275,
+    "sample_rate": 24000,
+    "peak": 0.8083410859107971,
+    "rms": 0.08331254124641418,
+    "dc_offset": 9.085139026865363e-06,
+    "clipping_fraction": 0.0,
+    "silence_threshold_dbfs": -50,
+    "leading_silence_seconds": 0.27,
+    "trailing_silence_seconds": 0.725,
+    "longest_internal_quiet_seconds": 0.23,
+    "f0_method": "YIN 60–500 Hz, energy-screened; not validated voicing or tone accuracy",
+    "f0_median_hz": 267.12495365720065,
+    "f0_iqr_hz": 60.560331910827756
+  },
+  "elapsed_seconds": 0.015818667015992105
+}

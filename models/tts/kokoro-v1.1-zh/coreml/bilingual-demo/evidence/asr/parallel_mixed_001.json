@@ -1,0 +1,82 @@
+{
+  "id": "parallel_mixed_001",
+  "audio_sha256": "de53338546aa763b6de08ff1a3f396179bdeea3601ce3ba90da2a0b7f201c345",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": "離開之前, please close the window.",
+    "detected_language": "zh",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 3.0,
+        "text": "離開之前, please close the window.",
+        "avg_logprob": -0.5173070430755615,
+        "no_speech_prob": 1.9767097680922774e-11
+      }
+    ],
+    "metric": "MER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "离开之前 please close the window",
+    "hypothesis_normalized": "离开之前 please close the window",
+    "reference_units": [
+      "离",
+      "开",
+      "之",
+      "前",
+      "please",
+      "close",
+      "the",
+      "window"
+    ],
+    "hypothesis_units": [
+      "离",
+      "开",
+      "之",
+      "前",
+      "please",
+      "close",
+      "the",
+      "window"
+    ],
+    "errors": 0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "reference_tokens": 8,
+    "hypothesis_tokens": 8,
+    "rate": 0.0,
+    "auto_language_diagnostic": {
+      "hypothesis": " Please close the window.",
+      "language": "en",
+      "metric": "MER",
+      "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+      "reference_normalized": "离开之前 please close the window",
+      "hypothesis_normalized": "please close the window",
+      "reference_units": [
+        "离",
+        "开",
+        "之",
+        "前",
+        "please",
+        "close",
+        "the",
+        "window"
+      ],
+      "hypothesis_units": [
+        "please",
+        "close",
+        "the",
+        "window"
+      ],
+      "errors": 4,
+      "substitutions": 0,
+      "deletions": 4,
+      "insertions": 0,
+      "reference_tokens": 8,
+      "hypothesis_tokens": 4,
+      "rate": 0.5
+    }
+  },
+  "elapsed_seconds": 0.6336882500909269
+}

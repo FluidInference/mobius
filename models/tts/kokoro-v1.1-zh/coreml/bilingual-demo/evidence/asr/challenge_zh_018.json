@@ -1,0 +1,60 @@
+{
+  "id": "challenge_zh_018",
+  "audio_sha256": "272944dead8c007bfbe07dca9bce37849ce402550dbdc7da7b3cfed3cbbe1315",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": "这本书的价格是13元五角",
+    "detected_language": "zh",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 2.98,
+        "text": "这本书的价格是13元五角",
+        "avg_logprob": -0.17106211185455322,
+        "no_speech_prob": 7.384232982021732e-12
+      }
+    ],
+    "metric": "CER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "这本书的价格是二十三元五角",
+    "hypothesis_normalized": "这本书的价格是13元五角",
+    "reference_units": [
+      "这",
+      "本",
+      "书",
+      "的",
+      "价",
+      "格",
+      "是",
+      "二",
+      "十",
+      "三",
+      "元",
+      "五",
+      "角"
+    ],
+    "hypothesis_units": [
+      "这",
+      "本",
+      "书",
+      "的",
+      "价",
+      "格",
+      "是",
+      "1",
+      "3",
+      "元",
+      "五",
+      "角"
+    ],
+    "errors": 3,
+    "substitutions": 2,
+    "deletions": 1,
+    "insertions": 0,
+    "reference_tokens": 13,
+    "hypothesis_tokens": 12,
+    "rate": 0.23076923076923078
+  },
+  "elapsed_seconds": 0.20673266693484038
+}

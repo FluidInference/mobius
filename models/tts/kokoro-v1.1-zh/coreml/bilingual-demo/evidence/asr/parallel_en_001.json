@@ -1,0 +1,49 @@
+{
+  "id": "parallel_en_001",
+  "audio_sha256": "9b461678d676c6c81272836e1a33cb6863826514ef7970edfb6ead2d4acb59b8",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": " Please close the window before you leave.",
+    "detected_language": "en",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 2.3000000000000003,
+        "text": " Please close the window before you leave.",
+        "avg_logprob": -0.18816731192848898,
+        "no_speech_prob": 3.124537304236008e-12
+      }
+    ],
+    "metric": "WER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "please close the window before you leave",
+    "hypothesis_normalized": "please close the window before you leave",
+    "reference_units": [
+      "please",
+      "close",
+      "the",
+      "window",
+      "before",
+      "you",
+      "leave"
+    ],
+    "hypothesis_units": [
+      "please",
+      "close",
+      "the",
+      "window",
+      "before",
+      "you",
+      "leave"
+    ],
+    "errors": 0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "reference_tokens": 7,
+    "hypothesis_tokens": 7,
+    "rate": 0.0
+  },
+  "elapsed_seconds": 0.22975745901931077
+}

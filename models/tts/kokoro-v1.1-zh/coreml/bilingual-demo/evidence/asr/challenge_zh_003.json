@@ -1,0 +1,59 @@
+{
+  "id": "challenge_zh_003",
+  "audio_sha256": "bb9a9effc3806f36728dc14c8cc1f55b1c5c21e021434033f13bf4a31fd400dd",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": "你好 我很好 你最近過得好嗎?",
+    "detected_language": "zh",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 3.0,
+        "text": "你好 我很好 你最近過得好嗎?",
+        "avg_logprob": -0.4374537467956543,
+        "no_speech_prob": 7.218832736438641e-12
+      }
+    ],
+    "metric": "CER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "你好 我很好 你最近过得好吗",
+    "hypothesis_normalized": "你好 我很好 你最近过得好吗",
+    "reference_units": [
+      "你",
+      "好",
+      "我",
+      "很",
+      "好",
+      "你",
+      "最",
+      "近",
+      "过",
+      "得",
+      "好",
+      "吗"
+    ],
+    "hypothesis_units": [
+      "你",
+      "好",
+      "我",
+      "很",
+      "好",
+      "你",
+      "最",
+      "近",
+      "过",
+      "得",
+      "好",
+      "吗"
+    ],
+    "errors": 0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "reference_tokens": 12,
+    "hypothesis_tokens": 12,
+    "rate": 0.0
+  },
+  "elapsed_seconds": 0.19502424995880574
+}

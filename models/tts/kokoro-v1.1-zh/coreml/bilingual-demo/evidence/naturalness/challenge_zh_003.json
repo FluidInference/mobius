@@ -1,0 +1,10 @@
+{
+  "id": "challenge_zh_003",
+  "audio_sha256": "bb9a9effc3806f36728dc14c8cc1f55b1c5c21e021434033f13bf4a31fd400dd",
+  "config_sha256": "d5cf0a493b8900fcec7442f5b63bfc9406d6c2dead235fe91e20869cb050e31a",
+  "status": "ok",
+  "result": {
+    "predicted_mos": 3.121692657470703
+  },
+  "elapsed_seconds": 0.3547519170679152
+}

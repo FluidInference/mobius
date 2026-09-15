@@ -1,5 +1,10 @@
 # kokoro-v1.1-zh-coreml
 
+For the small English–Mandarin frontend sampling exercise, see
+[the twelve-clip demo and issue list](bilingual-demo/README.md). It reuses saved
+artifacts and has an offline integrity check; it is not an official quality
+baseline, training harness, or instruction to run the full local benchmarks.
+
 7-stage CoreML conversion of [Kokoro-82M-v1.1-zh](https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh)
 (Mandarin fine-tune of Kokoro-82M, n_token=178, Bopomofo + tone-digit vocab),
 optimized for the Apple Neural Engine (~80 MB total).
