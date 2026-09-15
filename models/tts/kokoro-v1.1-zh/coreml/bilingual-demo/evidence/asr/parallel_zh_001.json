@@ -1,0 +1,55 @@
+{
+  "id": "parallel_zh_001",
+  "audio_sha256": "b7f631428693e472cd4457b734fb0d07e713dc653a2418f7d1ccbe344edbe291",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": "离开之前请把窗户关上",
+    "detected_language": "zh",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 2.56,
+        "text": "离开之前请把窗户关上",
+        "avg_logprob": -0.1658943812052409,
+        "no_speech_prob": 6.593143132144208e-12
+      }
+    ],
+    "metric": "CER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "离开之前 请把窗户关上",
+    "hypothesis_normalized": "离开之前请把窗户关上",
+    "reference_units": [
+      "离",
+      "开",
+      "之",
+      "前",
+      "请",
+      "把",
+      "窗",
+      "户",
+      "关",
+      "上"
+    ],
+    "hypothesis_units": [
+      "离",
+      "开",
+      "之",
+      "前",
+      "请",
+      "把",
+      "窗",
+      "户",
+      "关",
+      "上"
+    ],
+    "errors": 0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "reference_tokens": 10,
+    "hypothesis_tokens": 10,
+    "rate": 0.0
+  },
+  "elapsed_seconds": 0.2468834170140326
+}

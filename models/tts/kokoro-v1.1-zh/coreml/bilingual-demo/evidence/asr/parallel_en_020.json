@@ -1,0 +1,51 @@
+{
+  "id": "parallel_en_020",
+  "audio_sha256": "9e759cf101ce332d91e204ee6bb1364aa287fd4212eb7b865c6e9ff4d042bc55",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": " Thank you for helping me finish the project.",
+    "detected_language": "en",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 3.0,
+        "text": " Thank you for helping me finish the project.",
+        "avg_logprob": -0.33689359823862713,
+        "no_speech_prob": 3.2249372443338142e-12
+      }
+    ],
+    "metric": "WER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "thank you for helping me finish the project",
+    "hypothesis_normalized": "thank you for helping me finish the project",
+    "reference_units": [
+      "thank",
+      "you",
+      "for",
+      "helping",
+      "me",
+      "finish",
+      "the",
+      "project"
+    ],
+    "hypothesis_units": [
+      "thank",
+      "you",
+      "for",
+      "helping",
+      "me",
+      "finish",
+      "the",
+      "project"
+    ],
+    "errors": 0,
+    "substitutions": 0,
+    "deletions": 0,
+    "insertions": 0,
+    "reference_tokens": 8,
+    "hypothesis_tokens": 8,
+    "rate": 0.0
+  },
+  "elapsed_seconds": 0.24802275002002716
+}

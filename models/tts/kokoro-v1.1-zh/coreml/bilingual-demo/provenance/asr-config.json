@@ -1,0 +1,23 @@
+{
+  "stage": "asr",
+  "evaluator": {
+    "model": "mlx-community/whisper-large-v3-turbo",
+    "revision": "a4aaeec0636e6fef84abdcbe3544cb2bf7e9f6fb",
+    "temperature": 0,
+    "language_policy": "en for English; zh for Mandarin and mixed; additional auto decode for mixed diagnostic only",
+    "condition_on_previous_text": false,
+    "initial_prompt": null,
+    "task": "transcribe",
+    "audio_preprocessing": "soundfile mono float32; librosa soxr_hq resample to 16000 Hz",
+    "weights_sha256": "951ed3fc1203e6a62467abb2144a96ce7eafca8fa77e3704fdb8635ff3e7f8a6",
+    "config_sha256": "b34fc29e4e11e0a25e812775dd67f4dd16fc2c8eb43d28ae25ff7d660ecb6379"
+  },
+  "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+  "lock_sha256": "2b4d2c889a646fabf400a70083045cdc9c74a37b4f47c6ed9e82f6ac6957d307",
+  "source_sha256": {
+    "evaluate.py": "d86c7859cc6a24d08de76f9fd1003ace168485d927873a31e8c1c834a124bfbd",
+    "scorers.py": "0f175665da4ff0af96a08caa49020f4b5266b816d7b2205595010ff21ecdf621",
+    "metrics.py": "05ce2794ace35f24a69a23ac3bec4081553f390a846cca925dcf5bd3fc5c1822",
+    "corpus.py": "cfa1cb0c03d428bdf2ec363b014fb12cc3a5b6223e3af8bedd30586fcea0f0d5"
+  }
+}

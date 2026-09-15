@@ -1,0 +1,10 @@
+{
+  "id": "parallel_mixed_002",
+  "audio_sha256": "4f6df06ac0d742e9431fa79a43af63079e9e372f6f9afc0b1ffd107a834977a2",
+  "config_sha256": "d5cf0a493b8900fcec7442f5b63bfc9406d6c2dead235fe91e20869cb050e31a",
+  "status": "ok",
+  "result": {
+    "predicted_mos": 2.552125930786133
+  },
+  "elapsed_seconds": 0.35025033296551555
+}

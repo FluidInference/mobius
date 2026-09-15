@@ -1,0 +1,6 @@
+Source: previously recorded FluidAudio render.log; this is not a new network request.
+Local file paths and unrelated log entries are omitted.
+
+[14:47:37.608] [DEBUG] [FluidAudio.KokoroAneResourceDownloader] Fetching Mandarin g2pW asset vocab.txt from https://huggingface.co/FluidInference/kokoro-82m-coreml/resolve/main/ANE-zh/g2pw/vocab.txt
+[14:47:37.723] [INFO] [FluidAudio.KokoroAneResourceDownloader] g2pW asset 'vocab.txt' unavailable (Unexpected response (status 404) while downloading Mandarin g2pW asset vocab.txt) — Mandarin G2P will run dict-only
+[14:47:37.723] [INFO] [FluidAudio.KokoroAneModelStore] Loaded Mandarin G2P (phrases=411957, singles=41923, jieba=true, g2pw=off)

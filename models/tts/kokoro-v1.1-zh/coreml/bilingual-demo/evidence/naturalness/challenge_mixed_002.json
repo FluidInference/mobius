@@ -1,0 +1,10 @@
+{
+  "id": "challenge_mixed_002",
+  "audio_sha256": "6a2571a60041b4c18e3cee9c3c9c5afbfccb5530ca85ff1633b8ea0cc8447718",
+  "config_sha256": "d5cf0a493b8900fcec7442f5b63bfc9406d6c2dead235fe91e20869cb050e31a",
+  "status": "ok",
+  "result": {
+    "predicted_mos": 2.2766637802124023
+  },
+  "elapsed_seconds": 0.3495642920024693
+}

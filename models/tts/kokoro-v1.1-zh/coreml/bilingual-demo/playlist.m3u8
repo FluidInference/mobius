@@ -1,0 +1,25 @@
+#EXTM3U
+#EXTINF:3.075,1. parallel_en_001 — Please close the window before you leave.
+audio/parallel_en_001.wav
+#EXTINF:3.800,2. parallel_en_012 — The new version fixes a pronunciation problem.
+audio/parallel_en_012.wav
+#EXTINF:3.475,3. parallel_en_019 — Please check whether the microphone is connected.
+audio/parallel_en_019.wav
+#EXTINF:3.175,4. parallel_en_020 — Thank you for helping me finish the project.
+audio/parallel_en_020.wav
+#EXTINF:3.300,5. parallel_zh_001 — 离开之前，请把窗户关上。
+audio/parallel_zh_001.wav
+#EXTINF:3.675,6. challenge_zh_003 — 你好，我很好，你最近过得好吗？
+audio/challenge_zh_003.wav
+#EXTINF:4.425,7. challenge_zh_008 — 银行的行长走过人行道，来到旅行社。
+audio/challenge_zh_008.wav
+#EXTINF:3.750,8. challenge_zh_018 — 这本书的价格是二十三元五角。
+audio/challenge_zh_018.wav
+#EXTINF:3.200,9. parallel_mixed_001 — 离开之前，please close the window。
+audio/parallel_mixed_001.wav
+#EXTINF:3.050,10. parallel_mixed_002 — The meeting 明天早上开始。
+audio/parallel_mixed_002.wav
+#EXTINF:5.275,11. challenge_mixed_001 — 我正在用 GitHub train a small speech model，然后部署到 Mac 上。
+audio/challenge_mixed_001.wav
+#EXTINF:4.425,12. challenge_mixed_002 — 这个 API 已经更新了，请 check the documentation。
+audio/challenge_mixed_002.wav
