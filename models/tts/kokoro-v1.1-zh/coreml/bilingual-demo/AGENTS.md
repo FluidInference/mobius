@@ -1,5 +1,10 @@
 # Exploratory demo scope
 
+Read the [shared project handoff](../../project-handoff.md) for cross-environment
+continuation. This folder's demo-only rules do not prohibit already-authorized
+training work in the designated environment; they prevent treating saved demo
+evidence or a documentation task as authority to start such work.
+
 This folder contains saved evidence from a 12-clip local sampling/demo exercise,
 not an official quality baseline or a trainer. Keep the source Mac for small
 demos, code preparation, and lightweight integrity/unit checks only.

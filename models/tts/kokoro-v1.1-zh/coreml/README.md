@@ -1,5 +1,11 @@
 # kokoro-v1.1-zh-coreml
 
+For the full single-voice English–Mandarin project requirements, training
+readiness gates, cross-environment artifact inventory, evaluation protocol, and
+production/export checklist, start with the
+[project handoff](../project-handoff.md). It distinguishes existing code from
+work still to build; this converter is not a training harness.
+
 For the small English–Mandarin frontend sampling exercise, see
 [the twelve-clip demo and issue list](bilingual-demo/README.md). It reuses saved
 artifacts and has an offline integrity check; it is not an official quality

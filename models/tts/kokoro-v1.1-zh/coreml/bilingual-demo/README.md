@@ -2,6 +2,11 @@
 
 **Local sampling/demo only. No new audio, inference, scoring, or training.**
 
+Continuing in the training environment? Read the
+[complete project handoff](../../project-handoff.md) first. It records settled
+product decisions, local-only/missing artifacts, implementation gates, and the
+inputs still to recover. This demo folder is evidence, not the full pipeline.
+
 One voice: `zf_001`, existing ANE-zh checkpoint, speed 1, 24-kHz mono.
 Total playback: **44.62 seconds**. The local WAVs are byte-for-byte copies
 of the selected earlier outputs. All 12 prompts were authored for this project.
