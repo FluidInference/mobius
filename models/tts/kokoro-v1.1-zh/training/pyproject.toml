@@ -13,7 +13,6 @@ dependencies = [
     "misaki[zh]==0.9.4",
     "scipy==1.17.1",
     "librosa==0.11.0",
-    "pypdf==6.0.0",
     "jiwer==4.0.0",
     "en-core-web-sm",
     "opencc-python-reimplemented==0.1.7",

@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "model": "Kokoro v1.1-zh / EMIME MF5 adaptation",
+  "training_date": "2026-09-15",
+  "production_qualified": false,
+  "artifacts": {
+    "model.pth": {
+      "sha256": "2c27865b7c794124197e49ab9b7c814da088e9ef87f1dd605f95b87e1458a4c0",
+      "bytes": 327453363
+    },
+    "voice.pt": {
+      "sha256": "119eca879d472a5327bc1e01c358958e9028a62d09d3a528d953248e94fbc8b3",
+      "bytes": 523739
+    },
+    "config.json": {
+      "sha256": "bc333efa5ce4ceff433c8c8e5d027a1eca0166001e4e4a62bea2d26ff7a46890",
+      "bytes": 3228
+    }
+  },
+  "source": {
+    "baseline_lock": "baseline.lock.json",
+    "training_assets_lock": "training-assets.lock.json",
+    "original_reports_commit": "fb13fc48d599b733759a4ecc60d0c10b6499fffc",
+    "training_dependency_lock_sha256": "2a5b4cb9f1884f707aaf8a2970fc998065b3d01b6c12ae36cc4a341df4ac32d3",
+    "training_checkpoint_sha256": "9888fae1dcf7374c908478b295e36089d88476bff1fe57da9b2e8d2e6dcb806d",
+    "training_manifest_sha256": "7c70acb06011992e57a77aa5f509ecf0ccefde2a06009b79c4df88771148e7b7"
+  },
+  "data": {
+    "speaker": "EMIME-MF5",
+    "microphone": 0,
+    "counts": {
+      "train/en": {
+        "utterances": 96,
+        "seconds": 419.90000000000003
+      },
+      "test/en": {
+        "utterances": 43,
+        "seconds": 158.14999999999998
+      },
+      "dev/en": {
+        "utterances": 6,
+        "seconds": 25.1
+      },
+      "train/zh": {
+        "utterances": 129,
+        "seconds": 928.05
+      },
+      "test/zh": {
+        "utterances": 31,
+        "seconds": 116.39999999999999
+      },
+      "dev/zh": {
+        "utterances": 9,
+        "seconds": 58.050000000000004
+      }
+    },
+    "session_disjoint": false,
+    "real_code_switch_recordings": 0,
+    "split_policy": "official test IDs + translated passage grouping; deterministic 10% dev from remaining passages"
+  },
+  "training": {
+    "steps": 500,
+    "seed": 1729,
+    "lr": 2e-05,
+    "style_lr": 0.001,
+    "train_style": true,
+    "accumulation": 2,
+    "crop_frames": 96,
+    "validate_every": 100,
+    "recording_presentations": 1000,
+    "unique_recordings_seen": 223,
+    "trainable_parameters": 22194996,
+    "device": "NVIDIA RTX A6000",
+    "torch": "2.11.0+cu130"
+  },
+  "selection": {
+    "policy": "evaluation-policy.json",
+    "candidates": [
+      {
+        "step": 100,
+        "english_wer": 0.018867924528301886,
+        "mandarin_cer": 0.0851063829787234,
+        "development_loss": 3.9851582368214924,
+        "signal_pass": true
+      },
+      {
+        "step": 300,
+        "english_wer": 0.0,
+        "mandarin_cer": 0.059574468085106386,
+        "development_loss": 3.3455609003702804,
+        "signal_pass": true
+      },
+      {
+        "step": 500,
+        "english_wer": 0.0,
+        "mandarin_cer": 0.059574468085106386,
+        "development_loss": 3.1982753117879232,
+        "signal_pass": true
+      }
+    ],
+    "selected_step": 500,
+    "test_used_for_selection": false
+  },
+  "evaluation": {
+    "protocol": "whisper-turbo-greedy-forced-language-v1",
+    "asr": {
+      "repo": "openai/whisper-large-v3-turbo",
+      "revision": "41f01f3fe87f28c78e2fbf8b568835947dd65ed9",
+      "weights_sha256": "542566a422ae4f3fd23f1ba11add198fca01bbf82e66e6a2857b3f608b1eb9d1"
+    },
+    "normalization": "NFKC, simplified Chinese, lowercase, strip punctuation; WER English, CER Mandarin/mixed",
+    "precision": {
+      "generator_tensor_dtype": "float32",
+      "asr_tensor_dtype": "torch.float16",
+      "matmul_allow_tf32": false,
+      "cudnn_allow_tf32": true
+    },
+    "heldout": {
+      "test/en/baseline": {
+        "utterances": 43,
+        "errors": 20,
+        "reference_units": 325,
+        "metric": "WER",
+        "rate": 0.06153846153846154
+      },
+      "test/en/candidate": {
+        "utterances": 43,
+        "errors": 14,
+        "reference_units": 325,
+        "metric": "WER",
+        "rate": 0.043076923076923075
+      },
+      "test/en/real_reference": {
+        "utterances": 43,
+        "errors": 17,
+        "reference_units": 325,
+        "metric": "WER",
+        "rate": 0.052307692307692305
+      },
+      "test/zh/baseline": {
+        "utterances": 31,
+        "errors": 7,
+        "reference_units": 466,
+        "metric": "CER",
+        "rate": 0.015021459227467811
+      },
+      "test/zh/candidate": {
+        "utterances": 31,
+        "errors": 9,
+        "reference_units": 466,
+        "metric": "CER",
+        "rate": 0.019313304721030045
+      },
+      "test/zh/real_reference": {
+        "utterances": 31,
+        "errors": 5,
+        "reference_units": 466,
+        "metric": "CER",
+        "rate": 0.01072961373390558
+      }
+    },
+    "development_controls": {
+      "controls/mixed/baseline": {
+        "utterances": 6,
+        "errors": 17,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.13178294573643412
+      },
+      "controls/mixed/candidate": {
+        "utterances": 6,
+        "errors": 25,
+        "reference_units": 129,
+        "metric": "CER",
+        "rate": 0.1937984496124031
+      },
+      "controls/zh/baseline": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/zh/candidate": {
+        "utterances": 3,
+        "errors": 14,
+        "reference_units": 42,
+        "metric": "CER",
+        "rate": 0.3333333333333333
+      },
+      "controls/en/baseline": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      },
+      "controls/en/candidate": {
+        "utterances": 3,
+        "errors": 3,
+        "reference_units": 28,
+        "metric": "WER",
+        "rate": 0.10714285714285714
+      }
+    },
+    "heldout_report_sha256": "cea3ae165b150e405ea9e6775c7afa7a81ec736904f9ff2eb90994e47c6a682e"
+  },
+  "validation": {
+    "baseline_parity_cases": 15,
+    "baseline_parity_passed": true,
+    "loaded_state_tensors": 688,
+    "gradient_and_supervised_parity_passed": true,
+    "real_recording_cases": 8,
+    "resume": {
+      "passed": true,
+      "checks": {
+        "model": true,
+        "optimizer": true,
+        "cpu_rng": true,
+        "cuda_rng": true,
+        "sample_rng": true,
+        "step": true,
+        "best": true
+      },
+      "protocol": "3 uninterrupted real-data optimizer updates vs 1 update + new process + 2 updates"
+    },
+    "targets_reproduced": true,
+    "bundle": {
+      "passed": true,
+      "checkpoint_tensors_match": true,
+      "voice_table_matches": true,
+      "all_upstream_state_tensors_match": true
+    },
+    "export_parity_cases": 12,
+    "changed_generator_tensors": 148,
+    "frozen_parameters_unchanged": true,
+    "micro_loss_initial": 6.79434859752655,
+    "micro_loss_final": 3.8678985238075256,
+    "development_loss_initial": 5.985551230112711,
+    "development_loss_final": 3.1982753117879232,
+    "peak_cuda_bytes": 2006450688
+  },
+  "limitations": [
+    "Small single-speaker corpus; only one session per language",
+    "No real code-switch training recordings",
+    "Mixed-language ASR can translate instead of transcribe",
+    "Mandarin held-out CER regresses slightly",
+    "Production voice consent and bilingual listening/tone acceptance not established"
+  ]
+}

@@ -615,7 +615,6 @@ dependencies = [
     { name = "misaki", extra = ["zh"] },
     { name = "numpy" },
     { name = "opencc-python-reimplemented" },
-    { name = "pypdf" },
     { name = "scipy" },
     { name = "soundfile" },
     { name = "torch" },
@@ -638,7 +637,6 @@ requires-dist = [
     { name = "misaki", extras = ["zh"], specifier = "==0.9.4" },
     { name = "numpy", specifier = "==2.2.6" },
     { name = "opencc-python-reimplemented", specifier = "==0.1.7" },
-    { name = "pypdf", specifier = "==6.0.0" },
     { name = "scipy", specifier = "==1.17.1" },
     { name = "soundfile", specifier = "==0.13.1" },
     { name = "torch", specifier = "==2.11.0+cu130", index = "https://download.pytorch.org/whl/cu130" },
@@ -1221,15 +1219,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f3/91/9c6ee907786a473bf81c5f53cf703ba0957b23ab84c264080fb5a450416f/pyparsing-3.3.2.tar.gz", hash = "sha256:c777f4d763f140633dcb6d8a3eda953bf7a214dc4eff598413c070bcdc117cbc", size = 6851574, upload-time = "2026-01-21T03:57:59.36Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/10/bd/c038d7cc38edc1aa5bf91ab8068b63d4308c66c4c8bb3cbba7dfbc049f9c/pyparsing-3.3.2-py3-none-any.whl", hash = "sha256:850ba148bd908d7e2411587e247a1e4f0327839c40e2e5e6d05a007ecc69911d", size = 122781, upload-time = "2026-01-21T03:57:55.912Z" },
-]
-
-[[package]]
-name = "pypdf"
-version = "6.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/20/ac/a300a03c3b34967c050677ccb16e7a4b65607ee5df9d51e8b6d713de4098/pypdf-6.0.0.tar.gz", hash = "sha256:282a99d2cc94a84a3a3159f0d9358c0af53f85b4d28d76ea38b96e9e5ac2a08d", size = 5033827, upload-time = "2025-08-11T14:22:02.352Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2c/83/2cacc506eb322bb31b747bc06ccb82cc9aa03e19ee9c1245e538e49d52be/pypdf-6.0.0-py3-none-any.whl", hash = "sha256:56ea60100ce9f11fc3eec4f359da15e9aec3821b036c1f06d2b660d35683abb8", size = 310465, upload-time = "2025-08-11T14:22:00.481Z" },
 ]
 
 [[package]]

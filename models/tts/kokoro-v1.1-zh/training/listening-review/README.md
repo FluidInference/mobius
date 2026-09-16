@@ -37,11 +37,11 @@ exact word or timestamp; what sounds wrong`.
 - 24 kHz mono PCM16 WAVs, converted from the saved generated evaluation outputs.
   No audio was regenerated; no gain normalization, trimming, denoising, or
   resampling was applied. Float originals remain in the local evaluation run.
-- [Manifest](manifest.json): exact text/IDs, model/source/output hashes, sample
+- [Manifest](manifest.json): exact text, token-input hashes, model/source/output hashes, sample
   counts, and measured quantization error (at most one PCM16 step).
 - No actual EMIME recordings or model weights are included in this review folder.
 
 The mixed-control ASR result was inconclusive because the recognizer sometimes
 translated instead of transcribing. These clips let you judge that speech directly.
-See the [full training and evaluation report](../docs/training-2026-09-15.md)
+See the [model and evaluation report](../MODEL_CARD.md)
 for the development and held-out results and remaining qualification limits.
