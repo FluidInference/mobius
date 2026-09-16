@@ -9,7 +9,6 @@ not a multi-speaker product.
 
 - [Training and inference commands](training/README.md)
 - [Selected model, methods, results, and limits](training/MODEL_CARD.md)
-- [Baseline/trained listening samples](training/listening-review/README.md)
 - [Machine-readable results and hashes](training/results.json)
 
 ## What exists
@@ -18,8 +17,8 @@ Training ran on an RTX A6000 using real EMIME MF5 English/Mandarin recordings.
 The selected deterministic checkpoint is update 500. Strict checkpoint loading,
 untouched baseline parity, real-data gradients, micro-overfit, exact restart,
 export parity, and offline CPU/GPU inference are implemented and checked.
-Model weights and real recordings remain local; 24 generated review WAVs are
-published in PR #95. Run artifacts are under ignored `.runs/` and `.artifacts/`.
+Model weights, real recordings, and generated evaluation audio remain local.
+Run artifacts are under ignored `.runs/` and `.artifacts/`.
 
 The frozen 74-utterance test improved English WER from 6.15% to 4.31%; Mandarin
 CER increased from 1.50% to 1.93%. Mixed ASR is unreliable when the recognizer

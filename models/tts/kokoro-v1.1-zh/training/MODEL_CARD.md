@@ -5,7 +5,7 @@
 A single female voice adapted from Kokoro-82M-v1.1-zh, retaining its architecture,
 vocabulary, 24 kHz output, and length-indexed 256-dimensional style interface.
 The selected checkpoint is deterministic run v2, update **500**. Weights remain
-local; [listening samples](listening-review/README.md) are available in the PR.
+local, along with generated evaluation audio.
 
 | File | Bytes | SHA-256 |
 |---|---:|---|

@@ -1,13 +1,12 @@
 # Kokoro bilingual PyTorch training
 
-[Listen to baseline vs trained audio](listening-review/README.md) ·
 [Model and measured results](MODEL_CARD.md) · [Result manifest](results.json)
 
 Fine-tune Kokoro v1.1-zh on real English/Mandarin recordings and export a
 PyTorch generator with its matching voice table. The selected MF5 model is an
 experimental adaptation; production speech quality is not established. Model
-weights and real recordings remain local. The PR includes 24 generated review
-clips. Core ML is outside the current scope.
+weights, real recordings, and generated evaluation audio remain local.
+Core ML is outside the current scope.
 
 ## Inference
 
