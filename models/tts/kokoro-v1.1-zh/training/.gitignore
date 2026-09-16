@@ -2,3 +2,6 @@
 .runs/
 .pytest_cache/
 *.egg-info/
+
+# User-requested, small generated listening clips attached to PR #95.
+!listening-review/audio/*.wav

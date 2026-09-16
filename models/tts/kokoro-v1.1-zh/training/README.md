@@ -1,5 +1,8 @@
 # Kokoro bilingual PyTorch training
 
+**[Listen to baseline vs trained audio](listening-review/README.md):** all 12
+English/Mandarin/mixed review prompts, with 24 uploaded WAVs and a browser player.
+
 This Linux/CUDA toolkit trains the real Kokoro v1.1-zh model on one female
 English/Mandarin speaker and exports the actual PyTorch weights, configuration,
 vocabulary, and matching voice table. The immediate deliverable is PyTorch;
