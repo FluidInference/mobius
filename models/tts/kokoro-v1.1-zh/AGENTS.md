@@ -5,7 +5,7 @@ planning changes, asking product-scope questions, or starting model execution.
 It contains the shared requirements, artifact gaps, gate sequence, and runbook.
 
 - Preserve settled scope: one female voice, English/Mandarin/code-switching,
-  compact Kokoro v1.1-zh-compatible adaptation, FluidAudio/Core ML direction;
+  compact Kokoro v1.1-zh-compatible PyTorch adaptation; Core ML is deferred;
   no voice cloning or runtime multi-speaker expansion.
 - Inspect the receiving environment's existing setup and approvals first. Ask
   only for genuinely missing inputs; do not make the user repeat settled goals.

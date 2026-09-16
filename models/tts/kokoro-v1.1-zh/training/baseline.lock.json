@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "repo_id": "hexgrad/Kokoro-82M-v1.1-zh",
+  "revision": "01e7505bd6a7a2ac4975463114c3a7650a9f7218",
+  "kokoro_source_revision": "dfb907a02bba8152ca444717ca5d78747ccb4bec",
+  "files": {
+    "config.json": {
+      "sha256": "bc333efa5ce4ceff433c8c8e5d027a1eca0166001e4e4a62bea2d26ff7a46890",
+      "bytes": 3228
+    },
+    "voices/zf_001.pt": {
+      "sha256": "9bdc9a87e13e9bb1ea3e7803259c2ecbfebaeeb2ff80b5d0c76df1a464c1c962",
+      "bytes": 523331
+    },
+    "kokoro-v1_1-zh.pth": {
+      "sha256": "b1d8410fa44dfb5c15471fd6c4225ea6b4e9ac7fa03c98e8bea47a9928476e2b",
+      "bytes": 327247856
+    }
+  }
+}
