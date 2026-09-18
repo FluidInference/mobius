@@ -96,6 +96,66 @@ Upstream regression fixture (`ggml/tests/fixtures/regression_input.f32` →
 `localvqe-v1.3-4.8M-f32.out.f32`): streaming PyTorch × ola_scale 1.0 matches
 the GGML fixture to 2.3e-6 after the 256-sample shift.
 
+## Quality: ICASSP 2022 AEC-Challenge blind test set
+
+The upstream README table is AECMOS on the 800-clip ICASSP 2022 blind set
+(real recordings; mirror: `richiejp/aec-challenge-16k`,
+`blind_test_set_icassp2022/`). `render-blind.sh` renders every mic/lpb pair
+through either engine, `score_blind.py` scores AECMOS echo / degradation
+(Microsoft's local `Run_1663915512_Stage_0.onnx`, challenge trimming rules:
+far-end single talk → last half, double talk → last (len−15)/2 s, near-end →
+whole clip), blind ERLE and DNSMOS OVRL, and `compare-renders.py` does an
+aligned A/B of two render dirs on identical samples.
+
+Core ML (Swift `fluidaudiocli enhance`, float32 WAV output), our scorer:
+
+| Scenario | n | unproc. echo | v1.3 echo / deg / ERLE / OVRL | v1.2 echo / deg / ERLE / OVRL |
+|---|--:|--:|---|---|
+| doubletalk | 115 | 2.17 | 4.35 / 3.93 / — / 2.45 | 4.20 / 3.63 / — / 2.42 |
+| doubletalk-with-movement | 185 | 2.21 | 4.35 / 3.86 / — / 2.42 | 4.13 / 3.57 / — / 2.37 |
+| farend-singletalk | 107 | 1.95 | 2.49 / 5.00 / 54.1 dB / 1.91 | 3.92 / 5.00 / 45.7 dB / 1.86 |
+| farend-singletalk-with-movement | 193 | 2.23 | 3.08 / 5.00 / 55.0 dB / 1.92 | 4.13 / 5.00 / 38.2 dB / 1.77 |
+| nearend-singletalk | 200 | 5.00 | 4.99 / 4.14 / — / 3.17 | 4.99 / 4.09 / — / 3.17 |
+
+**Port fidelity (the verification that matters).** The upstream GGML CLI was
+run on the same 800 clips on the same machine (`localvqe-v1.3-4.8M-f32.gguf`)
+and both render sets scored with `compare-renders.py --shift-b 256
+--quantize-a`: per-scenario echo / deg / ERLE means are identical to two
+decimals in every scenario, per-clip echo-MOS delta mean −0.0001 (p95 |Δ|
+0.02, max 0.09), ERLE delta p95 0.008 dB. Three things had to be normalised
+first, all artefacts of the upstream CLI rather than the model: it emits its
+output one hop (256 samples) late (AECMOS is alignment-sensitive — unshifted,
+identical waveforms score up to 2 MOS apart on near-silent far-end residuals);
+its whole-clip mode truncates some outputs (e.g. 384000 vs 399360 samples);
+and it writes 16-bit PCM, which both quantises the ~1e-4-RMS far-end residual
+(worth ~0.2 echo MOS on the far-end rows) and *wraps* samples above full
+scale (1.02 → −0.98) on clips whose mic is already clipped — the Swift CLI
+writes float32 and keeps them.
+
+**Against the upstream README table.** v1.2 reproduces it on the single-talk
+rows (far-end ERLE 45.7 dB vs 45.7 dB published; echo 3.92 / 4.13 vs
+3.78 / 4.12; near-end 4.99 / 4.09 vs 5.00 / 4.16). The double-talk rows are
+not comparable: our unprocessed baseline scores 2.17 / 2.21 vs upstream's
+2.67 / 2.56, and no trimming rule tried (whole clip, last half, the README's
+(len−15)/2 rule, skip-first-15 s) reproduces theirs, so upstream used a
+different double-talk segment. v1.3's far-end echo MOS (2.49 / 3.08) sits
+~1 MOS below the table (3.69 / 3.88) at *higher* ERLE (54 vs 51 dB) with the
+Core ML output bit-matched to the published GGUF, so that row of the table
+was not produced from the published v1.3 weights under this protocol.
+
+```bash
+./render-blind.sh coreml blind renders/coreml-v1.3 /path/to/fluidaudiocli v1.3 4
+./render-blind.sh ggml   blind renders/ggml-v1.3 /path/to/localvqe localvqe-v1.3-4.8M-f32.gguf 4
+PY="uv run --no-project --python 3.12 --with librosa --with onnxruntime --with soundfile --with scipy python"
+$PY score_blind.py --blind-dir blind --enh-dir unprocessed --aecmos-dir aecmos
+$PY score_blind.py --blind-dir blind --enh-dir renders/coreml-v1.3 --aecmos-dir aecmos --output scores.json
+$PY compare-renders.py --blind-dir blind --a renders/coreml-v1.3 --b renders/ggml-v1.3 --shift-b 256 --quantize-a --aecmos-dir aecmos
+```
+
+(`aecmos/` holds the AECMOS and DNSMOS ONNX files from microsoft/AEC-Challenge
+and microsoft/DNS-Challenge. The scorer runs under Python 3.12: scipy wheels
+for the 3.10 project env fail to dlopen on macOS 27.)
+
 ## Speed
 
 Apple M5 Pro, FluidAudio release build, `fluidaudiocli enhance --streaming`
@@ -142,6 +202,9 @@ Model I/O (all Float32): `mic`, `ref` `[1, 256·frames]`; `enhanced`
 convert-coreml.py            checkpoint -> streaming .mlpackage + .mlmodelc
 verify-coreml.py             Core ML vs PyTorch parity + per-call timing
 verify_torch.py              PyTorch-only sanity (OLA scale, streaming, GGML fixture)
+render-blind.sh              render an AEC-Challenge blind set through the Swift or GGML CLI
+score_blind.py               AECMOS / ERLE / DNSMOS scoring of blind-set renders
+compare-renders.py           aligned, quantisation-matched A/B of two render dirs
 src/localvqe_coreml/
   streaming.py               explicit-state wrapper (the conversion)
   common.py                  checkpoint loader (model_config + fold_temperature)

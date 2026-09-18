@@ -18,5 +18,12 @@ dependencies = [
   "huggingface-hub>=0.30",
 ]
 
+[project.optional-dependencies]
+eval = [
+  "onnxruntime>=1.17",
+  "librosa>=0.10",
+  "scipy>=1.15",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/localvqe_coreml"]
