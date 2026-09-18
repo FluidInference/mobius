@@ -136,9 +136,10 @@ gated definition; OVRL is DNSMOS on the rated segment.
 
 ### Upstream protocol (HF table reproduction)
 
-AECMOS echo / deg; ERLE is the gated definition; OVRL is the rated-segment
-DNSMOS from the run above (the segment the card's OVRL matches). Core ML and
-GGML rows are kept separate — GGML is the upstream CLI's raw output (256-sample
+AECMOS echo / deg over the first 20 s; ERLE is the gated definition over the
+same segment; OVRL is DNSMOS on the challenge-rated segment (the segment the
+card's OVRL matches — `--dnsmos-region rated` selects it under either
+protocol). Core ML and GGML rows are kept separate — GGML is the upstream CLI's raw output (256-sample
 delay, 16-bit PCM), Core ML is aligned float32.
 
 | Scenario | HF card v1.3 (echo / deg / ERLE / OVRL) | Core ML v1.3 | GGML v1.3 |
@@ -160,17 +161,20 @@ delay, 16-bit PCM), Core ML is aligned float32.
 Unprocessed baseline under this protocol: 2.67 / 2.56 / 1.90 / 2.13 / 5.00
 echo MOS, identical to the card.
 
-**What is and is not reproduced.** Every double-talk and near-end cell of
-both models reproduces to within 0.02 echo MOS; v1.3 far-end echo is within
-0.04 from the raw GGML output (3.66 / 3.84 vs 3.69 / 3.88) and 0.15 from
-aligned float Core ML — the CLI's delay and 16-bit quantisation of the
-near-silent residual are worth that much on this scorer. The v1.2 far-end
-echo rows are **not** reproduced from either runtime (4.07 / 4.27 Core ML,
-4.14 / 4.32 GGML vs 3.78 / 4.12 published; ours score higher). ERLE agrees to
-~1 dB everywhere under the gated definition, OVRL to 0.06. The earlier
-statement in this README that the v1.3 far-end row "was not produced from the
-published v1.3 weights" is retracted: it was a scorer / segment protocol
-mismatch. The remaining v1.2 far-end gap is unexplained; the private LocalVQE
+**What is and is not reproduced.** Unprocessed baseline: exact.
+v1.3 (Core ML vs card): echo MOS within 0.01 on double-talk and near-end and
+0.15 low on far-end (3.54 / 3.75 vs 3.69 / 3.88; the raw GGML output, with
+its delay and 16-bit quantisation of the near-silent residual, scores within
+0.04); deg within 0.02; gated ERLE within 0.8 dB (50.1 / 49.6 vs
+50.9 / 49.9); OVRL within 0.01. v1.2 (Core ML vs card): double-talk and
+near-end within 0.02 echo, 0.02 deg, 0.1 dB ERLE and 0.06 OVRL; **far-end is
+not reproduced on any metric** — echo +0.29 / +0.15 (4.07 / 4.27 vs
+3.78 / 4.12), gated ERLE +1.9 / +0.7 dB (47.6 / 41.3 vs 45.7 / 40.6; GGML
++2.3 / +0.5 dB), OVRL +0.09 / +0.05 (1.89 / 1.80 vs 1.80 / 1.75). Ours score
+higher, from either runtime, so this is not an output-format effect. The
+earlier statement in this README that the v1.3 far-end row "was not produced
+from the published v1.3 weights" is retracted: it was a scorer / segment
+protocol mismatch. The v1.2 far-end gap is unexplained; the private LocalVQE
 scoring script is not public, so exact reproduction of every cell is not
 established.
 

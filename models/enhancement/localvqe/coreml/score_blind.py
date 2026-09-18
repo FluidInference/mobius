@@ -5,8 +5,9 @@ AECMOS echo / degradation MOS, blind ERLE (two definitions: the plain energy
 ratio 10*log10(E[mic^2] / E[enh^2]) over the rated segment, and the LocalVQE
 technical-report gated version pooled over 512/256 frames whose loopback RMS
 is above its 75th percentile and whose mic RMS is below 2x the loopback RMS)
-and DNSMOS P.835 OVRL on the enhanced clip (over the rated segment by default,
---dnsmos-region whole for the entire recording). Two AECMOS protocols:
+and DNSMOS P.835 OVRL on the enhanced clip (over the challenge-rated segment
+by default, whichever AECMOS protocol is selected; --dnsmos-region whole for
+the entire recording). Two AECMOS protocols:
 
   --protocol challenge (default): Run_1663915512_Stage_0.onnx (scenario
       marker) with the AECMOS README trimming rules — far-end single talk ->
@@ -140,22 +141,23 @@ def score_one(job):
     n = min(len(mic), len(lpb), len(enh))
     mic, lpb, enh = mic[:n], lpb[:n], enh[:n]
 
-    # Challenge trimming rules (AECMOS README): far-end single talk -> last
+    # Challenge-rated segment (AECMOS README): far-end single talk -> last
     # half; double talk -> last (len - 15) / 2 seconds; near-end -> whole clip.
-    # The upstream-table protocol scores the whole clip (first 20 s).
-    if _protocol == "upstream":
-        start = 0
-    elif talk == "st":
-        start = n // 2
+    if talk == "st":
+        rated_start = n // 2
     elif talk == "dt":
-        start = max(0, n - int(((n / SR) - 15) / 2 * SR))
+        rated_start = max(0, n - int(((n / SR) - 15) / 2 * SR))
     else:
-        start = 0
+        rated_start = 0
+    # AECMOS/ERLE segment: the rated segment, or the whole clip (first 20 s
+    # via the model's cap) under the upstream-table protocol. DNSMOS "rated"
+    # always means the challenge-rated segment, independent of the protocol.
+    start = 0 if _protocol == "upstream" else rated_start
     echo, deg = aecmos(talk, lpb[start:], mic[start:], enh[start:])
     seg_mic, seg_lpb, seg_enh = mic[start:], lpb[start:], enh[start:]
     erle = 10 * np.log10((np.mean(seg_mic**2) + 1e-12) / (np.mean(seg_enh**2) + 1e-12))
     erle_gated = gated_erle(seg_mic, seg_lpb, seg_enh)
-    dns_input = enh[start:] if _dnsmos_region == "rated" else enh
+    dns_input = enh[rated_start:] if _dnsmos_region == "rated" else enh
     sig, bak, ovr, p808 = dnsmos(dns_input) if _run_dnsmos else (float("nan"),) * 4
     return {
         "scenario": scenario, "stem": stem, "echo": echo, "deg": deg, "erle": float(erle),
