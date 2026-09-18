@@ -183,6 +183,31 @@ protocol mismatch. The v1.2 far-end gap is unexplained; the private LocalVQE
 scoring script is not public, so exact reproduction of every cell is not
 established.
 
+**v1.2 far-end investigation.** Hypotheses tested to explain the v1.2
+far-end cells, all rendered through the PyTorch reference over the 800 clips
+(`render-torch.py`) and scored under the upstream protocol:
+
+| Render | FE-ST echo / deg / gERLE | FE-ST-mov echo / deg / gERLE | DT echo / deg |
+|---|---|---|---|
+| HF card v1.2 | 3.78 / 4.91 / 45.7 | 4.12 / 4.96 / 40.6 | 4.72 / 2.37 |
+| published weights as shipped (dmax 64) | 4.07 / 4.93 / 47.6 | 4.27 / 4.96 / 41.3 | 4.72 / 2.39 |
+| **dmax 32** (pre-v1.2 delay window) | 4.29 / 4.88 / **44.9** | 4.41 / 4.96 / **40.5** | 4.70 / 2.40 |
+| dmax 32 + GGML CLI output emulated (delay, int16) | 4.32 / 4.87 / 43.8 | 4.43 / 4.96 / 39.8 | 4.70 / 2.24 |
+| softmax temperature 1.0 (unfolded) | 2.79 / 4.77 / 13.4 | 3.02 / 4.91 / 12.9 | 3.81 / 2.60 |
+| ReLU6 reference (arch_version 2), dmax 32 or 64 | 2.17 / 4.88 / −7 | 2.39 / 4.94 / −7 | 2.78 / 3.30 |
+
+Scorer-side variations (both AECMOS models, with / without scenario marker,
+whole / first-half / last-half / middle-20 s segments, on Core ML and raw
+GGML renders) never reach 3.78 while keeping deg near 4.91. The delay window
+is not stored in the checkpoint, and the reference config switched from
+dmax 32 to 64 on the day the row was published (2026-05-14): rendering at
+dmax 32 reproduces the card's far-end ERLE (44.9 / 40.5 vs 45.7 / 40.6 dB)
+and deg (4.88 / 4.96 vs 4.91 / 4.96) while leaving the double-talk and
+near-end cells matched, so that row was most likely evaluated at the older
+window. It does not reproduce the card's far-end echo MOS (4.29 / 4.41 vs
+3.78 / 4.12, moving the wrong way), and nothing tried does. Those two cells
+remain unexplained; the upstream scoring script is private.
+
 **Port fidelity.** The upstream GGML CLI was run on the same 800 clips on the
 same machine and both render sets scored with `compare-renders.py --shift-b
 256 --quantize-a` (whole hops only, challenge protocol): per-scenario echo /
@@ -259,6 +284,7 @@ verify_torch.py              PyTorch-only sanity (OLA scale, streaming, GGML fix
 render-blind.sh              render an AEC-Challenge blind set through the Swift or GGML CLI
 score_blind.py               AECMOS / ERLE / DNSMOS scoring of blind-set renders
 compare-renders.py           aligned, quantisation-matched A/B of two render dirs
+render-torch.py              PyTorch-reference render of a blind set (diagnostics: --dmax, --no-fold, --arch-version)
 src/localvqe_coreml/
   streaming.py               explicit-state wrapper (the conversion)
   common.py                  checkpoint loader (model_config + fold_temperature)
