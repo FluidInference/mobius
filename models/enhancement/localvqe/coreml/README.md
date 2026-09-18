@@ -120,28 +120,36 @@ Core ML (Swift `fluidaudiocli enhance`, float32 WAV output), our scorer:
 **Port fidelity (the verification that matters).** The upstream GGML CLI was
 run on the same 800 clips on the same machine (`localvqe-v1.3-4.8M-f32.gguf`)
 and both render sets scored with `compare-renders.py --shift-b 256
---quantize-a`: per-scenario echo / deg / ERLE means are identical to two
-decimals in every scenario, per-clip echo-MOS delta mean −0.0001 (p95 |Δ|
-0.02, max 0.09), ERLE delta p95 0.008 dB. Three things had to be normalised
-first, all artefacts of the upstream CLI rather than the model: it emits its
-output one hop (256 samples) late (AECMOS is alignment-sensitive — unshifted,
-identical waveforms score up to 2 MOS apart on near-silent far-end residuals);
-its whole-clip mode truncates some outputs (e.g. 384000 vs 399360 samples);
-and it writes 16-bit PCM, which both quantises the ~1e-4-RMS far-end residual
-(worth ~0.2 echo MOS on the far-end rows) and *wraps* samples above full
-scale (1.02 → −0.98) on clips whose mic is already clipped — the Swift CLI
-writes float32 and keeps them.
+--quantize-a` (whole hops only): per-scenario echo / deg / ERLE means are
+identical to two decimals in every scenario; per-clip deltas — echo MOS mean
++0.0002 (p95 |Δ| 0.017, max 0.09), deg MOS p95 0.0004, ERLE p95 0.005 dB;
+aligned waveform SNR median 84 dB. The outputs are numerically equivalent
+(max abs diff ~2e-5, i.e. within 16-bit quantisation), not bit-identical.
+Three things had to be normalised first, all artefacts of the upstream CLI
+rather than the model: it emits its output one hop (256 samples) late (AECMOS
+is alignment-sensitive — unshifted, identical waveforms score up to 2 MOS
+apart on near-silent far-end residuals); its whole-clip mode zero-fills the
+trailing partial hop and truncates some outputs (e.g. 384000 vs 399360
+samples); and it writes 16-bit PCM, which both quantises the ~1e-4-RMS
+far-end residual (worth ~0.2 echo MOS on the far-end rows) and *wraps*
+samples above full scale (1.02 → −0.98) on clips whose mic is already clipped
+— the Swift CLI writes float32 and keeps them. Those wrapped clips are the
+only ones whose aligned waveform SNR stays low (min 2.7 dB) and their AECMOS
+scores still agree.
 
-**Against the upstream README table.** v1.2 reproduces it on the single-talk
-rows (far-end ERLE 45.7 dB vs 45.7 dB published; echo 3.92 / 4.13 vs
-3.78 / 4.12; near-end 4.99 / 4.09 vs 5.00 / 4.16). The double-talk rows are
-not comparable: our unprocessed baseline scores 2.17 / 2.21 vs upstream's
-2.67 / 2.56, and no trimming rule tried (whole clip, last half, the README's
-(len−15)/2 rule, skip-first-15 s) reproduces theirs, so upstream used a
-different double-talk segment. v1.3's far-end echo MOS (2.49 / 3.08) sits
-~1 MOS below the table (3.69 / 3.88) at *higher* ERLE (54 vs 51 dB) with the
-Core ML output bit-matched to the published GGUF, so that row of the table
-was not produced from the published v1.3 weights under this protocol.
+**Against the upstream README table.** v1.2 agrees with it on the single-talk
+rows to within ~0.15 MOS on echo / deg (3.92 / 4.13 vs 3.78 / 4.12 far-end;
+4.99 / 4.09 vs 5.00 / 4.16 near-end) and reproduces the far-end ERLE exactly
+(45.7 dB); the with-movement ERLE is 38.2 dB vs 40.6 dB published. The
+double-talk rows do not agree for any model, and neither does the unprocessed
+baseline (ours 2.17 / 2.21 vs upstream's 2.67 / 2.56): no trimming rule tried
+(whole clip, last half, the AECMOS README's (len−15)/2 rule, skip-first-15 s)
+reproduces theirs. The cause is an undocumented difference in evaluation
+protocol — segment choice is the leading hypothesis, but it is not
+established. v1.3's far-end echo MOS (2.49 / 3.08) sits ~1 MOS below the
+table (3.69 / 3.88) at *higher* ERLE (54 vs 51 dB) with output numerically
+equivalent to the published GGUF, so that row cannot be reproduced from the
+published v1.3 weights under the documented protocol either.
 
 ```bash
 ./render-blind.sh coreml blind renders/coreml-v1.3 /path/to/fluidaudiocli v1.3 4

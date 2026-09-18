@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 """Aligned A/B of two blind-set render dirs (e.g. Core ML vs upstream GGML).
 
-The upstream GGML CLI emits its output one hop (256 samples) late and its
-whole-clip mode can truncate the tail, so raw score tables of the two engines
-are not comparable clip by clip. This script drops --shift-b samples from the
-B render, truncates both to the common length and scores AECMOS + blind ERLE
-on identical sample regions, reporting per-scenario means for both and the
-per-clip delta distribution.
+The upstream GGML CLI emits its output one hop (256 samples) late, its
+whole-clip mode can truncate the tail and zero-fills the last partial hop,
+and it writes 16-bit PCM, so raw score tables of the two engines are not
+comparable clip by clip. This script drops --shift-b samples from the B
+render, truncates both to the common whole-hop length, optionally rounds A
+to 16-bit (--quantize-a) and scores AECMOS + blind ERLE on identical sample
+regions, reporting per-scenario means for both and the per-clip delta
+distribution.
 
     uv run python compare-renders.py --blind-dir blind --a renders/coreml-v1.3 \
         --b renders/ggml-v1.3 --shift-b 256 --aecmos-dir aecmos --label-a coreml --label-b ggml
@@ -30,7 +32,10 @@ def one(job):
     if quantize_a:  # emulate a 16-bit PCM WAV round trip (what the GGML CLI writes)
         a = np.clip(np.round(a * 32767.0), -32768, 32767) / 32767.0
     b = b[shift_b:]
-    n = min(len(mic), len(lpb), len(a), len(b))
+    # Compare whole hops only: the GGML whole-clip mode zero-fills the trailing
+    # partial hop instead of rendering it, which would otherwise dominate the
+    # residual on near-silent outputs.
+    n = (min(len(mic), len(lpb), len(a), len(b)) // sb.HOP) * sb.HOP
     mic, lpb, a, b = mic[:n], lpb[:n], a[:n], b[:n]
     start = {"st": n // 2, "dt": max(0, n - int(((n / sb.SR) - 15) / 2 * sb.SR)), "nst": 0}[talk]
     ea, da = sb.aecmos(talk, lpb[start:], mic[start:], a[start:])

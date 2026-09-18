@@ -28,6 +28,7 @@ import onnxruntime as ort
 import soundfile as sf
 
 SR = 16000
+HOP = 256
 SCENARIOS = {
     "doubletalk": "dt",
     "doubletalk-with-movement": "dt",
