@@ -72,7 +72,7 @@ def main():
         rel = mic.parent.name
         jobs.append((scenario, stem, mic, mic.with_name(stem + "_lpb.flac"),
                      args.a / rel / f"{stem}_enh.wav", args.b / rel / f"{stem}_enh.wav", args.shift_b, args.quantize_a))
-    with mp.Pool(args.jobs, initializer=sb._init, initargs=(args.aecmos_dir,)) as pool:
+    with mp.Pool(args.jobs, initializer=sb._init, initargs=(args.aecmos_dir, "challenge", False, "rated")) as pool:
         rows = pool.map(one, jobs, chunksize=4)
 
     by = defaultdict(list)
