@@ -98,6 +98,9 @@ the GGML fixture to 2.3e-6 after the 256-sample shift.
 
 ## Quality: ICASSP 2022 AEC-Challenge blind test set
 
+**Summary: port fidelity validated; published benchmark substantially
+reproduced, with unresolved v1.2 far-end differences.**
+
 The upstream README / HF model-card table is AECMOS on the 800-clip ICASSP
 2022 blind set (real recordings; mirror `richiejp/aec-challenge-16k`,
 `blind_test_set_icassp2022/`). `render-blind.sh` renders every mic/lpb pair
@@ -170,8 +173,10 @@ its delay and 16-bit quantisation of the near-silent residual, scores within
 near-end within 0.02 echo, 0.02 deg, 0.1 dB ERLE and 0.06 OVRL; **far-end is
 not reproduced on any metric** — echo +0.29 / +0.15 (4.07 / 4.27 vs
 3.78 / 4.12), gated ERLE +1.9 / +0.7 dB (47.6 / 41.3 vs 45.7 / 40.6; GGML
-+2.3 / +0.5 dB), OVRL +0.09 / +0.05 (1.89 / 1.80 vs 1.80 / 1.75). Ours score
-higher, from either runtime, so this is not an output-format effect. The
++2.3 / +0.5 dB), OVRL +0.09 / +0.05 (1.89 / 1.80 vs 1.80 / 1.75). Our values
+are above the published ones from either runtime, so this is not an
+output-format effect; it is not evidence that the port outperforms upstream,
+and +0.29 echo MOS is not rounding noise. The
 earlier statement in this README that the v1.3 far-end row "was not produced
 from the published v1.3 weights" is retracted: it was a scorer / segment
 protocol mismatch. The v1.2 far-end gap is unexplained; the private LocalVQE
