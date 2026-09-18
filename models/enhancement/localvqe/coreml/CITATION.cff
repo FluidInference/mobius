@@ -1,0 +1,69 @@
+cff-version: 1.2.0
+message: "If you use LocalVQE in academic work, please cite it using the metadata from this file."
+title: "LocalVQE: Local Voice Quality Enhancement"
+abstract: >-
+  LocalVQE is a compact neural model for joint acoustic echo cancellation,
+  noise suppression, and dereverberation of 16 kHz speech, designed to run
+  in real time on commodity CPUs. It is a derivative of DeepVQE (Indenbom
+  et al., Interspeech 2023) with an in-graph DCT-II analysis/synthesis
+  filterbank, an S4D diagonal state-space bottleneck in place of a GRU,
+  and a streaming GGML implementation at roughly one tenth of the
+  DeepVQE parameter count.
+type: software
+authors:
+  - family-names: Palethorpe
+    given-names: Richard
+    email: io@richiejp.com
+    website: "https://richiejp.com"
+  - name: "Claude (Anthropic)"
+    website: "https://www.anthropic.com/claude"
+repository-code: "https://github.com/localai-org/LocalVQE"
+url: "https://github.com/localai-org/LocalVQE"
+license: Apache-2.0
+keywords:
+  - acoustic-echo-cancellation
+  - noise-suppression
+  - dereverberation
+  - speech-enhancement
+  - state-space-models
+  - ggml
+  - real-time
+  - on-device
+references:
+  - type: conference-paper
+    title: >-
+      DeepVQE: Real Time Deep Voice Quality Enhancement for Joint Acoustic
+      Echo Cancellation, Noise Suppression and Dereverberation
+    authors:
+      - family-names: Indenbom
+        given-names: Evgenii
+      - family-names: Beltrán
+        given-names: Nicolae-Cătălin
+      - family-names: Chernov
+        given-names: Mykola
+      - family-names: Aichner
+        given-names: Robert
+    collection-title: "Proc. Interspeech 2023"
+    year: 2023
+    doi: "10.21437/Interspeech.2023-2176"
+  - type: conference-paper
+    title: >-
+      GTCRN: A Speech Enhancement Model Requiring Ultralow Computational
+      Resources
+    authors:
+      - family-names: Rong
+        given-names: Xiaobin
+      - family-names: Sun
+        given-names: Tianchi
+      - family-names: Zhang
+        given-names: Xu
+      - family-names: Hu
+        given-names: Yuxiang
+      - family-names: Zhu
+        given-names: Changbao
+      - family-names: Lu
+        given-names: Jing
+    collection-title: "Proc. ICASSP 2024"
+    year: 2024
+    doi: "10.1109/ICASSP48485.2024.10448310"
+    notes: "Basis for the experimental Raspberry Pi (GTCRN-AEC) backend."
