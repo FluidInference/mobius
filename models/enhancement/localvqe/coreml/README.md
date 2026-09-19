@@ -7,8 +7,11 @@ dereverberation for 16 kHz speech, a CPU-tuned derivative of DeepVQE
 [FluidAudio#49](https://github.com/FluidInference/FluidAudio/issues/49#issuecomment-5719663475).
 
 Published weights: `FluidInference/localvqe-coreml` (see [Outputs](#outputs)).
-Swift consumer: `LocalVqeManager` / `LocalVqeStream` in FluidAudio
-(`Sources/FluidAudio/Enhancement/LocalVQE`).
+Swift consumer: `LocalVqeManager` / `LocalVqeStream` in
+[FluidAudio #930](https://github.com/FluidInference/FluidAudio/pull/930).
+The consumer serializes each stream's push/flush/reset operations and handles
+queued and active cancellation. It remains beta pending live call-pipeline
+validation on target devices; offline model parity does not certify that integration.
 
 ## What was converted
 
@@ -115,14 +118,22 @@ different questions:
   (far-end single talk → last half, double talk → last (len−15)/2 s, near-end
   → whole clip), i.e. the convergence portions are excluded as the challenge
   instructs. DNSMOS on the same rated segment.
-- **upstream** (what the HF table was produced with): the legacy AECMOS model
+- **upstream** (HF table reproduction check): the legacy AECMOS model
   (`Run_1663829550_Stage_0`, no scenario marker) over the whole clip, which
   its 20 s cap makes the first 20 s. This reproduces the card's unprocessed
   baseline to the displayed digit (2.67 / 2.56 / 1.90 / 2.13 / 5.00), and the
   same first-20-s implementation is in the author's public predecessor
   evaluation code (deepvqe-ggml `train/src/metrics.py`). The card's OVRL is
   DNSMOS on the rated segment and its ERLE is the technical-report gated
-  definition; both are reproduced below.
+  definition; both definitions are compared below.
+
+Saved per-recording results, metric availability and recomputed aggregates are
+published in the [validation index](validation/benchmark-index.json), alongside
+the [800-recording manifest](validation/blind-manifest.txt). The stored upstream
+runs skipped DNSMOS. Rated DNSMOS measurements are available in the separate
+challenge files. The fixed scorer computes that same rated segment independently
+of AECMOS protocol, but these saved upstream files must not be represented as
+full DNSMOS runs.
 
 ### Challenge protocol (reference)
 
@@ -140,7 +151,7 @@ gated definition; OVRL is DNSMOS on the rated segment.
 ### Upstream protocol (HF table reproduction)
 
 AECMOS echo / deg over the first 20 s; ERLE is the gated definition over the
-same segment; OVRL is DNSMOS on the challenge-rated segment (the segment the
+whole clip; OVRL is DNSMOS on the challenge-rated segment (the segment the
 card's OVRL matches — `--dnsmos-region rated` selects it under either
 protocol). Core ML and GGML rows are kept separate — GGML is the upstream CLI's raw output (256-sample
 delay, 16-bit PCM), Core ML is aligned float32.
@@ -200,13 +211,24 @@ Scorer-side variations (both AECMOS models, with / without scenario marker,
 whole / first-half / last-half / middle-20 s segments, on Core ML and raw
 GGML renders) never reach 3.78 while keeping deg near 4.91. The delay window
 is not stored in the checkpoint, and the reference config switched from
-dmax 32 to 64 on the day the row was published (2026-05-14): rendering at
-dmax 32 reproduces the card's far-end ERLE (44.9 / 40.5 vs 45.7 / 40.6 dB)
-and deg (4.88 / 4.96 vs 4.91 / 4.96) while leaving the double-talk and
-near-end cells matched, so that row was most likely evaluated at the older
-window. It does not reproduce the card's far-end echo MOS (4.29 / 4.41 vs
-3.78 / 4.12, moving the wrong way), and nothing tried does. Those two cells
-remain unexplained; the upstream scoring script is private.
+dmax 32 to 64 on the day the row was published (2026-05-14). Rendering at
+dmax 32 brings far-end ERLE (44.9 / 40.5 vs 45.7 / 40.6 dB) and degradation
+(4.88 / 4.96 vs 4.91 / 4.96) close to the card. This supports a historical
+configuration hypothesis, but does not confirm which configuration upstream
+used. Far-end echo MOS moves farther from the card (4.29 / 4.41 vs
+3.78 / 4.12), and none of the tested settings reproduces the whole table.
+Those echo cells remain unexplained. Upstream's evaluation configuration,
+rendered audio or scoring script would help resolve the discrepancy.
+
+A separate [historical-runtime and precision investigation](REPRODUCTION.md)
+compares the published PT/GGUF tensors and isolates an upstream state-copy
+defect. Applying only the later two-phase copy fix makes the historical
+engine match current GGML exactly on four real-recording controls. The
+original engine was also rendered and scored on all 300 far-end recordings;
+its echo MOS (4.12 / 4.28) still does not reproduce the card. The linked report
+includes per-recording results, manifests, failed precision trials and the
+limits of these diagnostics. These are separate from the main 800-clip
+benchmark and do not replace its quality reference.
 
 **Port fidelity.** The upstream GGML CLI was run on the same 800 clips on the
 same machine and both render sets scored with `compare-renders.py --shift-b
