@@ -1,0 +1,128 @@
+{
+  "verification_report_sha256": "9a5d22ec4b447f0710c12e03c69d7ed802158bb94e9a3c6b059731730ced9f30",
+  "evaluator_source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+  "evaluator_source_path": "libs/cua-s1/evals/metrics.py",
+  "evaluator_sha256": "49dccdeb4e2b456187cdc4491a6d78fabac6a45384272f8e3ec802a58872aa6e",
+  "adapter_sha256": "c78e45caa86fb59f9a56ef18cc6a35020ea6e281a6a23d23618f56da85a0d95e",
+  "scope": "Offline action/target classification, not GUI execution or task completion",
+  "normalization": "Stable row IDs; fill target is entity option index; upstream treats skip as abstention",
+  "results": {
+    "ALL": {
+      "examples": 196,
+      "accuracy": 1.0,
+      "coverage": 0.23469387755102042,
+      "abstention_rate": 0.7653061224489796,
+      "selective_accuracy": 1.0,
+      "wrong_action_rate": 0.0,
+      "wrong_target_rate": 0.0,
+      "unsafe_action_rate": 0.0,
+      "counts": {
+        "total": 196,
+        "correct": 196,
+        "abstained": 150,
+        "acted": 46,
+        "acted_correct": 46
+      },
+      "per_action": {
+        "abstain": {
+          "accuracy": 1.0,
+          "abstention_rate": 1.0,
+          "examples": 150
+        },
+        "check": {
+          "accuracy": 1.0,
+          "abstention_rate": 0.0,
+          "examples": 4
+        },
+        "click": {
+          "accuracy": 1.0,
+          "abstention_rate": 0.0,
+          "examples": 6
+        },
+        "fill": {
+          "accuracy": 1.0,
+          "abstention_rate": 0.0,
+          "examples": 36
+        }
+      }
+    },
+    "CPU_AND_NE": {
+      "examples": 196,
+      "accuracy": 1.0,
+      "coverage": 0.23469387755102042,
+      "abstention_rate": 0.7653061224489796,
+      "selective_accuracy": 1.0,
+      "wrong_action_rate": 0.0,
+      "wrong_target_rate": 0.0,
+      "unsafe_action_rate": 0.0,
+      "counts": {
+        "total": 196,
+        "correct": 196,
+        "abstained": 150,
+        "acted": 46,
+        "acted_correct": 46
+      },
+      "per_action": {
+        "abstain": {
+          "accuracy": 1.0,
+          "abstention_rate": 1.0,
+          "examples": 150
+        },
+        "check": {
+          "accuracy": 1.0,
+          "abstention_rate": 0.0,
+          "examples": 4
+        },
+        "click": {
+          "accuracy": 1.0,
+          "abstention_rate": 0.0,
+          "examples": 6
+        },
+        "fill": {
+          "accuracy": 1.0,
+          "abstention_rate": 0.0,
+          "examples": 36
+        }
+      }
+    },
+    "upstream_pytorch": {
+      "examples": 196,
+      "accuracy": 1.0,
+      "coverage": 0.23469387755102042,
+      "abstention_rate": 0.7653061224489796,
+      "selective_accuracy": 1.0,
+      "wrong_action_rate": 0.0,
+      "wrong_target_rate": 0.0,
+      "unsafe_action_rate": 0.0,
+      "counts": {
+        "total": 196,
+        "correct": 196,
+        "abstained": 150,
+        "acted": 46,
+        "acted_correct": 46
+      },
+      "per_action": {
+        "abstain": {
+          "accuracy": 1.0,
+          "abstention_rate": 1.0,
+          "examples": 150
+        },
+        "check": {
+          "accuracy": 1.0,
+          "abstention_rate": 0.0,
+          "examples": 4
+        },
+        "click": {
+          "accuracy": 1.0,
+          "abstention_rate": 0.0,
+          "examples": 6
+        },
+        "fill": {
+          "accuracy": 1.0,
+          "abstention_rate": 0.0,
+          "examples": 36
+        }
+      }
+    }
+  }
+}

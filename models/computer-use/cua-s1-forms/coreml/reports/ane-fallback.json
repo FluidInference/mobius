@@ -1,0 +1,84 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-19T16:51:27.323329+00:00"
+  },
+  "models": [
+    {
+      "model_path": "build/cua_s1_forms_fp16_options32.mlmodelc",
+      "model_name": "cua_s1_forms_fp16_options32",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 173,
+        "ane_ops": 149,
+        "gpu_ops": 0,
+        "cpu_ops": 24,
+        "ane_percent": 86.1,
+        "reasons": [
+          {
+            "reason": "Unsupported tensor data type: int32",
+            "count": 17,
+            "estimated_cpu_runtime_ms": 0.017,
+            "op_types": {
+              "ios17.cast": 8,
+              "ios17.slice_by_index": 4,
+              "ios17.add": 2,
+              "select": 2,
+              "ios17.reshape": 1
+            },
+            "ops": [
+              "var_27",
+              "var_43",
+              "var_43_to_fp16",
+              "context_ids_to_int16",
+              "cast_54",
+              "add_3",
+              "select_0",
+              "select_0_to_int16",
+              "flat_ids",
+              "var_333",
+              "var_349",
+              "var_349_to_fp16",
+              "flat_ids_to_int16",
+              "cast_55",
+              "add_4",
+              "select_1",
+              "select_1_to_int16"
+            ]
+          },
+          {
+            "reason": "Unable to resolve operation input \"y\".",
+            "count": 5,
+            "estimated_cpu_runtime_ms": 0.005,
+            "op_types": {
+              "ios17.not_equal": 3,
+              "ios17.greater_equal": 2
+            },
+            "ops": [
+              "option_mask_1",
+              "context_mask",
+              "greater_equal_0",
+              "flat_mask",
+              "greater_equal_1"
+            ]
+          },
+          {
+            "reason": "Unsupported gather index type",
+            "count": 2,
+            "estimated_cpu_runtime_ms": 0.0144,
+            "op_types": {
+              "ios17.gather": 2
+            },
+            "ops": [
+              "var_59_cast_fp16_cast_uint16_cast_uint16",
+              "var_365_cast_fp16_cast_uint16_cast_uint16"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
