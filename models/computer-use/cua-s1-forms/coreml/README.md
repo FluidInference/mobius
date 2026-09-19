@@ -145,12 +145,11 @@ are correct; skip accuracy is 12,701/12,712. Higher ANE placement is approximate
 **Strict numerical conversion parity fails for both exports.** Each has 11 rows
 above the original 0.005 absolute probability-error limit, with a maximum error
 of **0.0204874**. One further row (zero-based index 19270) has a live-probability
-sum of **0.99893665**. That lies outside the current Swift manager's 0.001
-normalization guard, so this output would be rejected despite its correct argmax.
-These are raw model-output accuracy results, not a claim that every row succeeds
-through the Swift API. No probabilities were renormalized and no tolerances or
-model weights were changed. The earlier 196-row demo passed its numerical gates;
-the larger split exposes failures that demo did not cover.
+sum of **0.99893665**, which failed the original Swift manager's 0.001
+normalization guard despite a correct argmax. The [Swift probability fix](#swift-probability-fix)
+now handles that output. These raw conversion reports retain the original scores,
+failed gates, tolerances, and model weights; the runtime fix does not establish
+raw numerical parity. The earlier 196-row demo passed its numerical gates.
 
 Measured September 19, 2026 on **Apple M5 Pro, 24 GB, macOS 27.0 (26A428)**,
 Python 3.11.11, PyTorch 2.7.0, coremltools 9.0. Batch size 1, three warmup rows per
@@ -526,6 +525,46 @@ Reports: [full test](reports/int4-synthetic-test.json),
 [compute plan](reports/int4-profile.json), [CLI fallback](reports/int4-fallback.json).
 The complete per-row trace is `reports/int4-synthetic-test-decisions.jsonl.gz` in
 the model PR. Source, package, script and trace hashes are retained in manifests.
+
+## Swift probability fix
+
+The Swift manager computes a stable softmax from live logits using Double arithmetic
+and returns Float `probabilities`. The model's original softmax output remains
+available as `rawProbabilities`, including FP16 rounding errors.
+
+All **73,110 real Swift API calls completed** on the pinned synthetic split
+(Apple M5 Pro, 24 GB, macOS 27.0; Swift 6.2.3, release build, CPU+ANE):
+
+| Variant | Calls completed | Correct decisions | Changed choices after fix | Probability-sum failures after fix |
+| --- | ---: | ---: | ---: | ---: |
+| FP16 | 24,370 | 24,359 (99.9549%) | 0 | 0 |
+| INT8 | 24,370 | 24,359 (99.9549%) | 0 | 0 |
+| INT4 | 24,370 | 24,353 (99.9302%) | 0 | 0 |
+
+The recorded FP16 sum failure is fixed. Stable probabilities agree with an
+independent float64 softmax within **0.000000030**. Raw conversion-parity failures
+and INT4's accuracy loss remain. This validation changes no model artifacts and
+makes no new latency claim. Earlier complete Swift timings predate this fix.
+
+[Runtime report](reports/swift-runtime/report.json) · [Full runtime trace](https://huggingface.co/FluidInference/cua-s1-forms-coreml/resolve/7f632a6b137aab69b20e517ecf51cf6eaa599b6b/reports/swift-runtime/decisions.jsonl.gz)
+The report pins the dataset, packages, saved reference traces, Swift sources,
+and validation harness by SHA-256.
+
+Reproduce on an Apple silicon Mac after the base setup. Supply a FluidAudio
+checkout containing the fix and a complete local download of the model PR,
+including its saved reports and traces:
+
+```bash
+uv run --frozen python validate-swift-runtime.py \
+  --fluidaudio /path/to/FluidAudio \
+  --models /path/to/cua-coreml \
+  --output-dir build/swift-runtime-reproduction
+```
+
+Use a fresh output directory. The command builds the actual Swift library in
+release mode, checks every row once per variant, and audits its saved output
+against the original raw decisions and an independent softmax. The Python
+regressions use the recorded real-model failure and run with `uv run --frozen pytest -q`.
 
 ## Live browser proof and expanded Swift benchmark
 
