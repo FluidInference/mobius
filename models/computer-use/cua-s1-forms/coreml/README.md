@@ -50,7 +50,8 @@ Outputs:
 - `build/conversion.json` — configuration, versions, source revisions, and package hashes.
 - [reports/verification.json](reports/verification.json) — per-decision parity and timing results.
 - [reports/upstream-metrics.json](reports/upstream-metrics.json) — original Cua action/target metrics.
-- [reports/ane-fallback.json](reports/ane-fallback.json) — actual compute placement on the test Mac.
+- [reports/ane-fallback.json](reports/ane-fallback.json) — scheduler placement and ANE rejection reasons.
+- [reports/ane-profile.json](reports/ane-profile.json) — four-policy compute plans and real-input timing.
 
 The generated model and downloaded data stay under ignored `build/` and
 `artifacts/`. Source, lockfiles, notices, tests, and compact JSON reports can be
@@ -133,6 +134,45 @@ The existing `coreml-cli` reports **149 operations on the Neural Engine**,
 **24 on CPU**, and **0 on GPU** with `CPU_AND_NE`. The remaining CPU operations
 are integer/mask preparation and embedding gathers. This is mixed execution;
 the 86.1% figure is an operation count, not a share of runtime.
+
+The September 19 follow-up profiles the same hash-verified package with the public
+`MLComputePlan` API across all four policies. It uses rows **0, 68, 130**: one
+real initial input from each form, with 27, 21, and 19 supplied options. Per policy,
+it measures the first call, runs two warmup passes, then ten timed passes over the
+three rows (30 timed predictions). All 120 timed predictions select the correct
+label; output validation also checks finite scores, normalization, and padding.
+
+| Policy | CPU ops | GPU ops | ANE ops | Warm p50 | Warm p95 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `CPU_ONLY` | 173 | 0 | 0 | 1.527 ms | 1.602 ms |
+| `CPU_AND_GPU` | 0 | 173 | 0 | 0.929 ms | 2.380 ms |
+| `CPU_AND_NE` | 24 | 0 | 149 | 0.929 ms | 0.973 ms |
+| `ALL` | 0 | 173 | 0 | 0.912 ms | 1.229 ms |
+
+On this M5 Pro, `ALL` selects the GPU; `.cpuAndNeuralEngine` is needed to obtain
+the ANE plan measured here. The ANE path had a **566.8 ms load** and a **1.65 ms
+first prediction** in this run. System caches were retained, so these are not
+first-install cold-start measurements. The table times synchronous Python model
+calls with pre-encoded real inputs; it excludes Swift encoding, UI work, and
+animation. Its small manifest differs from the original 196-row parity timing.
+
+Operation placement is the scheduler's preferred-device plan, not a measured
+utilization, energy, or per-device runtime trace. Xcode Instruments was unavailable
+on this Mac. The fallback report identifies 17 integer-type rejections, five
+unresolved mask/comparison dependencies, and two unsupported gather-index types.
+No graph or weights were changed to obtain this profile.
+
+Reproduce the bounded profile from this directory:
+
+```bash
+uv run --frozen python profile-coreml.py
+uv run --frozen pytest -q tests/test_profile_manifest.py
+```
+
+The report records input rows, package hashes, OS build, policy order, load/first
+call timings, every timed prediction, and every assigned operation. Use `--rows`,
+`--warmup-passes`, `--timed-passes`, and `--compute-units` for an explicitly chosen
+different protocol; the default does not run the full corpus.
 
 The profiler needs a compiled `.mlmodelc` input because its current `.mlpackage`
 loader attempts an unsupported `MLModel.save(...mlmodelc)` call. Compile using

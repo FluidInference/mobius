@@ -1,0 +1,4109 @@
+{
+  "created_utc": "2026-09-19T19:43:44.834712+00:00",
+  "purpose": "Bounded real-input latency and scheduler placement; not a general accuracy benchmark",
+  "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+  "package_files": {
+    "Data/com.apple.CoreML/model.mlmodel": "70485fc18cbb21785df833cbddddc0b5b59acb00d22394b76e55307e2c135dd0",
+    "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+    "Manifest.json": "2bc0f5f62337b27fb6b0ecde248f1e3dc269e1ba4b65516aaeede2a60e293dcc"
+  },
+  "dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+  "dataset_sha256": "4f43b442e79ba2e2ce731e27e9b8e340c2b5dfcaffc92d8ff564c34f115ff1ca",
+  "environment": {
+    "chip": "Apple M5 Pro",
+    "memory_bytes": 25769803776,
+    "macos": "27.0",
+    "os_build": "26A428",
+    "python": "3.11.11",
+    "coremltools": "9.0"
+  },
+  "protocol": {
+    "rows": [
+      0,
+      68,
+      130
+    ],
+    "pages": [
+      "patient-registration",
+      "job-application",
+      "auto-claim"
+    ],
+    "option_counts": [
+      27,
+      21,
+      19
+    ],
+    "first_call_row": 0,
+    "warmup_passes": 2,
+    "timed_passes": 10,
+    "backend_order": [
+      "CPU_ONLY",
+      "CPU_AND_GPU",
+      "CPU_AND_NE",
+      "ALL"
+    ],
+    "timing_scope": "Synchronous Python MLModel.predict; pre-encoded inputs; output checks outside timer",
+    "load_scope": "MLModel construction; system caches retained, not first-install cold start",
+    "first_call_scope": "First predict after this load; may use existing system/ANE caches",
+    "plan_order": "Compute plan loaded after timing each backend"
+  },
+  "backends": {
+    "CPU_ONLY": {
+      "load_ms": 71.21945900144055,
+      "first_prediction_ms": 15.096832998096943,
+      "warm_prediction": {
+        "count": 30,
+        "median_ms": 1.5270625008270144,
+        "p95_ms": 1.601899994420819,
+        "min_ms": 1.3285410241223872,
+        "max_ms": 1.6374590049963444
+      },
+      "timed_predictions_correct": 30,
+      "calls": [
+        {
+          "row": 0,
+          "milliseconds": 1.578499999595806
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.561041979584843
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.5606670058332384
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.4908749726600945
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.5069579822011292
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.412415993399918
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.5242919907905161
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.5393749927170575
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.3988339924253523
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.5052919916342944
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.4890410238876939
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.5105829806998372
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.6374590049963444
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.6122499946504831
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.5023329760879278
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.5473749954253435
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.3900829944759607
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.5310419839806855
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.3285410241223872
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.5892499941401184
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.5656249888706952
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.546334009617567
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.5298330108635128
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.543457998195663
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.5623749932274222
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.4965840091463178
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.5304579865187407
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.465249981265515
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.4851669839117676
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.4999579871073365
+        }
+      ],
+      "compute_plan": {
+        "kind": "MLComputePlan preferred device; not a runtime utilization or power trace",
+        "assigned_operation_count": 173,
+        "device_counts": {
+          "cpu": 173,
+          "gpu": 0,
+          "ane": 0,
+          "unknown": 0
+        },
+        "unassigned_operation_types": {
+          "const": 239
+        },
+        "operations": [
+          {
+            "name": "option_mask_1",
+            "type": "ios17.not_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "context_mask",
+            "type": "ios17.not_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "var_27",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "fill_like_0_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "cpu"
+          },
+          {
+            "name": "var_43",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "var_43_to_fp16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "safe_context_ids_cast_fp16",
+            "type": "ios17.concat",
+            "device": "cpu"
+          },
+          {
+            "name": "context_ids_to_int16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "cast_54",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "greater_equal_0",
+            "type": "ios17.greater_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "add_3",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "select_0",
+            "type": "select",
+            "device": "cpu"
+          },
+          {
+            "name": "select_0_to_int16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "var_59_cast_fp16_cast_uint16_cast_uint16",
+            "type": "ios17.gather",
+            "device": "cpu"
+          },
+          {
+            "name": "src_1_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "mask_1_cast_fp16",
+            "type": "ios17.equal",
+            "device": "cpu"
+          },
+          {
+            "name": "key_padding_mask_1_cast_fp16",
+            "type": "select",
+            "device": "cpu"
+          },
+          {
+            "name": "query_1_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "cpu"
+          },
+          {
+            "name": "query_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_0_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "var_124_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_125_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "cpu"
+          },
+          {
+            "name": "var_126_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "var_127_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "cpu"
+          },
+          {
+            "name": "q_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "k_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "v_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "var_136_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_143_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_150_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_154_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_156_cast_fp16",
+            "type": "tile",
+            "device": "cpu"
+          },
+          {
+            "name": "q_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "q_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "k_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "k_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "v_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "v_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "mul_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "cpu"
+          },
+          {
+            "name": "matmul_0_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "cpu"
+          },
+          {
+            "name": "add_0_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "softmax_0_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "cpu"
+          },
+          {
+            "name": "attn_output_1_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "cpu"
+          },
+          {
+            "name": "var_172_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "attn_output_3_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_1_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "attn_output_7_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "input_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "input_5_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "input_7_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_2_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "input_11_cast_fp16",
+            "type": "ios16.relu",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_3_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "input_17_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "query_5_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "cpu"
+          },
+          {
+            "name": "query_7_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_4_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "var_231_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_232_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "cpu"
+          },
+          {
+            "name": "var_233_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "var_234_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "cpu"
+          },
+          {
+            "name": "q_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "k_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "v_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "var_243_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_250_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_257_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "q_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "q_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "k_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "k_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "v_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "v_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "mul_3_cast_fp16",
+            "type": "ios17.mul",
+            "device": "cpu"
+          },
+          {
+            "name": "matmul_1_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "cpu"
+          },
+          {
+            "name": "add_1_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "softmax_1_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "cpu"
+          },
+          {
+            "name": "attn_output_9_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "cpu"
+          },
+          {
+            "name": "var_279_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "attn_output_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_5_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "attn_output_15_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "input_19_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "input_21_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "input_23_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_6_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "input_27_cast_fp16",
+            "type": "ios16.relu",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_7_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "context_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "flat_ids",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "flat_mask",
+            "type": "ios17.not_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "var_333",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "fill_like_1_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "cpu"
+          },
+          {
+            "name": "var_349",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "var_349_to_fp16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "safe_ids_cast_fp16",
+            "type": "ios17.concat",
+            "device": "cpu"
+          },
+          {
+            "name": "flat_ids_to_int16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "cast_55",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "greater_equal_1",
+            "type": "ios17.greater_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "add_4",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "select_1",
+            "type": "select",
+            "device": "cpu"
+          },
+          {
+            "name": "select_1_to_int16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "var_365_cast_fp16_cast_uint16_cast_uint16",
+            "type": "ios17.gather",
+            "device": "cpu"
+          },
+          {
+            "name": "src_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "mask_cast_fp16",
+            "type": "ios17.equal",
+            "device": "cpu"
+          },
+          {
+            "name": "key_padding_mask_7_cast_fp16",
+            "type": "select",
+            "device": "cpu"
+          },
+          {
+            "name": "query_9_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "cpu"
+          },
+          {
+            "name": "query_11_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_8_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "var_428_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_429_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "cpu"
+          },
+          {
+            "name": "var_430_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "var_431_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "cpu"
+          },
+          {
+            "name": "q_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "k_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "v_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "var_440_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_447_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_454_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_458_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "var_460_cast_fp16",
+            "type": "tile",
+            "device": "cpu"
+          },
+          {
+            "name": "q_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "q_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "k_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "k_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "v_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "v_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "mul_5_cast_fp16",
+            "type": "ios17.mul",
+            "device": "cpu"
+          },
+          {
+            "name": "matmul_2_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "cpu"
+          },
+          {
+            "name": "add_2_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "softmax_2_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "cpu"
+          },
+          {
+            "name": "attn_output_17_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "cpu"
+          },
+          {
+            "name": "var_476_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "attn_output_19_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_9_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "attn_output_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "input_35_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "cpu"
+          },
+          {
+            "name": "input_37_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "input_39_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_10_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "input_43_cast_fp16",
+            "type": "ios16.relu",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_11_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "hidden_cast_fp16",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "var_504",
+            "type": "ios17.expand_dims",
+            "device": "cpu"
+          },
+          {
+            "name": "var_504_to_fp16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "var_510_cast_fp16",
+            "type": "ios17.mul",
+            "device": "cpu"
+          },
+          {
+            "name": "var_515_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "cpu"
+          },
+          {
+            "name": "var_520_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "cpu"
+          },
+          {
+            "name": "var_522_cast_fp16",
+            "type": "ios17.maximum",
+            "device": "cpu"
+          },
+          {
+            "name": "pooled_cast_fp16",
+            "type": "ios17.real_div",
+            "device": "cpu"
+          },
+          {
+            "name": "options_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "input_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "cpu"
+          },
+          {
+            "name": "input_53_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_12_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_13_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "linear_14_cast_fp16",
+            "type": "ios17.linear",
+            "device": "cpu"
+          },
+          {
+            "name": "matmul_3_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "cpu"
+          },
+          {
+            "name": "_inversed_scores_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "cpu"
+          },
+          {
+            "name": "var_567",
+            "type": "ios17.expand_dims",
+            "device": "cpu"
+          },
+          {
+            "name": "var_569",
+            "type": "ios17.logical_not",
+            "device": "cpu"
+          },
+          {
+            "name": "scores_cast_fp16",
+            "type": "select",
+            "device": "cpu"
+          },
+          {
+            "name": "var_571_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "cpu"
+          },
+          {
+            "name": "matmul_4_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "cpu"
+          },
+          {
+            "name": "var_574_cast_fp16",
+            "type": "ios17.mul",
+            "device": "cpu"
+          },
+          {
+            "name": "var_576_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "cpu"
+          },
+          {
+            "name": "_inversed_logits_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "cpu"
+          },
+          {
+            "name": "var_579",
+            "type": "ios17.logical_not",
+            "device": "cpu"
+          },
+          {
+            "name": "logits_3_cast_fp16",
+            "type": "select",
+            "device": "cpu"
+          },
+          {
+            "name": "var_587_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "cpu"
+          },
+          {
+            "name": "logits_cast_fp16",
+            "type": "select",
+            "device": "cpu"
+          },
+          {
+            "name": "var_591_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "cpu"
+          },
+          {
+            "name": "probabilities",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "logits",
+            "type": "ios17.cast",
+            "device": "cpu"
+          }
+        ]
+      }
+    },
+    "CPU_AND_GPU": {
+      "load_ms": 70.07474999409169,
+      "first_prediction_ms": 66.33504197816364,
+      "warm_prediction": {
+        "count": 30,
+        "median_ms": 0.9288130095228553,
+        "p95_ms": 2.3798043403076,
+        "min_ms": 0.8875419734977186,
+        "max_ms": 2.6384999800939113
+      },
+      "timed_predictions_correct": 30,
+      "calls": [
+        {
+          "row": 0,
+          "milliseconds": 2.5134169845841825
+        },
+        {
+          "row": 68,
+          "milliseconds": 2.6384999800939113
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.9895419827662408
+        },
+        {
+          "row": 0,
+          "milliseconds": 2.21649999730289
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.2297500215936452
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.1009590234607458
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9331250039394945
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9082920150831342
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9552080009598285
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.4009579899720848
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.207541994517669
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9119999886024743
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9255839977413416
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.0290830105077475
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.932042021304369
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9105000062845647
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9429579949937761
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9207910043187439
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.8967499888967723
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.2767080042976886
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9552080009598285
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9043329919222742
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9005409956444055
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.8939160034060478
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.8917910163290799
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.8989170019049197
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.8875419734977186
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.88900001719594
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.8909160096663982
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.8875839994288981
+        }
+      ],
+      "compute_plan": {
+        "kind": "MLComputePlan preferred device; not a runtime utilization or power trace",
+        "assigned_operation_count": 173,
+        "device_counts": {
+          "cpu": 0,
+          "gpu": 173,
+          "ane": 0,
+          "unknown": 0
+        },
+        "unassigned_operation_types": {
+          "const": 239
+        },
+        "operations": [
+          {
+            "name": "option_mask_1",
+            "type": "ios17.not_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "context_mask",
+            "type": "ios17.not_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "var_27",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "fill_like_0_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "gpu"
+          },
+          {
+            "name": "var_43",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_43_to_fp16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "safe_context_ids_cast_fp16",
+            "type": "ios17.concat",
+            "device": "gpu"
+          },
+          {
+            "name": "context_ids_to_int16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "cast_54",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "greater_equal_0",
+            "type": "ios17.greater_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "add_3",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "select_0",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "select_0_to_int16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "var_59_cast_fp16_cast_uint16_cast_uint16",
+            "type": "ios17.gather",
+            "device": "gpu"
+          },
+          {
+            "name": "src_1_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "mask_1_cast_fp16",
+            "type": "ios17.equal",
+            "device": "gpu"
+          },
+          {
+            "name": "key_padding_mask_1_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "query_1_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "query_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_0_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "var_124_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_125_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_126_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "var_127_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "gpu"
+          },
+          {
+            "name": "q_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "k_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "v_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_136_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_143_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_150_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_154_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_156_cast_fp16",
+            "type": "tile",
+            "device": "gpu"
+          },
+          {
+            "name": "q_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "q_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "k_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "k_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "v_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "v_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "mul_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_0_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "add_0_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "softmax_0_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_1_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_172_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_3_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_1_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_7_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "input_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "input_5_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "input_7_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_2_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "input_11_cast_fp16",
+            "type": "ios16.relu",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_3_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "input_17_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "query_5_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "query_7_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_4_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "var_231_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_232_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_233_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "var_234_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "gpu"
+          },
+          {
+            "name": "q_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "k_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "v_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_243_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_250_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_257_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "q_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "q_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "k_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "k_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "v_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "v_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "mul_3_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_1_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "add_1_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "softmax_1_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_9_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_279_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_5_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_15_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "input_19_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "input_21_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "input_23_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_6_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "input_27_cast_fp16",
+            "type": "ios16.relu",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_7_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "context_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "flat_ids",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "flat_mask",
+            "type": "ios17.not_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "var_333",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "fill_like_1_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "gpu"
+          },
+          {
+            "name": "var_349",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_349_to_fp16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "safe_ids_cast_fp16",
+            "type": "ios17.concat",
+            "device": "gpu"
+          },
+          {
+            "name": "flat_ids_to_int16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "cast_55",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "greater_equal_1",
+            "type": "ios17.greater_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "add_4",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "select_1",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "select_1_to_int16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "var_365_cast_fp16_cast_uint16_cast_uint16",
+            "type": "ios17.gather",
+            "device": "gpu"
+          },
+          {
+            "name": "src_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "mask_cast_fp16",
+            "type": "ios17.equal",
+            "device": "gpu"
+          },
+          {
+            "name": "key_padding_mask_7_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "query_9_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "query_11_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_8_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "var_428_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_429_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_430_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "var_431_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "gpu"
+          },
+          {
+            "name": "q_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "k_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "v_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_440_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_447_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_454_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_458_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_460_cast_fp16",
+            "type": "tile",
+            "device": "gpu"
+          },
+          {
+            "name": "q_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "q_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "k_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "k_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "v_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "v_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "mul_5_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_2_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "add_2_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "softmax_2_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_17_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_476_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_19_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_9_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "input_35_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "input_37_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "input_39_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_10_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "input_43_cast_fp16",
+            "type": "ios16.relu",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_11_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "hidden_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "var_504",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_504_to_fp16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "var_510_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_515_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "gpu"
+          },
+          {
+            "name": "var_520_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "gpu"
+          },
+          {
+            "name": "var_522_cast_fp16",
+            "type": "ios17.maximum",
+            "device": "gpu"
+          },
+          {
+            "name": "pooled_cast_fp16",
+            "type": "ios17.real_div",
+            "device": "gpu"
+          },
+          {
+            "name": "options_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "input_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "input_53_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_12_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_13_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_14_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_3_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "_inversed_scores_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_567",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_569",
+            "type": "ios17.logical_not",
+            "device": "gpu"
+          },
+          {
+            "name": "scores_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "var_571_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_4_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_574_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_576_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "gpu"
+          },
+          {
+            "name": "_inversed_logits_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_579",
+            "type": "ios17.logical_not",
+            "device": "gpu"
+          },
+          {
+            "name": "logits_3_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "var_587_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "gpu"
+          },
+          {
+            "name": "logits_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "var_591_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "probabilities",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "logits",
+            "type": "ios17.cast",
+            "device": "gpu"
+          }
+        ]
+      }
+    },
+    "CPU_AND_NE": {
+      "load_ms": 566.8206670088693,
+      "first_prediction_ms": 1.6522080113645643,
+      "warm_prediction": {
+        "count": 30,
+        "median_ms": 0.9285830019507557,
+        "p95_ms": 0.9725897951284423,
+        "min_ms": 0.9064170008059591,
+        "max_ms": 1.2301660026423633
+      },
+      "timed_predictions_correct": 30,
+      "calls": [
+        {
+          "row": 0,
+          "milliseconds": 0.9575410222169012
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9647910192143172
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9704580006655306
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9583340142853558
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9467090130783617
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.2301660026423633
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9743339905980974
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9361249976791441
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9265419794246554
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9583329956512898
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9652920125517994
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9257500059902668
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9283330000471324
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9066659840755165
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9307079890277237
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9274999902117997
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9069579828064889
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9290000016335398
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.927332992432639
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.917499972274527
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9173330035991967
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9288330038543791
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9251659794244915
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9205000242218375
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9272919851355255
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9192500147037208
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.933834002353251
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9269170113839209
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9406250028405339
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9064170008059591
+        }
+      ],
+      "compute_plan": {
+        "kind": "MLComputePlan preferred device; not a runtime utilization or power trace",
+        "assigned_operation_count": 173,
+        "device_counts": {
+          "cpu": 24,
+          "gpu": 0,
+          "ane": 149,
+          "unknown": 0
+        },
+        "unassigned_operation_types": {
+          "const": 239
+        },
+        "operations": [
+          {
+            "name": "option_mask_1",
+            "type": "ios17.not_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "context_mask",
+            "type": "ios17.not_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "var_27",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "fill_like_0_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "ane"
+          },
+          {
+            "name": "var_43",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "var_43_to_fp16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "safe_context_ids_cast_fp16",
+            "type": "ios17.concat",
+            "device": "ane"
+          },
+          {
+            "name": "context_ids_to_int16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "cast_54",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "greater_equal_0",
+            "type": "ios17.greater_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "add_3",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "select_0",
+            "type": "select",
+            "device": "cpu"
+          },
+          {
+            "name": "select_0_to_int16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "var_59_cast_fp16_cast_uint16_cast_uint16",
+            "type": "ios17.gather",
+            "device": "cpu"
+          },
+          {
+            "name": "src_1_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "mask_1_cast_fp16",
+            "type": "ios17.equal",
+            "device": "ane"
+          },
+          {
+            "name": "key_padding_mask_1_cast_fp16",
+            "type": "select",
+            "device": "ane"
+          },
+          {
+            "name": "query_1_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "ane"
+          },
+          {
+            "name": "query_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "linear_0_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "var_124_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_125_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "ane"
+          },
+          {
+            "name": "var_126_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "var_127_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "ane"
+          },
+          {
+            "name": "q_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "ane"
+          },
+          {
+            "name": "k_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "ane"
+          },
+          {
+            "name": "v_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "ane"
+          },
+          {
+            "name": "var_136_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_143_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_150_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_154_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_156_cast_fp16",
+            "type": "tile",
+            "device": "ane"
+          },
+          {
+            "name": "q_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "q_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "k_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "k_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "v_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "v_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "mul_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "ane"
+          },
+          {
+            "name": "matmul_0_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "ane"
+          },
+          {
+            "name": "add_0_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "softmax_0_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "ane"
+          },
+          {
+            "name": "attn_output_1_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "ane"
+          },
+          {
+            "name": "var_172_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "attn_output_3_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "linear_1_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "attn_output_7_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "input_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "input_5_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "input_7_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "ane"
+          },
+          {
+            "name": "linear_2_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "input_11_cast_fp16",
+            "type": "ios16.relu",
+            "device": "ane"
+          },
+          {
+            "name": "linear_3_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "input_17_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "query_5_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "ane"
+          },
+          {
+            "name": "query_7_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "linear_4_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "var_231_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_232_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "ane"
+          },
+          {
+            "name": "var_233_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "var_234_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "ane"
+          },
+          {
+            "name": "q_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "ane"
+          },
+          {
+            "name": "k_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "ane"
+          },
+          {
+            "name": "v_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "ane"
+          },
+          {
+            "name": "var_243_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_250_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_257_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "q_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "q_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "k_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "k_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "v_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "v_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "mul_3_cast_fp16",
+            "type": "ios17.mul",
+            "device": "ane"
+          },
+          {
+            "name": "matmul_1_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "ane"
+          },
+          {
+            "name": "add_1_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "softmax_1_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "ane"
+          },
+          {
+            "name": "attn_output_9_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "ane"
+          },
+          {
+            "name": "var_279_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "attn_output_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "linear_5_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "attn_output_15_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "input_19_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "input_21_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "input_23_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "ane"
+          },
+          {
+            "name": "linear_6_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "input_27_cast_fp16",
+            "type": "ios16.relu",
+            "device": "ane"
+          },
+          {
+            "name": "linear_7_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "context_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "flat_ids",
+            "type": "ios17.reshape",
+            "device": "cpu"
+          },
+          {
+            "name": "flat_mask",
+            "type": "ios17.not_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "var_333",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "fill_like_1_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "ane"
+          },
+          {
+            "name": "var_349",
+            "type": "ios17.slice_by_index",
+            "device": "cpu"
+          },
+          {
+            "name": "var_349_to_fp16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "safe_ids_cast_fp16",
+            "type": "ios17.concat",
+            "device": "ane"
+          },
+          {
+            "name": "flat_ids_to_int16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "cast_55",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "greater_equal_1",
+            "type": "ios17.greater_equal",
+            "device": "cpu"
+          },
+          {
+            "name": "add_4",
+            "type": "ios17.add",
+            "device": "cpu"
+          },
+          {
+            "name": "select_1",
+            "type": "select",
+            "device": "cpu"
+          },
+          {
+            "name": "select_1_to_int16",
+            "type": "ios17.cast",
+            "device": "cpu"
+          },
+          {
+            "name": "var_365_cast_fp16_cast_uint16_cast_uint16",
+            "type": "ios17.gather",
+            "device": "cpu"
+          },
+          {
+            "name": "src_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "mask_cast_fp16",
+            "type": "ios17.equal",
+            "device": "ane"
+          },
+          {
+            "name": "key_padding_mask_7_cast_fp16",
+            "type": "select",
+            "device": "ane"
+          },
+          {
+            "name": "query_9_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "ane"
+          },
+          {
+            "name": "query_11_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "linear_8_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "var_428_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_429_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "ane"
+          },
+          {
+            "name": "var_430_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "var_431_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "ane"
+          },
+          {
+            "name": "q_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "ane"
+          },
+          {
+            "name": "k_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "ane"
+          },
+          {
+            "name": "v_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "ane"
+          },
+          {
+            "name": "var_440_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_447_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_454_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_458_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "var_460_cast_fp16",
+            "type": "tile",
+            "device": "ane"
+          },
+          {
+            "name": "q_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "q_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "k_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "k_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "v_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "v_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "mul_5_cast_fp16",
+            "type": "ios17.mul",
+            "device": "ane"
+          },
+          {
+            "name": "matmul_2_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "ane"
+          },
+          {
+            "name": "add_2_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "softmax_2_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "ane"
+          },
+          {
+            "name": "attn_output_17_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "ane"
+          },
+          {
+            "name": "var_476_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "attn_output_19_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "linear_9_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "attn_output_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "input_35_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "ane"
+          },
+          {
+            "name": "input_37_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "input_39_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "ane"
+          },
+          {
+            "name": "linear_10_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "input_43_cast_fp16",
+            "type": "ios16.relu",
+            "device": "ane"
+          },
+          {
+            "name": "linear_11_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "hidden_cast_fp16",
+            "type": "ios17.add",
+            "device": "ane"
+          },
+          {
+            "name": "var_504",
+            "type": "ios17.expand_dims",
+            "device": "ane"
+          },
+          {
+            "name": "var_504_to_fp16",
+            "type": "ios17.cast",
+            "device": "ane"
+          },
+          {
+            "name": "var_510_cast_fp16",
+            "type": "ios17.mul",
+            "device": "ane"
+          },
+          {
+            "name": "var_515_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "ane"
+          },
+          {
+            "name": "var_520_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "ane"
+          },
+          {
+            "name": "var_522_cast_fp16",
+            "type": "ios17.maximum",
+            "device": "ane"
+          },
+          {
+            "name": "pooled_cast_fp16",
+            "type": "ios17.real_div",
+            "device": "ane"
+          },
+          {
+            "name": "options_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "ane"
+          },
+          {
+            "name": "input_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "ane"
+          },
+          {
+            "name": "input_53_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "ane"
+          },
+          {
+            "name": "linear_12_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "linear_13_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "linear_14_cast_fp16",
+            "type": "ios17.linear",
+            "device": "ane"
+          },
+          {
+            "name": "matmul_3_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "ane"
+          },
+          {
+            "name": "_inversed_scores_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "ane"
+          },
+          {
+            "name": "var_567",
+            "type": "ios17.expand_dims",
+            "device": "ane"
+          },
+          {
+            "name": "var_569",
+            "type": "ios17.logical_not",
+            "device": "ane"
+          },
+          {
+            "name": "scores_cast_fp16",
+            "type": "select",
+            "device": "ane"
+          },
+          {
+            "name": "var_571_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "ane"
+          },
+          {
+            "name": "matmul_4_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "ane"
+          },
+          {
+            "name": "var_574_cast_fp16",
+            "type": "ios17.mul",
+            "device": "ane"
+          },
+          {
+            "name": "var_576_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "ane"
+          },
+          {
+            "name": "_inversed_logits_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "ane"
+          },
+          {
+            "name": "var_579",
+            "type": "ios17.logical_not",
+            "device": "ane"
+          },
+          {
+            "name": "logits_3_cast_fp16",
+            "type": "select",
+            "device": "ane"
+          },
+          {
+            "name": "var_587_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "ane"
+          },
+          {
+            "name": "logits_cast_fp16",
+            "type": "select",
+            "device": "ane"
+          },
+          {
+            "name": "var_591_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "ane"
+          },
+          {
+            "name": "probabilities",
+            "type": "ios17.cast",
+            "device": "ane"
+          },
+          {
+            "name": "logits",
+            "type": "ios17.cast",
+            "device": "ane"
+          }
+        ]
+      }
+    },
+    "ALL": {
+      "load_ms": 115.82287499913946,
+      "first_prediction_ms": 17.531749996123835,
+      "warm_prediction": {
+        "count": 30,
+        "median_ms": 0.9119170135818422,
+        "p95_ms": 1.2285901117138565,
+        "min_ms": 0.8736249874345958,
+        "max_ms": 1.7777080065570772
+      },
+      "timed_predictions_correct": 30,
+      "calls": [
+        {
+          "row": 0,
+          "milliseconds": 1.7777080065570772
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.2005419994238764
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9608750115148723
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.0891249985434115
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.2131670082453638
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.241209014551714
+        },
+        {
+          "row": 0,
+          "milliseconds": 1.1116660025436431
+        },
+        {
+          "row": 68,
+          "milliseconds": 1.179958024295047
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.8888749871402979
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.8894159982446581
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9866250038612634
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9067920036613941
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.8964589796960354
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.901333027286455
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9048339852597564
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9170420235022902
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.8820410002954304
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.8736249874345958
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.8920000109355897
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.8972920186351985
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.888916983967647
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.8755000017117709
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9061669989023358
+        },
+        {
+          "row": 130,
+          "milliseconds": 1.0763329919427633
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9489590011071414
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.9267920104321092
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.9253750031348318
+        },
+        {
+          "row": 0,
+          "milliseconds": 0.9227920090779662
+        },
+        {
+          "row": 68,
+          "milliseconds": 0.8931249903980643
+        },
+        {
+          "row": 130,
+          "milliseconds": 0.8973750227596611
+        }
+      ],
+      "compute_plan": {
+        "kind": "MLComputePlan preferred device; not a runtime utilization or power trace",
+        "assigned_operation_count": 173,
+        "device_counts": {
+          "cpu": 0,
+          "gpu": 173,
+          "ane": 0,
+          "unknown": 0
+        },
+        "unassigned_operation_types": {
+          "const": 239
+        },
+        "operations": [
+          {
+            "name": "option_mask_1",
+            "type": "ios17.not_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "context_mask",
+            "type": "ios17.not_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "var_27",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "fill_like_0_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "gpu"
+          },
+          {
+            "name": "var_43",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_43_to_fp16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "safe_context_ids_cast_fp16",
+            "type": "ios17.concat",
+            "device": "gpu"
+          },
+          {
+            "name": "context_ids_to_int16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "cast_54",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "greater_equal_0",
+            "type": "ios17.greater_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "add_3",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "select_0",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "select_0_to_int16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "var_59_cast_fp16_cast_uint16_cast_uint16",
+            "type": "ios17.gather",
+            "device": "gpu"
+          },
+          {
+            "name": "src_1_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "mask_1_cast_fp16",
+            "type": "ios17.equal",
+            "device": "gpu"
+          },
+          {
+            "name": "key_padding_mask_1_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "query_1_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "query_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_0_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "var_124_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_125_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_126_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "var_127_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "gpu"
+          },
+          {
+            "name": "q_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "k_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "v_1_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_136_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_143_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_150_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_154_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_156_cast_fp16",
+            "type": "tile",
+            "device": "gpu"
+          },
+          {
+            "name": "q_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "q_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "k_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "k_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "v_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "v_5_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "mul_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_0_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "add_0_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "softmax_0_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_1_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_172_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_3_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_1_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_7_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "input_3_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "input_5_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "input_7_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_2_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "input_11_cast_fp16",
+            "type": "ios16.relu",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_3_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "input_17_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "query_5_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "query_7_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_4_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "var_231_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_232_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_233_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "var_234_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "gpu"
+          },
+          {
+            "name": "q_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "k_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "v_7_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_243_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_250_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_257_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "q_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "q_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "k_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "k_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "v_9_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "v_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "mul_3_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_1_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "add_1_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "softmax_1_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_9_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_279_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_11_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_5_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_15_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "input_19_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "input_21_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "input_23_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_6_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "input_27_cast_fp16",
+            "type": "ios16.relu",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_7_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "context_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "flat_ids",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "flat_mask",
+            "type": "ios17.not_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "var_333",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "fill_like_1_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "gpu"
+          },
+          {
+            "name": "var_349",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_349_to_fp16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "safe_ids_cast_fp16",
+            "type": "ios17.concat",
+            "device": "gpu"
+          },
+          {
+            "name": "flat_ids_to_int16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "cast_55",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "greater_equal_1",
+            "type": "ios17.greater_equal",
+            "device": "gpu"
+          },
+          {
+            "name": "add_4",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "select_1",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "select_1_to_int16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "var_365_cast_fp16_cast_uint16_cast_uint16",
+            "type": "ios17.gather",
+            "device": "gpu"
+          },
+          {
+            "name": "src_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "mask_cast_fp16",
+            "type": "ios17.equal",
+            "device": "gpu"
+          },
+          {
+            "name": "key_padding_mask_7_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "query_9_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "query_11_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_8_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "var_428_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_429_cast_fp16",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_430_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "var_431_cast_fp16",
+            "type": "ios17.squeeze",
+            "device": "gpu"
+          },
+          {
+            "name": "q_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "k_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "v_13_cast_fp16",
+            "type": "ios17.slice_by_index",
+            "device": "gpu"
+          },
+          {
+            "name": "var_440_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_447_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_454_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_458_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "var_460_cast_fp16",
+            "type": "tile",
+            "device": "gpu"
+          },
+          {
+            "name": "q_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "q_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "k_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "k_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "v_15_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "v_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "mul_5_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_2_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "add_2_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "softmax_2_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_17_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_476_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_19_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_9_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "attn_output_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "input_35_cast_fp16",
+            "type": "ios17.transpose",
+            "device": "gpu"
+          },
+          {
+            "name": "input_37_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "input_39_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_10_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "input_43_cast_fp16",
+            "type": "ios16.relu",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_11_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "hidden_cast_fp16",
+            "type": "ios17.add",
+            "device": "gpu"
+          },
+          {
+            "name": "var_504",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_504_to_fp16",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "var_510_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_515_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "gpu"
+          },
+          {
+            "name": "var_520_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "gpu"
+          },
+          {
+            "name": "var_522_cast_fp16",
+            "type": "ios17.maximum",
+            "device": "gpu"
+          },
+          {
+            "name": "pooled_cast_fp16",
+            "type": "ios17.real_div",
+            "device": "gpu"
+          },
+          {
+            "name": "options_cast_fp16",
+            "type": "ios17.reshape",
+            "device": "gpu"
+          },
+          {
+            "name": "input_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "input_53_cast_fp16",
+            "type": "ios17.layer_norm",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_12_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_13_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "linear_14_cast_fp16",
+            "type": "ios17.linear",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_3_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "_inversed_scores_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_567",
+            "type": "ios17.expand_dims",
+            "device": "gpu"
+          },
+          {
+            "name": "var_569",
+            "type": "ios17.logical_not",
+            "device": "gpu"
+          },
+          {
+            "name": "scores_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "var_571_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "matmul_4_cast_fp16",
+            "type": "ios17.matmul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_574_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_576_cast_fp16",
+            "type": "ios16.reduce_sum",
+            "device": "gpu"
+          },
+          {
+            "name": "_inversed_logits_1_cast_fp16",
+            "type": "ios17.mul",
+            "device": "gpu"
+          },
+          {
+            "name": "var_579",
+            "type": "ios17.logical_not",
+            "device": "gpu"
+          },
+          {
+            "name": "logits_3_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "var_587_cast_fp16",
+            "type": "ios16.fill_like",
+            "device": "gpu"
+          },
+          {
+            "name": "logits_cast_fp16",
+            "type": "select",
+            "device": "gpu"
+          },
+          {
+            "name": "var_591_cast_fp16",
+            "type": "ios16.softmax",
+            "device": "gpu"
+          },
+          {
+            "name": "probabilities",
+            "type": "ios17.cast",
+            "device": "gpu"
+          },
+          {
+            "name": "logits",
+            "type": "ios17.cast",
+            "device": "gpu"
+          }
+        ]
+      }
+    }
+  },
+  "script_sha256": "d5e1386f54fc6c482647120e593e7ffbbe4bbb277c2cc6d4949154660fe239fd"
+}
