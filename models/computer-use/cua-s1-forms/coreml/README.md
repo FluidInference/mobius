@@ -290,3 +290,42 @@ loads every checkpoint tensor. See [assets.lock.json](assets.lock.json) for
 download hashes and [vendor/README.md](vendor/README.md) for the unmodified
 reference files, evaluator, and license notices. The pinned model and dataset
 cards declare MIT; Cua and Minimal Labs source notices are retained.
+
+## Live browser proof and expanded Swift benchmark
+
+The [native Swift browser demo](https://github.com/FluidInference/FluidAudio/tree/codex/cua-s1-forms/Examples/CuaS1FormsDemo)
+loads both variants into independent WKWebViews. It reads actual DOM labels,
+roles and state, asks the model for a choice, applies compatible fill/check
+actions, dispatches events, and independently verifies the resulting DOM.
+Source values are user-entered or supplied by the original public examples.
+HTML contains controls, not source values or expected choices. The
+[recording](https://github.com/FluidInference/FluidAudio/blob/codex/cua-s1-forms/Examples/CuaS1FormsDemo/browser-demo.mp4)
+shows patient, job and insurance forms: **100/100 original decisions** across
+both models, with event-count, stale-observation and explicit-click checks.
+Full actual contexts/candidates/actions are in [browser-validation.json](reports/browser-validation.json).
+This is bounded local browser automation, not arbitrary desktop control or PDF extraction.
+
+The expanded **release Swift** comparison uses all 50 initial controls, both
+models resident, one warmup pass per model and ABBA with two full passes per
+block (200 timed calls/model). All 400 choices match upstream labels. On the
+M5 Pro / 24 GB / macOS 27.0 (26A428), original median/p95 is **0.912/0.933 ms**;
+ANE gather is **0.961/0.984 ms**, about 5.4% slower by median. This timer includes
+Swift encoding + Core ML + output decoding and excludes browser/rendering/animation.
+See [swift-variant-comparison.json](reports/swift-variant-comparison.json) for
+raw samples, exact model hashes, per-form statistics, and load/first-call costs.
+The earlier compute-plan counts still apply to these unchanged artifacts;
+no utilization, energy saving or held-out accuracy claim is made.
+
+Reproduce from the FluidAudio branch:
+
+```bash
+Examples/CuaS1FormsDemo/run.sh --browser
+swift run --package-path Examples/CuaS1FormsDemo -c release CuaS1FormsDemo \
+  --benchmark --report /absolute/path/to/variant-comparison.json \
+  --hardware "Describe the measured Mac"
+```
+
+Both packages are fetched by pinned revisions and verified hashes, or supplied
+with `--model /path/to/original.mlpackage --ane-model /path/to/ane-gather.mlpackage`.
+The [demo README](https://github.com/FluidInference/FluidAudio/tree/codex/cua-s1-forms/Examples/CuaS1FormsDemo#matched-swift-benchmark)
+also documents real-browser recording and its separate validation trace.
