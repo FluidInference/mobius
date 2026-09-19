@@ -27,7 +27,7 @@ uv run pytest -q
 For independent Swift/runtime parity, `uv run python export-reference.py` writes
 the unmodified PyTorch probabilities for every pinned demo row to
 `build/reference-probabilities.json`, including the model revision and dataset
-SHA-256. The [FluidAudio integration checks](https://github.com/FluidInference/FluidAudio/blob/codex/cua-s1-forms/Documentation/Decision/CuaS1Forms.md)
+SHA-256. The [FluidAudio integration checks](#swift-integration-checks)
 consume this file without requiring PyTorch in the application.
 
 The converted package and compiled bundle are proposed in
@@ -94,6 +94,29 @@ separately (median 0.038 ms). Load measurements may benefit from existing system
 caches; they are not a guaranteed first-install cold-start measurement. PyTorch
 uses two CPU threads and variable-length inputs; no optimized MPS comparison is
 claimed.
+
+## Swift integration checks
+
+The [Swift API reference](https://github.com/FluidInference/FluidAudio/blob/codex/cua-s1-forms/Documentation/API.md#decision-scoring)
+describes local loading, input limits, and output validation. After the base setup
+above, `uv run python export-reference.py` exports probabilities from the unmodified
+PyTorch model plus the exact demo SHA-256 and checkpoint revision.
+
+Run from FluidAudio with absolute paths to those generated assets:
+
+```bash
+FLUIDAUDIO_CUA_MODEL_PATH=/path/to/coreml/build/cua_s1_forms_fp16_options32.mlpackage \
+FLUIDAUDIO_CUA_DEMO_PATH=/path/to/coreml/artifacts/demo.jsonl \
+FLUIDAUDIO_CUA_REFERENCE_PATH=/path/to/coreml/build/reference-probabilities.json \
+swift test --filter CuaS1Forms
+```
+
+Set `FLUIDAUDIO_CUA_COMPILED_PATH` to the real `.mlmodelc` to include the shared-cache
+check; see [compilation instructions](#device-placement). Use the ANE-gather package
+path to check that variant against the same reference. Integration tests skip if
+their asset paths are absent; encoding, limits, rejection, and registry unit tests
+still run. Tests do not automatically download models or data. XCTest requires a
+full Xcode installation on macOS.
 
 ## Full published synthetic test
 
