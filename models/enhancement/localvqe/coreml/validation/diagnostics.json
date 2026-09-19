@@ -1,0 +1,2859 @@
+{
+  "weights": {
+    "v1.2": {
+      "metadata": {
+        "general.architecture": "localvqe",
+        "localvqe.version": 3,
+        "localvqe.audio_transform": "stft256",
+        "localvqe.norm_type": "causal_group_norm",
+        "localvqe.activation": "silu",
+        "localvqe.n_fft": 512,
+        "localvqe.hop_length": 256,
+        "localvqe.n_freq_bins": 256,
+        "localvqe.sample_rate": 16000,
+        "localvqe.dmax": 64,
+        "localvqe.power_law_c": 0.30000001192092896,
+        "localvqe.align_hidden": 32,
+        "localvqe.bn_folded": false,
+        "localvqe.quantized": false,
+        "localvqe.kernel_size_h": 4,
+        "localvqe.kernel_size_w": 4,
+        "localvqe.bottleneck_hidden": 162,
+        "localvqe.mic_channels.0": 2,
+        "localvqe.mic_channels.1": 32,
+        "localvqe.mic_channels.2": 40,
+        "localvqe.mic_channels.3": 40,
+        "localvqe.mic_channels.4": 40,
+        "localvqe.mic_channels.5": 40,
+        "localvqe.mic_channels.count": 6,
+        "localvqe.far_channels.0": 2,
+        "localvqe.far_channels.1": 32,
+        "localvqe.far_channels.2": 40,
+        "localvqe.far_channels.count": 3
+      },
+      "tensors": [
+        {
+          "name": "encoder.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            512,
+            1,
+            512
+          ]
+        },
+        {
+          "name": "decoder.linear.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            512,
+            512
+          ]
+        },
+        {
+          "name": "mic_enc1.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            2
+          ]
+        },
+        {
+          "name": "mic_enc1.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            2
+          ]
+        },
+        {
+          "name": "mic_enc1.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            2,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc1.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "mic_enc1.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "mic_enc1.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "mic_enc1.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc1.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "mic_enc2.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "mic_enc2.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "mic_enc2.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc2.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc2.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc2.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc2.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc2.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "far_enc1.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            2
+          ]
+        },
+        {
+          "name": "far_enc1.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            2
+          ]
+        },
+        {
+          "name": "far_enc1.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            2,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "far_enc1.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc1.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc1.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc1.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "far_enc1.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc2.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc2.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc2.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "far_enc2.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "far_enc2.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "far_enc2.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "far_enc2.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "far_enc2.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "align.pconv_mic.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            40,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "align.pconv_mic.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "align.pconv_ref.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            40,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "align.pconv_ref.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "align.conv.1.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            1,
+            32,
+            5,
+            3
+          ]
+        },
+        {
+          "name": "align.conv.1.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            1
+          ]
+        },
+        {
+          "name": "mic_enc3.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            80
+          ]
+        },
+        {
+          "name": "mic_enc3.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            80
+          ]
+        },
+        {
+          "name": "mic_enc3.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            80,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc3.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc3.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc3.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc3.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc3.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc4.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc4.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc4.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc4.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc4.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc4.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc4.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc4.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc5.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc5.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc5.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc5.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc5.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc5.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "mic_enc5.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc5.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "bottleneck.B_real",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            162
+          ]
+        },
+        {
+          "name": "bottleneck.B_imag",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            162
+          ]
+        },
+        {
+          "name": "bottleneck.C_real",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            162
+          ]
+        },
+        {
+          "name": "bottleneck.C_imag",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            162
+          ]
+        },
+        {
+          "name": "bottleneck.D",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            320
+          ]
+        },
+        {
+          "name": "bottleneck.input_proj.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            162,
+            320
+          ]
+        },
+        {
+          "name": "bottleneck.input_proj.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            162
+          ]
+        },
+        {
+          "name": "bottleneck.output_proj.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            320,
+            162
+          ]
+        },
+        {
+          "name": "bottleneck.output_proj.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            320
+          ]
+        },
+        {
+          "name": "dec5.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec5.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec5.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec5.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec5.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec5.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec5.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec5.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec5.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec5.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec5.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            80,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec5.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            80
+          ]
+        },
+        {
+          "name": "dec4.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec4.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec4.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec4.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec4.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec4.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec4.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec4.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec4.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec4.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec4.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            80,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec4.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            80
+          ]
+        },
+        {
+          "name": "dec3.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec3.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec3.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec3.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec3.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec3.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec3.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec3.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec3.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec3.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec3.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            80,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec3.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            80
+          ]
+        },
+        {
+          "name": "dec2.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec2.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec2.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec2.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec2.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec2.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec2.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec2.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec2.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec2.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            40
+          ]
+        },
+        {
+          "name": "dec2.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64,
+            40,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec2.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "dec1.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec1.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec1.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec1.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec1.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec1.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec1.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec1.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec1.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec1.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec1.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            54,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec1.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            54
+          ]
+        },
+        {
+          "name": "mask.v_real",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            3
+          ]
+        },
+        {
+          "name": "mask.v_imag",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            3
+          ]
+        },
+        {
+          "name": "bottleneck.a_real",
+          "status": "diff",
+          "maxdiff": 5.960464477539063e-08,
+          "shape": [
+            162
+          ]
+        },
+        {
+          "name": "bottleneck.a_imag",
+          "status": "diff",
+          "maxdiff": 5.960464477539063e-08,
+          "shape": [
+            162
+          ]
+        }
+      ],
+      "PT_only": [
+        "align.temperature",
+        "bottleneck.A_log_rate",
+        "bottleneck.A_theta"
+      ]
+    },
+    "v1.3": {
+      "metadata": {
+        "general.architecture": "localvqe",
+        "localvqe.version": 3,
+        "localvqe.audio_transform": "stft256",
+        "localvqe.norm_type": "causal_group_norm",
+        "localvqe.activation": "silu",
+        "localvqe.n_fft": 512,
+        "localvqe.hop_length": 256,
+        "localvqe.n_freq_bins": 256,
+        "localvqe.sample_rate": 16000,
+        "localvqe.dmax": 64,
+        "localvqe.power_law_c": 0.30000001192092896,
+        "localvqe.align_hidden": 32,
+        "localvqe.bn_folded": false,
+        "localvqe.quantized": false,
+        "localvqe.kernel_size_h": 4,
+        "localvqe.kernel_size_w": 4,
+        "localvqe.bottleneck_hidden": 256,
+        "localvqe.mic_channels.0": 2,
+        "localvqe.mic_channels.1": 112,
+        "localvqe.mic_channels.2": 32,
+        "localvqe.mic_channels.3": 104,
+        "localvqe.mic_channels.4": 96,
+        "localvqe.mic_channels.5": 152,
+        "localvqe.mic_channels.count": 6,
+        "localvqe.far_channels.0": 2,
+        "localvqe.far_channels.1": 64,
+        "localvqe.far_channels.2": 32,
+        "localvqe.far_channels.count": 3
+      },
+      "tensors": [
+        {
+          "name": "encoder.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            512,
+            1,
+            512
+          ]
+        },
+        {
+          "name": "decoder.linear.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            512,
+            512
+          ]
+        },
+        {
+          "name": "mic_enc1.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            2
+          ]
+        },
+        {
+          "name": "mic_enc1.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            2
+          ]
+        },
+        {
+          "name": "mic_enc1.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112,
+            2,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc1.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "mic_enc1.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "mic_enc1.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "mic_enc1.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112,
+            112,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc1.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "mic_enc2.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "mic_enc2.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "mic_enc2.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            112,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc2.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "mic_enc2.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "mic_enc2.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "mic_enc2.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc2.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc1.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            2
+          ]
+        },
+        {
+          "name": "far_enc1.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            2
+          ]
+        },
+        {
+          "name": "far_enc1.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64,
+            2,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "far_enc1.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "far_enc1.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "far_enc1.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "far_enc1.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64,
+            64,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "far_enc1.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "far_enc2.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "far_enc2.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "far_enc2.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            64,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "far_enc2.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc2.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc2.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "far_enc2.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "far_enc2.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "align.pconv_mic.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "align.pconv_mic.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "align.pconv_ref.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "align.pconv_ref.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "align.conv.1.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            1,
+            32,
+            5,
+            3
+          ]
+        },
+        {
+          "name": "align.conv.1.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            1
+          ]
+        },
+        {
+          "name": "mic_enc3.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "mic_enc3.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "mic_enc3.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104,
+            64,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc3.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "mic_enc3.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "mic_enc3.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "mic_enc3.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104,
+            104,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc3.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "mic_enc4.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "mic_enc4.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "mic_enc4.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96,
+            104,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc4.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "mic_enc4.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "mic_enc4.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "mic_enc4.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96,
+            96,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc4.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "mic_enc5.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "mic_enc5.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "mic_enc5.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152,
+            96,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc5.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "mic_enc5.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "mic_enc5.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "mic_enc5.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152,
+            152,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "mic_enc5.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "bottleneck.B_real",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            256
+          ]
+        },
+        {
+          "name": "bottleneck.B_imag",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            256
+          ]
+        },
+        {
+          "name": "bottleneck.C_real",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            256
+          ]
+        },
+        {
+          "name": "bottleneck.C_imag",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            256
+          ]
+        },
+        {
+          "name": "bottleneck.D",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            1216
+          ]
+        },
+        {
+          "name": "bottleneck.input_proj.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            256,
+            1216
+          ]
+        },
+        {
+          "name": "bottleneck.input_proj.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            256
+          ]
+        },
+        {
+          "name": "bottleneck.output_proj.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            1216,
+            256
+          ]
+        },
+        {
+          "name": "bottleneck.output_proj.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            1216
+          ]
+        },
+        {
+          "name": "dec5.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "dec5.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "dec5.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152,
+            152,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec5.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "dec5.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "dec5.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "dec5.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152,
+            152,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec5.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "dec5.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "dec5.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            152
+          ]
+        },
+        {
+          "name": "dec5.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            192,
+            152,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec5.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            192
+          ]
+        },
+        {
+          "name": "dec4.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "dec4.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "dec4.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96,
+            96,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec4.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "dec4.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "dec4.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "dec4.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96,
+            96,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec4.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "dec4.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "dec4.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "name": "dec4.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            208,
+            96,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec4.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            208
+          ]
+        },
+        {
+          "name": "dec3.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "dec3.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "dec3.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104,
+            104,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec3.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "dec3.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "dec3.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "dec3.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104,
+            104,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec3.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "dec3.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "dec3.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            104
+          ]
+        },
+        {
+          "name": "dec3.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64,
+            104,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec3.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "name": "dec2.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec2.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec2.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec2.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec2.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec2.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec2.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec2.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec2.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec2.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "name": "dec2.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            224,
+            32,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec2.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            224
+          ]
+        },
+        {
+          "name": "dec1.skip_norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "dec1.skip_norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "dec1.skip_conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112,
+            112,
+            1,
+            1
+          ]
+        },
+        {
+          "name": "dec1.skip_conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "dec1.resblock.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "dec1.resblock.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "dec1.resblock.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112,
+            112,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec1.resblock.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "dec1.deconv.norm.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "dec1.deconv.norm.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            112
+          ]
+        },
+        {
+          "name": "dec1.deconv.conv.weight",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            54,
+            112,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "dec1.deconv.conv.bias",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            54
+          ]
+        },
+        {
+          "name": "mask.v_real",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            3
+          ]
+        },
+        {
+          "name": "mask.v_imag",
+          "status": "exact",
+          "maxdiff": 0.0,
+          "shape": [
+            3
+          ]
+        },
+        {
+          "name": "bottleneck.a_real",
+          "status": "diff",
+          "maxdiff": 1.1920928955078125e-07,
+          "shape": [
+            256
+          ]
+        },
+        {
+          "name": "bottleneck.a_imag",
+          "status": "diff",
+          "maxdiff": 1.1920928955078125e-07,
+          "shape": [
+            256
+          ]
+        }
+      ],
+      "PT_only": [
+        "align.temperature",
+        "bottleneck.A_log_rate",
+        "bottleneck.A_theta"
+      ]
+    }
+  },
+  "memmove_control": [
+    {
+      "stem": "t2U2oyODeEuQhnAt3oCksQ_doubletalk",
+      "old_to_fixed": {
+        "maxdiff": 0.0,
+        "snr": 225.862548828125,
+        "different_samples": 0
+      },
+      "fixed_to_current": {
+        "maxdiff": 0.155609130859375,
+        "snr": 19.21150016784668,
+        "different_samples": 329714
+      }
+    },
+    {
+      "stem": "0iQKw06LPEekoH4aMtpObQ_farend-singletalk",
+      "old_to_fixed": {
+        "maxdiff": 0.0,
+        "snr": 217.10113525390625,
+        "different_samples": 0
+      },
+      "fixed_to_current": {
+        "maxdiff": 0.008819580078125,
+        "snr": 38.47868728637695,
+        "different_samples": 51581
+      }
+    },
+    {
+      "stem": "Du0RI678G0yhsNVU5AGKTw_farend-singletalk-with-movement",
+      "old_to_fixed": {
+        "maxdiff": 0.0,
+        "snr": 217.2338104248047,
+        "different_samples": 0
+      },
+      "fixed_to_current": {
+        "maxdiff": 0.05291748046875,
+        "snr": 10.962398529052734,
+        "different_samples": 33974
+      }
+    },
+    {
+      "stem": "f2HsvN51L0ygRLcFvf3udg_nearend-singletalk",
+      "old_to_fixed": {
+        "maxdiff": 0.0,
+        "snr": 230.02671813964844,
+        "different_samples": 0
+      },
+      "fixed_to_current": {
+        "maxdiff": 0.0003662109375,
+        "snr": 82.0847396850586,
+        "different_samples": 1528
+      }
+    }
+  ],
+  "two_phase_copy_control": [
+    {
+      "stem": "0iQKw06LPEekoH4aMtpObQ_farend-singletalk",
+      "old_to_staged": {
+        "max_diff": 0.008819580078125,
+        "snr": 38.4786874304324,
+        "different_samples": 51581
+      },
+      "staged_to_current": {
+        "max_diff": 0.0,
+        "snr": 217.09910303408606,
+        "different_samples": 0
+      }
+    },
+    {
+      "stem": "Du0RI678G0yhsNVU5AGKTw_farend-singletalk-with-movement",
+      "old_to_staged": {
+        "max_diff": 0.05291748046875,
+        "snr": 10.962397319367849,
+        "different_samples": 33974
+      },
+      "staged_to_current": {
+        "max_diff": 0.0,
+        "snr": 216.8986435288508,
+        "different_samples": 0
+      }
+    },
+    {
+      "stem": "f2HsvN51L0ygRLcFvf3udg_nearend-singletalk",
+      "old_to_staged": {
+        "max_diff": 0.0003662109375,
+        "snr": 82.08473720935841,
+        "different_samples": 1528
+      },
+      "staged_to_current": {
+        "max_diff": 0.0,
+        "snr": 230.02675262614412,
+        "different_samples": 0
+      }
+    },
+    {
+      "stem": "t2U2oyODeEuQhnAt3oCksQ_doubletalk",
+      "old_to_staged": {
+        "max_diff": 0.155609130859375,
+        "snr": 19.211500554982713,
+        "different_samples": 329714
+      },
+      "staged_to_current": {
+        "max_diff": 0.0,
+        "snr": 225.84896298477244,
+        "different_samples": 0
+      }
+    }
+  ],
+  "pristine_ggml_control": [
+    {
+      "stem": "0iQKw06LPEekoH4aMtpObQ_farend-singletalk",
+      "equal": true,
+      "max_diff": 0.0
+    },
+    {
+      "stem": "Du0RI678G0yhsNVU5AGKTw_farend-singletalk-with-movement",
+      "equal": true,
+      "max_diff": 0.0
+    },
+    {
+      "stem": "f2HsvN51L0ygRLcFvf3udg_nearend-singletalk",
+      "equal": true,
+      "max_diff": 0.0
+    },
+    {
+      "stem": "t2U2oyODeEuQhnAt3oCksQ_doubletalk",
+      "equal": true,
+      "max_diff": 0.0
+    }
+  ],
+  "fp16_cpu_failures": {
+    "device": "cpu",
+    "torch": "2.7.0",
+    "decoder": "fp32, x2 to GGML gain",
+    "temperature": "unfolded trained value",
+    "renders": [
+      {
+        "version": "v1.2",
+        "precision": "fp16",
+        "stem": "t2U2oyODeEuQhnAt3oCksQ_doubletalk",
+        "scenario": "doubletalk",
+        "samples": 584640,
+        "seconds": 37.6977602080151,
+        "finite": false
+      },
+      {
+        "version": "v1.2",
+        "precision": "fp16",
+        "stem": "0iQKw06LPEekoH4aMtpObQ_farend-singletalk",
+        "scenario": "farend-singletalk",
+        "samples": 382400,
+        "seconds": 21.101270749990363,
+        "finite": false
+      },
+      {
+        "version": "v1.2",
+        "precision": "fp16",
+        "stem": "Du0RI678G0yhsNVU5AGKTw_farend-singletalk-with-movement",
+        "scenario": "farend-singletalk-with-movement",
+        "samples": 382240,
+        "seconds": 21.28982166701462,
+        "finite": false
+      },
+      {
+        "version": "v1.2",
+        "precision": "fp16",
+        "stem": "f2HsvN51L0ygRLcFvf3udg_nearend-singletalk",
+        "scenario": "nearend-singletalk",
+        "samples": 264480,
+        "seconds": 14.724849124992033,
+        "finite": false
+      }
+    ]
+  },
+  "bf16_cpu_fp32_transforms": {
+    "device": "cpu",
+    "torch": "2.7.0",
+    "encoder": "fp32",
+    "body": "bf16 autocast",
+    "decoder": "fp32 x2 to GGML gain",
+    "clips": [
+      {
+        "stem": "t2U2oyODeEuQhnAt3oCksQ_doubletalk",
+        "seconds": 36.36641933300416,
+        "finite": true
+      },
+      {
+        "stem": "0iQKw06LPEekoH4aMtpObQ_farend-singletalk",
+        "seconds": 21.008712249982636,
+        "finite": true
+      },
+      {
+        "stem": "Du0RI678G0yhsNVU5AGKTw_farend-singletalk-with-movement",
+        "seconds": 20.72728133300552,
+        "finite": true
+      },
+      {
+        "stem": "f2HsvN51L0ygRLcFvf3udg_nearend-singletalk",
+        "seconds": 14.390282708016457,
+        "finite": true
+      }
+    ]
+  },
+  "precision_scores": {
+    "protocol": "upstream",
+    "dnsmos_region": "rated",
+    "rows": [
+      {
+        "stem": "t2U2oyODeEuQhnAt3oCksQ_doubletalk",
+        "scenario": "doubletalk",
+        "condition": "bf16_network_fp32_transform",
+        "echo": 4.598698616027832,
+        "deg": 2.791532039642334,
+        "erle_gated": 7.3252177238464355,
+        "ovrl": 2.99813351333253
+      },
+      {
+        "stem": "t2U2oyODeEuQhnAt3oCksQ_doubletalk",
+        "scenario": "doubletalk",
+        "condition": "fp32_public_decoder_unscaled",
+        "echo": 4.613080024719238,
+        "deg": 2.84676456451416,
+        "erle_gated": 13.356925964355469,
+        "ovrl": 3.0549214105471627
+      },
+      {
+        "stem": "0iQKw06LPEekoH4aMtpObQ_farend-singletalk",
+        "scenario": "farend-singletalk",
+        "condition": "bf16_network_fp32_transform",
+        "echo": 4.031400680541992,
+        "deg": 4.999726295471191,
+        "erle_gated": 54.5881462097168,
+        "ovrl": 2.147271251864124
+      },
+      {
+        "stem": "0iQKw06LPEekoH4aMtpObQ_farend-singletalk",
+        "scenario": "farend-singletalk",
+        "condition": "fp32_public_decoder_unscaled",
+        "echo": 4.001368522644043,
+        "deg": 4.999746799468994,
+        "erle_gated": 62.56755447387695,
+        "ovrl": 2.154598997091932
+      },
+      {
+        "stem": "Du0RI678G0yhsNVU5AGKTw_farend-singletalk-with-movement",
+        "scenario": "farend-singletalk-with-movement",
+        "condition": "bf16_network_fp32_transform",
+        "echo": 4.456284523010254,
+        "deg": 4.999748706817627,
+        "erle_gated": 25.56505584716797,
+        "ovrl": 2.060069107185055
+      },
+      {
+        "stem": "Du0RI678G0yhsNVU5AGKTw_farend-singletalk-with-movement",
+        "scenario": "farend-singletalk-with-movement",
+        "condition": "fp32_public_decoder_unscaled",
+        "echo": 4.460177898406982,
+        "deg": 4.999773979187012,
+        "erle_gated": 31.539352416992188,
+        "ovrl": 2.0855865834798974
+      },
+      {
+        "stem": "f2HsvN51L0ygRLcFvf3udg_nearend-singletalk",
+        "scenario": "nearend-singletalk",
+        "condition": "bf16_network_fp32_transform",
+        "echo": 4.999895095825195,
+        "deg": 3.323552131652832,
+        "erle_gated": null,
+        "ovrl": 3.0964323593122294
+      },
+      {
+        "stem": "f2HsvN51L0ygRLcFvf3udg_nearend-singletalk",
+        "scenario": "nearend-singletalk",
+        "condition": "fp32_public_decoder_unscaled",
+        "echo": 4.999895095825195,
+        "deg": 3.323943853378296,
+        "erle_gated": null,
+        "ovrl": 3.0370604948075277
+      }
+    ]
+  },
+  "precision_deltas_vs_coreml": [
+    {
+      "scenario": "doubletalk",
+      "condition": "bf16_network_fp32_transform",
+      "delta_vs_coreml": {
+        "echo": -0.014377593994140625,
+        "deg": -0.05530047416687012,
+        "erle_gated": -0.011126518249511719,
+        "ovrl": -0.011872785062146729
+      }
+    },
+    {
+      "scenario": "doubletalk",
+      "condition": "fp32_public_decoder_unscaled",
+      "delta_vs_coreml": {
+        "echo": 3.814697265625e-06,
+        "deg": -6.794929504394531e-05,
+        "erle_gated": 6.0205817222595215,
+        "ovrl": 0.044915112152486
+      }
+    },
+    {
+      "scenario": "farend-singletalk",
+      "condition": "bf16_network_fp32_transform",
+      "delta_vs_coreml": {
+        "echo": 0.02997446060180664,
+        "deg": -2.0503997802734375e-05,
+        "erle_gated": -1.9503135681152344,
+        "ovrl": -0.009594185425521928
+      }
+    },
+    {
+      "scenario": "farend-singletalk",
+      "condition": "fp32_public_decoder_unscaled",
+      "delta_vs_coreml": {
+        "echo": -5.7697296142578125e-05,
+        "deg": 0.0,
+        "erle_gated": 6.029094696044922,
+        "ovrl": -0.002266440197713937
+      }
+    },
+    {
+      "scenario": "farend-singletalk-with-movement",
+      "condition": "bf16_network_fp32_transform",
+      "delta_vs_coreml": {
+        "echo": -0.0038852691650390625,
+        "deg": -2.5272369384765625e-05,
+        "erle_gated": 0.04578208923339844,
+        "ovrl": 0.010650828666274315
+      }
+    },
+    {
+      "scenario": "farend-singletalk-with-movement",
+      "condition": "fp32_public_decoder_unscaled",
+      "delta_vs_coreml": {
+        "echo": 8.106231689453125e-06,
+        "deg": 0.0,
+        "erle_gated": 6.020078659057617,
+        "ovrl": 0.03616830496111678
+      }
+    },
+    {
+      "scenario": "nearend-singletalk",
+      "condition": "bf16_network_fp32_transform",
+      "delta_vs_coreml": {
+        "echo": -4.76837158203125e-07,
+        "deg": -0.0004563331604003906,
+        "erle_gated": null,
+        "ovrl": 0.002873227432247827
+      }
+    },
+    {
+      "scenario": "nearend-singletalk",
+      "condition": "fp32_public_decoder_unscaled",
+      "delta_vs_coreml": {
+        "echo": -4.76837158203125e-07,
+        "deg": -6.461143493652344e-05,
+        "erle_gated": null,
+        "ovrl": -0.05649863707245384
+      }
+    }
+  ],
+  "diagnostic_manifest_stems": [
+    "t2U2oyODeEuQhnAt3oCksQ_doubletalk",
+    "6q0WZ0szbUGJLWXz0qJQ3A_doubletalk",
+    "447b872c-dee2-4cec-a435-055fec36acfd_doubletalk-with-movement",
+    "f60d129b-a4b2-4fc3-a81d-da7352af020a_doubletalk-with-movement",
+    "0iQKw06LPEekoH4aMtpObQ_farend-singletalk",
+    "ae94b563-c288-4e01-b09a-eff655da435d_farend-singletalk",
+    "Id0hoawnYEa3N1rSk9lofg_farend-singletalk",
+    "Du0RI678G0yhsNVU5AGKTw_farend-singletalk-with-movement",
+    "ecad0894-2824-431f-8f12-f3fa10c13d9a_farend-singletalk-with-movement",
+    "9a4daf9c-72f5-4d01-af14-97f004763053_farend-singletalk-with-movement",
+    "f2HsvN51L0ygRLcFvf3udg_nearend-singletalk",
+    "486b6e4e-4d85-4b50-bc30-5337b331bc55_nearend-singletalk"
+  ],
+  "notes": [
+    "CPU precision diagnostics do not establish CUDA behavior.",
+    "The v1.3 CPU BF16 diagnostic was terminated before completion.",
+    "SNR values with exactly zero difference use a numerical floor; the zero different-sample count is the exact-equality test.",
+    "CPU FP16 nonfinite outputs were recorded as failures and were not scored."
+  ]
+}

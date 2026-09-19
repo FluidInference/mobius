@@ -1,0 +1,25 @@
+# LocalVQE architecture config (learned-tiny variant, ~0.9M params)
+#
+# This file describes the model geometry used for the published checkpoints.
+# Only `model` and `audio` fields are consumed by the inference model;
+# training-side settings live in the (private) training repository.
+
+model:
+  # arch_version mirrors the GGUF `localvqe.version` field:
+  #   1 = legacy: post-conv BatchNorm + ELU
+  #   2 = v1.1: pre-norm CausalGroupNorm + ReLU6 with skip_norm
+  #   3 = v1.2 (current): identical structure to v2, SiLU in place of ReLU6
+  # The published localvqe-v1.2-1.3M.pt requires arch_version: 3 and dmax: 64.
+  # For v1.1: arch_version: 2 and dmax: 32.
+  arch_version: 3
+  mic_channels: [2, 32, 40, 40, 40, 40]
+  far_channels: [2, 32, 40]
+  align_hidden: 32
+  dmax: 64
+  power_law_c: 0.3
+  kernel_size: [4, 4]
+  bottleneck_hidden: 162
+
+audio:
+  sample_rate: 16000
+  n_freqs: 256
