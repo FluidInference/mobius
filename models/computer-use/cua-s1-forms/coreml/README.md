@@ -393,6 +393,69 @@ download hashes and [vendor/README.md](vendor/README.md) for the unmodified
 reference files, evaluator, and license notices. The pinned model and dataset
 cards declare MIT; Cua and Minimal Labs source notices are retained.
 
+## INT8 weight trial
+
+A matched run over all **24,370 synthetic decisions** on the same M5 Pro:
+
+| Export | Package size | Accuracy | Median | p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Original FP16 | 1.51 MB | 99.9549% | 0.990 ms | 1.102 ms |
+| INT8 weights, FP16 compute | 0.81 MB | 99.9549% | 0.990 ms | 1.104 ms |
+
+**46.2% smaller**, with every selected option unchanged and effectively identical
+latency. Numerical parity still fails: 64 rows exceed the 0.005 probability-error
+limit (maximum 0.067738), versus 11 for FP16. No INT8 probability-sum violations
+were observed. The original remains the default.
+
+Weight-only, per-channel symmetric INT8 quantization of the original FP16 export,
+using coremltools 9.0 and a 2,048-element threshold. Nineteen weight tensors are
+compressed; activations and computation remain floating point. No calibration,
+training, or test-based tuning is used. Both model variants stay loaded for one
+full test pass, with three warmups each and alternating AB/BA order. Accuracy,
+paired choices, strict probability gates, and timings use the existing harness.
+
+The original 196-row demo retains 196/196 choices, but maximum probability error
+0.005336 exceeds the unchanged 0.005 threshold. The full-test result above exposes larger score drift than the demo.
+
+The public compute plan assigns **149 ANE and 32 CPU operations**, plus 19
+unassigned constant-dequantization operations. `coreml-cli --fallback` counts
+those 19 as CPU fallback (51 total); this is not evidence that all 19 execute
+on every prediction. These are scheduler counts, not utilization or energy.
+The trial does not establish INT8 activation computation or an ANE speedup.
+
+The quantizer emits a zero-scale warning for the all-zero embedding padding row.
+Tests verify that all 19 dequantized weight tensors are finite and that zero
+channels remain zero. The tensor interface and minimum deployment version match
+the original. The quantization manifest retains source hashes and exact settings.
+
+Reproduce after preparing the original baseline:
+
+```bash
+uv run --frozen python quantize-int8.py
+uv run --frozen python verify.py --build-dir build/int8-weights \
+  --compute-units CPU_AND_NE --report build/int8-demo-reproduction.json
+uv run --frozen python benchmark-synthetic.py --candidate-name int8-weights \
+  --report build/int8-test-reproduction.json --trace build/int8-test-reproduction.jsonl.gz \
+  --require-parity
+uv run --frozen python profile-coreml.py --build-dir build/int8-weights \
+  --compute-units CPU_AND_NE --report build/int8-profile-reproduction.json
+uv run --frozen pytest -q tests/test_int8.py tests/test_synthetic_test.py
+```
+
+Use fresh output paths. The numerical checks return exit 1 for the recorded
+failures; no tolerance is relaxed. The 15 focused tests pass, covering real
+compression/interface preservation, finite dequantized weights, zero padding,
+source/variant validation, full-test coverage, and metric edge cases.
+
+Reports: [full test](reports/int8-synthetic-test.json),
+[demo](reports/int8-demo-verification.json), [compute plan](reports/int8-profile.json),
+and [CLI fallback](reports/int8-fallback.json).
+The experimental package and complete per-row trace are under `int8-weights/` and
+`reports/int8-synthetic-test-decisions.jsonl.gz` in the
+[model PR](https://huggingface.co/FluidInference/cua-s1-forms-coreml/discussions/1).
+Load the portable INT8 package locally with the existing Swift manager; the
+standard model download continues to use the original FP16 artifact.
+
 ## Live browser proof and expanded Swift benchmark
 
 The [native Swift browser demo](https://github.com/FluidInference/FluidAudio/tree/7f9eb92b0af8594c4e048a9e57f697340aacfa67/Examples/CuaS1FormsDemo)

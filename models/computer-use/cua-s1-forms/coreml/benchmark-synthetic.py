@@ -1,4 +1,4 @@
-"""Compare the pinned upstream PyTorch model and both unchanged Core ML exports on test.jsonl."""
+"""Compare the pinned upstream PyTorch model and two specified Core ML exports on test.jsonl."""
 
 from __future__ import annotations
 
@@ -21,7 +21,27 @@ from preprocessing import InputLimits, prepare_inputs
 from synthetic_test import MANIFEST, calibration, inspect_rows, load_test, paired_outcomes
 from verify import PROBABILITY_TOLERANCE, check_package, latency_summary, validate_prediction
 
-NAMES = ("upstream_pytorch", "baseline", "ane-gather")
+
+def validate_variants(conversions: dict, candidate_name: str) -> None:
+    """Reject mislabeled or unrelated models before evaluating the held-out split."""
+    baseline, candidate = conversions["baseline"], conversions[candidate_name]
+    if baseline.get("optimization", "baseline") != "baseline" or "quantization" in baseline:
+        raise ValueError("Expected the original baseline")
+    if candidate_name == "int8-weights":
+        quantization = candidate.get("quantization", {})
+        if (
+            quantization.get("name") != candidate_name
+            or quantization.get("source_package_files") != baseline["package_files"]
+        ):
+            raise ValueError("INT8 candidate must derive from this exact baseline")
+    elif candidate_name == "ane-gather":
+        if candidate.get("optimization") != candidate_name or "quantization" in candidate:
+            raise ValueError("Expected the unquantized ANE-gather candidate")
+    else:
+        raise ValueError("Unknown benchmark candidate")
+    for key in ("limits", "model_revision", "source_revision", "assets_lock_sha256"):
+        if baseline[key] != candidate[key]:
+            raise ValueError(f"Baseline and candidate disagree on {key}")
 
 
 def read_scorer():
@@ -54,11 +74,14 @@ def prediction_for_comparison(output: dict, count: int, capacity: int) -> tuple[
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline", type=Path, default=ROOT / "build")
-    parser.add_argument("--candidate", type=Path, default=ROOT / "build/ane-gather")
+    parser.add_argument("--candidate", type=Path)
+    parser.add_argument("--candidate-name", choices=["ane-gather", "int8-weights"], default="ane-gather")
     parser.add_argument("--report", type=Path, default=ROOT / "reports/synthetic-test.json")
     parser.add_argument("--trace", type=Path, default=ROOT / "build/synthetic-test-decisions.jsonl.gz")
     parser.add_argument("--require-parity", action="store_true", help="Exit nonzero if original conversion gates fail")
     args = parser.parse_args()
+    names = ("upstream_pytorch", "baseline", args.candidate_name)
+    candidate_dir = args.candidate or ROOT / "build" / args.candidate_name
     if args.report.exists() or args.trace.exists():
         raise FileExistsError("Use fresh report/trace paths to preserve previous evaluation runs")
     torch.set_num_threads(2)
@@ -67,12 +90,9 @@ def main() -> None:
     lock = verify_assets()
     rows, manifest = load_test(download=True)
     packages, conversions = {}, {}
-    for name, directory in (("baseline", args.baseline), ("ane-gather", args.candidate)):
+    for name, directory in (("baseline", args.baseline), (args.candidate_name, candidate_dir)):
         packages[name], conversions[name] = check_package(directory)
-        if conversions[name].get("optimization", "baseline") != name:
-            raise ValueError("Benchmark variant does not match its conversion manifest")
-    if conversions["baseline"]["limits"] != conversions["ane-gather"]["limits"]:
-        raise ValueError("The two exports must have the same interface")
+    validate_variants(conversions, args.candidate_name)
     limits = InputLimits(**conversions["baseline"]["limits"])
     census = inspect_rows(rows, limits)
     print(f"Pinned synthetic test: {len(rows)} rows; all fit unchanged; maxima={census['maxima']}", flush=True)
@@ -83,21 +103,21 @@ def main() -> None:
 
     examples = [validate_example(row) for row in rows]
     models = {}
-    for name in NAMES[1:]:
+    for name in names[1:]:
         started = time.perf_counter()
         models[name] = ct.models.MLModel(str(packages[name]), compute_units=ct.ComputeUnit.CPU_AND_NE)
         load_ms[name] = (time.perf_counter() - started) * 1000
     first_call_ms = {}
     with torch.no_grad():
-        for name in NAMES:
+        for name in names:
             for index in range(3):
                 batch = (
                     collator([examples[index]])
-                    if name == NAMES[0]
+                    if name == names[0]
                     else prepare_inputs(rows[index]["context"], rows[index]["options"], limits)
                 )
                 started = time.perf_counter()
-                if name == NAMES[0]:
+                if name == names[0]:
                     reference(batch)[0].softmax(-1)
                 else:
                     models[name].predict(batch)
@@ -105,12 +125,12 @@ def main() -> None:
                     first_call_ms[name] = (time.perf_counter() - started) * 1000
     stats = {
         name: {key: [] for key in ("predictions", "confidence", "gold_probability", "correct", "latency_ms")}
-        for name in NAMES
+        for name in names
     }
     preprocessing = {"upstream_collator_ms": [], "shared_coreml_encoding_ms": []}
-    errors = {name: [] for name in NAMES[1:]}
-    violations = {name: [] for name in NAMES[1:]}
-    output_issues = {name: {} for name in NAMES[1:]}
+    errors = {name: [] for name in names[1:]}
+    violations = {name: [] for name in names[1:]}
+    output_issues = {name: {} for name in names[1:]}
     records = []
     test_started = time.perf_counter()
     args.trace.parent.mkdir(parents=True, exist_ok=True)
@@ -130,10 +150,10 @@ def main() -> None:
             arrays = prepare_inputs(row["context"], row["options"], limits)
             encoding_ms = (time.perf_counter() - started) * 1000
             preprocessing["shared_coreml_encoding_ms"].append(encoding_ms)
-            probabilities = {NAMES[0]: reference_probabilities}
-            latencies = {NAMES[0]: reference_ms}
+            probabilities = {names[0]: reference_probabilities}
+            latencies = {names[0]: reference_ms}
             # Counterbalance order, without rerunning the test split or selecting favorable calls.
-            order = list(NAMES[1:]) if index % 2 == 0 else list(reversed(NAMES[1:]))
+            order = list(names[1:]) if index % 2 == 0 else list(reversed(names[1:]))
             for name in order:
                 started = time.perf_counter()
                 output = models[name].predict(arrays)
@@ -158,7 +178,7 @@ def main() -> None:
                 "outputs": {},
             }
             compact = {"row": index}
-            for name in NAMES:
+            for name in names:
                 values = probabilities[name]
                 selected = int(values.argmax())
                 confidence, gold_probability = float(values[selected]), float(values[row["label"]])
@@ -180,13 +200,13 @@ def main() -> None:
                     "latency_ms": latencies[name],
                     "probability_sum": float(values.sum()),
                 }
-                if name != NAMES[0]:
+                if name != names[0]:
                     record["outputs"][name]["max_abs_probability_error"] = errors[name][-1]
                     record["outputs"][name]["validation_issues"] = output_issues[name].get(index, [])
             records.append(compact)
             trace.write(json.dumps(record, separators=(",", ":"), allow_nan=False) + "\n")
             if (index + 1) % 1000 == 0 or index + 1 == len(rows):
-                scores = ", ".join(f"{name}={sum(stats[name]['correct'])}/{index + 1}" for name in NAMES)
+                scores = ", ".join(f"{name}={sum(stats[name]['correct'])}/{index + 1}" for name in names)
                 print(
                     f"{index + 1}/{len(rows)}: {scores}; elapsed {time.perf_counter() - test_started:.1f}s", flush=True
                 )
@@ -194,7 +214,7 @@ def main() -> None:
     labels = [row["label"] for row in rows]
     scorer = read_scorer()
     results, failures = {}, []
-    for name in NAMES:
+    for name in names:
         measured = stats[name]
         metrics = scorer.score_decisions(rows, records, name)
         correct = int(sum(measured["correct"]))
@@ -210,13 +230,13 @@ def main() -> None:
             "macro_action_accuracy": float(np.mean([value["accuracy"] for value in metrics["per_action"].values()])),
             "wrong_rows": [i for i, hit in enumerate(measured["correct"]) if not hit],
         }
-        if name != NAMES[0]:
-            paired = paired_outcomes(labels, stats[NAMES[0]]["predictions"], measured["predictions"])
+        if name != names[0]:
+            paired = paired_outcomes(labels, stats[names[0]]["predictions"], measured["predictions"])
             passed = (
                 paired["argmax_agreement"] == len(rows)
                 and not violations[name]
                 and not output_issues[name]
-                and correct >= sum(stats[NAMES[0]]["correct"])
+                and correct >= sum(stats[names[0]]["correct"])
             )
             entry.update(
                 {
@@ -230,8 +250,8 @@ def main() -> None:
             )
         results[name] = entry
     for index, row in enumerate(rows):
-        if all(stats[name]["correct"][index] for name in NAMES) and all(
-            errors[name][index] <= PROBABILITY_TOLERANCE and index not in output_issues[name] for name in NAMES[1:]
+        if all(stats[name]["correct"][index] for name in names) and all(
+            errors[name][index] <= PROBABILITY_TOLERANCE and index not in output_issues[name] for name in names[1:]
         ):
             continue
         failures.append(
@@ -239,7 +259,7 @@ def main() -> None:
                 "row": index,
                 "context": row["context"],
                 "gold_option": row["options"][row["label"]],
-                "selected_options": {name: row["options"][stats[name]["predictions"][index]] for name in NAMES},
+                "selected_options": {name: row["options"][stats[name]["predictions"][index]] for name in names},
             }
         )
     report = {
@@ -278,8 +298,7 @@ def main() -> None:
             ),
             "load_note": "Process/model creation can use existing system caches; not a cold-start experiment",
             "output_audit": (
-                "Imperfect finite probability sums are retained unchanged "
-                "and fail the original normalization gate"
+                "Imperfect finite probability sums are retained unchanged and fail the original normalization gate"
             ),
             "calibration_note": "NLL/ECE use raw emitted scores; no renormalization or calibration was applied",
         },
@@ -298,7 +317,7 @@ def main() -> None:
         "harness_sha256": {
             file: sha256(ROOT / file) for file in ("benchmark-synthetic.py", "synthetic_test.py", "score-report.py")
         },
-        "conversion_parity_passed": all(results[name]["conversion_parity_passed"] for name in NAMES[1:]),
+        "conversion_parity_passed": all(results[name]["conversion_parity_passed"] for name in names[1:]),
         "limitations": [
             (
                 "The release file has 24370 rows; the model card claims approximately 15000. "
