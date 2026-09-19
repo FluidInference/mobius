@@ -1,0 +1,15 @@
+{
+  "dataset_repository": "cua-ai/cua-s1-forms",
+  "dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+  "path": "artifacts/test.jsonl",
+  "url": "https://huggingface.co/datasets/cua-ai/cua-s1-forms/resolve/8273f34778b99ac2e12d9f6e7d57dad99ae20845/test.jsonl",
+  "sha256": "d63a7e0db195d4d20154a40b2f8dd09ce3bb65487a158c638da5c609d4475e7c",
+  "rows": 24370,
+  "bytes": 18710924,
+  "upstream_split_claim": "Synthetic test, form-signature-disjoint from train/validation. Train and validation signatures have not been independently re-audited here.",
+  "model_card_claim": {
+    "synthetic_test_top1": 0.9995,
+    "approximate_decisions": 15000,
+    "note": "The released file has 24370 rows. No matching full result ledger or exact 15000-row manifest is supplied by the linked model card."
+  }
+}
