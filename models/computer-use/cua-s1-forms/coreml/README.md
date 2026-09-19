@@ -112,8 +112,9 @@ swift test --filter CuaS1Forms
 ```
 
 Set `FLUIDAUDIO_CUA_COMPILED_PATH` to the real `.mlmodelc` to include the shared-cache
-check; see [compilation instructions](#device-placement). Use the ANE-gather package
-path to check that variant against the same reference. Integration tests skip if
+check; see [compilation instructions](#device-placement). The portable-model fixture
+also checks loading through Hugging Face cache symlinks and temporary-copy cleanup.
+Use the ANE-gather package path to check that variant against the same reference. Integration tests skip if
 their asset paths are absent; encoding, limits, rejection, and registry unit tests
 still run. Tests do not automatically download models or data. XCTest requires a
 full Xcode installation on macOS.
