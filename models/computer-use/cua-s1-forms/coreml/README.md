@@ -439,11 +439,11 @@ uv run --frozen python benchmark-synthetic.py --candidate-name int8-weights \
   --require-parity
 uv run --frozen python profile-coreml.py --build-dir build/int8-weights \
   --compute-units CPU_AND_NE --report build/int8-profile-reproduction.json
-uv run --frozen pytest -q tests/test_int8.py tests/test_synthetic_test.py
+uv run --frozen pytest -q tests/test_quantized_weights.py tests/test_synthetic_test.py
 ```
 
 Use fresh output paths. The numerical checks return exit 1 for the recorded
-failures; no tolerance is relaxed. The 15 focused tests pass, covering real
+failures; no tolerance is relaxed. The quantization and benchmark tests cover real
 compression/interface preservation, finite dequantized weights, zero padding,
 source/variant validation, full-test coverage, and metric edge cases.
 
@@ -455,6 +455,76 @@ The experimental package and complete per-row trace are under `int8-weights/` an
 [model PR](https://huggingface.co/FluidInference/cua-s1-forms-coreml/discussions/1).
 Load the portable INT8 package locally with the existing Swift manager; the
 standard model download continues to use the original FP16 artifact.
+
+## INT4 weight trial
+
+A matched run over all **24,370 synthetic decisions** on M5 Pro, CPU+ANE:
+
+| Export | Package size | Accuracy | Median | p95 |
+| --- | ---: | ---: | ---: | ---: |
+| FP16 control, iOS 18 target | 1.51 MB | 99.9549% | 0.982 ms | 1.081 ms |
+| INT4 weights, FP16 compute | 0.45 MB | 99.9302% | 0.982 ms | 1.082 ms |
+
+**70.1% smaller**, with essentially unchanged latency. INT4 makes **17 errors
+versus 11** for FP16: 14 choices change, introducing 10 errors and correcting four.
+Numerical parity fails: 356 rows exceed the 0.005 probability-error limit
+(maximum 0.754359); no INT4 probability-sum violations were observed.
+
+Packed INT4 requires **iOS 18/macOS 15**. Both exports use the same decomposed
+attention graph and FP16 computation. Batch-1 timing excludes encoding/loading/UI.
+INT8 preserves all choices at 0.81 MB; the original FP16 remains the default.
+
+The exact portable sizes are 1,511,080 bytes for the retargeted FP16 control and
+451,595 bytes for INT4. `prepare-int4-source.py` loads the hash-verified original
+FP16 MIL at specification 9 with an empty pass pipeline, preserving its weights
+and decomposed attention. A direct iOS18 PyTorch conversion uses fused attention
+and failed the demo even before quantization; that graph is excluded from this
+comparison. No full synthetic run used that failed graph.
+
+`quantize-int4.py` applies per-channel symmetric INT4, threshold 2,048, to 19
+weight tensors. Packed INT4 blobs feed `constexpr_blockwise_shift_scale`; scales,
+activations and computation remain FP16. No calibration, training, or test-based
+tuning was applied. The original and retargeted FP16 controls have identical
+weights and nonconstant operation counts, checked against the actual artifacts.
+
+The 196-row demo retains all choices; its INT4 maximum probability error is
+0.200770. The full run above exposes changed choices and fails the original
+conversion gates. All 28 focused tests pass, covering both compressed artifacts,
+finite dequantized weights and zero padding channels, packed storage and target,
+source identity, interface preservation, dataset coverage and metric accounting.
+
+The public compute plan assigns **149 ANE and 32 CPU operations**, plus 19
+unassigned constant-dequantization operations. CLI fallback counts those 19 as
+CPU (51 total). These are scheduler assignments, not runtime utilization or
+proof of INT4 activation computation. No speed or energy gain is established.
+
+Reproduce after preparing the original baseline; use fresh output paths:
+
+```bash
+uv run --frozen python prepare-int4-source.py
+uv run --frozen python verify.py --build-dir build/int4-source-fp16 \
+  --compute-units CPU_AND_NE --report build/int4-source-demo-reproduction.json
+uv run --frozen python quantize-int4.py
+uv run --frozen python verify.py --build-dir build/int4-weights \
+  --compute-units CPU_AND_NE --report build/int4-demo-reproduction.json
+uv run --frozen python benchmark-synthetic.py --baseline build/int4-source-fp16 \
+  --candidate-name int4-weights --report build/int4-test-reproduction.json \
+  --trace build/int4-test-reproduction.jsonl.gz --require-parity
+uv run --frozen python profile-coreml.py --build-dir build/int4-weights \
+  --compute-units CPU_AND_NE --report build/int4-profile-reproduction.json
+uv run --frozen pytest -q tests/test_quantized_weights.py tests/test_synthetic_test.py
+```
+
+INT4 demo/full-test numerical checks return exit 1 after saving their reports.
+The original target and default download remain unchanged. Experimental packages
+and conversion manifests are under `int4-weights/` and `int4-source-fp16/` in the
+[model PR](https://huggingface.co/FluidInference/cua-s1-forms-coreml/discussions/1).
+Reports: [full test](reports/int4-synthetic-test.json),
+[INT4 demo](reports/int4-demo-verification.json),
+[FP16 control demo](reports/int4-source-demo-verification.json),
+[compute plan](reports/int4-profile.json), [CLI fallback](reports/int4-fallback.json).
+The complete per-row trace is `reports/int4-synthetic-test-decisions.jsonl.gz` in
+the model PR. Source, package, script and trace hashes are retained in manifests.
 
 ## Live browser proof and expanded Swift benchmark
 

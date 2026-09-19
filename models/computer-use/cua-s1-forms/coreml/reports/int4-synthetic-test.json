@@ -1,0 +1,4733 @@
+{
+  "purpose": "Full published synthetic test; no fitting, filtering, resampling or test-based tuning",
+  "created_utc": "2026-09-19T22:27:41.071082+00:00",
+  "dataset": {
+    "dataset_repository": "cua-ai/cua-s1-forms",
+    "dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+    "path": "artifacts/test.jsonl",
+    "url": "https://huggingface.co/datasets/cua-ai/cua-s1-forms/resolve/8273f34778b99ac2e12d9f6e7d57dad99ae20845/test.jsonl",
+    "sha256": "d63a7e0db195d4d20154a40b2f8dd09ce3bb65487a158c638da5c609d4475e7c",
+    "rows": 24370,
+    "bytes": 18710924,
+    "upstream_split_claim": "Synthetic test, form-signature-disjoint from train/validation. Train and validation signatures have not been independently re-audited here.",
+    "model_card_claim": {
+      "synthetic_test_top1": 0.9995,
+      "approximate_decisions": 15000,
+      "note": "The released file has 24370 rows. No matching full result ledger or exact 15000-row manifest is supplied by the linked model card."
+    }
+  },
+  "manifest_sha256": "e582b951ecc07809a0b06a2bc0790827b90a86ce57c70d5b6177ef04f0b4f1ca",
+  "input_census": {
+    "rows": 24370,
+    "unique_episode_seeds": 1040,
+    "maxima": {
+      "context_bytes": 217,
+      "option_bytes": 92,
+      "max_options": 32
+    },
+    "per_action": {
+      "check": 816,
+      "click": 1040,
+      "fill": 9802,
+      "skip": 12712
+    },
+    "option_count_histogram": {
+      "7": 17,
+      "8": 46,
+      "9": 80,
+      "10": 227,
+      "11": 361,
+      "12": 589,
+      "13": 888,
+      "14": 1254,
+      "15": 1513,
+      "16": 1761,
+      "17": 2373,
+      "18": 2014,
+      "19": 2277,
+      "20": 2506,
+      "21": 2396,
+      "22": 1818,
+      "23": 1422,
+      "24": 907,
+      "25": 688,
+      "26": 524,
+      "27": 483,
+      "28": 89,
+      "29": 33,
+      "30": 29,
+      "31": 35,
+      "32": 40
+    },
+    "excluded_rows": 0,
+    "truncated_contexts": 0,
+    "truncated_options": 0
+  },
+  "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+  "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+  "conversions": {
+    "baseline": {
+      "model": "cua_s1_forms_fp16_options32.mlpackage",
+      "precision": "float16",
+      "minimum_target": "iOS18/macOS15",
+      "limits": {
+        "context_bytes": 224,
+        "option_bytes": 96,
+        "max_options": 32
+      },
+      "model_config": {
+        "context_tokens": 224,
+        "encoder": "tinyx",
+        "heads": 4,
+        "hf_model": "Qwen/Qwen2.5-0.5B",
+        "layers": 2,
+        "option_tokens": 96,
+        "rank": 128,
+        "width": 128
+      },
+      "parameters": 706048,
+      "assets_lock_sha256": "8e65ad70af6bb814b571cdcfe828ba4bc339147da2d2211cbeac416163ef18ba",
+      "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+      "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+      "trace_row": 0,
+      "trace_dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+      "export_seconds": 0.5374167499830946,
+      "python": "3.11.11",
+      "torch": "2.7.0",
+      "coremltools": "9.0",
+      "package_files": {
+        "Data/com.apple.CoreML/model.mlmodel": "6ab2df320df7081480b76876df0f4bfd2c841592d93f354c568ba504f7269627",
+        "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+        "Manifest.json": "e5b1c7dc66b2014b3985c180a75548a709788c6e314d9d2ae14e4e6d441c3c68"
+      },
+      "target_upgrade": {
+        "source_conversion_sha256": "ac94239751ceb7e19602eb7276940ff53446b1776d4900405af9be0382fe4a94",
+        "source_package_files": {
+          "Data/com.apple.CoreML/model.mlmodel": "70485fc18cbb21785df833cbddddc0b5b59acb00d22394b76e55307e2c135dd0",
+          "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+          "Manifest.json": "2bc0f5f62337b27fb6b0ecde248f1e3dc269e1ba4b65516aaeede2a60e293dcc"
+        },
+        "method": "Load original MIL at specification 9; empty pass pipeline; retain decomposed attention",
+        "operation_counts": {
+          "add": 13,
+          "cast": 11,
+          "concat": 2,
+          "const": 239,
+          "equal": 2,
+          "expand_dims": 5,
+          "fill_like": 3,
+          "gather": 2,
+          "greater_equal": 2,
+          "layer_norm": 8,
+          "linear": 15,
+          "logical_not": 2,
+          "matmul": 8,
+          "maximum": 1,
+          "mul": 7,
+          "not_equal": 3,
+          "real_div": 1,
+          "reduce_sum": 3,
+          "relu": 3,
+          "reshape": 31,
+          "select": 7,
+          "slice_by_index": 13,
+          "softmax": 5,
+          "squeeze": 3,
+          "tile": 2,
+          "transpose": 21
+        },
+        "script_sha256": "33db3295450428d90c1de5a804ab47bf3507c686fbbdef67cd276ce116758b5f"
+      }
+    },
+    "int4-weights": {
+      "model": "cua_s1_forms_int4_options32.mlpackage",
+      "precision": "int4_weights_float16_compute",
+      "minimum_target": "iOS18/macOS15",
+      "limits": {
+        "context_bytes": 224,
+        "option_bytes": 96,
+        "max_options": 32
+      },
+      "model_config": {
+        "context_tokens": 224,
+        "encoder": "tinyx",
+        "heads": 4,
+        "hf_model": "Qwen/Qwen2.5-0.5B",
+        "layers": 2,
+        "option_tokens": 96,
+        "rank": 128,
+        "width": 128
+      },
+      "parameters": 706048,
+      "assets_lock_sha256": "8e65ad70af6bb814b571cdcfe828ba4bc339147da2d2211cbeac416163ef18ba",
+      "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+      "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+      "trace_row": 0,
+      "trace_dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+      "export_seconds": 0.5374167499830946,
+      "python": "3.11.11",
+      "torch": "2.7.0",
+      "coremltools": "9.0",
+      "package_files": {
+        "Data/com.apple.CoreML/model.mlmodel": "cadad6bfa6875383a7ee3de68d0d22871148aa21cf117e7fe44c2c971287c4e5",
+        "Data/com.apple.CoreML/weights/weight.bin": "0f766fcb9dbd612ed4f6c7a40117a5993a4789b3ae94afba0df37193c831f63c",
+        "Manifest.json": "fb91c8b5ec3168111567de663bb3140d2790c6e7c48f32e0df3f5135af0673af"
+      },
+      "target_upgrade": {
+        "source_conversion_sha256": "ac94239751ceb7e19602eb7276940ff53446b1776d4900405af9be0382fe4a94",
+        "source_package_files": {
+          "Data/com.apple.CoreML/model.mlmodel": "70485fc18cbb21785df833cbddddc0b5b59acb00d22394b76e55307e2c135dd0",
+          "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+          "Manifest.json": "2bc0f5f62337b27fb6b0ecde248f1e3dc269e1ba4b65516aaeede2a60e293dcc"
+        },
+        "method": "Load original MIL at specification 9; empty pass pipeline; retain decomposed attention",
+        "operation_counts": {
+          "add": 13,
+          "cast": 11,
+          "concat": 2,
+          "const": 239,
+          "equal": 2,
+          "expand_dims": 5,
+          "fill_like": 3,
+          "gather": 2,
+          "greater_equal": 2,
+          "layer_norm": 8,
+          "linear": 15,
+          "logical_not": 2,
+          "matmul": 8,
+          "maximum": 1,
+          "mul": 7,
+          "not_equal": 3,
+          "real_div": 1,
+          "reduce_sum": 3,
+          "relu": 3,
+          "reshape": 31,
+          "select": 7,
+          "slice_by_index": 13,
+          "softmax": 5,
+          "squeeze": 3,
+          "tile": 2,
+          "transpose": 21
+        },
+        "script_sha256": "33db3295450428d90c1de5a804ab47bf3507c686fbbdef67cd276ce116758b5f"
+      },
+      "quantization": {
+        "name": "int4-weights",
+        "settings": {
+          "mode": "linear_symmetric",
+          "dtype": "int4",
+          "granularity": "per_channel",
+          "weight_threshold": 2048
+        },
+        "activations": "float16",
+        "calibration": "None; weight-only, data-free quantization",
+        "source_conversion_sha256": "01105dc8bef7a30fc3430e150caa2a143dc0ba23a295b6280de3b8ff3b40af55",
+        "source_package_files": {
+          "Data/com.apple.CoreML/model.mlmodel": "6ab2df320df7081480b76876df0f4bfd2c841592d93f354c568ba504f7269627",
+          "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+          "Manifest.json": "e5b1c7dc66b2014b3985c180a75548a709788c6e314d9d2ae14e4e6d441c3c68"
+        },
+        "source_package_bytes": 1511080,
+        "package_bytes": 451595,
+        "compression_seconds": 0.2996572910051327,
+        "packed_int4_tensors": 19,
+        "operation_counts": {
+          "add": 15,
+          "cast": 13,
+          "concat": 2,
+          "const": 226,
+          "constexpr_blockwise_shift_scale": 19,
+          "equal": 2,
+          "expand_dims": 5,
+          "fill_like": 3,
+          "gather": 2,
+          "greater_equal": 4,
+          "layer_norm": 8,
+          "linear": 15,
+          "logical_not": 2,
+          "matmul": 8,
+          "maximum": 1,
+          "mul": 7,
+          "not_equal": 3,
+          "real_div": 1,
+          "reduce_sum": 3,
+          "relu": 3,
+          "reshape": 31,
+          "select": 9,
+          "slice_by_index": 13,
+          "softmax": 5,
+          "squeeze": 3,
+          "tile": 2,
+          "transpose": 21
+        },
+        "script_sha256": "a91636e539d8934253b5e7628ca706346fbee538fa1aa9e3eaf794f440d49dcc"
+      }
+    }
+  },
+  "environment": {
+    "machine": "Apple M5 Pro",
+    "memory_bytes": 25769803776,
+    "os": "27.0",
+    "os_build": "26A428",
+    "python": "3.11.11",
+    "torch": "2.7.0",
+    "coremltools": "9.0",
+    "torch_cpu_threads": 2,
+    "torch_interop_threads": 1,
+    "torch_mha_fastpath": false
+  },
+  "protocol": {
+    "batch_size": 1,
+    "warmups_per_model": 3,
+    "timed_passes": 1,
+    "coreml_compute_units": "CPU_AND_NE",
+    "coreml_order": "AB on even rows, BA on odd rows",
+    "timing": "PyTorch CPU forward+softmax / synchronous Core ML predict; excludes encoding, validation, GUI and network",
+    "preprocessing": "Upstream variable-length collator; independent fixed-shape Core ML encoder shared by both exports",
+    "load_note": "Process/model creation can use existing system caches; not a cold-start experiment",
+    "output_audit": "Imperfect finite probability sums are retained unchanged and fail the original normalization gate",
+    "calibration_note": "NLL/ECE use raw emitted scores; no renormalization or calibration was applied"
+  },
+  "thresholds": {
+    "argmax_agreement": 1.0,
+    "max_abs_probability_error": 0.005,
+    "allow_accuracy_loss": false,
+    "probability_sum_atol": 0.001,
+    "probability_sum_rtol": 1e-05
+  },
+  "host_preprocessing_ms": {
+    "upstream_collator_ms": {
+      "count": 24370,
+      "median_ms": 0.09124999633058906,
+      "p95_ms": 0.12510610686149445,
+      "min_ms": 0.04041698412038386,
+      "max_ms": 0.5723749927710742
+    },
+    "shared_coreml_encoding_ms": {
+      "count": 24370,
+      "median_ms": 0.026124995201826096,
+      "p95_ms": 0.036083016311749816,
+      "min_ms": 0.011541007552295923,
+      "max_ms": 0.15366601292043924
+    }
+  },
+  "results": {
+    "upstream_pytorch": {
+      "correct": 24359,
+      "rows": 24370,
+      "accuracy": 0.999548625359048,
+      "model_call_latency_ms": {
+        "count": 24370,
+        "median_ms": 1.722437998978421,
+        "p95_ms": 2.9158063945942554,
+        "min_ms": 1.0111250157933682,
+        "max_ms": 7.711042009759694
+      },
+      "load_ms": 11.409584025386721,
+      "first_call_ms": 7.722499984083697,
+      "calibration": {
+        "nll": 0.0021302032038990836,
+        "ece": 0.00035450826133425167,
+        "equal_width_bins": 15,
+        "bins": [
+          {
+            "bin": 7,
+            "count": 2,
+            "accuracy": 0.5,
+            "mean_confidence": 0.5216051042079926
+          },
+          {
+            "bin": 8,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.575071656703949
+          },
+          {
+            "bin": 9,
+            "count": 7,
+            "accuracy": 0.7142857142857143,
+            "mean_confidence": 0.6404258779117039
+          },
+          {
+            "bin": 10,
+            "count": 4,
+            "accuracy": 1.0,
+            "mean_confidence": 0.6963506639003754
+          },
+          {
+            "bin": 11,
+            "count": 11,
+            "accuracy": 0.9090909090909091,
+            "mean_confidence": 0.7664791941642761
+          },
+          {
+            "bin": 12,
+            "count": 21,
+            "accuracy": 0.9523809523809523,
+            "mean_confidence": 0.8310647464933849
+          },
+          {
+            "bin": 13,
+            "count": 22,
+            "accuracy": 0.9545454545454546,
+            "mean_confidence": 0.9173552746122534
+          },
+          {
+            "bin": 14,
+            "count": 24298,
+            "accuracy": 0.9998353773973166,
+            "mean_confidence": 0.999802232897422
+          }
+        ],
+        "nll_probability_floor": 1.1754943508222875e-38
+      },
+      "upstream_action_metrics": {
+        "examples": 24370,
+        "accuracy": 0.999548625359048,
+        "coverage": 0.4788264259335248,
+        "abstention_rate": 0.5211735740664751,
+        "selective_accuracy": 0.9990573313908647,
+        "wrong_action_rate": 0.00045137464095199015,
+        "wrong_target_rate": 0.0,
+        "unsafe_action_rate": 0.00045137464095199015,
+        "counts": {
+          "total": 24370,
+          "correct": 24359,
+          "abstained": 12701,
+          "acted": 11669,
+          "acted_correct": 11658,
+          "wrong_action": 11,
+          "unsafe_action": 11
+        },
+        "per_action": {
+          "abstain": {
+            "accuracy": 0.9991346758967904,
+            "abstention_rate": 0.9991346758967904,
+            "examples": 12712
+          },
+          "check": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 816
+          },
+          "click": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 1040
+          },
+          "fill": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 9802
+          }
+        }
+      },
+      "macro_action_accuracy": 0.9997836689741976,
+      "wrong_rows": [
+        137,
+        3216,
+        6631,
+        6748,
+        7280,
+        10703,
+        12255,
+        13480,
+        15214,
+        21022,
+        23671
+      ]
+    },
+    "baseline": {
+      "correct": 24359,
+      "rows": 24370,
+      "accuracy": 0.999548625359048,
+      "model_call_latency_ms": {
+        "count": 24370,
+        "median_ms": 0.9818960097618401,
+        "p95_ms": 1.0811670086695813,
+        "min_ms": 0.8811249863356352,
+        "max_ms": 1.690416014753282
+      },
+      "load_ms": 611.4340419881046,
+      "first_call_ms": 2.451416978146881,
+      "calibration": {
+        "nll": 0.002108235388127147,
+        "ece": 0.000331678613561794,
+        "equal_width_bins": 15,
+        "bins": [
+          {
+            "bin": 7,
+            "count": 2,
+            "accuracy": 0.5,
+            "mean_confidence": 0.5224609375
+          },
+          {
+            "bin": 8,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.57607421875
+          },
+          {
+            "bin": 9,
+            "count": 6,
+            "accuracy": 0.8333333333333334,
+            "mean_confidence": 0.637451171875
+          },
+          {
+            "bin": 10,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.69248046875
+          },
+          {
+            "bin": 11,
+            "count": 12,
+            "accuracy": 0.9166666666666666,
+            "mean_confidence": 0.7687581380208334
+          },
+          {
+            "bin": 12,
+            "count": 20,
+            "accuracy": 0.95,
+            "mean_confidence": 0.8322265625
+          },
+          {
+            "bin": 13,
+            "count": 22,
+            "accuracy": 0.9545454545454546,
+            "mean_confidence": 0.9176136363636364
+          },
+          {
+            "bin": 14,
+            "count": 24298,
+            "accuracy": 0.9998353773973166,
+            "mean_confidence": 0.9998245660008025
+          }
+        ],
+        "nll_probability_floor": 1.1754943508222875e-38
+      },
+      "upstream_action_metrics": {
+        "examples": 24370,
+        "accuracy": 0.999548625359048,
+        "coverage": 0.4788264259335248,
+        "abstention_rate": 0.5211735740664751,
+        "selective_accuracy": 0.9990573313908647,
+        "wrong_action_rate": 0.00045137464095199015,
+        "wrong_target_rate": 0.0,
+        "unsafe_action_rate": 0.00045137464095199015,
+        "counts": {
+          "total": 24370,
+          "correct": 24359,
+          "abstained": 12701,
+          "acted": 11669,
+          "acted_correct": 11658,
+          "wrong_action": 11,
+          "unsafe_action": 11
+        },
+        "per_action": {
+          "abstain": {
+            "accuracy": 0.9991346758967904,
+            "abstention_rate": 0.9991346758967904,
+            "examples": 12712
+          },
+          "check": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 816
+          },
+          "click": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 1040
+          },
+          "fill": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 9802
+          }
+        }
+      },
+      "macro_action_accuracy": 0.9997836689741976,
+      "wrong_rows": [
+        137,
+        3216,
+        6631,
+        6748,
+        7280,
+        10703,
+        12255,
+        13480,
+        15214,
+        21022,
+        23671
+      ],
+      "paired_with_upstream": {
+        "rows": 24370,
+        "argmax_agreement": 24370,
+        "agreement_rate": 1.0,
+        "reference_correct_candidate_wrong": 0,
+        "reference_wrong_candidate_correct": 0,
+        "both_wrong": 11,
+        "disagreement_rows": []
+      },
+      "max_abs_probability_error": 0.020487427711486816,
+      "mean_row_max_abs_probability_error": 4.673297645567538e-05,
+      "probability_tolerance_violation_rows": [
+        137,
+        884,
+        2945,
+        3216,
+        8706,
+        9193,
+        12725,
+        13480,
+        13768,
+        15698,
+        23992
+      ],
+      "conversion_parity_passed": false,
+      "output_validation_failures": {
+        "19270": [
+          "Live option probabilities do not sum to one"
+        ]
+      }
+    },
+    "int4-weights": {
+      "correct": 24353,
+      "rows": 24370,
+      "accuracy": 0.9993024210094378,
+      "model_call_latency_ms": {
+        "count": 24370,
+        "median_ms": 0.9815625235205516,
+        "p95_ms": 1.08248109172564,
+        "min_ms": 0.8774579910095781,
+        "max_ms": 2.3330000112764537
+      },
+      "load_ms": 601.2531660089735,
+      "first_call_ms": 1.561125012813136,
+      "calibration": {
+        "nll": 0.002501404265778786,
+        "ece": 0.00041435783301703634,
+        "equal_width_bins": 15,
+        "bins": [
+          {
+            "bin": 7,
+            "count": 3,
+            "accuracy": 0.6666666666666666,
+            "mean_confidence": 0.5087076822916666
+          },
+          {
+            "bin": 8,
+            "count": 4,
+            "accuracy": 0.75,
+            "mean_confidence": 0.58056640625
+          },
+          {
+            "bin": 9,
+            "count": 8,
+            "accuracy": 0.5,
+            "mean_confidence": 0.6361083984375
+          },
+          {
+            "bin": 10,
+            "count": 6,
+            "accuracy": 1.0,
+            "mean_confidence": 0.7128092447916666
+          },
+          {
+            "bin": 11,
+            "count": 11,
+            "accuracy": 0.7272727272727273,
+            "mean_confidence": 0.7681995738636364
+          },
+          {
+            "bin": 12,
+            "count": 11,
+            "accuracy": 0.8181818181818182,
+            "mean_confidence": 0.8423739346590909
+          },
+          {
+            "bin": 13,
+            "count": 34,
+            "accuracy": 1.0,
+            "mean_confidence": 0.9043255974264706
+          },
+          {
+            "bin": 14,
+            "count": 24293,
+            "accuracy": 0.999753015271889,
+            "mean_confidence": 0.9996638933411888
+          }
+        ],
+        "nll_probability_floor": 1.1754943508222875e-38
+      },
+      "upstream_action_metrics": {
+        "examples": 24370,
+        "accuracy": 0.9993024210094378,
+        "coverage": 0.4789905621665983,
+        "abstention_rate": 0.5210094378334017,
+        "selective_accuracy": 0.998629315514435,
+        "wrong_action_rate": 0.0006565449322938039,
+        "wrong_target_rate": 0.0,
+        "unsafe_action_rate": 0.0006565449322938039,
+        "counts": {
+          "total": 24370,
+          "correct": 24353,
+          "abstained": 12697,
+          "acted": 11673,
+          "acted_correct": 11657,
+          "wrong_action": 16,
+          "unsafe_action": 16
+        },
+        "per_action": {
+          "abstain": {
+            "accuracy": 0.9987413467589679,
+            "abstention_rate": 0.9987413467589679,
+            "examples": 12712
+          },
+          "check": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 816
+          },
+          "click": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 1040
+          },
+          "fill": {
+            "accuracy": 0.9998979800040808,
+            "abstention_rate": 0.00010201999591920016,
+            "examples": 9802
+          }
+        }
+      },
+      "macro_action_accuracy": 0.9996598316907622,
+      "wrong_rows": [
+        137,
+        410,
+        882,
+        2093,
+        3151,
+        6631,
+        6748,
+        7280,
+        9253,
+        12255,
+        13370,
+        16920,
+        21022,
+        21344,
+        22791,
+        23671,
+        23992
+      ],
+      "paired_with_upstream": {
+        "rows": 24370,
+        "argmax_agreement": 24356,
+        "agreement_rate": 0.9994255231842429,
+        "reference_correct_candidate_wrong": 10,
+        "reference_wrong_candidate_correct": 4,
+        "both_wrong": 7,
+        "disagreement_rows": [
+          410,
+          882,
+          2093,
+          3151,
+          3216,
+          9253,
+          10703,
+          13370,
+          13480,
+          15214,
+          16920,
+          21344,
+          22791,
+          23992
+        ]
+      },
+      "max_abs_probability_error": 0.7543594241142273,
+      "mean_row_max_abs_probability_error": 0.0010651588038265774,
+      "probability_tolerance_violation_rows": [
+        84,
+        137,
+        309,
+        410,
+        514,
+        570,
+        612,
+        685,
+        811,
+        882,
+        884,
+        992,
+        1033,
+        1109,
+        1195,
+        1225,
+        1266,
+        1369,
+        1398,
+        1438,
+        1475,
+        1547,
+        1656,
+        1898,
+        1946,
+        1963,
+        2076,
+        2093,
+        2095,
+        2155,
+        2187,
+        2272,
+        2308,
+        2420,
+        2584,
+        2611,
+        2661,
+        2798,
+        2818,
+        2860,
+        2928,
+        2945,
+        2976,
+        3064,
+        3090,
+        3151,
+        3209,
+        3216,
+        3282,
+        3298,
+        3313,
+        3479,
+        3483,
+        3538,
+        3733,
+        3736,
+        3756,
+        3806,
+        3878,
+        3978,
+        4097,
+        4106,
+        4123,
+        4139,
+        4233,
+        4278,
+        4469,
+        4605,
+        4630,
+        4682,
+        4745,
+        4908,
+        4936,
+        5015,
+        5243,
+        5294,
+        5330,
+        5525,
+        5527,
+        5585,
+        5591,
+        5613,
+        5687,
+        5759,
+        5838,
+        5946,
+        6113,
+        6123,
+        6196,
+        6205,
+        6299,
+        6349,
+        6426,
+        6466,
+        6587,
+        6631,
+        6928,
+        7088,
+        7177,
+        7306,
+        7411,
+        7515,
+        7641,
+        7650,
+        7672,
+        7815,
+        8017,
+        8034,
+        8235,
+        8243,
+        8385,
+        8497,
+        8514,
+        8543,
+        8664,
+        8668,
+        8706,
+        8714,
+        8891,
+        8892,
+        9037,
+        9051,
+        9193,
+        9253,
+        9291,
+        9345,
+        9445,
+        9533,
+        9570,
+        9577,
+        9581,
+        9621,
+        9624,
+        9642,
+        9730,
+        9855,
+        9945,
+        9977,
+        9981,
+        10165,
+        10191,
+        10216,
+        10345,
+        10364,
+        10398,
+        10436,
+        10458,
+        10486,
+        10488,
+        10503,
+        10620,
+        10703,
+        10740,
+        10962,
+        10993,
+        11046,
+        11090,
+        11122,
+        11191,
+        11214,
+        11257,
+        11300,
+        11337,
+        11390,
+        11553,
+        11630,
+        11813,
+        11880,
+        11959,
+        12043,
+        12217,
+        12219,
+        12255,
+        12411,
+        12516,
+        12546,
+        12605,
+        12606,
+        12699,
+        12725,
+        12754,
+        12792,
+        12936,
+        12949,
+        12983,
+        13027,
+        13031,
+        13053,
+        13115,
+        13154,
+        13204,
+        13323,
+        13370,
+        13392,
+        13423,
+        13450,
+        13480,
+        13483,
+        13533,
+        13545,
+        13609,
+        13693,
+        13766,
+        13768,
+        13795,
+        13969,
+        14043,
+        14145,
+        14220,
+        14568,
+        14608,
+        14656,
+        14718,
+        14722,
+        14868,
+        14899,
+        14934,
+        15065,
+        15132,
+        15214,
+        15219,
+        15252,
+        15259,
+        15698,
+        15764,
+        15819,
+        16041,
+        16106,
+        16182,
+        16200,
+        16205,
+        16207,
+        16253,
+        16256,
+        16392,
+        16517,
+        16597,
+        16608,
+        16678,
+        16920,
+        16951,
+        17100,
+        17122,
+        17253,
+        17304,
+        17318,
+        17351,
+        17372,
+        17454,
+        17632,
+        17665,
+        17854,
+        17858,
+        17865,
+        17873,
+        17918,
+        18099,
+        18119,
+        18154,
+        18168,
+        18237,
+        18252,
+        18290,
+        18339,
+        18432,
+        18541,
+        18549,
+        18551,
+        18559,
+        18579,
+        18726,
+        18731,
+        18753,
+        18775,
+        18802,
+        18945,
+        19021,
+        19205,
+        19276,
+        19308,
+        19361,
+        19438,
+        19439,
+        19511,
+        19634,
+        19669,
+        19704,
+        19809,
+        19834,
+        19940,
+        19957,
+        20008,
+        20097,
+        20214,
+        20326,
+        20370,
+        20457,
+        20462,
+        20476,
+        20486,
+        20492,
+        20625,
+        20776,
+        20928,
+        20956,
+        21028,
+        21029,
+        21049,
+        21163,
+        21344,
+        21352,
+        21464,
+        21519,
+        21566,
+        21631,
+        21813,
+        21844,
+        21866,
+        21871,
+        21886,
+        21890,
+        21903,
+        22046,
+        22148,
+        22223,
+        22297,
+        22336,
+        22442,
+        22571,
+        22714,
+        22785,
+        22791,
+        22831,
+        22855,
+        23012,
+        23051,
+        23074,
+        23097,
+        23276,
+        23322,
+        23350,
+        23398,
+        23670,
+        23671,
+        23742,
+        23749,
+        23794,
+        23858,
+        23863,
+        23888,
+        23992,
+        24016,
+        24018,
+        24027,
+        24142,
+        24163
+      ],
+      "conversion_parity_passed": false,
+      "output_validation_failures": {}
+    }
+  },
+  "failures": [
+    {
+      "row": 84,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"Contact email\" value=\"\" hint=\"name@domain.com\"",
+      "gold_option": "fill Email address: cmbeki19@fastmail.com",
+      "selected_options": {
+        "upstream_pytorch": "fill Email address: cmbeki19@fastmail.com",
+        "baseline": "fill Email address: cmbeki19@fastmail.com",
+        "int4-weights": "fill Email address: cmbeki19@fastmail.com"
+      }
+    },
+    {
+      "row": 137,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT Edit \"Full name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Novak",
+        "baseline": "fill Last: Novak",
+        "int4-weights": "fill Last: Novak"
+      }
+    },
+    {
+      "row": 309,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - JevBrowser\nELEMENT Edit \"Last name\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Surname: Ivanova",
+      "selected_options": {
+        "upstream_pytorch": "fill Surname: Ivanova",
+        "baseline": "fill Surname: Ivanova",
+        "int4-weights": "fill Surname: Ivanova"
+      }
+    },
+    {
+      "row": 410,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Date of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "fill Incident: Water damage from burst pipe"
+      }
+    },
+    {
+      "row": 514,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form\nELEMENT Edit \"Car make\" value=\"\"",
+      "gold_option": "fill Vehicle make: Toyota",
+      "selected_options": {
+        "upstream_pytorch": "fill Vehicle make: Toyota",
+        "baseline": "fill Vehicle make: Toyota",
+        "int4-weights": "fill Vehicle make: Toyota"
+      }
+    },
+    {
+      "row": 570,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT CheckBox \"Consent to electronic communication (required)\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 612,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Financial institution\" value=\"\"",
+      "gold_option": "fill Bank name: Capital One",
+      "selected_options": {
+        "upstream_pytorch": "fill Bank name: Capital One",
+        "baseline": "fill Bank name: Capital One",
+        "int4-weights": "fill Bank name: Capital One"
+      }
+    },
+    {
+      "row": 685,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"Claim number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 811,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Button \"Create account\" value=\"\"",
+      "gold_option": "click",
+      "selected_options": {
+        "upstream_pytorch": "click",
+        "baseline": "click",
+        "int4-weights": "click"
+      }
+    },
+    {
+      "row": 882,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Surname\" value=\"old\" hint=\"Family name\"",
+      "gold_option": "fill Last name: Fischer",
+      "selected_options": {
+        "upstream_pytorch": "fill Last name: Fischer",
+        "baseline": "fill Last name: Fischer",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 884,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Health plan\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 992,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form - Microsoft Edge\nELEMENT CheckBox \"I am legally authorized to work in this country\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 1033,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer\nELEMENT Edit \"Passport no.\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1109,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up\nELEMENT Edit \"Plate number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1195,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"Year\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1225,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up\nELEMENT Edit \"Vehicle identification number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1266,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request - Microsoft Edge\nELEMENT Edit \"Marital status\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1369,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Manufacturer\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1398,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Social security no.\" value=\"\"",
+      "gold_option": "fill Social Security: 271-37-2373",
+      "selected_options": {
+        "upstream_pytorch": "fill Social Security: 271-37-2373",
+        "baseline": "fill Social Security: 271-37-2373",
+        "int4-weights": "fill Social Security: 271-37-2373"
+      }
+    },
+    {
+      "row": 1438,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Mozilla Firefox\nELEMENT Edit \"Discount code\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1475,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake - Mozilla Firefox\nELEMENT Edit \"Car model\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1547,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT CheckBox \"Consent to electronic communication (required)\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1656,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"Relation to applicant\" value=\"\"",
+      "gold_option": "fill Relationship: Father",
+      "selected_options": {
+        "upstream_pytorch": "fill Relationship: Father",
+        "baseline": "fill Relationship: Father",
+        "int4-weights": "fill Relationship: Father"
+      }
+    },
+    {
+      "row": 1898,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Reason for visit\" value=\"\"",
+      "gold_option": "fill Reason: Allergy testing",
+      "selected_options": {
+        "upstream_pytorch": "fill Reason: Allergy testing",
+        "baseline": "fill Reason: Allergy testing",
+        "int4-weights": "fill Reason: Allergy testing"
+      }
+    },
+    {
+      "row": 1946,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Member ID\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 1963,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Manufacturer\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 2076,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Graduation year\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 2093,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Title\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "fill Reason: Flu vaccination"
+      }
+    },
+    {
+      "row": 2095,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Years in role\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 2155,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "fill Summary: Slipped on icy pavement",
+      "selected_options": {
+        "upstream_pytorch": "fill Summary: Slipped on icy pavement",
+        "baseline": "fill Summary: Slipped on icy pavement",
+        "int4-weights": "fill Summary: Slipped on icy pavement"
+      }
+    },
+    {
+      "row": 2187,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - Microsoft Edge\nELEMENT Edit \"Last Name\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Family name: Okafor",
+      "selected_options": {
+        "upstream_pytorch": "fill Family name: Okafor",
+        "baseline": "fill Family name: Okafor",
+        "int4-weights": "fill Family name: Okafor"
+      }
+    },
+    {
+      "row": 2272,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"Total years experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 2308,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration\nELEMENT Edit \"Purpose of visit\" value=\"\"",
+      "gold_option": "fill Complaint: Knee pain when climbing stairs",
+      "selected_options": {
+        "upstream_pytorch": "fill Complaint: Knee pain when climbing stairs",
+        "baseline": "fill Complaint: Knee pain when climbing stairs",
+        "int4-weights": "fill Complaint: Knee pain when climbing stairs"
+      }
+    },
+    {
+      "row": 2420,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Town\" value=\"\"",
+      "gold_option": "fill Town: Tucson",
+      "selected_options": {
+        "upstream_pytorch": "fill Town: Tucson",
+        "baseline": "fill Town: Tucson",
+        "int4-weights": "fill Town: Tucson"
+      }
+    },
+    {
+      "row": 2584,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"Salary expectation\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 2611,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request - Microsoft Edge\nELEMENT Edit \"Claim #\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 2661,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Years in role\" value=\"11\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 2798,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "fill Complaint: Allergy testing",
+      "selected_options": {
+        "upstream_pytorch": "fill Complaint: Allergy testing",
+        "baseline": "fill Complaint: Allergy testing",
+        "int4-weights": "fill Complaint: Allergy testing"
+      }
+    },
+    {
+      "row": 2818,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Your email\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 2860,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Surname\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Last: Mbeki",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Mbeki",
+        "baseline": "fill Last: Mbeki",
+        "int4-weights": "fill Last: Mbeki"
+      }
+    },
+    {
+      "row": 2928,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"SSN\" value=\"\"",
+      "gold_option": "fill Social security number: 431-74-1573",
+      "selected_options": {
+        "upstream_pytorch": "fill Social security number: 431-74-1573",
+        "baseline": "fill Social security number: 431-74-1573",
+        "int4-weights": "fill Social security number: 431-74-1573"
+      }
+    },
+    {
+      "row": 2945,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Organization\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 2976,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake - Microsoft Edge\nELEMENT Edit \"Claim reference\" value=\"\"",
+      "gold_option": "fill Reference: CLM-317554",
+      "selected_options": {
+        "upstream_pytorch": "fill Reference: CLM-317554",
+        "baseline": "fill Reference: CLM-317554",
+        "int4-weights": "fill Reference: CLM-317554"
+      }
+    },
+    {
+      "row": 3064,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Make\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3090,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Discount code\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3151,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - Google Chrome\nELEMENT Edit \"Date of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "fill Description: Water damage from burst pipe"
+      }
+    },
+    {
+      "row": 3209,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer - Mozilla Firefox\nELEMENT Button \"Create account\" value=\"\"",
+      "gold_option": "click",
+      "selected_options": {
+        "upstream_pytorch": "click",
+        "baseline": "click",
+        "int4-weights": "click"
+      }
+    },
+    {
+      "row": 3216,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Google Chrome\nELEMENT Edit \"Email\" value=\"oivanova66@yahoo.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Email address: oivanova66@yahoo.com",
+        "baseline": "fill Email address: oivanova66@yahoo.com",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3282,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Mozilla Firefox\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3298,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Mozilla Firefox\nELEMENT Edit \"DL number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3313,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Google Chrome\nELEMENT Edit \"Office phone\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3479,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Insurance company\" value=\"Centene\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3483,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"E-mail\" value=\"ethan.patel@yahoo.com\" hint=\"name@domain.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3538,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form - Mozilla Firefox\nELEMENT Edit \"State\" value=\"\"",
+      "gold_option": "fill Region: WA",
+      "selected_options": {
+        "upstream_pytorch": "fill Region: WA",
+        "baseline": "fill Region: WA",
+        "int4-weights": "fill Region: WA"
+      }
+    },
+    {
+      "row": 3733,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"What happened?\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3736,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Degree earned\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3756,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Claim #\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3806,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer - JevBrowser\nELEMENT Edit \"Next of kin\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 3878,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Surname\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Last name: Larsson",
+      "selected_options": {
+        "upstream_pytorch": "fill Last name: Larsson",
+        "baseline": "fill Last name: Larsson",
+        "int4-weights": "fill Last name: Larsson"
+      }
+    },
+    {
+      "row": 3978,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer - Microsoft Edge\nELEMENT Edit \"Family doctor\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 4097,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Vehicle model\" value=\"Civic\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 4106,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - JevBrowser\nELEMENT Edit \"Date of loss\" value=\"\"",
+      "gold_option": "fill Date of incident: 2026-05-02",
+      "selected_options": {
+        "upstream_pytorch": "fill Date of incident: 2026-05-02",
+        "baseline": "fill Date of incident: 2026-05-02",
+        "int4-weights": "fill Date of incident: 2026-05-02"
+      }
+    },
+    {
+      "row": 4123,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - JevBrowser\nELEMENT Edit \"GP name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 4139,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Google Chrome\nELEMENT Edit \"Years of experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 4233,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Mozilla Firefox\nELEMENT Edit \"Nationality\" value=\"old\"",
+      "gold_option": "fill Citizen of: Canadian",
+      "selected_options": {
+        "upstream_pytorch": "fill Citizen of: Canadian",
+        "baseline": "fill Citizen of: Canadian",
+        "int4-weights": "fill Citizen of: Canadian"
+      }
+    },
+    {
+      "row": 4278,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Nationality\" value=\"old\"",
+      "gold_option": "fill Citizenship: Japanese",
+      "selected_options": {
+        "upstream_pytorch": "fill Citizenship: Japanese",
+        "baseline": "fill Citizenship: Japanese",
+        "int4-weights": "fill Citizenship: Japanese"
+      }
+    },
+    {
+      "row": 4469,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"City\" value=\"Portland\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 4605,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake - Mozilla Firefox\nELEMENT Edit \"VIN number\" value=\"\"",
+      "gold_option": "fill VIN: GLZRYQTQRWYSTHUZ2",
+      "selected_options": {
+        "upstream_pytorch": "fill VIN: GLZRYQTQRWYSTHUZ2",
+        "baseline": "fill VIN: GLZRYQTQRWYSTHUZ2",
+        "int4-weights": "fill VIN: GLZRYQTQRWYSTHUZ2"
+      }
+    },
+    {
+      "row": 4630,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Mozilla Firefox\nELEMENT Edit \"Current salary\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 4682,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"Surname\" value=\"\"",
+      "gold_option": "fill Last: Schmidt",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Schmidt",
+        "baseline": "fill Last: Schmidt",
+        "int4-weights": "fill Last: Schmidt"
+      }
+    },
+    {
+      "row": 4745,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - JevBrowser\nELEMENT Edit \"Given name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 4908,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request - JevBrowser\nELEMENT Edit \"Make\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 4936,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - Mozilla Firefox\nELEMENT Edit \"Years of experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 5015,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - Google Chrome\nELEMENT CheckBox \"Consent to electronic communication (required)\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 5243,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Contact email\" value=\"zara.schmidt@yahoo.com\" hint=\"name@domain.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 5294,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Email\" value=\"nadia.fischer@fastmail.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 5330,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT CheckBox \"I am legally authorized to work in this country\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 5525,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Occupation\" value=\"\"",
+      "gold_option": "fill Position: Dental Hygienist",
+      "selected_options": {
+        "upstream_pytorch": "fill Position: Dental Hygienist",
+        "baseline": "fill Position: Dental Hygienist",
+        "int4-weights": "fill Position: Dental Hygienist"
+      }
+    },
+    {
+      "row": 5527,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Telephone\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 5585,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "fill Presenting problem: Skin rash on left arm",
+      "selected_options": {
+        "upstream_pytorch": "fill Presenting problem: Skin rash on left arm",
+        "baseline": "fill Presenting problem: Skin rash on left arm",
+        "int4-weights": "fill Presenting problem: Skin rash on left arm"
+      }
+    },
+    {
+      "row": 5591,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form\nELEMENT Edit \"Last\" value=\"\"",
+      "gold_option": "fill Family name: Abernathy",
+      "selected_options": {
+        "upstream_pytorch": "fill Family name: Abernathy",
+        "baseline": "fill Family name: Abernathy",
+        "int4-weights": "fill Family name: Abernathy"
+      }
+    },
+    {
+      "row": 5613,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Current medications\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 5687,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Mobile number\" value=\"\"",
+      "gold_option": "fill Contact number: 792.396.2253",
+      "selected_options": {
+        "upstream_pytorch": "fill Contact number: 792.396.2253",
+        "baseline": "fill Contact number: 792.396.2253",
+        "int4-weights": "fill Contact number: 792.396.2253"
+      }
+    },
+    {
+      "row": 5759,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form\nELEMENT Edit \"Relationship to patient\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 5838,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Region\" value=\"AZ\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 5946,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Occupation\" value=\"\"",
+      "gold_option": "fill Position: Civil Engineer",
+      "selected_options": {
+        "upstream_pytorch": "fill Position: Civil Engineer",
+        "baseline": "fill Position: Civil Engineer",
+        "int4-weights": "fill Position: Civil Engineer"
+      }
+    },
+    {
+      "row": 6113,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up\nELEMENT Edit \"Purpose of visit\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 6123,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up\nELEMENT Edit \"Primary care physician\" value=\"\"",
+      "gold_option": "fill GP: Dr. Becker",
+      "selected_options": {
+        "upstream_pytorch": "fill GP: Dr. Becker",
+        "baseline": "fill GP: Dr. Becker",
+        "int4-weights": "fill GP: Dr. Becker"
+      }
+    },
+    {
+      "row": 6196,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - JevBrowser\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 6205,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - JevBrowser\nELEMENT Edit \"Last name\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Family name: Silva",
+      "selected_options": {
+        "upstream_pytorch": "fill Family name: Silva",
+        "baseline": "fill Family name: Silva",
+        "int4-weights": "fill Family name: Silva"
+      }
+    },
+    {
+      "row": 6299,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Mozilla Firefox\nELEMENT Edit \"Birth date\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 6349,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Microsoft Edge\nELEMENT Edit \"Relationship status\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 6426,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Microsoft Edge\nELEMENT CheckBox \"Consent to electronic communication (required)\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 6466,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - JevBrowser\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 6587,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Microsoft Edge\nELEMENT Edit \"Current employer\" value=\"\"",
+      "gold_option": "fill Employer: Umbrella Health",
+      "selected_options": {
+        "upstream_pytorch": "fill Employer: Umbrella Health",
+        "baseline": "fill Employer: Umbrella Health",
+        "int4-weights": "fill Employer: Umbrella Health"
+      }
+    },
+    {
+      "row": 6631,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Google Chrome\nELEMENT Edit \"Given name\" value=\"Priya\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Physician: Dr. Fischer",
+        "baseline": "fill Physician: Dr. Fischer",
+        "int4-weights": "fill Physician: Dr. Fischer"
+      }
+    },
+    {
+      "row": 6748,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"State / Province\" value=\"NE\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill ST: NE",
+        "baseline": "fill ST: NE",
+        "int4-weights": "fill ST: NE"
+      }
+    },
+    {
+      "row": 6928,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Google Chrome\nELEMENT Edit \"Citizenship\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 7088,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"Current salary\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 7177,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Claim #\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 7280,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Given name\" value=\"Tomas\" hint=\"First\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill First name: Tomas",
+        "baseline": "fill First name: Tomas",
+        "int4-weights": "fill First name: Tomas"
+      }
+    },
+    {
+      "row": 7306,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Given name\" value=\"\" hint=\"Given name\"",
+      "gold_option": "fill First: Mateo",
+      "selected_options": {
+        "upstream_pytorch": "fill First: Mateo",
+        "baseline": "fill First: Mateo",
+        "int4-weights": "fill First: Mateo"
+      }
+    },
+    {
+      "row": 7411,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"National ID number\" value=\"\"",
+      "gold_option": "fill Social Security: 638-17-6557",
+      "selected_options": {
+        "upstream_pytorch": "fill Social Security: 638-17-6557",
+        "baseline": "fill Social Security: 638-17-6557",
+        "int4-weights": "fill Social Security: 638-17-6557"
+      }
+    },
+    {
+      "row": 7515,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Province\" value=\"GA\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 7641,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form - Mozilla Firefox\nELEMENT Edit \"Manufacturer\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 7650,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form - Mozilla Firefox\nELEMENT Edit \"VIN number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 7672,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Forename\" value=\"Kenji\" hint=\"Given name\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 7815,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"Vehicle year\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8017,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Policy number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8034,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Qualification\" value=\"\"",
+      "gold_option": "fill Degree: Associate of Arts",
+      "selected_options": {
+        "upstream_pytorch": "fill Degree: Associate of Arts",
+        "baseline": "fill Degree: Associate of Arts",
+        "int4-weights": "fill Degree: Associate of Arts"
+      }
+    },
+    {
+      "row": 8235,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Reason for visit\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8243,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Passport number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8385,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration\nELEMENT Edit \"City\" value=\"Denver\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8497,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer - JevBrowser\nELEMENT Edit \"VIN number\" value=\"\"",
+      "gold_option": "fill Chassis number: 6X03E5GUHTB3AMH57",
+      "selected_options": {
+        "upstream_pytorch": "fill Chassis number: 6X03E5GUHTB3AMH57",
+        "baseline": "fill Chassis number: 6X03E5GUHTB3AMH57",
+        "int4-weights": "fill Chassis number: 6X03E5GUHTB3AMH57"
+      }
+    },
+    {
+      "row": 8514,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Microsoft Edge\nELEMENT Edit \"Reason for visit\" value=\"\"",
+      "gold_option": "fill Reason: Skin rash on left arm",
+      "selected_options": {
+        "upstream_pytorch": "fill Reason: Skin rash on left arm",
+        "baseline": "fill Reason: Skin rash on left arm",
+        "int4-weights": "fill Reason: Skin rash on left arm"
+      }
+    },
+    {
+      "row": 8543,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Address line 1\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8664,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - JevBrowser\nELEMENT Edit \"Experience (years)\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8668,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - JevBrowser\nELEMENT Edit \"Message to hiring manager\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8706,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Mozilla Firefox\nELEMENT CheckBox \"I authorize verification of the information provided\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 8714,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Registration number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8891,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Google Chrome\nELEMENT Edit \"Last\" value=\"Ivanova\" hint=\"Family name\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 8892,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Google Chrome\nELEMENT Edit \"Reason for visit\" value=\"\"",
+      "gold_option": "fill Presenting problem: Knee pain when climbing stairs",
+      "selected_options": {
+        "upstream_pytorch": "fill Presenting problem: Knee pain when climbing stairs",
+        "baseline": "fill Presenting problem: Knee pain when climbing stairs",
+        "int4-weights": "fill Presenting problem: Knee pain when climbing stairs"
+      }
+    },
+    {
+      "row": 9037,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer\nELEMENT Edit \"Last Name\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Last: Lindqvist",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Lindqvist",
+        "baseline": "fill Last: Lindqvist",
+        "int4-weights": "fill Last: Lindqvist"
+      }
+    },
+    {
+      "row": 9051,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding\nELEMENT Edit \"Bank account number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9193,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding\nELEMENT Edit \"DL number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9253,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Homepage\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "fill Member #: 75R6HHUVJ"
+      }
+    },
+    {
+      "row": 9291,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form - JevBrowser\nELEMENT Edit \"Relationship status\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9345,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Registration plate\" value=\"\"",
+      "gold_option": "fill Reg plate: BED-9597",
+      "selected_options": {
+        "upstream_pytorch": "fill Reg plate: BED-9597",
+        "baseline": "fill Reg plate: BED-9597",
+        "int4-weights": "fill Reg plate: BED-9597"
+      }
+    },
+    {
+      "row": 9445,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request - JevBrowser\nELEMENT Edit \"Full name\" value=\"\"",
+      "gold_option": "fill Applicant: Lucas Becker",
+      "selected_options": {
+        "upstream_pytorch": "fill Applicant: Lucas Becker",
+        "baseline": "fill Applicant: Lucas Becker",
+        "int4-weights": "fill Applicant: Lucas Becker"
+      }
+    },
+    {
+      "row": 9533,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Insurance ID\" value=\"\"",
+      "gold_option": "fill Member #: V291KY57V",
+      "selected_options": {
+        "upstream_pytorch": "fill Member #: V291KY57V",
+        "baseline": "fill Member #: V291KY57V",
+        "int4-weights": "fill Member #: V291KY57V"
+      }
+    },
+    {
+      "row": 9570,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - JevBrowser\nELEMENT Edit \"First\" value=\"Isla\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9577,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - JevBrowser\nELEMENT Edit \"Registration plate\" value=\"\"",
+      "gold_option": "fill Reg plate: YV7-9984",
+      "selected_options": {
+        "upstream_pytorch": "fill Reg plate: YV7-9984",
+        "baseline": "fill Reg plate: YV7-9984",
+        "int4-weights": "fill Reg plate: YV7-9984"
+      }
+    },
+    {
+      "row": 9581,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - JevBrowser\nELEMENT Edit \"Manufacturer\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9621,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Mozilla Firefox\nELEMENT Edit \"Mobile phone\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9624,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Mozilla Firefox\nELEMENT CheckBox \"I consent to treatment and agree to the privacy policy\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9642,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer\nELEMENT Edit \"Drug allergies\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9730,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Registration plate\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9855,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "fill Complaint: Persistent cough for two weeks",
+      "selected_options": {
+        "upstream_pytorch": "fill Complaint: Persistent cough for two weeks",
+        "baseline": "fill Complaint: Persistent cough for two weeks",
+        "int4-weights": "fill Complaint: Persistent cough for two weeks"
+      }
+    },
+    {
+      "row": 9945,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration\nELEMENT Edit \"Financial institution\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9977,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Country\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 9981,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"City\" value=\"Burlington\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10165,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - Google Chrome\nELEMENT Edit \"Insurance company\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10191,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"Highest degree\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10216,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - JevBrowser\nELEMENT Edit \"Forename\" value=\"\" hint=\"First\"",
+      "gold_option": "fill First name: Jonas",
+      "selected_options": {
+        "upstream_pytorch": "fill First name: Jonas",
+        "baseline": "fill First name: Jonas",
+        "int4-weights": "fill First name: Jonas"
+      }
+    },
+    {
+      "row": 10345,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Button \"Create account\" value=\"\"",
+      "gold_option": "click",
+      "selected_options": {
+        "upstream_pytorch": "click",
+        "baseline": "click",
+        "int4-weights": "click"
+      }
+    },
+    {
+      "row": 10364,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "fill Complaint: Migraine headaches",
+      "selected_options": {
+        "upstream_pytorch": "fill Complaint: Migraine headaches",
+        "baseline": "fill Complaint: Migraine headaches",
+        "int4-weights": "fill Complaint: Migraine headaches"
+      }
+    },
+    {
+      "row": 10398,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT CheckBox \"Consent to electronic communication (required)\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10436,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Microsoft Edge\nELEMENT Edit \"Last Name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10458,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Current salary\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10486,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "fill Presenting problem: Allergy testing",
+      "selected_options": {
+        "upstream_pytorch": "fill Presenting problem: Allergy testing",
+        "baseline": "fill Presenting problem: Allergy testing",
+        "int4-weights": "fill Presenting problem: Allergy testing"
+      }
+    },
+    {
+      "row": 10488,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Highest degree\" value=\"\"",
+      "gold_option": "fill Studied: BSc Computer Science",
+      "selected_options": {
+        "upstream_pytorch": "fill Studied: BSc Computer Science",
+        "baseline": "fill Studied: BSc Computer Science",
+        "int4-weights": "fill Studied: BSc Computer Science"
+      }
+    },
+    {
+      "row": 10503,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Discount code\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10620,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Car model\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10703,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - JevBrowser\nELEMENT Edit \"Last\" value=\"Silva\" hint=\"Family name\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Family name: Silva",
+        "baseline": "fill Family name: Silva",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10740,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Mozilla Firefox\nELEMENT Edit \"Passport no.\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10962,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Office phone\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 10993,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Mozilla Firefox\nELEMENT Edit \"Family name\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Last name: Yamamoto",
+      "selected_options": {
+        "upstream_pytorch": "fill Last name: Yamamoto",
+        "baseline": "fill Last name: Yamamoto",
+        "int4-weights": "fill Last name: Yamamoto"
+      }
+    },
+    {
+      "row": 11046,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake - Google Chrome\nELEMENT Edit \"Date of loss\" value=\"\"",
+      "gold_option": "fill Occurred: 2026-12-23",
+      "selected_options": {
+        "upstream_pytorch": "fill Occurred: 2026-12-23",
+        "baseline": "fill Occurred: 2026-12-23",
+        "int4-weights": "fill Occurred: 2026-12-23"
+      }
+    },
+    {
+      "row": 11090,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"VIN\" value=\"\"",
+      "gold_option": "fill Vehicle ID: W2VC74RR3YU3WLQ3V",
+      "selected_options": {
+        "upstream_pytorch": "fill Vehicle ID: W2VC74RR3YU3WLQ3V",
+        "baseline": "fill Vehicle ID: W2VC74RR3YU3WLQ3V",
+        "int4-weights": "fill Vehicle ID: W2VC74RR3YU3WLQ3V"
+      }
+    },
+    {
+      "row": 11122,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"EIN\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 11191,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"First\" value=\"Jonas\" hint=\"First\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 11214,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Mozilla Firefox\nELEMENT Edit \"VIN number\" value=\"\"",
+      "gold_option": "fill Vehicle ID: VU7X3AG831XFKJXPC",
+      "selected_options": {
+        "upstream_pytorch": "fill Vehicle ID: VU7X3AG831XFKJXPC",
+        "baseline": "fill Vehicle ID: VU7X3AG831XFKJXPC",
+        "int4-weights": "fill Vehicle ID: VU7X3AG831XFKJXPC"
+      }
+    },
+    {
+      "row": 11257,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Microsoft Edge\nELEMENT CheckBox \"I am legally authorized to work in this country\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 11300,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Email Address\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 11337,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding\nELEMENT Edit \"Describe the incident\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 11390,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Your name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 11553,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"DL number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 11630,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up\nELEMENT Edit \"Purpose of visit\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 11813,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - JevBrowser\nELEMENT Edit \"Surname\" value=\"\"",
+      "gold_option": "fill Last: Yamamoto",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Yamamoto",
+        "baseline": "fill Last: Yamamoto",
+        "int4-weights": "fill Last: Yamamoto"
+      }
+    },
+    {
+      "row": 11880,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Google Chrome\nELEMENT Edit \"Date of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 11959,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer - Mozilla Firefox\nELEMENT Edit \"Reason for visit\" value=\"\"",
+      "gold_option": "fill Reason: Annual check-up",
+      "selected_options": {
+        "upstream_pytorch": "fill Reason: Annual check-up",
+        "baseline": "fill Reason: Annual check-up",
+        "int4-weights": "fill Reason: Annual check-up"
+      }
+    },
+    {
+      "row": 12043,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"Street\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 12217,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Google Chrome\nELEMENT Edit \"Forename\" value=\"\" hint=\"First\"",
+      "gold_option": "fill Forename: Maya",
+      "selected_options": {
+        "upstream_pytorch": "fill Forename: Maya",
+        "baseline": "fill Forename: Maya",
+        "int4-weights": "fill Forename: Maya"
+      }
+    },
+    {
+      "row": 12219,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Google Chrome\nELEMENT Edit \"Reason for visit\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 12255,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form - JevBrowser\nELEMENT Edit \"Taxpayer identification number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill National ID: 813-20-3361",
+        "baseline": "fill National ID: 813-20-3361",
+        "int4-weights": "fill National ID: 813-20-3361"
+      }
+    },
+    {
+      "row": 12411,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form\nELEMENT Edit \"Purpose of visit\" value=\"\"",
+      "gold_option": "fill Presenting problem: Persistent cough for two weeks",
+      "selected_options": {
+        "upstream_pytorch": "fill Presenting problem: Persistent cough for two weeks",
+        "baseline": "fill Presenting problem: Persistent cough for two weeks",
+        "int4-weights": "fill Presenting problem: Persistent cough for two weeks"
+      }
+    },
+    {
+      "row": 12516,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Insurance ID\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 12546,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form\nELEMENT Edit \"Vehicle make\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 12605,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Forename\" value=\"old\"",
+      "gold_option": "fill Forename: Ravi",
+      "selected_options": {
+        "upstream_pytorch": "fill Forename: Ravi",
+        "baseline": "fill Forename: Ravi",
+        "int4-weights": "fill Forename: Ravi"
+      }
+    },
+    {
+      "row": 12606,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"E-mail\" value=\"\" hint=\"you@example.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 12699,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Button \"Create account\" value=\"\"",
+      "gold_option": "click",
+      "selected_options": {
+        "upstream_pytorch": "click",
+        "baseline": "click",
+        "int4-weights": "click"
+      }
+    },
+    {
+      "row": 12725,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Company\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 12754,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Microsoft Edge\nELEMENT CheckBox \"I consent to treatment and agree to the privacy policy\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 12792,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - Microsoft Edge\nELEMENT Edit \"Insurance carrier\" value=\"\"",
+      "gold_option": "fill Health plan: Aetna",
+      "selected_options": {
+        "upstream_pytorch": "fill Health plan: Aetna",
+        "baseline": "fill Health plan: Aetna",
+        "int4-weights": "fill Health plan: Aetna"
+      }
+    },
+    {
+      "row": 12936,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Vehicle identification number\" value=\"old\"",
+      "gold_option": "fill VIN: L17B14Q75FUYGNC6S",
+      "selected_options": {
+        "upstream_pytorch": "fill VIN: L17B14Q75FUYGNC6S",
+        "baseline": "fill VIN: L17B14Q75FUYGNC6S",
+        "int4-weights": "fill VIN: L17B14Q75FUYGNC6S"
+      }
+    },
+    {
+      "row": 12949,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Insurance policy number\" value=\"\"",
+      "gold_option": "fill Policy #: POL-08547702",
+      "selected_options": {
+        "upstream_pytorch": "fill Policy #: POL-08547702",
+        "baseline": "fill Policy #: POL-08547702",
+        "int4-weights": "fill Policy #: POL-08547702"
+      }
+    },
+    {
+      "row": 12983,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT CheckBox \"Consent to electronic communication (required)\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13027,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Town\" value=\"\"",
+      "gold_option": "fill City: Omaha",
+      "selected_options": {
+        "upstream_pytorch": "fill City: Omaha",
+        "baseline": "fill City: Omaha",
+        "int4-weights": "fill City: Omaha"
+      }
+    },
+    {
+      "row": 13031,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Region\" value=\"NE\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13053,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Symptoms\" value=\"\"",
+      "gold_option": "fill Reason: Skin rash on left arm",
+      "selected_options": {
+        "upstream_pytorch": "fill Reason: Skin rash on left arm",
+        "baseline": "fill Reason: Skin rash on left arm",
+        "int4-weights": "fill Reason: Skin rash on left arm"
+      }
+    },
+    {
+      "row": 13115,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"SSN\" value=\"\"",
+      "gold_option": "fill National ID: 663-60-6630",
+      "selected_options": {
+        "upstream_pytorch": "fill National ID: 663-60-6630",
+        "baseline": "fill National ID: 663-60-6630",
+        "int4-weights": "fill National ID: 663-60-6630"
+      }
+    },
+    {
+      "row": 13154,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Last\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Family name: Delgado",
+      "selected_options": {
+        "upstream_pytorch": "fill Family name: Delgado",
+        "baseline": "fill Family name: Delgado",
+        "int4-weights": "fill Family name: Delgado"
+      }
+    },
+    {
+      "row": 13204,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"Institution attended\" value=\"Tech Institute\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13323,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Postal code\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13370,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - Microsoft Edge\nELEMENT Edit \"Mailing address\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "fill Status: Divorced"
+      }
+    },
+    {
+      "row": 13392,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer\nELEMENT Edit \"Member ID\" value=\"TYB2Y2JDT\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13423,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"Current job title\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13450,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Last Name\" value=\"\"",
+      "gold_option": "fill Last: Andersen",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Andersen",
+        "baseline": "fill Last: Andersen",
+        "int4-weights": "fill Last: Andersen"
+      }
+    },
+    {
+      "row": 13480,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Current employer\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Company reg: REG3878384",
+        "baseline": "fill Company reg: REG3878384",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13483,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Medicines taken\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13533,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"First\" value=\"Nadia\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13545,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Google Chrome\nELEMENT Edit \"Last Name\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Last: Schmidt",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Schmidt",
+        "baseline": "fill Last: Schmidt",
+        "int4-weights": "fill Last: Schmidt"
+      }
+    },
+    {
+      "row": 13609,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Applicant name\" value=\"Isla Quinn\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13693,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Mozilla Firefox\nELEMENT Edit \"Organization\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13766,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"Last\" value=\"\"",
+      "gold_option": "fill Surname: Andersen",
+      "selected_options": {
+        "upstream_pytorch": "fill Surname: Andersen",
+        "baseline": "fill Surname: Andersen",
+        "int4-weights": "fill Surname: Andersen"
+      }
+    },
+    {
+      "row": 13768,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"Legal name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13795,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - Microsoft Edge\nELEMENT Edit \"Forename\" value=\"Leila\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 13969,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form - Mozilla Firefox\nELEMENT Edit \"Email address\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 14043,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form - JevBrowser\nELEMENT Edit \"Health plan\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 14145,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - JevBrowser\nELEMENT Edit \"Sex\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 14220,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"First name\" value=\"Leila\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 14568,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Microsoft Edge\nELEMENT Button \"Create account\" value=\"\"",
+      "gold_option": "click",
+      "selected_options": {
+        "upstream_pytorch": "click",
+        "baseline": "click",
+        "int4-weights": "click"
+      }
+    },
+    {
+      "row": 14608,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"SSN\" value=\"\"",
+      "gold_option": "fill Social security number: 003-11-8534",
+      "selected_options": {
+        "upstream_pytorch": "fill Social security number: 003-11-8534",
+        "baseline": "fill Social security number: 003-11-8534",
+        "int4-weights": "fill Social security number: 003-11-8534"
+      }
+    },
+    {
+      "row": 14656,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - Google Chrome\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 14718,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form - Microsoft Edge\nELEMENT Edit \"Case number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 14722,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form - Microsoft Edge\nELEMENT Edit \"Nationality\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 14868,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Microsoft Edge\nELEMENT Edit \"Medicines taken\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 14899,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Insurance carrier\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 14934,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Marital status\" value=\"Divorced\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 15065,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - JevBrowser\nELEMENT Edit \"Title\" value=\"Nurse Practitioner\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 15132,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Mozilla Firefox\nELEMENT Edit \"Town\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 15214,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Relation to applicant\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Reg plate: WN9-8147",
+        "baseline": "fill Reg plate: WN9-8147",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 15219,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Model\" value=\"Model 3\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 15252,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"VIN number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 15259,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Mozilla Firefox\nELEMENT Edit \"VIN number\" value=\"\"",
+      "gold_option": "fill Vehicle ID: UF6M521K3G9J023CS",
+      "selected_options": {
+        "upstream_pytorch": "fill Vehicle ID: UF6M521K3G9J023CS",
+        "baseline": "fill Vehicle ID: UF6M521K3G9J023CS",
+        "int4-weights": "fill Vehicle ID: UF6M521K3G9J023CS"
+      }
+    },
+    {
+      "row": 15698,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer - Mozilla Firefox\nELEMENT CheckBox \"I am legally authorized to work in this country\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 15764,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer\nELEMENT Edit \"First Name\" value=\"\" hint=\"Given name\"",
+      "gold_option": "fill Forename: Kenji",
+      "selected_options": {
+        "upstream_pytorch": "fill Forename: Kenji",
+        "baseline": "fill Forename: Kenji",
+        "int4-weights": "fill Forename: Kenji"
+      }
+    },
+    {
+      "row": 15819,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"Address line 1\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 16041,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"Last\" value=\"\"",
+      "gold_option": "fill Surname: Lindqvist",
+      "selected_options": {
+        "upstream_pytorch": "fill Surname: Lindqvist",
+        "baseline": "fill Surname: Lindqvist",
+        "int4-weights": "fill Surname: Lindqvist"
+      }
+    },
+    {
+      "row": 16106,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - Microsoft Edge\nELEMENT Edit \"Home address\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 16182,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form - Microsoft Edge\nELEMENT CheckBox \"I am legally authorized to work in this country\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 16200,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer - JevBrowser\nELEMENT Edit \"Start date\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 16205,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer - JevBrowser\nELEMENT Edit \"State\" value=\"\"",
+      "gold_option": "fill ST: OR",
+      "selected_options": {
+        "upstream_pytorch": "fill ST: OR",
+        "baseline": "fill ST: OR",
+        "int4-weights": "fill ST: OR"
+      }
+    },
+    {
+      "row": 16207,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer - JevBrowser\nELEMENT Edit \"Surname\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Surname: Moreau",
+      "selected_options": {
+        "upstream_pytorch": "fill Surname: Moreau",
+        "baseline": "fill Surname: Moreau",
+        "int4-weights": "fill Surname: Moreau"
+      }
+    },
+    {
+      "row": 16253,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Relation to applicant\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 16256,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Role\" value=\"\"",
+      "gold_option": "fill Position: Project Manager",
+      "selected_options": {
+        "upstream_pytorch": "fill Position: Project Manager",
+        "baseline": "fill Position: Project Manager",
+        "int4-weights": "fill Position: Project Manager"
+      }
+    },
+    {
+      "row": 16392,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer - Google Chrome\nELEMENT Edit \"Your email\" value=\"\" hint=\"name@domain.com\"",
+      "gold_option": "fill Email: nandersen99@fastmail.com",
+      "selected_options": {
+        "upstream_pytorch": "fill Email: nandersen99@fastmail.com",
+        "baseline": "fill Email: nandersen99@fastmail.com",
+        "int4-weights": "fill Email: nandersen99@fastmail.com"
+      }
+    },
+    {
+      "row": 16517,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"First Name\" value=\"old\" hint=\"First\"",
+      "gold_option": "fill First name: Hannah",
+      "selected_options": {
+        "upstream_pytorch": "fill First name: Hannah",
+        "baseline": "fill First name: Hannah",
+        "int4-weights": "fill First name: Hannah"
+      }
+    },
+    {
+      "row": 16597,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Google Chrome\nELEMENT Edit \"Telephone\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 16608,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Google Chrome\nELEMENT CheckBox \"I am legally authorized to work in this country\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 16678,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake - Mozilla Firefox\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "fill Complaint: Skin rash on left arm",
+      "selected_options": {
+        "upstream_pytorch": "fill Complaint: Skin rash on left arm",
+        "baseline": "fill Complaint: Skin rash on left arm",
+        "int4-weights": "fill Complaint: Skin rash on left arm"
+      }
+    },
+    {
+      "row": 16920,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application - Google Chrome\nELEMENT Edit \"Total years experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "fill Expected salary: $130k"
+      }
+    },
+    {
+      "row": 16951,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"State\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 17100,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"National ID number\" value=\"\"",
+      "gold_option": "fill Social Security: 513-12-8044",
+      "selected_options": {
+        "upstream_pytorch": "fill Social Security: 513-12-8044",
+        "baseline": "fill Social Security: 513-12-8044",
+        "int4-weights": "fill Social Security: 513-12-8044"
+      }
+    },
+    {
+      "row": 17122,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form - Mozilla Firefox\nELEMENT Edit \"Plate #\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 17253,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Primary phone\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 17304,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request - Google Chrome\nELEMENT CheckBox \"I am legally authorized to work in this country\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 17318,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Google Chrome\nELEMENT Edit \"Last name\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Last: Abernathy",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Abernathy",
+        "baseline": "fill Last: Abernathy",
+        "int4-weights": "fill Last: Abernathy"
+      }
+    },
+    {
+      "row": 17351,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Marital status\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 17372,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Last name\" value=\"old\"",
+      "gold_option": "fill Last: Delgado",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Delgado",
+        "baseline": "fill Last: Delgado",
+        "int4-weights": "fill Last: Delgado"
+      }
+    },
+    {
+      "row": 17454,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Forename\" value=\"\" hint=\"First\"",
+      "gold_option": "fill First: Jonas",
+      "selected_options": {
+        "upstream_pytorch": "fill First: Jonas",
+        "baseline": "fill First: Jonas",
+        "int4-weights": "fill First: Jonas"
+      }
+    },
+    {
+      "row": 17632,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Mobile number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 17665,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form - JevBrowser\nELEMENT Edit \"Contact email\" value=\"\"",
+      "gold_option": "fill Contact: olivia.garcia@gmail.com",
+      "selected_options": {
+        "upstream_pytorch": "fill Contact: olivia.garcia@gmail.com",
+        "baseline": "fill Contact: olivia.garcia@gmail.com",
+        "int4-weights": "fill Contact: olivia.garcia@gmail.com"
+      }
+    },
+    {
+      "row": 17854,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Microsoft Edge\nELEMENT Edit \"Purpose of visit\" value=\"\"",
+      "gold_option": "fill Complaint: Annual check-up",
+      "selected_options": {
+        "upstream_pytorch": "fill Complaint: Annual check-up",
+        "baseline": "fill Complaint: Annual check-up",
+        "int4-weights": "fill Complaint: Annual check-up"
+      }
+    },
+    {
+      "row": 17858,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Microsoft Edge\nELEMENT Edit \"Contact phone\" value=\"\"",
+      "gold_option": "fill Phone: +1 779 550 3974",
+      "selected_options": {
+        "upstream_pytorch": "fill Phone: +1 779 550 3974",
+        "baseline": "fill Phone: +1 779 550 3974",
+        "int4-weights": "fill Phone: +1 779 550 3974"
+      }
+    },
+    {
+      "row": 17865,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Microsoft Edge\nELEMENT Edit \"Apartment or unit\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 17873,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Microsoft Edge\nELEMENT CheckBox \"I acknowledge the cancellation policy\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 17918,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Mozilla Firefox\nELEMENT Edit \"Gender\" value=\"Female\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18099,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "fill Presenting problem: Knee pain when climbing stairs",
+      "selected_options": {
+        "upstream_pytorch": "fill Presenting problem: Knee pain when climbing stairs",
+        "baseline": "fill Presenting problem: Knee pain when climbing stairs",
+        "int4-weights": "fill Presenting problem: Knee pain when climbing stairs"
+      }
+    },
+    {
+      "row": 18119,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application - Google Chrome\nELEMENT Edit \"Surname\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Family name: Abernathy",
+      "selected_options": {
+        "upstream_pytorch": "fill Family name: Abernathy",
+        "baseline": "fill Family name: Abernathy",
+        "int4-weights": "fill Family name: Abernathy"
+      }
+    },
+    {
+      "row": 18154,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form - JevBrowser\nELEMENT Edit \"Last\" value=\"\"",
+      "gold_option": "fill Surname: Garcia",
+      "selected_options": {
+        "upstream_pytorch": "fill Surname: Garcia",
+        "baseline": "fill Surname: Garcia",
+        "int4-weights": "fill Surname: Garcia"
+      }
+    },
+    {
+      "row": 18168,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form - JevBrowser\nELEMENT Edit \"Model\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18237,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - Microsoft Edge\nELEMENT Edit \"Primary care physician\" value=\"Dr. Chen\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18252,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"Marital status\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18290,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding\nELEMENT Edit \"Purpose of visit\" value=\"\"",
+      "gold_option": "fill Presenting problem: Knee pain when climbing stairs",
+      "selected_options": {
+        "upstream_pytorch": "fill Presenting problem: Knee pain when climbing stairs",
+        "baseline": "fill Presenting problem: Knee pain when climbing stairs",
+        "int4-weights": "fill Presenting problem: Knee pain when climbing stairs"
+      }
+    },
+    {
+      "row": 18339,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - Mozilla Firefox\nELEMENT Edit \"Last name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18432,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT Edit \"Search\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18541,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT Edit \"GP name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18549,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT Edit \"ABA routing number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18551,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT CheckBox \"Consent to electronic communication (required)\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18559,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT Edit \"Search\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18579,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration\nELEMENT Edit \"Member number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18726,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Last Name\" value=\"old\" hint=\"Family name\"",
+      "gold_option": "fill Last: Tanaka",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Tanaka",
+        "baseline": "fill Last: Tanaka",
+        "int4-weights": "fill Last: Tanaka"
+      }
+    },
+    {
+      "row": 18731,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Button \"Create account\" value=\"\"",
+      "gold_option": "click",
+      "selected_options": {
+        "upstream_pytorch": "click",
+        "baseline": "click",
+        "int4-weights": "click"
+      }
+    },
+    {
+      "row": 18753,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Microsoft Edge\nELEMENT Edit \"Job title\" value=\"\"",
+      "gold_option": "fill Occupation: Registered Nurse",
+      "selected_options": {
+        "upstream_pytorch": "fill Occupation: Registered Nurse",
+        "baseline": "fill Occupation: Registered Nurse",
+        "int4-weights": "fill Occupation: Registered Nurse"
+      }
+    },
+    {
+      "row": 18775,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form\nELEMENT Edit \"Name (as on ID)\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18802,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Unit number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 18945,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Microsoft Edge\nELEMENT Button \"Create account\" value=\"\"",
+      "gold_option": "click",
+      "selected_options": {
+        "upstream_pytorch": "click",
+        "baseline": "click",
+        "int4-weights": "click"
+      }
+    },
+    {
+      "row": 19021,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form\nELEMENT Edit \"Surname\" value=\"\"",
+      "gold_option": "fill Surname: Novak",
+      "selected_options": {
+        "upstream_pytorch": "fill Surname: Novak",
+        "baseline": "fill Surname: Novak",
+        "int4-weights": "fill Surname: Novak"
+      }
+    },
+    {
+      "row": 19205,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form - Microsoft Edge\nELEMENT CheckBox \"I am legally authorized to work in this country\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 19270,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Plate number\" value=\"old\"",
+      "gold_option": "fill License plate: SJ3-1115",
+      "selected_options": {
+        "upstream_pytorch": "fill License plate: SJ3-1115",
+        "baseline": "fill License plate: SJ3-1115",
+        "int4-weights": "fill License plate: SJ3-1115"
+      }
+    },
+    {
+      "row": 19276,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Routing number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 19308,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Google Chrome\nELEMENT Edit \"Last\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 19361,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Mozilla Firefox\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 19438,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Last\" value=\"Rossi\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 19439,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Describe the incident\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 19511,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Last Name\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Last name: Silva",
+      "selected_options": {
+        "upstream_pytorch": "fill Last name: Silva",
+        "baseline": "fill Last name: Silva",
+        "int4-weights": "fill Last name: Silva"
+      }
+    },
+    {
+      "row": 19634,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "fill Summary: Slipped on icy pavement",
+      "selected_options": {
+        "upstream_pytorch": "fill Summary: Slipped on icy pavement",
+        "baseline": "fill Summary: Slipped on icy pavement",
+        "int4-weights": "fill Summary: Slipped on icy pavement"
+      }
+    },
+    {
+      "row": 19669,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"School\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 19704,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Occupation\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 19809,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request - JevBrowser\nELEMENT Edit \"Total years experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 19834,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - JevBrowser\nELEMENT Edit \"Tax number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 19940,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Surname\" value=\"\"",
+      "gold_option": "fill Last: Kowalski",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Kowalski",
+        "baseline": "fill Last: Kowalski",
+        "int4-weights": "fill Last: Kowalski"
+      }
+    },
+    {
+      "row": 19957,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"Plate number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20008,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form - Mozilla Firefox\nELEMENT Edit \"First name\" value=\"\" hint=\"First\"",
+      "gold_option": "fill Forename: Ibrahim",
+      "selected_options": {
+        "upstream_pytorch": "fill Forename: Ibrahim",
+        "baseline": "fill Forename: Ibrahim",
+        "int4-weights": "fill Forename: Ibrahim"
+      }
+    },
+    {
+      "row": 20097,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20214,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer\nELEMENT Edit \"State\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20326,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration\nELEMENT Edit \"Current medications\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20370,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request - Microsoft Edge\nELEMENT Edit \"Name (as on ID)\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20457,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Mozilla Firefox\nELEMENT Edit \"Town\" value=\"Seattle\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20462,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Mozilla Firefox\nELEMENT CheckBox \"I am legally authorized to work in this country\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20476,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Sort code\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20486,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Social Security Number\" value=\"\"",
+      "gold_option": "fill National ID: 858-41-8534",
+      "selected_options": {
+        "upstream_pytorch": "fill National ID: 858-41-8534",
+        "baseline": "fill National ID: 858-41-8534",
+        "int4-weights": "fill National ID: 858-41-8534"
+      }
+    },
+    {
+      "row": 20492,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT CheckBox \"Consent to electronic communication (required)\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20625,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Street\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20776,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Given name\" value=\"\"",
+      "gold_option": "fill Forename: Ethan",
+      "selected_options": {
+        "upstream_pytorch": "fill Forename: Ethan",
+        "baseline": "fill Forename: Ethan",
+        "int4-weights": "fill Forename: Ethan"
+      }
+    },
+    {
+      "row": 20928,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Next of kin\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 20956,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21022,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - JevBrowser\nELEMENT Edit \"State\" value=\"NE\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill National ID: 794-03-1212",
+        "baseline": "fill National ID: 794-03-1212",
+        "int4-weights": "fill National ID: 794-03-1212"
+      }
+    },
+    {
+      "row": 21028,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - JevBrowser\nELEMENT Edit \"DL number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21029,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - JevBrowser\nELEMENT Edit \"Taxpayer identification number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21049,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Nation\" value=\"\"",
+      "gold_option": "fill Country: Japan",
+      "selected_options": {
+        "upstream_pytorch": "fill Country: Japan",
+        "baseline": "fill Country: Japan",
+        "int4-weights": "fill Country: Japan"
+      }
+    },
+    {
+      "row": 21163,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Google Chrome\nELEMENT Edit \"School\" value=\"Tech Institute\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21344,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form\nELEMENT Edit \"Job title\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "fill Phone: 403.964.9030"
+      }
+    },
+    {
+      "row": 21352,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form\nELEMENT Edit \"Last Name\" value=\"\" hint=\"Family name\"",
+      "gold_option": "fill Family name: Abernathy",
+      "selected_options": {
+        "upstream_pytorch": "fill Family name: Abernathy",
+        "baseline": "fill Family name: Abernathy",
+        "int4-weights": "fill Family name: Abernathy"
+      }
+    },
+    {
+      "row": 21464,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"National ID number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21519,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - JevBrowser\nELEMENT Edit \"Region\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21566,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Relationship\" value=\"\"",
+      "gold_option": "fill Relationship: Daughter",
+      "selected_options": {
+        "upstream_pytorch": "fill Relationship: Daughter",
+        "baseline": "fill Relationship: Daughter",
+        "int4-weights": "fill Relationship: Daughter"
+      }
+    },
+    {
+      "row": 21631,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Mozilla Firefox\nELEMENT Edit \"Medicines taken\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21813,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form - Microsoft Edge\nELEMENT Edit \"Insurer\" value=\"\"",
+      "gold_option": "fill Insurance company: Centene",
+      "selected_options": {
+        "upstream_pytorch": "fill Insurance company: Centene",
+        "baseline": "fill Insurance company: Centene",
+        "int4-weights": "fill Insurance company: Centene"
+      }
+    },
+    {
+      "row": 21844,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer - Mozilla Firefox\nELEMENT Edit \"Gender\" value=\"Female\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21866,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"DOB\" value=\"\" hint=\"YYYY-MM-DD\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21871,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Sort code\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21886,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"Sort code\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 21890,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"Province\" value=\"\"",
+      "gold_option": "fill Province: GA",
+      "selected_options": {
+        "upstream_pytorch": "fill Province: GA",
+        "baseline": "fill Province: GA",
+        "int4-weights": "fill Province: GA"
+      }
+    },
+    {
+      "row": 21903,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding\nELEMENT Edit \"Bank account number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22046,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Nationality\" value=\"Indian\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22148,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Google Chrome\nELEMENT Edit \"Purpose of visit\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22223,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request - Microsoft Edge\nELEMENT Edit \"Marital status\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22297,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - Microsoft Edge\nELEMENT Edit \"Last\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22336,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up\nELEMENT Edit \"Car model\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22442,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "fill Complaint: Knee pain when climbing stairs",
+      "selected_options": {
+        "upstream_pytorch": "fill Complaint: Knee pain when climbing stairs",
+        "baseline": "fill Complaint: Knee pain when climbing stairs",
+        "int4-weights": "fill Complaint: Knee pain when climbing stairs"
+      }
+    },
+    {
+      "row": 22571,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Phone\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22714,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Describe your concern\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22785,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake - Mozilla Firefox\nELEMENT Edit \"Gender\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22791,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake - Mozilla Firefox\nELEMENT CheckBox \"Consent to electronic communication (required)\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "check"
+      }
+    },
+    {
+      "row": 22831,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 22855,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Reason for visit\" value=\"\"",
+      "gold_option": "fill Reason: Back pain",
+      "selected_options": {
+        "upstream_pytorch": "fill Reason: Back pain",
+        "baseline": "fill Reason: Back pain",
+        "int4-weights": "fill Reason: Back pain"
+      }
+    },
+    {
+      "row": 23012,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up\nELEMENT Edit \"Chief complaint\" value=\"\"",
+      "gold_option": "fill Complaint: Migraine headaches",
+      "selected_options": {
+        "upstream_pytorch": "fill Complaint: Migraine headaches",
+        "baseline": "fill Complaint: Migraine headaches",
+        "int4-weights": "fill Complaint: Migraine headaches"
+      }
+    },
+    {
+      "row": 23051,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Microsoft Edge\nELEMENT Edit \"Total years experience\" value=\"\"",
+      "gold_option": "fill Years: 6",
+      "selected_options": {
+        "upstream_pytorch": "fill Years: 6",
+        "baseline": "fill Years: 6",
+        "int4-weights": "fill Years: 6"
+      }
+    },
+    {
+      "row": 23074,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer\nELEMENT Edit \"Degree\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23097,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form - Microsoft Edge\nELEMENT Edit \"Surname\" value=\"\"",
+      "gold_option": "fill Last name: Haddad",
+      "selected_options": {
+        "upstream_pytorch": "fill Last name: Haddad",
+        "baseline": "fill Last name: Haddad",
+        "int4-weights": "fill Last name: Haddad"
+      }
+    },
+    {
+      "row": 23276,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form - JevBrowser\nELEMENT Edit \"Relationship status\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23322,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Passport number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23350,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"E-mail\" value=\"\" hint=\"you@example.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23398,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Button \"Create account\" value=\"\"",
+      "gold_option": "click",
+      "selected_options": {
+        "upstream_pytorch": "click",
+        "baseline": "click",
+        "int4-weights": "click"
+      }
+    },
+    {
+      "row": 23670,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Member number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23671,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Email\" value=\"lchen6@yahoo.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Email: lchen6@yahoo.com",
+        "baseline": "fill Email: lchen6@yahoo.com",
+        "int4-weights": "fill Email: lchen6@yahoo.com"
+      }
+    },
+    {
+      "row": 23742,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Email\" value=\"old\"",
+      "gold_option": "fill Email: anovak17@gmail.com",
+      "selected_options": {
+        "upstream_pytorch": "fill Email: anovak17@gmail.com",
+        "baseline": "fill Email: anovak17@gmail.com",
+        "int4-weights": "fill Email: anovak17@gmail.com"
+      }
+    },
+    {
+      "row": 23749,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Personal website\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23794,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Member number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23858,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Mozilla Firefox\nELEMENT Edit \"Job title\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23863,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Mozilla Firefox\nELEMENT Edit \"Years of experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23888,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form\nELEMENT CheckBox \"Consent to electronic communication (required)\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 23992,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Microsoft Edge\nELEMENT Edit \"Total years experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "fill Desired compensation: $181,000"
+      }
+    },
+    {
+      "row": 24016,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Description of incident\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 24018,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Current job title\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 24027,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Current salary\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 24142,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Next of kin phone\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int4-weights": "skip"
+      }
+    },
+    {
+      "row": 24163,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment\nELEMENT Edit \"SSN\" value=\"\"",
+      "gold_option": "fill National ID: 185-82-5310",
+      "selected_options": {
+        "upstream_pytorch": "fill National ID: 185-82-5310",
+        "baseline": "fill National ID: 185-82-5310",
+        "int4-weights": "fill National ID: 185-82-5310"
+      }
+    }
+  ],
+  "trace": {
+    "file": "int4-synthetic-test-decisions.jsonl.gz",
+    "sha256": "6922913041f95ac8872958b92312cb5b869b9ce88116c4684b36ea7753284674",
+    "rows": 24370
+  },
+  "upstream_evaluator_sha256": "49dccdeb4e2b456187cdc4491a6d78fabac6a45384272f8e3ec802a58872aa6e",
+  "harness_sha256": {
+    "benchmark-synthetic.py": "ba8255fd3f63d87ef340c26c4c251800f2e20878d80858ad1e6557cf59f249a2",
+    "synthetic_test.py": "e2b68725236e6827eb422480c8cc8aa189b2490c1594650d8f2928771d1bc626",
+    "score-report.py": "c78e45caa86fb59f9a56ef18cc6a35020ea6e281a6a23d23618f56da85a0d95e"
+  },
+  "conversion_parity_passed": false,
+  "limitations": [
+    "The release file has 24370 rows; the model card claims approximately 15000. This is not a reconstruction of that unspecified manifest.",
+    "Upstream describes form-disjoint synthetic data; this is not an unseen real-world GUI or task-completion benchmark.",
+    "No fresh hosted Jev calls are included. Published hosted-Jev percentages are not a matched baseline for this run.",
+    "Local timings use CPU for PyTorch and CPU+ANE for Core ML; they are backend/deployment measurements, not equal-hardware algorithm comparisons."
+  ]
+}

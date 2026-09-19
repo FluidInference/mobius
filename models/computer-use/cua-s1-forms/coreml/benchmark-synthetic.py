@@ -27,13 +27,17 @@ def validate_variants(conversions: dict, candidate_name: str) -> None:
     baseline, candidate = conversions["baseline"], conversions[candidate_name]
     if baseline.get("optimization", "baseline") != "baseline" or "quantization" in baseline:
         raise ValueError("Expected the original baseline")
-    if candidate_name == "int8-weights":
+    if candidate_name in ("int8-weights", "int4-weights"):
         quantization = candidate.get("quantization", {})
         if (
             quantization.get("name") != candidate_name
             or quantization.get("source_package_files") != baseline["package_files"]
+            or quantization.get("settings", {}).get("dtype") != candidate_name.split("-")[0]
+            or candidate["minimum_target"] != baseline["minimum_target"]
         ):
-            raise ValueError("INT8 candidate must derive from this exact baseline")
+            raise ValueError("Quantized candidate must derive from this exact baseline with the stated dtype")
+        if candidate_name == "int4-weights" and candidate["minimum_target"] != "iOS18/macOS15":
+            raise ValueError("This packed INT4 trial requires an iOS18/macOS15 baseline")
     elif candidate_name == "ane-gather":
         if candidate.get("optimization") != candidate_name or "quantization" in candidate:
             raise ValueError("Expected the unquantized ANE-gather candidate")
@@ -75,7 +79,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline", type=Path, default=ROOT / "build")
     parser.add_argument("--candidate", type=Path)
-    parser.add_argument("--candidate-name", choices=["ane-gather", "int8-weights"], default="ane-gather")
+    parser.add_argument(
+        "--candidate-name", choices=["ane-gather", "int8-weights", "int4-weights"], default="ane-gather"
+    )
     parser.add_argument("--report", type=Path, default=ROOT / "reports/synthetic-test.json")
     parser.add_argument("--trace", type=Path, default=ROOT / "build/synthetic-test-decisions.jsonl.gz")
     parser.add_argument("--require-parity", action="store_true", help="Exit nonzero if original conversion gates fail")
