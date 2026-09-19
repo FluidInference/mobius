@@ -2,13 +2,14 @@
 name = "pyannote-coreml"
 version = "0.1.0"
 description = "Conversion tools for pyannote speaker diarization models to CoreML"
-requires-python = "==3.10.12"
+requires-python = "==3.11.11"
 dependencies = [
-  "coremltools==9.0b1",
+  "coremltools==9.0",
   "torch==2.8.0",
+  "torchaudio==2.8.0",
   "pyannote-audio==4.0.0",
   "soundfile>=0.12.1",
-  "scipy>=1.10",
+  "scipy==1.16.3",
   "librosa>=0.10.2",
   "huggingface-hub>=0.23",
   "tqdm",

@@ -8,7 +8,9 @@ This Core ML port of the Hugging Face `pyannote/speaker-diarization-community-1`
 - `coreml_models/` — default output folder for `.mlpackage` bundles plus resource JSON.
 - `docs/` — background notes (`docs/plda-coreml.md`, conversion guides, optimization results).
 - `coreml_wrappers.py`, `embedding_io.py`, `plda_module.py` — importable helpers for wrapping Core ML bundles inside PyTorch pipelines.
-- `pyproject.toml`, `uv.lock` — reproducible Python 3.10.12 environment pinned to Torch 2.4, coremltools 7.2, pyannote-audio 4.0.0.
+- `pyproject.toml`, `uv.lock` — reproducible Python 3.11.11 environment pinned to Torch 2.8.0, torchaudio 2.8.0, coremltools 9.0, SciPy 1.16.3, and pyannote-audio 4.0.0.
+- `build-release.py`, `provenance.py` — immutable upstream download, conversion,
+  compilation, and SHA-256 manifest generation for redistributable releases.
 - Sample clips (`yc_first_10s.wav`, `yc_first_minute.wav`, `../../../../longconvo-30m*.wav`) for smoke tests and benchmarking.
 
 ## Agent-Oriented Workflow
@@ -23,16 +25,28 @@ All scripts write machine-readable summaries to disk so an agent can decide what
 
 ## Manual Pipeline
 
-Prerequisites: macOS 14+, Xcode 15+, [uv](https://github.com/astral-sh/uv), access to the gated Hugging Face repo. Accept the user agreement on [huggingface.co/pyannote/speaker-diarization-community-1](https://huggingface.co/pyannote/speaker-diarization-community-1) before attempting to download the checkpoints, then fetch the assets into `pyannote-speaker-diarization-community-1/` (run `git lfs pull` if necessary).
+Prerequisites: macOS 14+, Xcode 15+, [uv](https://github.com/astral-sh/uv), access to the gated Hugging Face repo. Accept the user agreement on [huggingface.co/pyannote/speaker-diarization-community-1](https://huggingface.co/pyannote/speaker-diarization-community-1) before attempting to download the checkpoints. The release command downloads an explicitly pinned snapshot through your accepted Hugging Face credentials. Mutable refs such as `main` and abbreviated SHAs are rejected.
 
 ```bash
 # 1. Create or refresh the local environment
 uv sync
 
-# 2. Convert PyTorch checkpoints to Core ML
+# 2. Convert PyTorch checkpoints to Core ML directly
+# Direct conversion also requires a clean, committed Mobius checkout; the
+# script verifies that its recorded converter revision equals HEAD.
 uv run python convert-coreml.py --model-root ./pyannote-speaker-diarization-community-1 \
-    --output-dir ./coreml_models
+    --output-dir ./coreml_models \
+    --source-revision 3533c8cf8e369892e6b79ff1bf80f7b0286a54ee
 # Optional: add --selective-fp16 for mixed precision exports
+
+# Or build a complete release with compiled bundles and provenance.json.
+# Run from a clean, committed Mobius checkout so the recorded converter SHA
+# identifies the exact source used.
+uv run python build-release.py \
+    --upstream-revision 3533c8cf8e369892e6b79ff1bf80f7b0286a54ee \
+    --work-dir ./build/community-1-3533c8cf \
+    --release-dir ./build/release-3533c8cf \
+    --selective-fp16
 
 # 3. Compare PyTorch vs Core ML outputs, generate plots/metrics
 uv run python compare-models.py --audio-path ../../../../longconvo-30m-last5m.wav \

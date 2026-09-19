@@ -24,6 +24,34 @@ from pyannote.audio.utils.receptive_field import conv1d_num_frames
 
 from embedding_io import EMBEDDING_SAMPLES, SEGMENTATION_FRAMES
 from plda_module import load_plda_module_from_npz
+from provenance import (
+    CONVERSION_REPOSITORY,
+    MATERIAL_INPUTS,
+    UPSTREAM_REPOSITORY,
+    inventory_paths,
+    require_commit_sha,
+    verified_git_revision,
+)
+
+
+@dataclass(frozen=True)
+class ConversionProvenance:
+    source_repository: str
+    source_revision: str
+    conversion_revision: str
+    input_hashes: dict[str, str]
+
+    def metadata(self, source_paths: tuple[str, ...]) -> dict[str, str]:
+        selected_hashes = {path: self.input_hashes[path] for path in source_paths}
+        return {
+            "com.fluidinference.source_repository": self.source_repository,
+            "com.fluidinference.source_revision": self.source_revision,
+            "com.fluidinference.source_files": json.dumps(selected_hashes, sort_keys=True),
+            "com.fluidinference.conversion_repository": CONVERSION_REPOSITORY,
+            "com.fluidinference.conversion_revision": self.conversion_revision,
+        }
+
+
 def _patch_sincnet_encoder_for_tracing(model: nn.Module) -> None:
     """Replace SincNet encoder forward with a trace-friendly variant."""
 
@@ -698,7 +726,12 @@ RESOURCES: tuple[ResourceSpec, ...] = (
 )
 
 
-def convert_resource(model_root: Path, output_dir: Path, spec: ResourceSpec) -> Path:
+def convert_resource(
+    model_root: Path,
+    output_dir: Path,
+    spec: ResourceSpec,
+    provenance: ConversionProvenance,
+) -> Path:
     input_path = model_root / spec.relative_path
     if not input_path.exists():
         raise FileNotFoundError(f"Resource not found: {input_path}")
@@ -707,7 +740,10 @@ def convert_resource(model_root: Path, output_dir: Path, spec: ResourceSpec) -> 
     loaded = np.load(input_path)
     tensors: dict[str, dict[str, object]] = {}
     for key in loaded.files:
-        array = np.asarray(loaded[key])
+        # FluidAudio consumes these tensors as Float32, and the published
+        # Community-1 resources use Float32. Converting explicitly keeps the
+        # serializer reproducible even though BUT's PLDA arrays are Float64.
+        array = np.asarray(loaded[key], dtype=np.float32)
         dtype_str = str(array.dtype)
         tensors[key] = {
             "shape": list(array.shape),
@@ -721,6 +757,11 @@ def convert_resource(model_root: Path, output_dir: Path, spec: ResourceSpec) -> 
         "description": spec.description,
         "license": COREML_LICENSE,
         "source": spec.relative_path.as_posix(),
+        "source_repository": provenance.source_repository,
+        "source_revision": provenance.source_revision,
+        "source_sha256": provenance.input_hashes[spec.relative_path.as_posix()],
+        "conversion_repository": CONVERSION_REPOSITORY,
+        "conversion_revision": provenance.conversion_revision,
         "version": COMMUNITY_VERSION,
         "tensors": tensors,
     }
@@ -741,6 +782,7 @@ def convert_component(
     spec: ComponentSpec,
     compute_precision: object,
     precision_label: str,
+    provenance: ConversionProvenance,
 ) -> Path:
     print(f"Tracing {spec.name} model...")
     traced = spec.trace_fn(model_root, device)
@@ -804,6 +846,13 @@ def convert_component(
     mlmodel.short_description = spec.description
     mlmodel.version = COMMUNITY_VERSION
     mlmodel.license = COREML_LICENSE
+    if spec.name == "segmentation":
+        source_paths = ("segmentation/pytorch_model.bin",)
+    elif spec.name in ("fbank", "embedding"):
+        source_paths = ("embedding/pytorch_model.bin",)
+    else:
+        source_paths = ("plda/plda.npz", "plda/xvec_transform.npz")
+    mlmodel.user_defined_metadata.update(provenance.metadata(source_paths))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     mlmodel.save(str(output_path))
     print(f"✓ {spec.name.capitalize()} model saved to {output_path}")
@@ -833,6 +882,20 @@ def parse_args() -> argparse.Namespace:
             "Convert models with selective FP16 precision, keeping sensitive operations in FP32"
         ),
     )
+    parser.add_argument(
+        "--source-revision",
+        required=True,
+        help="Full immutable commit SHA for the upstream Community-1 snapshot",
+    )
+    parser.add_argument(
+        "--source-repository",
+        default=UPSTREAM_REPOSITORY,
+        help="Upstream Hugging Face repository identifier",
+    )
+    parser.add_argument(
+        "--conversion-revision",
+        help="Full Mobius commit SHA; defaults to the current checkout's HEAD",
+    )
     return parser.parse_args()
 
 
@@ -843,6 +906,18 @@ def main() -> None:
     model_root = args.model_root
     if not model_root.exists():
         raise FileNotFoundError(f"Model root not found: {model_root}")
+    source_revision = require_commit_sha(args.source_revision, "source revision")
+    conversion_revision = verified_git_revision(
+        Path(__file__).resolve().parents[4],
+        args.conversion_revision,
+    )
+    source_files = inventory_paths(model_root, MATERIAL_INPUTS)
+    provenance = ConversionProvenance(
+        source_repository=args.source_repository,
+        source_revision=source_revision,
+        conversion_revision=conversion_revision,
+        input_hashes={entry["path"]: entry["sha256"] for entry in source_files},
+    )
     generated = []
     selective_fp16 = bool(args.selective_fp16)
     for spec in COMPONENTS:
@@ -873,13 +948,14 @@ def main() -> None:
                 spec,
                 compute_precision,
                 precision_label,
+                provenance,
             )
         )
 
     resource_output_dir = args.output_dir / "resources"
     resource_paths = []
     for spec in RESOURCES:
-        resource_paths.append(convert_resource(model_root, resource_output_dir, spec))
+        resource_paths.append(convert_resource(model_root, resource_output_dir, spec, provenance))
 
     print("Conversion complete:")
     for path in generated:
