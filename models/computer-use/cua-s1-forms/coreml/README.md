@@ -209,6 +209,59 @@ demo inputs through `verify.py`.
 
 ## Conversion details and provenance
 
+### Optional higher-ANE variant
+
+`--optimization ane-gather` raises ANE placement from **149/173 operations
+(86.1%) to 162/165 (98.2%)** on this M5 Pro. CPU operations fall from **24 to 3**:
+only the three int32 input casts remain. Both `.cpuAndNeuralEngine` and `.all`
+select this ANE plan on the test Mac. The original input/output names, dtypes,
+shapes, trained layers, and weights are preserved.
+
+The variant prepares masks using shared float16 byte IDs and rewrites the two
+embedding gathers to use unsigned 16-bit indices ([Core ML operation reference](https://apple.github.io/coremltools/_modules/coremltools/converters/mil/mil/ops/defs/iOS17/scatter_gather.html)). IDs 0–256 are exactly
+representable in both types. This removes signed-index correction and lets ANE
+execute the gathers. The conversion uses the pinned coremltools 9.0 MIL API;
+the application continues to use public Core ML inference APIs.
+
+The full 196-row check passes on `ALL` and `CPU_AND_NE`, with **196/196 correct
+and matching options** and maximum probability error **0.002336**, below the
+unchanged 0.005 tolerance. All **28 regression tests** pass against this variant,
+including raw byte-ID boundaries, padding, full capacity, truncation, and reordered
+options. The Swift manager independently passes all 196 decisions plus cache and
+concurrency checks ([Swift report](reports/swift-ane-validation.json)); the native
+demo also passes all three form checks. See [verification](reports/ane-gather-verification.json),
+[placement](reports/ane-gather-profile.json), and [fallbacks](reports/ane-gather-fallback.json).
+
+More ANE placement did **not** improve latency here. A matched, same-process ABBA
+comparison uses rows 0, 68, and 130, two warmup passes per block, and ten timed
+passes per block: 60 timed calls per model, all correct.
+
+| Model | CPU ops | ANE ops | Warm p50 | Warm p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Default | 24 | 149 | 0.915 ms | 0.968 ms |
+| `ane-gather` | 3 | 162 | 0.970 ms | 0.988 ms |
+
+The higher-ANE model is about **6% slower** in this small local comparison, so
+the original export remains the default. No energy or CPU-time saving is claimed:
+operation counts are scheduler assignments, not runtime shares. The model still
+needs host-side byte encoding. [Raw comparison](reports/ane-comparison.json).
+
+Build, verify, and compare the optional artifact without replacing the default:
+
+```bash
+uv run --frozen python convert-coreml.py --optimization ane-gather --output-dir build/ane-gather
+uv run --frozen python verify.py --build-dir build/ane-gather --report reports/ane-gather-verification.json
+CUA_COREML_BUILD_DIR=build/ane-gather uv run --frozen pytest -q
+uv run --frozen python profile-coreml.py --build-dir build/ane-gather --report reports/ane-gather-profile.json
+uv run --frozen python compare-ane.py
+```
+
+The optional HF artifact lives under `ane-gather/`. Load its `.mlpackage` with
+the existing Swift manager or pass it to the demo's `--model` argument. Default
+FluidAudio downloads and the demo's pinned default package stay unchanged.
+
+### Shared export adaptations
+
 The export adapter replaces upstream Boolean mask slice assignments with
 equivalent concatenation, uses a floating-point pooling clamp constant, and
 makes only padded output logits finite. PyTorch's fused Transformer inference
@@ -217,7 +270,7 @@ Upstream masked attention constants can emit a float16 cast-overflow warning
 during conversion; the regression checks verify finite outputs for supported
 inputs, including fully occupied option slots and truncated text.
 
-Eighteen tests cover the real checkpoint, byte encoding, truncation across a
+The regression suite covers the real checkpoint, byte encoding, truncation across a
 multibyte boundary, padding, invalid input rejection, option-count changes,
 option reordering, complete reference export, and coverage when adapting decisions to the original
 evaluation harness. Derived text fixtures are numerical regression cases; they

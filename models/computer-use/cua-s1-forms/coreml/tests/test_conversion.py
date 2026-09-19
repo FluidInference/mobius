@@ -1,5 +1,8 @@
 """Regression checks use the pinned real checkpoint and existing demo records."""
 
+import os
+from pathlib import Path
+
 import numpy as np
 import pytest
 import torch
@@ -79,7 +82,8 @@ def test_empty_context_is_rejected(demo, context):
 
 
 @pytest.mark.parametrize("capacity", [32, 40])
-def test_adapter_padding_preserves_real_predictions(upstream, demo, capacity):
+@pytest.mark.parametrize("optimization", ["baseline", "ane-gather"])
+def test_adapter_padding_preserves_real_predictions(upstream, demo, capacity, optimization):
     from cua_s1.model import validate_example
 
     model, collator, _ = upstream
@@ -87,19 +91,48 @@ def test_adapter_padding_preserves_real_predictions(upstream, demo, capacity):
     arrays = prepare_inputs(row["context"], row["options"], InputLimits(max_options=capacity))
     with torch.no_grad():
         expected = model(collator([validate_example(row)]))[0].softmax(-1).numpy()
-        logits, probabilities = ExportScorer(model)(*(torch.from_numpy(value) for value in arrays.values()))
+        logits, probabilities = ExportScorer(model, optimization)(
+            *(torch.from_numpy(value) for value in arrays.values())
+        )
     _, actual = validate_prediction(
         {"logits": logits.numpy(), "probabilities": probabilities.numpy()}, len(row["options"]), capacity
     )
     np.testing.assert_allclose(actual, expected, atol=0.00001, rtol=0.00001)
 
 
+def test_shared_float_indices_preserve_every_byte_embedding(upstream):
+    model, _, _ = upstream
+    ids = torch.arange(257, dtype=torch.int32).reshape(257, 1)
+    with torch.no_grad():
+        actual = model._embed(ids.to(torch.float16).to(torch.int32))
+        expected = model._embed(ids)
+    torch.testing.assert_close(actual, expected, atol=0, rtol=0)
+
+
 @pytest.fixture(scope="module")
 def coreml_model():
     import coremltools as ct
 
-    package, manifest = check_package(ROOT / "build")
+    package, manifest = check_package(Path(os.environ.get("CUA_COREML_BUILD_DIR", ROOT / "build")))
     return ct.models.MLModel(str(package), compute_units=ct.ComputeUnit.ALL), InputLimits(**manifest["limits"])
+
+
+@pytest.mark.parametrize("bounds", [(0, 128), (128, 257)])
+def test_raw_byte_id_boundaries_preserve_model_scores(upstream, demo, coreml_model, bounds):
+    model, _, _ = upstream
+    coreml, limits = coreml_model
+    row = demo[0]
+    arrays = prepare_inputs(row["context"], row["options"], limits)
+    # Tensor-domain regression: exercise every byte ID, including padding and
+    # 256, with the real trained network. These are not benchmark examples.
+    ids = np.arange(*bounds, dtype=np.int32)
+    arrays["context_ids"][:] = 0
+    arrays["context_ids"][0, :len(ids)] = ids
+    with torch.no_grad():
+        _, expected = ExportScorer(model)(*(torch.from_numpy(value) for value in arrays.values()))
+    output = coreml.predict(arrays)
+    _, probabilities = validate_prediction(output, len(row["options"]), limits.max_options)
+    np.testing.assert_allclose(probabilities, expected.numpy()[0, :len(row["options"])], atol=0.005, rtol=0)
 
 
 @pytest.mark.parametrize("mode", ["two_options", "full_capacity", "long_text", "reversed"])

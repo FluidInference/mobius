@@ -13,6 +13,7 @@ import coremltools as ct
 import numpy as np
 import torch
 
+from ane_gather import rewrite_byte_gathers
 from assets import LOCK_PATH, ROOT, load_demo, load_reference, sha256, verify_assets
 from export_model import ExportScorer
 from preprocessing import InputLimits, prepare_inputs
@@ -22,6 +23,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=ROOT / "build")
     parser.add_argument("--max-options", type=int, default=32)
+    parser.add_argument("--optimization", choices=["baseline", "ane-gather"], default="baseline")
     args = parser.parse_args()
     torch.set_num_threads(2)
     # Prevent PyTorch's fused inference-only encoder from hiding the traceable ops.
@@ -33,7 +35,7 @@ def main() -> None:
     row = rows[0]
     arrays = prepare_inputs(row["context"], row["options"], limits)
     example = tuple(torch.from_numpy(value) for value in arrays.values())
-    wrapper = ExportScorer(reference).eval()
+    wrapper = ExportScorer(reference, optimization=args.optimization).eval()
     with torch.no_grad():
         traced = torch.jit.trace(wrapper, example)
     started = time.perf_counter()
@@ -46,6 +48,8 @@ def main() -> None:
         inputs=[ct.TensorType(name=name, shape=value.shape, dtype=np.int32) for name, value in arrays.items()],
         outputs=[ct.TensorType(name="logits", dtype=np.float32), ct.TensorType(name="probabilities", dtype=np.float32)],
     )
+    if args.optimization == "ane-gather":
+        converted = rewrite_byte_gathers(converted)
     converted.short_description = "CUA-S1-FORMS: one-pass scoring of document entities and form actions"
     converted.author = "Cua AI (weights); Fluid Inference (Core ML conversion)"
     converted.license = "MIT; see pinned model card and vendor/CUA-LICENSE"
@@ -56,6 +60,7 @@ def main() -> None:
             "source_revision": lock["source_revision"],
             "input_limits": json.dumps(asdict(limits), sort_keys=True),
             "encoding": "UTF-8 bytes truncated to limits; byte+1; zero padding",
+            "optimization": args.optimization,
         }
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -64,6 +69,7 @@ def main() -> None:
     manifest = {
         "model": path.name,
         "precision": "float16",
+        "optimization": args.optimization,
         "minimum_target": "iOS17/macOS14",
         "limits": asdict(limits),
         "model_config": config,

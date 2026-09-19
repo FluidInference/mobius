@@ -78,7 +78,7 @@ def main() -> None:
     reference, collator, _ = load_reference()
     from cua_s1.model import validate_example
 
-    wrapper = ExportScorer(reference).eval()
+    wrapper = ExportScorer(reference, optimization=conversion.get("optimization", "baseline")).eval()
     rows = load_demo()
     examples = [validate_example(row) for row in rows]
     inputs, expected, preprocessing_ms, reference_ms = [], [], [], []
