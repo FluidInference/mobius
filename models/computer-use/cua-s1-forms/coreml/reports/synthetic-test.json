@@ -1,0 +1,845 @@
+{
+  "purpose": "Full published synthetic test; no fitting, filtering, resampling or test-based tuning",
+  "created_utc": "2026-09-19T21:10:18.821257+00:00",
+  "dataset": {
+    "dataset_repository": "cua-ai/cua-s1-forms",
+    "dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+    "path": "artifacts/test.jsonl",
+    "url": "https://huggingface.co/datasets/cua-ai/cua-s1-forms/resolve/8273f34778b99ac2e12d9f6e7d57dad99ae20845/test.jsonl",
+    "sha256": "d63a7e0db195d4d20154a40b2f8dd09ce3bb65487a158c638da5c609d4475e7c",
+    "rows": 24370,
+    "bytes": 18710924,
+    "upstream_split_claim": "Synthetic test, form-signature-disjoint from train/validation. Train and validation signatures have not been independently re-audited here.",
+    "model_card_claim": {
+      "synthetic_test_top1": 0.9995,
+      "approximate_decisions": 15000,
+      "note": "The released file has 24370 rows. No matching full result ledger or exact 15000-row manifest is supplied by the linked model card."
+    }
+  },
+  "manifest_sha256": "e582b951ecc07809a0b06a2bc0790827b90a86ce57c70d5b6177ef04f0b4f1ca",
+  "input_census": {
+    "rows": 24370,
+    "unique_episode_seeds": 1040,
+    "maxima": {
+      "context_bytes": 217,
+      "option_bytes": 92,
+      "max_options": 32
+    },
+    "per_action": {
+      "check": 816,
+      "click": 1040,
+      "fill": 9802,
+      "skip": 12712
+    },
+    "option_count_histogram": {
+      "7": 17,
+      "8": 46,
+      "9": 80,
+      "10": 227,
+      "11": 361,
+      "12": 589,
+      "13": 888,
+      "14": 1254,
+      "15": 1513,
+      "16": 1761,
+      "17": 2373,
+      "18": 2014,
+      "19": 2277,
+      "20": 2506,
+      "21": 2396,
+      "22": 1818,
+      "23": 1422,
+      "24": 907,
+      "25": 688,
+      "26": 524,
+      "27": 483,
+      "28": 89,
+      "29": 33,
+      "30": 29,
+      "31": 35,
+      "32": 40
+    },
+    "excluded_rows": 0,
+    "truncated_contexts": 0,
+    "truncated_options": 0
+  },
+  "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+  "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+  "conversions": {
+    "baseline": {
+      "model": "cua_s1_forms_fp16_options32.mlpackage",
+      "precision": "float16",
+      "minimum_target": "iOS17/macOS14",
+      "limits": {
+        "context_bytes": 224,
+        "option_bytes": 96,
+        "max_options": 32
+      },
+      "model_config": {
+        "context_tokens": 224,
+        "encoder": "tinyx",
+        "heads": 4,
+        "hf_model": "Qwen/Qwen2.5-0.5B",
+        "layers": 2,
+        "option_tokens": 96,
+        "rank": 128,
+        "width": 128
+      },
+      "parameters": 706048,
+      "assets_lock_sha256": "8e65ad70af6bb814b571cdcfe828ba4bc339147da2d2211cbeac416163ef18ba",
+      "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+      "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+      "trace_row": 0,
+      "trace_dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+      "export_seconds": 0.5374167499830946,
+      "python": "3.11.11",
+      "torch": "2.7.0",
+      "coremltools": "9.0",
+      "package_files": {
+        "Data/com.apple.CoreML/model.mlmodel": "70485fc18cbb21785df833cbddddc0b5b59acb00d22394b76e55307e2c135dd0",
+        "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+        "Manifest.json": "2bc0f5f62337b27fb6b0ecde248f1e3dc269e1ba4b65516aaeede2a60e293dcc"
+      }
+    },
+    "ane-gather": {
+      "model": "cua_s1_forms_fp16_options32.mlpackage",
+      "precision": "float16",
+      "optimization": "ane-gather",
+      "minimum_target": "iOS17/macOS14",
+      "limits": {
+        "context_bytes": 224,
+        "option_bytes": 96,
+        "max_options": 32
+      },
+      "model_config": {
+        "context_tokens": 224,
+        "encoder": "tinyx",
+        "heads": 4,
+        "hf_model": "Qwen/Qwen2.5-0.5B",
+        "layers": 2,
+        "option_tokens": 96,
+        "rank": 128,
+        "width": 128
+      },
+      "parameters": 706048,
+      "assets_lock_sha256": "8e65ad70af6bb814b571cdcfe828ba4bc339147da2d2211cbeac416163ef18ba",
+      "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+      "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+      "trace_row": 0,
+      "trace_dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+      "export_seconds": 0.6771400420111604,
+      "python": "3.11.11",
+      "torch": "2.7.0",
+      "coremltools": "9.0",
+      "package_files": {
+        "Data/com.apple.CoreML/model.mlmodel": "de18e313c3b625e35d008ed8b6b24108edc6df7bf2fae9533af03519eca11b63",
+        "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+        "Manifest.json": "38f812a04eb2322080634ba788c61df362336168466ca67e5549058d346ac793"
+      }
+    }
+  },
+  "environment": {
+    "machine": "Apple M5 Pro",
+    "memory_bytes": 25769803776,
+    "os": "27.0",
+    "os_build": "26A428",
+    "python": "3.11.11",
+    "torch": "2.7.0",
+    "coremltools": "9.0",
+    "torch_cpu_threads": 2,
+    "torch_interop_threads": 1,
+    "torch_mha_fastpath": false
+  },
+  "protocol": {
+    "batch_size": 1,
+    "warmups_per_model": 3,
+    "timed_passes": 1,
+    "coreml_compute_units": "CPU_AND_NE",
+    "coreml_order": "AB on even rows, BA on odd rows",
+    "timing": "PyTorch CPU forward+softmax / synchronous Core ML predict; excludes encoding, validation, GUI and network",
+    "preprocessing": "Upstream variable-length collator; independent fixed-shape Core ML encoder shared by both exports",
+    "load_note": "Process/model creation can use existing system caches; not a cold-start experiment",
+    "output_audit": "Imperfect finite probability sums are retained unchanged and fail the original normalization gate",
+    "calibration_note": "NLL/ECE use raw emitted scores; no renormalization or calibration was applied"
+  },
+  "thresholds": {
+    "argmax_agreement": 1.0,
+    "max_abs_probability_error": 0.005,
+    "allow_accuracy_loss": false,
+    "probability_sum_atol": 0.001,
+    "probability_sum_rtol": 1e-05
+  },
+  "host_preprocessing_ms": {
+    "upstream_collator_ms": {
+      "count": 24370,
+      "median_ms": 0.09608300752006471,
+      "p95_ms": 0.14412500750040635,
+      "min_ms": 0.04137499490752816,
+      "max_ms": 0.96245898748748
+    },
+    "shared_coreml_encoding_ms": {
+      "count": 24370,
+      "median_ms": 0.028999987989664078,
+      "p95_ms": 0.044917018385604024,
+      "min_ms": 0.012375006917864084,
+      "max_ms": 0.3988750104326755
+    }
+  },
+  "results": {
+    "upstream_pytorch": {
+      "correct": 24359,
+      "rows": 24370,
+      "accuracy": 0.999548625359048,
+      "model_call_latency_ms": {
+        "count": 24370,
+        "median_ms": 1.786978988093324,
+        "p95_ms": 3.103799853124656,
+        "min_ms": 1.019332994474098,
+        "max_ms": 15.003458975115791
+      },
+      "load_ms": 8.14687501406297,
+      "first_call_ms": 5.291624984238297,
+      "calibration": {
+        "nll": 0.0021302032038990836,
+        "ece": 0.00035450826133425167,
+        "equal_width_bins": 15,
+        "bins": [
+          {
+            "bin": 7,
+            "count": 2,
+            "accuracy": 0.5,
+            "mean_confidence": 0.5216051042079926
+          },
+          {
+            "bin": 8,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.575071656703949
+          },
+          {
+            "bin": 9,
+            "count": 7,
+            "accuracy": 0.7142857142857143,
+            "mean_confidence": 0.6404258779117039
+          },
+          {
+            "bin": 10,
+            "count": 4,
+            "accuracy": 1.0,
+            "mean_confidence": 0.6963506639003754
+          },
+          {
+            "bin": 11,
+            "count": 11,
+            "accuracy": 0.9090909090909091,
+            "mean_confidence": 0.7664791941642761
+          },
+          {
+            "bin": 12,
+            "count": 21,
+            "accuracy": 0.9523809523809523,
+            "mean_confidence": 0.8310647464933849
+          },
+          {
+            "bin": 13,
+            "count": 22,
+            "accuracy": 0.9545454545454546,
+            "mean_confidence": 0.9173552746122534
+          },
+          {
+            "bin": 14,
+            "count": 24298,
+            "accuracy": 0.9998353773973166,
+            "mean_confidence": 0.999802232897422
+          }
+        ],
+        "nll_probability_floor": 1.1754943508222875e-38
+      },
+      "upstream_action_metrics": {
+        "examples": 24370,
+        "accuracy": 0.999548625359048,
+        "coverage": 0.4788264259335248,
+        "abstention_rate": 0.5211735740664751,
+        "selective_accuracy": 0.9990573313908647,
+        "wrong_action_rate": 0.00045137464095199015,
+        "wrong_target_rate": 0.0,
+        "unsafe_action_rate": 0.00045137464095199015,
+        "counts": {
+          "total": 24370,
+          "correct": 24359,
+          "abstained": 12701,
+          "acted": 11669,
+          "acted_correct": 11658,
+          "wrong_action": 11,
+          "unsafe_action": 11
+        },
+        "per_action": {
+          "abstain": {
+            "accuracy": 0.9991346758967904,
+            "abstention_rate": 0.9991346758967904,
+            "examples": 12712
+          },
+          "check": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 816
+          },
+          "click": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 1040
+          },
+          "fill": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 9802
+          }
+        }
+      },
+      "macro_action_accuracy": 0.9997836689741976,
+      "wrong_rows": [
+        137,
+        3216,
+        6631,
+        6748,
+        7280,
+        10703,
+        12255,
+        13480,
+        15214,
+        21022,
+        23671
+      ]
+    },
+    "baseline": {
+      "correct": 24359,
+      "rows": 24370,
+      "accuracy": 0.999548625359048,
+      "model_call_latency_ms": {
+        "count": 24370,
+        "median_ms": 1.0031874990090728,
+        "p95_ms": 1.1327079846523702,
+        "min_ms": 0.8830419974401593,
+        "max_ms": 3.726124996319413
+      },
+      "load_ms": 612.4412920034956,
+      "first_call_ms": 3.2538340019527823,
+      "calibration": {
+        "nll": 0.002108235388127147,
+        "ece": 0.000331678613561794,
+        "equal_width_bins": 15,
+        "bins": [
+          {
+            "bin": 7,
+            "count": 2,
+            "accuracy": 0.5,
+            "mean_confidence": 0.5224609375
+          },
+          {
+            "bin": 8,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.57607421875
+          },
+          {
+            "bin": 9,
+            "count": 6,
+            "accuracy": 0.8333333333333334,
+            "mean_confidence": 0.637451171875
+          },
+          {
+            "bin": 10,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.69248046875
+          },
+          {
+            "bin": 11,
+            "count": 12,
+            "accuracy": 0.9166666666666666,
+            "mean_confidence": 0.7687581380208334
+          },
+          {
+            "bin": 12,
+            "count": 20,
+            "accuracy": 0.95,
+            "mean_confidence": 0.8322265625
+          },
+          {
+            "bin": 13,
+            "count": 22,
+            "accuracy": 0.9545454545454546,
+            "mean_confidence": 0.9176136363636364
+          },
+          {
+            "bin": 14,
+            "count": 24298,
+            "accuracy": 0.9998353773973166,
+            "mean_confidence": 0.9998245660008025
+          }
+        ],
+        "nll_probability_floor": 1.1754943508222875e-38
+      },
+      "upstream_action_metrics": {
+        "examples": 24370,
+        "accuracy": 0.999548625359048,
+        "coverage": 0.4788264259335248,
+        "abstention_rate": 0.5211735740664751,
+        "selective_accuracy": 0.9990573313908647,
+        "wrong_action_rate": 0.00045137464095199015,
+        "wrong_target_rate": 0.0,
+        "unsafe_action_rate": 0.00045137464095199015,
+        "counts": {
+          "total": 24370,
+          "correct": 24359,
+          "abstained": 12701,
+          "acted": 11669,
+          "acted_correct": 11658,
+          "wrong_action": 11,
+          "unsafe_action": 11
+        },
+        "per_action": {
+          "abstain": {
+            "accuracy": 0.9991346758967904,
+            "abstention_rate": 0.9991346758967904,
+            "examples": 12712
+          },
+          "check": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 816
+          },
+          "click": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 1040
+          },
+          "fill": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 9802
+          }
+        }
+      },
+      "macro_action_accuracy": 0.9997836689741976,
+      "wrong_rows": [
+        137,
+        3216,
+        6631,
+        6748,
+        7280,
+        10703,
+        12255,
+        13480,
+        15214,
+        21022,
+        23671
+      ],
+      "paired_with_upstream": {
+        "rows": 24370,
+        "argmax_agreement": 24370,
+        "agreement_rate": 1.0,
+        "reference_correct_candidate_wrong": 0,
+        "reference_wrong_candidate_correct": 0,
+        "both_wrong": 11,
+        "disagreement_rows": []
+      },
+      "max_abs_probability_error": 0.020487427711486816,
+      "mean_row_max_abs_probability_error": 4.673297645567538e-05,
+      "probability_tolerance_violation_rows": [
+        137,
+        884,
+        2945,
+        3216,
+        8706,
+        9193,
+        12725,
+        13480,
+        13768,
+        15698,
+        23992
+      ],
+      "conversion_parity_passed": false,
+      "output_validation_failures": {
+        "19270": [
+          "Live option probabilities do not sum to one"
+        ]
+      }
+    },
+    "ane-gather": {
+      "correct": 24359,
+      "rows": 24370,
+      "accuracy": 0.999548625359048,
+      "model_call_latency_ms": {
+        "count": 24370,
+        "median_ms": 1.0515624890103936,
+        "p95_ms": 1.1766475494368933,
+        "min_ms": 0.9340409887954593,
+        "max_ms": 2.8469589888118207
+      },
+      "load_ms": 570.0647499761544,
+      "first_call_ms": 1.2669999850913882,
+      "calibration": {
+        "nll": 0.002108235388127147,
+        "ece": 0.000331678613561794,
+        "equal_width_bins": 15,
+        "bins": [
+          {
+            "bin": 7,
+            "count": 2,
+            "accuracy": 0.5,
+            "mean_confidence": 0.5224609375
+          },
+          {
+            "bin": 8,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.57607421875
+          },
+          {
+            "bin": 9,
+            "count": 6,
+            "accuracy": 0.8333333333333334,
+            "mean_confidence": 0.637451171875
+          },
+          {
+            "bin": 10,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.69248046875
+          },
+          {
+            "bin": 11,
+            "count": 12,
+            "accuracy": 0.9166666666666666,
+            "mean_confidence": 0.7687581380208334
+          },
+          {
+            "bin": 12,
+            "count": 20,
+            "accuracy": 0.95,
+            "mean_confidence": 0.8322265625
+          },
+          {
+            "bin": 13,
+            "count": 22,
+            "accuracy": 0.9545454545454546,
+            "mean_confidence": 0.9176136363636364
+          },
+          {
+            "bin": 14,
+            "count": 24298,
+            "accuracy": 0.9998353773973166,
+            "mean_confidence": 0.9998245660008025
+          }
+        ],
+        "nll_probability_floor": 1.1754943508222875e-38
+      },
+      "upstream_action_metrics": {
+        "examples": 24370,
+        "accuracy": 0.999548625359048,
+        "coverage": 0.4788264259335248,
+        "abstention_rate": 0.5211735740664751,
+        "selective_accuracy": 0.9990573313908647,
+        "wrong_action_rate": 0.00045137464095199015,
+        "wrong_target_rate": 0.0,
+        "unsafe_action_rate": 0.00045137464095199015,
+        "counts": {
+          "total": 24370,
+          "correct": 24359,
+          "abstained": 12701,
+          "acted": 11669,
+          "acted_correct": 11658,
+          "wrong_action": 11,
+          "unsafe_action": 11
+        },
+        "per_action": {
+          "abstain": {
+            "accuracy": 0.9991346758967904,
+            "abstention_rate": 0.9991346758967904,
+            "examples": 12712
+          },
+          "check": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 816
+          },
+          "click": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 1040
+          },
+          "fill": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 9802
+          }
+        }
+      },
+      "macro_action_accuracy": 0.9997836689741976,
+      "wrong_rows": [
+        137,
+        3216,
+        6631,
+        6748,
+        7280,
+        10703,
+        12255,
+        13480,
+        15214,
+        21022,
+        23671
+      ],
+      "paired_with_upstream": {
+        "rows": 24370,
+        "argmax_agreement": 24370,
+        "agreement_rate": 1.0,
+        "reference_correct_candidate_wrong": 0,
+        "reference_wrong_candidate_correct": 0,
+        "both_wrong": 11,
+        "disagreement_rows": []
+      },
+      "max_abs_probability_error": 0.020487427711486816,
+      "mean_row_max_abs_probability_error": 4.673297645567538e-05,
+      "probability_tolerance_violation_rows": [
+        137,
+        884,
+        2945,
+        3216,
+        8706,
+        9193,
+        12725,
+        13480,
+        13768,
+        15698,
+        23992
+      ],
+      "conversion_parity_passed": false,
+      "output_validation_failures": {
+        "19270": [
+          "Live option probabilities do not sum to one"
+        ]
+      }
+    }
+  },
+  "failures": [
+    {
+      "row": 137,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT Edit \"Full name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Novak",
+        "baseline": "fill Last: Novak",
+        "ane-gather": "fill Last: Novak"
+      }
+    },
+    {
+      "row": 884,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Health plan\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "ane-gather": "skip"
+      }
+    },
+    {
+      "row": 2945,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Organization\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "ane-gather": "skip"
+      }
+    },
+    {
+      "row": 3216,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Google Chrome\nELEMENT Edit \"Email\" value=\"oivanova66@yahoo.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Email address: oivanova66@yahoo.com",
+        "baseline": "fill Email address: oivanova66@yahoo.com",
+        "ane-gather": "fill Email address: oivanova66@yahoo.com"
+      }
+    },
+    {
+      "row": 6631,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Google Chrome\nELEMENT Edit \"Given name\" value=\"Priya\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Physician: Dr. Fischer",
+        "baseline": "fill Physician: Dr. Fischer",
+        "ane-gather": "fill Physician: Dr. Fischer"
+      }
+    },
+    {
+      "row": 6748,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"State / Province\" value=\"NE\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill ST: NE",
+        "baseline": "fill ST: NE",
+        "ane-gather": "fill ST: NE"
+      }
+    },
+    {
+      "row": 7280,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Given name\" value=\"Tomas\" hint=\"First\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill First name: Tomas",
+        "baseline": "fill First name: Tomas",
+        "ane-gather": "fill First name: Tomas"
+      }
+    },
+    {
+      "row": 8706,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Mozilla Firefox\nELEMENT CheckBox \"I authorize verification of the information provided\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "ane-gather": "check"
+      }
+    },
+    {
+      "row": 9193,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding\nELEMENT Edit \"DL number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "ane-gather": "skip"
+      }
+    },
+    {
+      "row": 10703,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - JevBrowser\nELEMENT Edit \"Last\" value=\"Silva\" hint=\"Family name\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Family name: Silva",
+        "baseline": "fill Family name: Silva",
+        "ane-gather": "fill Family name: Silva"
+      }
+    },
+    {
+      "row": 12255,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form - JevBrowser\nELEMENT Edit \"Taxpayer identification number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill National ID: 813-20-3361",
+        "baseline": "fill National ID: 813-20-3361",
+        "ane-gather": "fill National ID: 813-20-3361"
+      }
+    },
+    {
+      "row": 12725,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Company\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "ane-gather": "skip"
+      }
+    },
+    {
+      "row": 13480,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Current employer\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Company reg: REG3878384",
+        "baseline": "fill Company reg: REG3878384",
+        "ane-gather": "fill Company reg: REG3878384"
+      }
+    },
+    {
+      "row": 13768,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"Legal name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "ane-gather": "skip"
+      }
+    },
+    {
+      "row": 15214,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Relation to applicant\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Reg plate: WN9-8147",
+        "baseline": "fill Reg plate: WN9-8147",
+        "ane-gather": "fill Reg plate: WN9-8147"
+      }
+    },
+    {
+      "row": 15698,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer - Mozilla Firefox\nELEMENT CheckBox \"I am legally authorized to work in this country\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "ane-gather": "skip"
+      }
+    },
+    {
+      "row": 19270,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Plate number\" value=\"old\"",
+      "gold_option": "fill License plate: SJ3-1115",
+      "selected_options": {
+        "upstream_pytorch": "fill License plate: SJ3-1115",
+        "baseline": "fill License plate: SJ3-1115",
+        "ane-gather": "fill License plate: SJ3-1115"
+      }
+    },
+    {
+      "row": 21022,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - JevBrowser\nELEMENT Edit \"State\" value=\"NE\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill National ID: 794-03-1212",
+        "baseline": "fill National ID: 794-03-1212",
+        "ane-gather": "fill National ID: 794-03-1212"
+      }
+    },
+    {
+      "row": 23671,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Email\" value=\"lchen6@yahoo.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Email: lchen6@yahoo.com",
+        "baseline": "fill Email: lchen6@yahoo.com",
+        "ane-gather": "fill Email: lchen6@yahoo.com"
+      }
+    },
+    {
+      "row": 23992,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Microsoft Edge\nELEMENT Edit \"Total years experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "ane-gather": "skip"
+      }
+    }
+  ],
+  "trace": {
+    "file": "synthetic-test-decisions.jsonl.gz",
+    "sha256": "b6f6edc9de34fb37b10847a1f9568b530ce2b8e1bd241f51bf2e637f489d6554",
+    "rows": 24370
+  },
+  "upstream_evaluator_sha256": "49dccdeb4e2b456187cdc4491a6d78fabac6a45384272f8e3ec802a58872aa6e",
+  "harness_sha256": {
+    "benchmark-synthetic.py": "96b75133b38735594e7b5483cec0f39a5f9868045d0e7438434df8af698215fa",
+    "synthetic_test.py": "e2b68725236e6827eb422480c8cc8aa189b2490c1594650d8f2928771d1bc626",
+    "score-report.py": "c78e45caa86fb59f9a56ef18cc6a35020ea6e281a6a23d23618f56da85a0d95e"
+  },
+  "conversion_parity_passed": false,
+  "limitations": [
+    "The release file has 24370 rows; the model card claims approximately 15000. This is not a reconstruction of that unspecified manifest.",
+    "Upstream describes form-disjoint synthetic data; this is not an unseen real-world GUI or task-completion benchmark.",
+    "No fresh hosted Jev calls are included. Published hosted-Jev percentages are not a matched baseline for this run.",
+    "Local timings use CPU for PyTorch and CPU+ANE for Core ML; they are backend/deployment measurements, not equal-hardware algorithm comparisons."
+  ]
+}

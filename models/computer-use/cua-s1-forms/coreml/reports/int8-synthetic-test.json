@@ -1,0 +1,1473 @@
+{
+  "purpose": "Full published synthetic test; no fitting, filtering, resampling or test-based tuning",
+  "created_utc": "2026-09-19T22:07:40.987091+00:00",
+  "dataset": {
+    "dataset_repository": "cua-ai/cua-s1-forms",
+    "dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+    "path": "artifacts/test.jsonl",
+    "url": "https://huggingface.co/datasets/cua-ai/cua-s1-forms/resolve/8273f34778b99ac2e12d9f6e7d57dad99ae20845/test.jsonl",
+    "sha256": "d63a7e0db195d4d20154a40b2f8dd09ce3bb65487a158c638da5c609d4475e7c",
+    "rows": 24370,
+    "bytes": 18710924,
+    "upstream_split_claim": "Synthetic test, form-signature-disjoint from train/validation. Train and validation signatures have not been independently re-audited here.",
+    "model_card_claim": {
+      "synthetic_test_top1": 0.9995,
+      "approximate_decisions": 15000,
+      "note": "The released file has 24370 rows. No matching full result ledger or exact 15000-row manifest is supplied by the linked model card."
+    }
+  },
+  "manifest_sha256": "e582b951ecc07809a0b06a2bc0790827b90a86ce57c70d5b6177ef04f0b4f1ca",
+  "input_census": {
+    "rows": 24370,
+    "unique_episode_seeds": 1040,
+    "maxima": {
+      "context_bytes": 217,
+      "option_bytes": 92,
+      "max_options": 32
+    },
+    "per_action": {
+      "check": 816,
+      "click": 1040,
+      "fill": 9802,
+      "skip": 12712
+    },
+    "option_count_histogram": {
+      "7": 17,
+      "8": 46,
+      "9": 80,
+      "10": 227,
+      "11": 361,
+      "12": 589,
+      "13": 888,
+      "14": 1254,
+      "15": 1513,
+      "16": 1761,
+      "17": 2373,
+      "18": 2014,
+      "19": 2277,
+      "20": 2506,
+      "21": 2396,
+      "22": 1818,
+      "23": 1422,
+      "24": 907,
+      "25": 688,
+      "26": 524,
+      "27": 483,
+      "28": 89,
+      "29": 33,
+      "30": 29,
+      "31": 35,
+      "32": 40
+    },
+    "excluded_rows": 0,
+    "truncated_contexts": 0,
+    "truncated_options": 0
+  },
+  "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+  "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+  "conversions": {
+    "baseline": {
+      "model": "cua_s1_forms_fp16_options32.mlpackage",
+      "precision": "float16",
+      "minimum_target": "iOS17/macOS14",
+      "limits": {
+        "context_bytes": 224,
+        "option_bytes": 96,
+        "max_options": 32
+      },
+      "model_config": {
+        "context_tokens": 224,
+        "encoder": "tinyx",
+        "heads": 4,
+        "hf_model": "Qwen/Qwen2.5-0.5B",
+        "layers": 2,
+        "option_tokens": 96,
+        "rank": 128,
+        "width": 128
+      },
+      "parameters": 706048,
+      "assets_lock_sha256": "8e65ad70af6bb814b571cdcfe828ba4bc339147da2d2211cbeac416163ef18ba",
+      "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+      "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+      "trace_row": 0,
+      "trace_dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+      "export_seconds": 0.5374167499830946,
+      "python": "3.11.11",
+      "torch": "2.7.0",
+      "coremltools": "9.0",
+      "package_files": {
+        "Data/com.apple.CoreML/model.mlmodel": "70485fc18cbb21785df833cbddddc0b5b59acb00d22394b76e55307e2c135dd0",
+        "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+        "Manifest.json": "2bc0f5f62337b27fb6b0ecde248f1e3dc269e1ba4b65516aaeede2a60e293dcc"
+      }
+    },
+    "int8-weights": {
+      "model": "cua_s1_forms_int8_options32.mlpackage",
+      "precision": "int8_weights_float16_compute",
+      "minimum_target": "iOS17/macOS14",
+      "limits": {
+        "context_bytes": 224,
+        "option_bytes": 96,
+        "max_options": 32
+      },
+      "model_config": {
+        "context_tokens": 224,
+        "encoder": "tinyx",
+        "heads": 4,
+        "hf_model": "Qwen/Qwen2.5-0.5B",
+        "layers": 2,
+        "option_tokens": 96,
+        "rank": 128,
+        "width": 128
+      },
+      "parameters": 706048,
+      "assets_lock_sha256": "8e65ad70af6bb814b571cdcfe828ba4bc339147da2d2211cbeac416163ef18ba",
+      "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+      "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+      "trace_row": 0,
+      "trace_dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+      "export_seconds": 0.5374167499830946,
+      "python": "3.11.11",
+      "torch": "2.7.0",
+      "coremltools": "9.0",
+      "package_files": {
+        "Data/com.apple.CoreML/model.mlmodel": "a7d9747308b8b754a46f3e70c8465b821f90e12376b3a71dc909f7364ae73c3a",
+        "Data/com.apple.CoreML/weights/weight.bin": "f600c4434b7f7e3e789de8f1a4aa54a55f84df51fa9b788e18f5c97b68e4840f",
+        "Manifest.json": "2206ec01787a85c12f1376fa5a832c5ac912f06172c6ff06b26ae8415470d246"
+      },
+      "quantization": {
+        "name": "int8-weights",
+        "settings": {
+          "mode": "linear_symmetric",
+          "dtype": "int8",
+          "granularity": "per_channel",
+          "weight_threshold": 2048
+        },
+        "activations": "float16",
+        "calibration": "None; weight-only, data-free quantization",
+        "source_conversion_sha256": "ac94239751ceb7e19602eb7276940ff53446b1776d4900405af9be0382fe4a94",
+        "source_package_files": {
+          "Data/com.apple.CoreML/model.mlmodel": "70485fc18cbb21785df833cbddddc0b5b59acb00d22394b76e55307e2c135dd0",
+          "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+          "Manifest.json": "2bc0f5f62337b27fb6b0ecde248f1e3dc269e1ba4b65516aaeede2a60e293dcc"
+        },
+        "source_package_bytes": 1511163,
+        "package_bytes": 813422,
+        "compression_seconds": 0.3180606249952689,
+        "operation_counts": {
+          "add": 15,
+          "cast": 13,
+          "concat": 2,
+          "const": 226,
+          "constexpr_affine_dequantize": 19,
+          "equal": 2,
+          "expand_dims": 5,
+          "fill_like": 3,
+          "gather": 2,
+          "greater_equal": 4,
+          "layer_norm": 8,
+          "linear": 15,
+          "logical_not": 2,
+          "matmul": 8,
+          "maximum": 1,
+          "mul": 7,
+          "not_equal": 3,
+          "real_div": 1,
+          "reduce_sum": 3,
+          "relu": 3,
+          "reshape": 31,
+          "select": 9,
+          "slice_by_index": 13,
+          "softmax": 5,
+          "squeeze": 3,
+          "tile": 2,
+          "transpose": 21
+        },
+        "script_sha256": "22071babfcb02ef77225203a479d9bb14b9fa35462ba38bcc4bf07d29c125a97"
+      }
+    }
+  },
+  "environment": {
+    "machine": "Apple M5 Pro",
+    "memory_bytes": 25769803776,
+    "os": "27.0",
+    "os_build": "26A428",
+    "python": "3.11.11",
+    "torch": "2.7.0",
+    "coremltools": "9.0",
+    "torch_cpu_threads": 2,
+    "torch_interop_threads": 1,
+    "torch_mha_fastpath": false
+  },
+  "protocol": {
+    "batch_size": 1,
+    "warmups_per_model": 3,
+    "timed_passes": 1,
+    "coreml_compute_units": "CPU_AND_NE",
+    "coreml_order": "AB on even rows, BA on odd rows",
+    "timing": "PyTorch CPU forward+softmax / synchronous Core ML predict; excludes encoding, validation, GUI and network",
+    "preprocessing": "Upstream variable-length collator; independent fixed-shape Core ML encoder shared by both exports",
+    "load_note": "Process/model creation can use existing system caches; not a cold-start experiment",
+    "output_audit": "Imperfect finite probability sums are retained unchanged and fail the original normalization gate",
+    "calibration_note": "NLL/ECE use raw emitted scores; no renormalization or calibration was applied"
+  },
+  "thresholds": {
+    "argmax_agreement": 1.0,
+    "max_abs_probability_error": 0.005,
+    "allow_accuracy_loss": false,
+    "probability_sum_atol": 0.001,
+    "probability_sum_rtol": 1e-05
+  },
+  "host_preprocessing_ms": {
+    "upstream_collator_ms": {
+      "count": 24370,
+      "median_ms": 0.09233300806954503,
+      "p95_ms": 0.12889755889773366,
+      "min_ms": 0.04445898230187595,
+      "max_ms": 1.0104170069098473
+    },
+    "shared_coreml_encoding_ms": {
+      "count": 24370,
+      "median_ms": 0.027417001547291875,
+      "p95_ms": 0.03995798761025071,
+      "min_ms": 0.012666976545006037,
+      "max_ms": 0.49662499804981053
+    }
+  },
+  "results": {
+    "upstream_pytorch": {
+      "correct": 24359,
+      "rows": 24370,
+      "accuracy": 0.999548625359048,
+      "model_call_latency_ms": {
+        "count": 24370,
+        "median_ms": 1.7357920005451888,
+        "p95_ms": 2.984285591810476,
+        "min_ms": 1.0271249921061099,
+        "max_ms": 30.681957985507324
+      },
+      "load_ms": 10.63050000811927,
+      "first_call_ms": 5.652791995089501,
+      "calibration": {
+        "nll": 0.0021302032038990836,
+        "ece": 0.00035450826133425167,
+        "equal_width_bins": 15,
+        "bins": [
+          {
+            "bin": 7,
+            "count": 2,
+            "accuracy": 0.5,
+            "mean_confidence": 0.5216051042079926
+          },
+          {
+            "bin": 8,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.575071656703949
+          },
+          {
+            "bin": 9,
+            "count": 7,
+            "accuracy": 0.7142857142857143,
+            "mean_confidence": 0.6404258779117039
+          },
+          {
+            "bin": 10,
+            "count": 4,
+            "accuracy": 1.0,
+            "mean_confidence": 0.6963506639003754
+          },
+          {
+            "bin": 11,
+            "count": 11,
+            "accuracy": 0.9090909090909091,
+            "mean_confidence": 0.7664791941642761
+          },
+          {
+            "bin": 12,
+            "count": 21,
+            "accuracy": 0.9523809523809523,
+            "mean_confidence": 0.8310647464933849
+          },
+          {
+            "bin": 13,
+            "count": 22,
+            "accuracy": 0.9545454545454546,
+            "mean_confidence": 0.9173552746122534
+          },
+          {
+            "bin": 14,
+            "count": 24298,
+            "accuracy": 0.9998353773973166,
+            "mean_confidence": 0.999802232897422
+          }
+        ],
+        "nll_probability_floor": 1.1754943508222875e-38
+      },
+      "upstream_action_metrics": {
+        "examples": 24370,
+        "accuracy": 0.999548625359048,
+        "coverage": 0.4788264259335248,
+        "abstention_rate": 0.5211735740664751,
+        "selective_accuracy": 0.9990573313908647,
+        "wrong_action_rate": 0.00045137464095199015,
+        "wrong_target_rate": 0.0,
+        "unsafe_action_rate": 0.00045137464095199015,
+        "counts": {
+          "total": 24370,
+          "correct": 24359,
+          "abstained": 12701,
+          "acted": 11669,
+          "acted_correct": 11658,
+          "wrong_action": 11,
+          "unsafe_action": 11
+        },
+        "per_action": {
+          "abstain": {
+            "accuracy": 0.9991346758967904,
+            "abstention_rate": 0.9991346758967904,
+            "examples": 12712
+          },
+          "check": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 816
+          },
+          "click": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 1040
+          },
+          "fill": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 9802
+          }
+        }
+      },
+      "macro_action_accuracy": 0.9997836689741976,
+      "wrong_rows": [
+        137,
+        3216,
+        6631,
+        6748,
+        7280,
+        10703,
+        12255,
+        13480,
+        15214,
+        21022,
+        23671
+      ]
+    },
+    "baseline": {
+      "correct": 24359,
+      "rows": 24370,
+      "accuracy": 0.999548625359048,
+      "model_call_latency_ms": {
+        "count": 24370,
+        "median_ms": 0.9897080017253757,
+        "p95_ms": 1.1015420022886246,
+        "min_ms": 0.884292006958276,
+        "max_ms": 3.03837499814108
+      },
+      "load_ms": 640.2017919754144,
+      "first_call_ms": 2.522958006011322,
+      "calibration": {
+        "nll": 0.002108235388127147,
+        "ece": 0.000331678613561794,
+        "equal_width_bins": 15,
+        "bins": [
+          {
+            "bin": 7,
+            "count": 2,
+            "accuracy": 0.5,
+            "mean_confidence": 0.5224609375
+          },
+          {
+            "bin": 8,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.57607421875
+          },
+          {
+            "bin": 9,
+            "count": 6,
+            "accuracy": 0.8333333333333334,
+            "mean_confidence": 0.637451171875
+          },
+          {
+            "bin": 10,
+            "count": 5,
+            "accuracy": 0.8,
+            "mean_confidence": 0.69248046875
+          },
+          {
+            "bin": 11,
+            "count": 12,
+            "accuracy": 0.9166666666666666,
+            "mean_confidence": 0.7687581380208334
+          },
+          {
+            "bin": 12,
+            "count": 20,
+            "accuracy": 0.95,
+            "mean_confidence": 0.8322265625
+          },
+          {
+            "bin": 13,
+            "count": 22,
+            "accuracy": 0.9545454545454546,
+            "mean_confidence": 0.9176136363636364
+          },
+          {
+            "bin": 14,
+            "count": 24298,
+            "accuracy": 0.9998353773973166,
+            "mean_confidence": 0.9998245660008025
+          }
+        ],
+        "nll_probability_floor": 1.1754943508222875e-38
+      },
+      "upstream_action_metrics": {
+        "examples": 24370,
+        "accuracy": 0.999548625359048,
+        "coverage": 0.4788264259335248,
+        "abstention_rate": 0.5211735740664751,
+        "selective_accuracy": 0.9990573313908647,
+        "wrong_action_rate": 0.00045137464095199015,
+        "wrong_target_rate": 0.0,
+        "unsafe_action_rate": 0.00045137464095199015,
+        "counts": {
+          "total": 24370,
+          "correct": 24359,
+          "abstained": 12701,
+          "acted": 11669,
+          "acted_correct": 11658,
+          "wrong_action": 11,
+          "unsafe_action": 11
+        },
+        "per_action": {
+          "abstain": {
+            "accuracy": 0.9991346758967904,
+            "abstention_rate": 0.9991346758967904,
+            "examples": 12712
+          },
+          "check": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 816
+          },
+          "click": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 1040
+          },
+          "fill": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 9802
+          }
+        }
+      },
+      "macro_action_accuracy": 0.9997836689741976,
+      "wrong_rows": [
+        137,
+        3216,
+        6631,
+        6748,
+        7280,
+        10703,
+        12255,
+        13480,
+        15214,
+        21022,
+        23671
+      ],
+      "paired_with_upstream": {
+        "rows": 24370,
+        "argmax_agreement": 24370,
+        "agreement_rate": 1.0,
+        "reference_correct_candidate_wrong": 0,
+        "reference_wrong_candidate_correct": 0,
+        "both_wrong": 11,
+        "disagreement_rows": []
+      },
+      "max_abs_probability_error": 0.020487427711486816,
+      "mean_row_max_abs_probability_error": 4.673297645567538e-05,
+      "probability_tolerance_violation_rows": [
+        137,
+        884,
+        2945,
+        3216,
+        8706,
+        9193,
+        12725,
+        13480,
+        13768,
+        15698,
+        23992
+      ],
+      "conversion_parity_passed": false,
+      "output_validation_failures": {
+        "19270": [
+          "Live option probabilities do not sum to one"
+        ]
+      }
+    },
+    "int8-weights": {
+      "correct": 24359,
+      "rows": 24370,
+      "accuracy": 0.999548625359048,
+      "model_call_latency_ms": {
+        "count": 24370,
+        "median_ms": 0.9902919991873205,
+        "p95_ms": 1.103792006324511,
+        "min_ms": 0.8826660050544888,
+        "max_ms": 49.30691700428724
+      },
+      "load_ms": 615.115666994825,
+      "first_call_ms": 1.328666985500604,
+      "calibration": {
+        "nll": 0.002145651629876076,
+        "ece": 0.00048729947809817673,
+        "equal_width_bins": 15,
+        "bins": [
+          {
+            "bin": 7,
+            "count": 4,
+            "accuracy": 0.75,
+            "mean_confidence": 0.520751953125
+          },
+          {
+            "bin": 8,
+            "count": 4,
+            "accuracy": 1.0,
+            "mean_confidence": 0.576904296875
+          },
+          {
+            "bin": 9,
+            "count": 6,
+            "accuracy": 0.8333333333333334,
+            "mean_confidence": 0.6383463541666666
+          },
+          {
+            "bin": 10,
+            "count": 3,
+            "accuracy": 0.3333333333333333,
+            "mean_confidence": 0.7058919270833334
+          },
+          {
+            "bin": 11,
+            "count": 15,
+            "accuracy": 0.9333333333333333,
+            "mean_confidence": 0.7711263020833333
+          },
+          {
+            "bin": 12,
+            "count": 15,
+            "accuracy": 0.9333333333333333,
+            "mean_confidence": 0.8310546875
+          },
+          {
+            "bin": 13,
+            "count": 26,
+            "accuracy": 1.0,
+            "mean_confidence": 0.9116023137019231
+          },
+          {
+            "bin": 14,
+            "count": 24297,
+            "accuracy": 0.9997942132773593,
+            "mean_confidence": 0.9998235539624234
+          }
+        ],
+        "nll_probability_floor": 1.1754943508222875e-38
+      },
+      "upstream_action_metrics": {
+        "examples": 24370,
+        "accuracy": 0.999548625359048,
+        "coverage": 0.4788264259335248,
+        "abstention_rate": 0.5211735740664751,
+        "selective_accuracy": 0.9990573313908647,
+        "wrong_action_rate": 0.00045137464095199015,
+        "wrong_target_rate": 0.0,
+        "unsafe_action_rate": 0.00045137464095199015,
+        "counts": {
+          "total": 24370,
+          "correct": 24359,
+          "abstained": 12701,
+          "acted": 11669,
+          "acted_correct": 11658,
+          "wrong_action": 11,
+          "unsafe_action": 11
+        },
+        "per_action": {
+          "abstain": {
+            "accuracy": 0.9991346758967904,
+            "abstention_rate": 0.9991346758967904,
+            "examples": 12712
+          },
+          "check": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 816
+          },
+          "click": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 1040
+          },
+          "fill": {
+            "accuracy": 1.0,
+            "abstention_rate": 0.0,
+            "examples": 9802
+          }
+        }
+      },
+      "macro_action_accuracy": 0.9997836689741976,
+      "wrong_rows": [
+        137,
+        3216,
+        6631,
+        6748,
+        7280,
+        10703,
+        12255,
+        13480,
+        15214,
+        21022,
+        23671
+      ],
+      "paired_with_upstream": {
+        "rows": 24370,
+        "argmax_agreement": 24370,
+        "agreement_rate": 1.0,
+        "reference_correct_candidate_wrong": 0,
+        "reference_wrong_candidate_correct": 0,
+        "both_wrong": 11,
+        "disagreement_rows": []
+      },
+      "max_abs_probability_error": 0.0677376389503479,
+      "mean_row_max_abs_probability_error": 8.935863356371478e-05,
+      "probability_tolerance_violation_rows": [
+        137,
+        410,
+        1225,
+        2076,
+        2093,
+        2818,
+        2945,
+        3064,
+        3151,
+        3216,
+        3298,
+        3479,
+        3756,
+        3978,
+        4469,
+        5294,
+        5759,
+        6426,
+        6466,
+        7177,
+        7515,
+        8243,
+        8706,
+        8714,
+        8891,
+        9193,
+        9253,
+        9977,
+        9981,
+        10703,
+        11122,
+        11257,
+        11880,
+        12725,
+        12754,
+        13370,
+        13423,
+        13693,
+        13768,
+        14656,
+        15132,
+        15214,
+        15252,
+        15698,
+        16253,
+        16920,
+        16951,
+        17304,
+        18339,
+        18549,
+        18802,
+        19308,
+        19669,
+        19957,
+        20462,
+        20476,
+        21844,
+        21871,
+        22336,
+        22714,
+        22791,
+        23276,
+        23670,
+        23992
+      ],
+      "conversion_parity_passed": false,
+      "output_validation_failures": {}
+    }
+  },
+  "failures": [
+    {
+      "row": 137,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT Edit \"Full name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Last: Novak",
+        "baseline": "fill Last: Novak",
+        "int8-weights": "fill Last: Novak"
+      }
+    },
+    {
+      "row": 410,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Date of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 884,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Health plan\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 1225,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up\nELEMENT Edit \"Vehicle identification number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 2076,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Graduation year\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 2093,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Title\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 2818,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Your email\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 2945,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Organization\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 3064,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Make\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 3151,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - Google Chrome\nELEMENT Edit \"Date of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 3216,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Google Chrome\nELEMENT Edit \"Email\" value=\"oivanova66@yahoo.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Email address: oivanova66@yahoo.com",
+        "baseline": "fill Email address: oivanova66@yahoo.com",
+        "int8-weights": "fill Email address: oivanova66@yahoo.com"
+      }
+    },
+    {
+      "row": 3298,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Mozilla Firefox\nELEMENT Edit \"DL number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 3479,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Insurance company\" value=\"Centene\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 3756,
+      "context": "TASK fill the form from the document, then submit\nFORM Page 2 of 3\nELEMENT Edit \"Claim #\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 3978,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer - Microsoft Edge\nELEMENT Edit \"Family doctor\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 4469,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"City\" value=\"Portland\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 5294,
+      "context": "TASK fill the form from the document, then submit\nFORM Untitled\nELEMENT Edit \"Email\" value=\"nadia.fischer@fastmail.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 5759,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form\nELEMENT Edit \"Relationship to patient\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 6426,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Microsoft Edge\nELEMENT CheckBox \"Consent to electronic communication (required)\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int8-weights": "check"
+      }
+    },
+    {
+      "row": 6466,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - JevBrowser\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 6631,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Google Chrome\nELEMENT Edit \"Given name\" value=\"Priya\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Physician: Dr. Fischer",
+        "baseline": "fill Physician: Dr. Fischer",
+        "int8-weights": "fill Physician: Dr. Fischer"
+      }
+    },
+    {
+      "row": 6748,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"State / Province\" value=\"NE\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill ST: NE",
+        "baseline": "fill ST: NE",
+        "int8-weights": "fill ST: NE"
+      }
+    },
+    {
+      "row": 7177,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Claim #\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 7280,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Given name\" value=\"Tomas\" hint=\"First\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill First name: Tomas",
+        "baseline": "fill First name: Tomas",
+        "int8-weights": "fill First name: Tomas"
+      }
+    },
+    {
+      "row": 7515,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"Province\" value=\"GA\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 8243,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Passport number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 8706,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Mozilla Firefox\nELEMENT CheckBox \"I authorize verification of the information provided\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int8-weights": "check"
+      }
+    },
+    {
+      "row": 8714,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Registration number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 8891,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Google Chrome\nELEMENT Edit \"Last\" value=\"Ivanova\" hint=\"Family name\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 9193,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding\nELEMENT Edit \"DL number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 9253,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"Homepage\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 9977,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Country\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 9981,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"City\" value=\"Burlington\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 10703,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - JevBrowser\nELEMENT Edit \"Last\" value=\"Silva\" hint=\"Family name\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Family name: Silva",
+        "baseline": "fill Family name: Silva",
+        "int8-weights": "fill Family name: Silva"
+      }
+    },
+    {
+      "row": 11122,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"EIN\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 11257,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Microsoft Edge\nELEMENT CheckBox \"I am legally authorized to work in this country\" unchecked",
+      "gold_option": "check",
+      "selected_options": {
+        "upstream_pytorch": "check",
+        "baseline": "check",
+        "int8-weights": "check"
+      }
+    },
+    {
+      "row": 11880,
+      "context": "TASK fill the form from the document, then submit\nFORM Blue Sun Freight - Vendor Onboarding - Google Chrome\nELEMENT Edit \"Date of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 12255,
+      "context": "TASK fill the form from the document, then submit\nFORM Globex Insurance - Auto Claim Form - JevBrowser\nELEMENT Edit \"Taxpayer identification number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill National ID: 813-20-3361",
+        "baseline": "fill National ID: 813-20-3361",
+        "int8-weights": "fill National ID: 813-20-3361"
+      }
+    },
+    {
+      "row": 12725,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Company\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 12754,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration - Microsoft Edge\nELEMENT CheckBox \"I consent to treatment and agree to the privacy policy\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 13370,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application - Microsoft Edge\nELEMENT Edit \"Mailing address\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 13423,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"Current job title\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 13480,
+      "context": "TASK fill the form from the document, then submit\nFORM Evergreen Rentals - Tenant Application\nELEMENT Edit \"Current employer\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Company reg: REG3878384",
+        "baseline": "fill Company reg: REG3878384",
+        "int8-weights": "fill Company reg: REG3878384"
+      }
+    },
+    {
+      "row": 13693,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Mozilla Firefox\nELEMENT Edit \"Organization\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 13768,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"Legal name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 14656,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - Google Chrome\nELEMENT Edit \"Details of loss\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 15132,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Mozilla Firefox\nELEMENT Edit \"Town\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 15214,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Relation to applicant\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Reg plate: WN9-8147",
+        "baseline": "fill Reg plate: WN9-8147",
+        "int8-weights": "fill Reg plate: WN9-8147"
+      }
+    },
+    {
+      "row": 15252,
+      "context": "TASK fill the form from the document, then submit\nFORM Northwind Clinic - New Patient Registration\nELEMENT Edit \"VIN number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 15698,
+      "context": "TASK fill the form from the document, then submit\nFORM Orbit Telecom - Account Transfer - Mozilla Firefox\nELEMENT CheckBox \"I am legally authorized to work in this country\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 16253,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application\nELEMENT Edit \"Relation to applicant\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 16920,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application - Google Chrome\nELEMENT Edit \"Total years experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 16951,
+      "context": "TASK fill the form from the document, then submit\nFORM Form\nELEMENT Edit \"State\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 17304,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request - Google Chrome\nELEMENT CheckBox \"I am legally authorized to work in this country\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 18339,
+      "context": "TASK fill the form from the document, then submit\nFORM Summit Bank - Direct Deposit Enrollment - Mozilla Firefox\nELEMENT Edit \"Last name\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 18549,
+      "context": "TASK fill the form from the document, then submit\nFORM Lakeside Vet - Pet Owner Registration - Microsoft Edge\nELEMENT Edit \"ABA routing number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 18802,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment\nELEMENT Edit \"Unit number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 19270,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Plate number\" value=\"old\"",
+      "gold_option": "fill License plate: SJ3-1115",
+      "selected_options": {
+        "upstream_pytorch": "fill License plate: SJ3-1115",
+        "baseline": "fill License plate: SJ3-1115",
+        "int8-weights": "fill License plate: SJ3-1115"
+      }
+    },
+    {
+      "row": 19308,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up - Google Chrome\nELEMENT Edit \"Last\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 19669,
+      "context": "TASK fill the form from the document, then submit\nFORM Acme Robotics - Job Application\nELEMENT Edit \"School\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 19957,
+      "context": "TASK fill the form from the document, then submit\nFORM Skyline Travel - Visa Assistance Form\nELEMENT Edit \"Plate number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 20462,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - Mozilla Firefox\nELEMENT CheckBox \"I am legally authorized to work in this country\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 20476,
+      "context": "TASK fill the form from the document, then submit\nFORM JevBrowser\nELEMENT Edit \"Sort code\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 21022,
+      "context": "TASK fill the form from the document, then submit\nFORM Harbor University - Graduate Application - JevBrowser\nELEMENT Edit \"State\" value=\"NE\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill National ID: 794-03-1212",
+        "baseline": "fill National ID: 794-03-1212",
+        "int8-weights": "fill National ID: 794-03-1212"
+      }
+    },
+    {
+      "row": 21844,
+      "context": "TASK fill the form from the document, then submit\nFORM Cedar Pharmacy - Prescription Transfer - Mozilla Firefox\nELEMENT Edit \"Gender\" value=\"Female\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 21871,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake\nELEMENT Edit \"Sort code\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 22336,
+      "context": "TASK fill the form from the document, then submit\nFORM City Library - Membership Sign-up\nELEMENT Edit \"Car model\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 22714,
+      "context": "TASK fill the form from the document, then submit\nFORM Metro Utilities - New Service Request\nELEMENT Edit \"Describe your concern\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 22791,
+      "context": "TASK fill the form from the document, then submit\nFORM Riverside Dental - Patient Intake - Mozilla Firefox\nELEMENT CheckBox \"Consent to electronic communication (required)\" checked",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 23276,
+      "context": "TASK fill the form from the document, then submit\nFORM Pinewood Camp - Parent Consent Form - JevBrowser\nELEMENT Edit \"Relationship status\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 23670,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Member number\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    },
+    {
+      "row": 23671,
+      "context": "TASK fill the form from the document, then submit\nFORM \nELEMENT Edit \"Email\" value=\"lchen6@yahoo.com\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "fill Email: lchen6@yahoo.com",
+        "baseline": "fill Email: lchen6@yahoo.com",
+        "int8-weights": "fill Email: lchen6@yahoo.com"
+      }
+    },
+    {
+      "row": 23992,
+      "context": "TASK fill the form from the document, then submit\nFORM Apex Gym - Member Enrollment - Microsoft Edge\nELEMENT Edit \"Total years experience\" value=\"\"",
+      "gold_option": "skip",
+      "selected_options": {
+        "upstream_pytorch": "skip",
+        "baseline": "skip",
+        "int8-weights": "skip"
+      }
+    }
+  ],
+  "trace": {
+    "file": "int8-synthetic-test-decisions.jsonl.gz",
+    "sha256": "69720b9e11430ecff7ea0718f14bf16792de6f39f114faba250cfe855e4e4156",
+    "rows": 24370
+  },
+  "upstream_evaluator_sha256": "49dccdeb4e2b456187cdc4491a6d78fabac6a45384272f8e3ec802a58872aa6e",
+  "harness_sha256": {
+    "benchmark-synthetic.py": "891da8408156e2b80849b4d799c77c9a31c091dfd999fcd044639deefac3e888",
+    "synthetic_test.py": "e2b68725236e6827eb422480c8cc8aa189b2490c1594650d8f2928771d1bc626",
+    "score-report.py": "c78e45caa86fb59f9a56ef18cc6a35020ea6e281a6a23d23618f56da85a0d95e"
+  },
+  "conversion_parity_passed": false,
+  "limitations": [
+    "The release file has 24370 rows; the model card claims approximately 15000. This is not a reconstruction of that unspecified manifest.",
+    "Upstream describes form-disjoint synthetic data; this is not an unseen real-world GUI or task-completion benchmark.",
+    "No fresh hosted Jev calls are included. Published hosted-Jev percentages are not a matched baseline for this run.",
+    "Local timings use CPU for PyTorch and CPU+ANE for Core ML; they are backend/deployment measurements, not equal-hardware algorithm comparisons."
+  ]
+}

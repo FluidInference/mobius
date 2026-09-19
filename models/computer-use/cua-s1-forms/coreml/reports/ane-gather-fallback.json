@@ -1,0 +1,38 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-19T20:08:52.988799+00:00"
+  },
+  "models": [
+    {
+      "model_path": "build/ane-gather/cua_s1_forms_fp16_options32.mlmodelc",
+      "model_name": "cua_s1_forms_fp16_options32",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 165,
+        "ane_ops": 162,
+        "gpu_ops": 0,
+        "cpu_ops": 3,
+        "ane_percent": 98.2,
+        "reasons": [
+          {
+            "reason": "Unsupported tensor data type: int32",
+            "count": 3,
+            "estimated_cpu_runtime_ms": 0.003,
+            "op_types": {
+              "ios17.cast": 3
+            },
+            "ops": [
+              "option_mask_to_fp16",
+              "context_ids_to_fp16",
+              "option_ids_to_fp16"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

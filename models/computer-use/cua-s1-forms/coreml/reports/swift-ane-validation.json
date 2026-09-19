@@ -1,0 +1,12 @@
+{
+  "byte_encoding_limits_and_rejection": "passed",
+  "concurrent_reversed_rows": 6,
+  "correct": 196,
+  "dataset_sha256": "4f43b442e79ba2e2ce731e27e9b8e340c2b5dfcaffc92d8ff564c34f115ff1ca",
+  "maximum_probability_error": 0.00233614444732666,
+  "model_path": "ane-gather/cua_s1_forms_fp16_options32.mlpackage",
+  "os": "Version 27.0 (Build 26A428)",
+  "purpose": "Standalone Swift validation against the real upstream demo; XCTest unavailable locally",
+  "rows": 196,
+  "shared_compiled_cache": "passed"
+}

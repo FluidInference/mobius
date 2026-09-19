@@ -1,0 +1,112 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-19T22:05:35.064926+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/Users/hanweng/Documents/FluidAudio/.mobius/cua-s1-prs/mobius/models/computer-use/cua-s1-forms/coreml/build/int8-weights/cua_s1_forms_int8_options32.mlmodelc",
+      "model_name": "cua_s1_forms_int8_options32",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 200,
+        "ane_ops": 149,
+        "gpu_ops": 0,
+        "cpu_ops": 51,
+        "ane_percent": 74.5,
+        "reasons": [
+          {
+            "reason": "Unsupported tensor data type: int32",
+            "count": 25,
+            "estimated_cpu_runtime_ms": 0.0375,
+            "op_types": {
+              "ios17.cast": 10,
+              "ios17.slice_by_index": 4,
+              "ios17.add": 4,
+              "select": 4,
+              "ios17.gather": 2,
+              "ios17.reshape": 1
+            },
+            "ops": [
+              "var_27",
+              "var_43",
+              "var_43_to_fp16",
+              "context_ids_to_int16",
+              "cast_54",
+              "add_3",
+              "select_0",
+              "select_0_to_int16",
+              "cast_0",
+              "add_0",
+              "select_0_1",
+              "op_59_cast_fp16_cast_uint16_cast_uint16",
+              "flat_ids",
+              "var_333",
+              "var_349",
+              "var_349_to_fp16",
+              "flat_ids_to_int16",
+              "cast_55",
+              "add_4",
+              "select_1",
+              "select_1_to_int16",
+              "cast_1",
+              "add_1",
+              "select_1_1",
+              "op_365_cast_fp16_cast_uint16_cast_uint16"
+            ]
+          },
+          {
+            "reason": "ANE not available for this op",
+            "count": 19,
+            "estimated_cpu_runtime_ms": 0,
+            "op_types": {
+              "ios16.constexpr_affine_dequantize": 19
+            },
+            "ops": [
+              "model_embedding_weight_to_fp16_quantized",
+              "model_position_weight_to_fp16_quantized",
+              "model_encoder_layers_0_self_attn_in_proj_weight_to_fp16_quantized",
+              "model_encoder_layers_0_self_attn_out_proj_weight_to_fp16_quantized",
+              "model_encoder_layers_0_linear1_weight_to_fp16_quantized",
+              "model_encoder_layers_0_linear2_weight_to_fp16_quantized",
+              "model_encoder_layers_1_self_attn_in_proj_weight_to_fp16_quantized",
+              "model_encoder_layers_1_self_attn_out_proj_weight_to_fp16_quantized",
+              "model_encoder_layers_1_linear1_weight_to_fp16_quantized",
+              "model_encoder_layers_1_linear2_weight_to_fp16_quantized",
+              "op_369_to_fp16_quantized",
+              "op_394_to_fp16_quantized",
+              "model_option_encoder_layers_0_self_attn_in_proj_weight_to_fp16_quantized",
+              "model_option_encoder_layers_0_self_attn_out_proj_weight_to_fp16_quantized",
+              "model_option_encoder_layers_0_linear1_weight_to_fp16_quantized",
+              "model_option_encoder_layers_0_linear2_weight_to_fp16_quantized",
+              "model_head_query_weight_to_fp16_quantized",
+              "model_head_key_weight_to_fp16_quantized",
+              "model_head_value_weight_to_fp16_quantized"
+            ]
+          },
+          {
+            "reason": "Unable to resolve operation input \"y\".",
+            "count": 7,
+            "estimated_cpu_runtime_ms": 0.007,
+            "op_types": {
+              "ios17.greater_equal": 4,
+              "ios17.not_equal": 3
+            },
+            "ops": [
+              "option_mask_1",
+              "context_mask",
+              "greater_equal_0",
+              "greater_equal_0_1",
+              "flat_mask",
+              "greater_equal_1",
+              "greater_equal_1_1"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
