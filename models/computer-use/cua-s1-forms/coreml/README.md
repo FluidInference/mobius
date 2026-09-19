@@ -30,10 +30,9 @@ the unmodified PyTorch probabilities for every pinned demo row to
 SHA-256. The [FluidAudio integration checks](#swift-integration-checks)
 consume this file without requiring PyTorch in the application.
 
-The converted package and compiled bundle are proposed in
-[Hugging Face model PR #1](https://huggingface.co/FluidInference/cua-s1-forms-coreml/discussions/1).
-During review, use the model PR revision; automatic FluidAudio downloading uses
-the model repository's `main` branch after that PR lands.
+The converted packages, compiled bundles, and reports are available on
+[Hugging Face](https://huggingface.co/FluidInference/cua-s1-forms-coreml).
+Automatic FluidAudio downloading uses the model repository's `main` branch.
 
 Python **3.11.11**, PyTorch **2.7.0**, and coremltools **9.0** are pinned. Python
 3.11 follows the upstream package's minimum version rather than the older Mobius
@@ -97,7 +96,7 @@ claimed.
 
 ## Swift integration checks
 
-The [Swift API reference](https://github.com/FluidInference/FluidAudio/blob/codex/cua-s1-forms/Documentation/API.md#decision-scoring)
+The [Swift API reference](https://github.com/FluidInference/FluidAudio/blob/main/Documentation/API.md#decision-scoring)
 describes local loading, input limits, and output validation. After the base setup
 above, `uv run python export-reference.py` exports probabilities from the unmodified
 PyTorch model plus the exact demo SHA-256 and checkpoint revision.
@@ -452,7 +451,7 @@ Reports: [full test](reports/int8-synthetic-test.json),
 and [CLI fallback](reports/int8-fallback.json).
 The experimental package and complete per-row trace are under `int8-weights/` and
 `reports/int8-synthetic-test-decisions.jsonl.gz` in the
-[model PR](https://huggingface.co/FluidInference/cua-s1-forms-coreml/discussions/1).
+[model repository](https://huggingface.co/FluidInference/cua-s1-forms-coreml).
 Load the portable INT8 package locally with the existing Swift manager; the
 standard model download continues to use the original FP16 artifact.
 
@@ -518,13 +517,13 @@ uv run --frozen pytest -q tests/test_quantized_weights.py tests/test_synthetic_t
 INT4 demo/full-test numerical checks return exit 1 after saving their reports.
 The original target and default download remain unchanged. Experimental packages
 and conversion manifests are under `int4-weights/` and `int4-source-fp16/` in the
-[model PR](https://huggingface.co/FluidInference/cua-s1-forms-coreml/discussions/1).
+[model repository](https://huggingface.co/FluidInference/cua-s1-forms-coreml).
 Reports: [full test](reports/int4-synthetic-test.json),
 [INT4 demo](reports/int4-demo-verification.json),
 [FP16 control demo](reports/int4-source-demo-verification.json),
 [compute plan](reports/int4-profile.json), [CLI fallback](reports/int4-fallback.json).
 The complete per-row trace is `reports/int4-synthetic-test-decisions.jsonl.gz` in
-the model PR. Source, package, script and trace hashes are retained in manifests.
+the model repository. Source, package, script and trace hashes are retained in manifests.
 
 ## Swift probability fix
 
@@ -551,7 +550,7 @@ The report pins the dataset, packages, saved reference traces, Swift sources,
 and validation harness by SHA-256.
 
 Reproduce on an Apple silicon Mac after the base setup. Supply a FluidAudio
-checkout containing the fix and a complete local download of the model PR,
+checkout containing the fix and a complete local download of the model repository,
 including its saved reports and traces:
 
 ```bash
