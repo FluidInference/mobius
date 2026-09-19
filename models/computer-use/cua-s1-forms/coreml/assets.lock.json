@@ -1,0 +1,54 @@
+{
+  "source_revision": "83f142c4290a0f7d9ed545ae8532858c6e4f8145",
+  "model_revision": "f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71",
+  "dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+  "evaluation_file": "artifacts/demo.jsonl",
+  "evaluation_rows": 196,
+  "files": [
+    {
+      "path": "vendor/cua_s1/__init__.py",
+      "url": "https://raw.githubusercontent.com/trycua/cua/83f142c4290a0f7d9ed545ae8532858c6e4f8145/libs/cua-s1/python/src/cua_s1/__init__.py",
+      "sha256": "68ca526b67bdb95401ddaa2ccc09b0717879d16a9102e2014f4f9018df292ddf"
+    },
+    {
+      "path": "vendor/cua_s1/model.py",
+      "url": "https://raw.githubusercontent.com/trycua/cua/83f142c4290a0f7d9ed545ae8532858c6e4f8145/libs/cua-s1/python/src/cua_s1/model.py",
+      "sha256": "7538cb4c9730d70a0b325050f370f981a9e109a1b182b8c66be3ba0fa2474344"
+    },
+    {
+      "path": "vendor/cua_s1/checkpoint.py",
+      "url": "https://raw.githubusercontent.com/trycua/cua/83f142c4290a0f7d9ed545ae8532858c6e4f8145/libs/cua-s1/python/src/cua_s1/checkpoint.py",
+      "sha256": "6d96ab6e946c88af341947d656ff244a8de5846edfd1f6a410466a97d89b375f"
+    },
+    {
+      "path": "vendor/CUA-LICENSE",
+      "url": "https://raw.githubusercontent.com/trycua/cua/83f142c4290a0f7d9ed545ae8532858c6e4f8145/libs/cua-s1/python/LICENSE",
+      "sha256": "c0779290c1d4783169aa3dbfb55feb505e563ef8a004bbf55298ceffcfbda8d9"
+    },
+    {
+      "path": "artifacts/cua-s1-forms.safetensors",
+      "url": "https://huggingface.co/cua-ai/cua-s1-forms/resolve/f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71/cua-s1-forms.safetensors",
+      "sha256": "05954c1caf51c2fb6c13ea4acbfc88a2e7653dea192252bb51dc89e76a356ddc"
+    },
+    {
+      "path": "artifacts/cua-s1-forms.json",
+      "url": "https://huggingface.co/cua-ai/cua-s1-forms/resolve/f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71/cua-s1-forms.json",
+      "sha256": "62d31e2f9a001a8e9b6f8534c5194d07ebdd3f9d62ef1ac281906622992650ca"
+    },
+    {
+      "path": "artifacts/demo.jsonl",
+      "url": "https://huggingface.co/datasets/cua-ai/cua-s1-forms/resolve/8273f34778b99ac2e12d9f6e7d57dad99ae20845/demo.jsonl",
+      "sha256": "4f43b442e79ba2e2ce731e27e9b8e340c2b5dfcaffc92d8ff564c34f115ff1ca"
+    },
+    {
+      "path": "artifacts/model-card.md",
+      "url": "https://huggingface.co/cua-ai/cua-s1-forms/resolve/f54adbf447f4ca6ec259f529ee3f2e3e09f8cc71/README.md",
+      "sha256": "a52b7930d12d59a9f70fba537f02c1683eb4be2b451ec0fd5f407620c5670a93"
+    },
+    {
+      "path": "artifacts/dataset-card.md",
+      "url": "https://huggingface.co/datasets/cua-ai/cua-s1-forms/resolve/8273f34778b99ac2e12d9f6e7d57dad99ae20845/README.md",
+      "sha256": "e5768e2a4b8fee2622ca73fb522bdbb0caca567a49c93266ef0f0fdef5b0af11"
+    }
+  ]
+}

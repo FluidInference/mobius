@@ -1,0 +1,26 @@
+[project]
+name = "cua-s1-forms-coreml"
+version = "0.1.0"
+description = "Pinned CUA-S1-FORMS Core ML conversion and real-demo verification"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "coremltools==9.0",
+    "numpy==1.26.4",
+    "safetensors==0.6.2",
+    "torch==2.7.0",
+]
+
+[dependency-groups]
+dev = ["pytest==8.4.2", "ruff==0.13.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["vendor"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

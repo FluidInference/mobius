@@ -1,0 +1,784 @@
+{
+  "created_utc": "2026-09-19T20:07:16.396741+00:00",
+  "purpose": "Matched warm model-call comparison, not a power or utilization measurement",
+  "environment": {
+    "chip": "Apple M5 Pro",
+    "macos": "27.0",
+    "os_build": "26A428",
+    "python": "3.11.11",
+    "coremltools": "9.0"
+  },
+  "protocol": {
+    "compute_units": "CPU_AND_NE",
+    "rows": [
+      0,
+      68,
+      130
+    ],
+    "schedule": [
+      "baseline",
+      "candidate",
+      "candidate",
+      "baseline"
+    ],
+    "warmup_passes_per_block": 2,
+    "timed_passes_per_block": 10,
+    "timing_scope": "Synchronous Python predict with pre-encoded inputs; validation outside timer",
+    "model_loading": "Both models resident in one process; loads excluded and system caches retained"
+  },
+  "dataset_revision": "8273f34778b99ac2e12d9f6e7d57dad99ae20845",
+  "dataset_sha256": "4f43b442e79ba2e2ce731e27e9b8e340c2b5dfcaffc92d8ff564c34f115ff1ca",
+  "package_files": {
+    "baseline": {
+      "Data/com.apple.CoreML/model.mlmodel": "70485fc18cbb21785df833cbddddc0b5b59acb00d22394b76e55307e2c135dd0",
+      "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+      "Manifest.json": "2bc0f5f62337b27fb6b0ecde248f1e3dc269e1ba4b65516aaeede2a60e293dcc"
+    },
+    "candidate": {
+      "Data/com.apple.CoreML/model.mlmodel": "de18e313c3b625e35d008ed8b6b24108edc6df7bf2fae9533af03519eca11b63",
+      "Data/com.apple.CoreML/weights/weight.bin": "4da9259f798e44f5a1b50769ee1916fd3747c4d723dd9997b516c7fe238c7895",
+      "Manifest.json": "38f812a04eb2322080634ba788c61df362336168466ca67e5549058d346ac793"
+    }
+  },
+  "summary": {
+    "baseline": {
+      "count": 60,
+      "median_ms": 0.9150624828180298,
+      "p95_ms": 0.9682062489446251,
+      "min_ms": 0.88170898379758,
+      "max_ms": 1.0281660070177168
+    },
+    "candidate": {
+      "count": 60,
+      "median_ms": 0.9703329997137189,
+      "p95_ms": 0.9877315780613571,
+      "min_ms": 0.9434169915039092,
+      "max_ms": 1.0195420181844383
+    }
+  },
+  "candidate_over_baseline_median": 1.0604008118937165,
+  "correct_timed_predictions": 120,
+  "calls": [
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 0.919707992579788
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9307919826824218
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 0.9576249867677689
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 0.9234579920303077
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9247499983757734
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 0.9314999915659428
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 0.9133330022450536
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9190000128000975
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 0.9215839963871986
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 0.9041670127771795
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9001670114230365
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 0.9362080018036067
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 1.0092500015161932
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9958750160876662
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 1.0281660070177168
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 0.96674999804236
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9511670214124024
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 0.9152919810730964
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 0.9129999962169677
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9089170198421925
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 0.9163749928120524
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 0.9026250045280904
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9094580018427223
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 0.9331250039394945
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 0.9327089937869459
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9123749914579093
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 0.9423340088687837
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 0,
+      "milliseconds": 0.9080420131795108
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 68,
+      "milliseconds": 0.9152499842457473
+    },
+    {
+      "model": "baseline",
+      "block": 0,
+      "row": 130,
+      "milliseconds": 0.9090829989872873
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.9569999820087105
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.9605420054867864
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.971125002251938
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.9833329822868109
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.9731249883770943
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.9744580020196736
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.9531670075375587
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.960625009611249
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.9434169915039092
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.965375016676262
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.9999169851653278
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.9775409998837858
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.983749981969595
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.9759170061443001
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.979083008132875
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.9849590132944286
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.9607080137357116
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.9490000084042549
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.9506659989710897
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.9708750003483146
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.9733340120874345
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.9872919763438404
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.970749999396503
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.9687079873401672
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.977249990683049
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.9785419970285147
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.9744160051923245
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 0,
+      "milliseconds": 0.9864169987849891
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 68,
+      "milliseconds": 0.982333003776148
+    },
+    {
+      "model": "candidate",
+      "block": 1,
+      "row": 130,
+      "milliseconds": 0.9689999860711396
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.9796250087674707
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 0.9837090037763119
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9523750049993396
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.9744999988470227
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 0.9580420155543834
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9489580115769058
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.9510410018265247
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 0.9449580102227628
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9497080172877759
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.9529579838272184
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 0.9495420090388507
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9463340102229267
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.9437499975319952
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 0.9775829967111349
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9694590116851032
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.996084010694176
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 1.0195420181844383
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9871670044958591
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.9699160000309348
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 0.9592499991413206
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9731660247780383
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.9729999874252826
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 0.9556250006426126
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9530829847790301
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.9495830163359642
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 0.9697090135887265
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9829580085352063
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 0,
+      "milliseconds": 0.9604159859009087
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 68,
+      "milliseconds": 0.9743330010678619
+    },
+    {
+      "model": "candidate",
+      "block": 2,
+      "row": 130,
+      "milliseconds": 0.9570419788360596
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.927665998460725
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.9297500073444098
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.9148749813903123
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.8912909834180027
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.88170898379758
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.9040829900186509
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.8952920034062117
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.9061660093721002
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.9120829927269369
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.9074159897863865
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.9095839923247695
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.883542001247406
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.8904590213205665
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.8850830199662596
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.8904580026865005
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.9044160251505673
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.9244170214515179
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.9261659870389849
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.9326669969595969
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.9306249849032611
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.8886670111678541
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.8824579999782145
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.8989160123746842
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.8977499965112656
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.8965420129243284
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.9054580004885793
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.93029101844877
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 0,
+      "milliseconds": 0.9197920153383166
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 68,
+      "milliseconds": 0.9319579985458404
+    },
+    {
+      "model": "baseline",
+      "block": 3,
+      "row": 130,
+      "milliseconds": 0.9407080069649965
+    }
+  ],
+  "script_sha256": "4633df7ad5f90d6aed37d5ef4f7a2d2231fdadd272ef1aa3057c237b2f937df8"
+}
