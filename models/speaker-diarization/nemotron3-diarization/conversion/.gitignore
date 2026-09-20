@@ -1,0 +1,5 @@
+# NVIDIA eval license: converted models are derivatives and must not be
+# redistributed (no git, no HuggingFace) until the public release.
+build/
+.venv/
+__pycache__/
