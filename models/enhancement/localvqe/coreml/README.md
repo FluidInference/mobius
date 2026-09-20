@@ -101,8 +101,8 @@ the GGML fixture to 2.3e-6 after the 256-sample shift.
 
 ## Quality: ICASSP 2022 AEC-Challenge blind test set
 
-**Summary: port fidelity validated; published benchmark substantially
-reproduced, with unresolved v1.2 far-end differences.**
+**Summary: port fidelity validated; the published benchmark is only partially
+reproduced and its ERLE protocol is not fully specified by the public artifacts.**
 
 The upstream README / HF model-card table is AECMOS on the 800-clip ICASSP
 2022 blind set (real recordings; mirror `richiejp/aec-challenge-16k`,
@@ -124,8 +124,11 @@ different questions:
   baseline to the displayed digit (2.67 / 2.56 / 1.90 / 2.13 / 5.00), and the
   same first-20-s implementation is in the author's public predecessor
   evaluation code (deepvqe-ggml `train/src/metrics.py`). The card's OVRL is
-  DNSMOS on the rated segment and its ERLE is the technical-report gated
-  definition; both definitions are compared below.
+  consistent with DNSMOS on the rated segment. The card explicitly defines
+  ERLE as the plain whole-signal energy ratio, but its published numbers are
+  much closer to a reconstructed technical-report gate. Because the original
+  scorer is unavailable, the plain and gated values remain separately labelled;
+  the gated value is not presented as the card's confirmed protocol.
 
 Saved per-recording results, metric availability and recomputed aggregates are
 published in the [validation index](validation/benchmark-index.json), alongside
@@ -134,6 +137,12 @@ runs skipped DNSMOS. Rated DNSMOS measurements are available in the separate
 challenge files. The fixed scorer computes that same rated segment independently
 of AECMOS protocol, but these saved upstream files must not be represented as
 full DNSMOS runs.
+
+`python verify-benchmark-evidence.py` independently checks all 13 CSV hashes,
+exact manifest coverage, scenario membership, DNSMOS availability and every
+stored aggregate. It also prints the pinned
+[model-card reference](validation/upstream-model-card.json) beside both ERLE
+definitions; no model inference is rerun.
 
 ### Challenge protocol (reference)
 
@@ -150,13 +159,15 @@ gated definition; OVRL is DNSMOS on the rated segment.
 
 ### Upstream protocol (HF table reproduction)
 
-AECMOS echo / deg over the first 20 s; ERLE is the gated definition over the
-whole clip; OVRL is DNSMOS on the challenge-rated segment (the segment the
-card's OVRL matches — `--dnsmos-region rated` selects it under either
-protocol). Core ML and GGML rows are kept separate — GGML is the upstream CLI's raw output (256-sample
-delay, 16-bit PCM), Core ML is aligned float32.
+AECMOS echo / deg over the first 20 s; `gERLE*` is our separately labelled
+gated reconstruction over the whole clip, not a confirmed interpretation of
+the card's ERLE column. OVRL is DNSMOS on the challenge-rated segment (the
+segment the card's OVRL matches — `--dnsmos-region rated` selects it under
+either protocol). Core ML and GGML rows are kept separate — GGML is the
+upstream CLI's raw output (256-sample delay, 16-bit PCM), Core ML is aligned
+float32.
 
-| Scenario | HF card v1.3 (echo / deg / ERLE / OVRL) | Core ML v1.3 | GGML v1.3 |
+| Scenario | HF card v1.3 (echo / deg / reported ERLE / OVRL) | Core ML v1.3 (echo / deg / gERLE* / OVRL) | GGML v1.3 |
 |---|---|---|---|
 | doubletalk | 4.73 / 2.62 / 8.5 / 2.89 | 4.73 / 2.62 / 8.5 / 2.89 | 4.73 / 2.47 / 8.2 / — |
 | doubletalk-with-movement | 4.67 / 2.43 / 8.3 / 2.85 | 4.66 / 2.44 / 8.2 / 2.84 | 4.68 / 2.34 / 7.8 / — |
@@ -164,7 +175,7 @@ delay, 16-bit PCM), Core ML is aligned float32.
 | farend-singletalk-with-movement | 3.88 / 4.98 / 49.9 / 1.96 | 3.75 / 4.96 / 49.6 / 1.96 | 3.84 / 4.95 / 49.4 / — |
 | nearend-singletalk | 5.00 / 4.18 / 2.4 / 3.17 | 5.00 / 4.18 / 2.3 / 3.17 | 5.00 / 4.12 / 1.0 / — |
 
-| Scenario | HF card v1.2 (echo / deg / ERLE / OVRL) | Core ML v1.2 | GGML v1.2 |
+| Scenario | HF card v1.2 (echo / deg / reported ERLE / OVRL) | Core ML v1.2 (echo / deg / gERLE* / OVRL) | GGML v1.2 |
 |---|---|---|---|
 | doubletalk | 4.72 / 2.37 / 8.4 / 2.83 | 4.72 / 2.39 / 8.5 / 2.77 | 4.71 / 2.24 / 8.1 / — |
 | doubletalk-with-movement | 4.65 / 2.30 / 8.1 / 2.79 | 4.64 / 2.31 / 8.1 / 2.73 | 4.66 / 2.19 / 7.6 / — |
@@ -175,13 +186,19 @@ delay, 16-bit PCM), Core ML is aligned float32.
 Unprocessed baseline under this protocol: 2.67 / 2.56 / 1.90 / 2.13 / 5.00
 echo MOS, identical to the card.
 
+The ERLE definition conflict is material, not cosmetic. On the two far-end
+scenarios, current GGML gives plain / gated ERLE of 43.0 / 50.9 and 40.1 /
+49.4 dB for v1.3, versus card values 50.9 / 49.9; v1.2 gives 38.7 / 48.0 and
+30.5 / 41.1 dB, versus 45.7 / 40.6. Selecting the closer gated number does not
+prove that upstream used this reconstruction.
+
 **What is and is not reproduced.** Unprocessed baseline: exact.
 v1.3 (Core ML vs card): echo MOS within 0.01 on double-talk and near-end and
 0.15 low on far-end (3.54 / 3.75 vs 3.69 / 3.88; the raw GGML output, with
 its delay and 16-bit quantisation of the near-silent residual, scores within
-0.04); deg within 0.02; gated ERLE within 0.8 dB (50.1 / 49.6 vs
+0.04); deg within 0.02; the gated ERLE reconstruction is within 0.8 dB (50.1 / 49.6 vs
 50.9 / 49.9); OVRL within 0.01. v1.2 (Core ML vs card): double-talk and
-near-end within 0.02 echo, 0.02 deg, 0.1 dB ERLE and 0.06 OVRL; **far-end is
+near-end within 0.02 echo, 0.02 deg, 0.1 dB gated ERLE and 0.06 OVRL; **far-end is
 not reproduced on any metric** — echo +0.29 / +0.15 (4.07 / 4.27 vs
 3.78 / 4.12), gated ERLE +1.9 / +0.7 dB (47.6 / 41.3 vs 45.7 / 40.6; GGML
 +2.3 / +0.5 dB), OVRL +0.09 / +0.05 (1.89 / 1.80 vs 1.80 / 1.75). Our values
@@ -190,9 +207,9 @@ output-format effect; it is not evidence that the port outperforms upstream,
 and +0.29 echo MOS is not rounding noise. The
 earlier statement in this README that the v1.3 far-end row "was not produced
 from the published v1.3 weights" is retracted: it was a scorer / segment
-protocol mismatch. The v1.2 far-end gap is unexplained; the private LocalVQE
-scoring script is not public, so exact reproduction of every cell is not
-established.
+protocol mismatch. The v1.2 far-end gap and the card's ERLE-definition conflict
+are unresolved; the private LocalVQE scoring script is not public, so exact
+reproduction of the table is not established.
 
 **v1.2 far-end investigation.** Hypotheses tested to explain the v1.2
 far-end cells, all rendered through the PyTorch reference over the 800 clips

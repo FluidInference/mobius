@@ -1,6 +1,6 @@
 # Continued LocalVQE reproduction investigation — 2026-09-18
 
-**The complete HuggingFace v1.2 table is still not reproduced.** Further investigation found a demonstrable historical GGML state-update defect, but testing the original release engine on every one of the 300 disputed far-end recordings did not reconcile the published echo/ERLE results. It is premature to say that the private scoring script is the only possible cause or that the published table is invalid.
+**The complete HuggingFace v1.2 table is still not reproduced.** Further investigation found a demonstrable historical GGML state-update defect, but testing the original release engine on every one of the 300 disputed far-end recordings did not reconcile the published echo/ERLE results. The model card defines ERLE as a plain energy ratio, while its numbers resemble a separate gated reconstruction; the original scorer is not public. It is premature to say that the private scoring script is the only possible cause or that the published table is invalid.
 
 ## Complete far-end comparison
 
@@ -12,6 +12,8 @@ All rows use published v1.2 weights. The historical run uses the legacy AECMOS m
 | Echo MOS | Far-end with movement | 4.12 | 4.2735 | 4.3187 | 4.2822 |
 | Degradation MOS | Far-end | 4.91 | 4.9289 | 4.9240 | 4.9069 |
 | Degradation MOS | Far-end with movement | 4.96 | 4.9636 | 4.9654 | 4.9740 |
+| Plain ERLE, dB (card's declared formula) | Far-end | 45.7 | 38.4616 | 38.7275 | 33.8070 |
+| Plain ERLE, dB (card's declared formula) | Far-end with movement | 40.6 | 30.3501 | 30.4718 | 27.6529 |
 | Gated ERLE, dB | Far-end | 45.7 | 47.6362 | 47.9518 | 42.2001 |
 | Gated ERLE, dB | Far-end with movement | 40.6 | 41.2546 | 41.1354 | 36.9386 |
 | Rated DNSMOS OVRL | Far-end | 1.80 | 1.8943 | — | 1.8034 |
@@ -19,7 +21,14 @@ All rows use published v1.2 weights. The historical run uses the legacy AECMOS m
 
 Current columns are retained from the existing saved reports; Core ML OVRL comes from the existing challenge run whose rated DNSMOS segment is independent of the AECMOS protocol. Historical values all come directly from one new run of the fixed scorer ([per-recording results](validation/release-v12-farend.json)), including DNSMOS. No values from different historical candidates were combined. A dash means that metric was not scored in the cached current-GGML comparison.
 
-The historical ordinary far-end OVRL happens to round to the published 1.80. Its echo and gated ERLE still differ substantially, so this does not establish reproduction of that row. Historical versus current GGML lowers gated ERLE by 5.75/4.20 dB but changes mean echo MOS by only −0.019/−0.036. The runtime defect therefore cannot by itself account for the far-end echo gap under the tested protocol.
+The HF column repeats one reported ERLE value across the plain and gated rows
+only to expose the definition ambiguity; it does not claim that both metrics
+can equal that value. The historical ordinary far-end OVRL happens to round to
+the published 1.80. Its echo and either ERLE definition still differ
+substantially, so this does not establish reproduction of that row. Historical
+versus current GGML lowers gated ERLE by 5.75/4.20 dB but changes mean echo MOS
+by only −0.019/−0.036. The runtime defect therefore cannot by itself account
+for the far-end echo gap under the tested protocol.
 
 ## Isolated runtime defect
 
@@ -65,6 +74,7 @@ The prior audit of the main 800-clip benchmark and the separate exploratory 200-
 Published artifacts:
 
 - [Benchmark index](validation/benchmark-index.json) and [800-recording manifest](validation/blind-manifest.txt): 13 saved runs, each covering the same 800 recordings, including the challenge reference, upstream comparisons and all five full-corpus PyTorch configuration diagnostics in the README. Per-recording CSVs retain the measured values; summaries, metric availability and CSV SHA256 hashes are in the index. All aggregates and input stem sets were rechecked before publication. The upstream runs skipped DNSMOS, explicitly recorded in the index and as empty CSV fields; their OVRL must not be described as directly scored in those runs.
+- [Evidence verifier](verify-benchmark-evidence.py) and pinned [model-card reference](validation/upstream-model-card.json): standard-library verification of every saved CSV hash, exact 800-stem coverage, scenario membership, DNSMOS availability and aggregate, plus a side-by-side printout of plain and gated ERLE. Run `python verify-benchmark-evidence.py`; it performs no inference.
 - [Historical far-end results](validation/release-v12-farend.json): the predetermined 300-stem manifest, source revisions, protocol, per-recording measurements, counts and aggregates. `null` gated ERLE marks a recording with no eligible frame.
 - [Weight, runtime and precision diagnostics](validation/diagnostics.json): complete tensor comparisons, four-recording state-copy and pristine-dependency controls, fixed diagnostic stem set, and precision outcomes including failed runs.
 

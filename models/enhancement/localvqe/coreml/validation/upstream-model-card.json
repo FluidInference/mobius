@@ -1,0 +1,35 @@
+{
+  "source": {
+    "repository": "LocalAI-io/LocalVQE",
+    "revision": "6256d05dc5a3a3aa7a340a8b8df57eee2ec9ae49",
+    "url": "https://huggingface.co/LocalAI-io/LocalVQE/blob/6256d05dc5a3a3aa7a340a8b8df57eee2ec9ae49/README.md"
+  },
+  "declared_erle_formula": "10*log10(E[mic^2]/E[enhanced^2])",
+  "notes": [
+    "The model card does not publish the renderer, scorer, segment selection, package versions or per-recording results.",
+    "The published ERLE values resemble the reconstructed gated metric more closely than the card's declared plain-energy formula; both are retained and must remain separately labelled."
+  ],
+  "unprocessed_echo": {
+    "doubletalk": 2.67,
+    "doubletalk-with-movement": 2.56,
+    "farend-singletalk": 1.90,
+    "farend-singletalk-with-movement": 2.13,
+    "nearend-singletalk": 5.00
+  },
+  "models": {
+    "v1.3": {
+      "doubletalk": {"echo": 4.73, "deg": 2.62, "erle": 8.5, "ovrl": 2.89},
+      "doubletalk-with-movement": {"echo": 4.67, "deg": 2.43, "erle": 8.3, "ovrl": 2.85},
+      "farend-singletalk": {"echo": 3.69, "deg": 4.83, "erle": 50.9, "ovrl": 1.94},
+      "farend-singletalk-with-movement": {"echo": 3.88, "deg": 4.98, "erle": 49.9, "ovrl": 1.96},
+      "nearend-singletalk": {"echo": 5.00, "deg": 4.18, "erle": 2.4, "ovrl": 3.17}
+    },
+    "v1.2": {
+      "doubletalk": {"echo": 4.72, "deg": 2.37, "erle": 8.4, "ovrl": 2.83},
+      "doubletalk-with-movement": {"echo": 4.65, "deg": 2.30, "erle": 8.1, "ovrl": 2.79},
+      "farend-singletalk": {"echo": 3.78, "deg": 4.91, "erle": 45.7, "ovrl": 1.80},
+      "farend-singletalk-with-movement": {"echo": 4.12, "deg": 4.96, "erle": 40.6, "ovrl": 1.75},
+      "nearend-singletalk": {"echo": 5.00, "deg": 4.16, "erle": 2.1, "ovrl": 3.17}
+    }
+  }
+}
