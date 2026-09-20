@@ -15,8 +15,8 @@ the entire recording). Two AECMOS protocols:
   --protocol upstream: what the LocalVQE README / HF model-card table was
       produced with — the legacy Run_1663829550_Stage_0.onnx (no scenario
       marker) over the whole clip, i.e. its first 20 s. Reproduces the
-      published unprocessed baseline exactly and the model rows to within
-      ~0.05 echo MOS when fed the GGML CLI's raw output.
+      published unprocessed baseline exactly. The v1.2 model table and
+      the card's ERLE definition remain unresolved (see REPRODUCTION.md).
 
     uv run --no-project --python 3.12 --with librosa --with onnxruntime --with soundfile --with scipy \
         python score_blind.py --blind-dir blind --enh-dir renders/coreml-v1.3 \
@@ -29,15 +29,21 @@ the entire recording). Two AECMOS protocols:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import multiprocessing as mp
+import sys
 from collections import defaultdict
+from importlib.metadata import version
 from pathlib import Path
 
 import librosa
 import numpy as np
 import onnxruntime as ort
 import soundfile as sf
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+from localvqe_coreml.benchmark_manifest import collect_jobs, require_coverage
 
 SR = 16000
 HOP = 256
@@ -103,6 +109,8 @@ def _polyfit(sig, bak, ovr):
 
 def dnsmos(audio: np.ndarray) -> tuple[float, float, float, float]:
     """Mirrors microsoft/DNS-Challenge dnsmos_local.py (non-personalized)."""
+    if not len(audio) or not np.isfinite(audio).all():
+        raise ValueError("DNSMOS requires nonempty, finite audio")
     input_length = 9.01
     len_samples = int(input_length * SR)
     while len(audio) < len_samples:
@@ -130,6 +138,8 @@ def load(path: Path) -> np.ndarray:
     audio = audio[:, 0]
     if sr != SR:
         audio = librosa.resample(audio, orig_sr=sr, target_sr=SR)
+    if not len(audio) or not np.isfinite(audio).all():
+        raise ValueError(f"Empty or non-finite audio: {path}")
     return audio
 
 
@@ -139,6 +149,12 @@ def score_one(job):
     mic, lpb = load(mic_path), load(lpb_path)
     enh = mic if enh_path is None else load(enh_path)
     n = min(len(mic), len(lpb), len(enh))
+    # Blind mic/loopback files legitimately have unequal tails. Score their
+    # common overlap, allowing the renderer to discard fewer than one hop.
+    # Reject enhanced files that truncate the common interval further.
+    if min(len(mic), len(lpb)) - len(enh) >= HOP or len(enh) - len(mic) >= HOP:
+        raise ValueError(f"Audio length mismatch for {stem}: {len(mic)}, {len(lpb)}, {len(enh)}")
+    input_samples = {"mic": len(mic), "lpb": len(lpb), "enhanced": len(enh), "scored": n}
     mic, lpb, enh = mic[:n], lpb[:n], enh[:n]
 
     # Challenge-rated segment (AECMOS README): far-end single talk -> last
@@ -162,6 +178,7 @@ def score_one(job):
     return {
         "scenario": scenario, "stem": stem, "echo": echo, "deg": deg, "erle": float(erle),
         "erle_gated": erle_gated, "sig": sig, "bak": bak, "ovrl": ovr, "p808": p808, "seconds": n / SR,
+        "input_samples": input_samples,
     }
 
 
@@ -192,37 +209,42 @@ def main():
     ap.add_argument("--output", type=Path)
     ap.add_argument("--jobs", type=int, default=max(1, mp.cpu_count() - 2))
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--manifest", type=Path,
+                    default=Path(__file__).resolve().parent / "validation/blind-manifest.txt",
+                    help="Exact input stem set (default: committed 800-clip manifest)")
     ap.add_argument("--protocol", choices=["challenge", "upstream"], default="challenge")
     ap.add_argument("--no-dnsmos", action="store_true", help="skip DNSMOS (much faster)")
     ap.add_argument("--dnsmos-region", choices=["rated", "whole"], default="rated",
                     help="score DNSMOS on the AECMOS-rated segment (default) or the whole recording")
     args = ap.parse_args()
 
-    jobs = []
-    # Blind layout: <dir>/<guid>_<scenario>_{mic,lpb}.flac; the scenario is
-    # the filename suffix (with-movement variants share a directory).
-    for mic in sorted(args.blind_dir.glob("*/*_mic.flac")):
-        stem = mic.name[: -len("_mic.flac")]
-        scenario = stem.split("_", 1)[1]
-        if scenario not in SCENARIOS:
-            continue
-        lpb = mic.with_name(stem + "_lpb.flac")
-        if not lpb.exists():
-            continue
-        rel = mic.parent.name
-        enh = None if args.enh_dir == "unprocessed" else Path(args.enh_dir) / rel / f"{stem}_enh.wav"
-        if enh is not None and not enh.exists():
-            raise SystemExit(f"missing render: {enh}")
-        jobs.append((scenario, stem, mic, lpb, enh))
-    if args.limit:
-        per = defaultdict(list)
-        for j in jobs:
-            per[j[0]].append(j)
-        jobs = [j for s in SCENARIOS for j in per[s][: args.limit]]
+    try:
+        jobs, expected = collect_jobs(args.blind_dir, args.enh_dir, args.manifest, SCENARIOS, args.limit)
+        if args.jobs <= 0:
+            raise ValueError("--jobs must be positive")
+    except ValueError as error:
+        ap.error(str(error))
     print(f"{len(jobs)} clips, {args.jobs} workers, enh={args.enh_dir}, protocol={args.protocol}")
 
+    model_names = ["Run_1663829550_Stage_0.onnx" if args.protocol == "upstream" else "Run_1663915512_Stage_0.onnx"]
+    if not args.no_dnsmos:
+        model_names += ["sig_bak_ovr.onnx", "model_v8.onnx"]
+    model_hashes = {name: hashlib.sha256((Path(args.aecmos_dir) / name).read_bytes()).hexdigest()
+                    for name in model_names}
+    # Validate model loading in the parent. Pool initializer failures otherwise
+    # keep respawning workers instead of returning a useful benchmark failure.
+    _init(args.aecmos_dir, args.protocol, not args.no_dnsmos, args.dnsmos_region)
     with mp.Pool(args.jobs, initializer=_init, initargs=(args.aecmos_dir, args.protocol, not args.no_dnsmos, args.dnsmos_region)) as pool:
         rows = pool.map(score_one, jobs, chunksize=4)
+
+    require_coverage([row["stem"] for row in rows], [job[1] for job in jobs])
+    for row in rows:
+        required = ["echo", "deg", "erle", "seconds"]
+        if not args.no_dnsmos:
+            required += ["sig", "bak", "ovrl", "p808"]
+        for metric in required:
+            if not np.isfinite(row[metric]):
+                raise ValueError(f"Non-finite {metric} for {row['stem']}")
 
     by_scenario = defaultdict(list)
     for r in rows:
@@ -242,9 +264,27 @@ def main():
         erle = f"{m['erle']:7.1f} dB" if SCENARIOS[scenario] == "st" else "       —"
         print(f"{scenario:34s} {m['n']:4d} {m['echo']:6.2f} {m['deg']:6.2f} {erle} {m['erle_gated']:6.1f}dB {m['ovrl']:6.2f}")
     if args.output:
+        # JSON null represents deliberately unscored metrics / ineligible ERLE,
+        # never a non-standard NaN token in a supposedly valid JSON report.
+        def finite_values(value):
+            if isinstance(value, dict):
+                return {key: finite_values(item) for key, item in value.items()}
+            if isinstance(value, list):
+                return [finite_values(item) for item in value]
+            return None if isinstance(value, float) and not np.isfinite(value) else value
+
         args.output.write_text(json.dumps(
-            {"enh_dir": args.enh_dir, "protocol": args.protocol, "dnsmos_region": args.dnsmos_region,
-             "summary": summary, "clips": rows}, indent=1))
+            finite_values({"enh_dir": args.enh_dir, "protocol": args.protocol, "dnsmos_region": args.dnsmos_region,
+                           "dnsmos_scored": not args.no_dnsmos,
+                           "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
+                           "manifest_count": len(expected), "selected_stems": [job[1] for job in jobs],
+                           "complete_manifest": len(jobs) == len(expected),
+                           "scorer_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                           "metric_models_sha256": model_hashes,
+                           "environment": {"python": sys.version,
+                                           "packages": {name: version(name) for name in
+                                                        ("numpy", "scipy", "librosa", "soundfile", "onnxruntime")}},
+                           "summary": summary, "clips": rows}), indent=1, allow_nan=False))
         print(f"wrote {args.output}")
 
 

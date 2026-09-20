@@ -144,6 +144,19 @@ stored aggregate. It also prints the pinned
 [model-card reference](validation/upstream-model-card.json) beside both ERLE
 definitions; no model inference is rerun.
 
+New `score_blind.py` runs require exact input coverage against the committed
+800-stem manifest before scoring. Missing loopbacks, duplicate/unexpected inputs,
+missing selected renders, empty/nonfinite audio and enhancement output that
+truncates the common source interval by a hop or more fail the run. Blind mic
+and loopback files can legitimately have unequal tails; the scorer keeps their
+common overlap and records all input and scored sample counts.
+`--limit N` remains a deterministic diagnostic subset;
+its JSON records the selected stems and marks incomplete coverage. An explicit
+`--manifest` can describe a separate dataset directory, but does not relabel it
+as the standard 800-clip benchmark. Reports include scorer/metric-model hashes
+and use JSON `null` for deliberately unscored metrics or ineligible gated ERLE.
+Run `uv run python test-benchmark-manifest.py` for the input-validation regressions.
+
 ### Challenge protocol (reference)
 
 Core ML (Swift `fluidaudiocli enhance`, float32 WAV output). ERLE is the
