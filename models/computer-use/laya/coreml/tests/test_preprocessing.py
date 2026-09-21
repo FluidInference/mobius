@@ -81,8 +81,13 @@ def test_encode_matches_reference_fixture(tok):
 def test_reports_exist_and_pass():
     reports = sorted(Path(ROOT / "reports").glob("verification-multilingual-L*.json"))
     assert reports, "run verify.py"
+    published = 0
     for report in reports:
         data = json.loads(report.read_text())
+        if data.get("precision", "fp16") not in ("fp16", "e8"):
+            continue  # unpublished compression experiments keep their reports as evidence only
+        published += 1
         assert data["passed"], report.name
         for run in data["runs"].values():
             assert run["argmax_agreements"] == run["questions"]
+    assert published >= 4

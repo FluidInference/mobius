@@ -85,9 +85,8 @@ def compress(model: ct.models.MLModel, precision: str) -> ct.models.MLModel:
         result = cto.palettize_weights(
             result, cto.OptimizationConfig(op_name_configs={name: palette for name in linear_weights})
         )
-    print(
-        f"compressed {len(linear_weights)} linear weights ({others}) and {len(embedding_weights) if embedding == 'int8' else 0} embedding tables"
-    )
+    tables = len(embedding_weights) if embedding == "int8" else 0
+    print(f"compressed {len(linear_weights)} linear weights ({others}) and {tables} embedding tables")
     return result
 
 
@@ -126,9 +125,8 @@ def main() -> None:
         "package_files": {str(p.relative_to(target)): sha256(p) for p in sorted(target.rglob("*")) if p.is_file()},
     }
     (args.build_dir / f"{target.stem}.conversion.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    print(
-        f"Saved {target.name}: {manifest['package_bytes'] / 1e6:.0f} MB from {manifest['source_bytes'] / 1e6:.0f} MB in {manifest['seconds']} s"
-    )
+    size, source_size = manifest["package_bytes"] / 1e6, manifest["source_bytes"] / 1e6
+    print(f"Saved {target.name}: {size:.0f} MB from {source_size:.0f} MB in {manifest['seconds']} s")
 
 
 if __name__ == "__main__":
