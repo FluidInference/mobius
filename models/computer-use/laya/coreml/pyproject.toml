@@ -29,3 +29,6 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"benchmark.py" = ["E501"]  # upstream question strings kept verbatim
