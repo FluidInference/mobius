@@ -46,10 +46,12 @@ swift run -c release LayaTetrisDemo           # SwiftUI demo
 | `laya_multilingual_fp16_L256_options32.mlmodelc` | 256 | |
 | `laya_multilingual_fp16_L512_options32.mlmodelc` | 512 | Long states; GPU is faster than ANE here |
 | `laya_multilingual_fp16_L1024_options32.mlmodelc` | 1024 | Upstream `max_len`; GPU |
+| `laya_multilingual_e8_L{128,256,512,1024}_options32.mlmodelc` | | Same buckets with an int8 embedding table: 448–453 MB each, accuracy within 0.5 points of fp16 on the full benchmark |
 | `tokenizer.json` | | mmBERT / Gemma vocabulary (256k), byte fallback |
 
-Each bucket is a complete FP16 model (614 MB, 393 MB of which is the embedding table) with
-32 option slots. `FluidUse` picks the smallest loaded bucket that fits a prompt and truncates
+Each fp16 bucket is a complete model (614 MB, 393 MB of which is the embedding table) with
+32 option slots; the `e8` buckets store that table as int8 per-channel. Encoder-weight int8 and
+6-/4-bit palettes fail the parity gates (the ANE in particular), so they are not published. `FluidUse` picks the smallest loaded bucket that fits a prompt and truncates
 the state on the right for the largest one, exactly like laya's `max_len`.
 
 Inputs: `input_ids` int32 `[1, L]`, `attention_mask` int32 `[1, L]`, `marker_map` float32

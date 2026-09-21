@@ -22,6 +22,7 @@ uv run python assets.py                       # pinned download + SHA-256 checks
 uv run python convert-coreml.py --length 128  # also 256 and 512
 uv run python verify.py --length 128          # parity + latency, writes reports/
 uv run python make_fixtures.py                # Swift parity fixtures
+uv run python quantize.py --length 128 --precision e8 && uv run python verify.py --length 128 --precision e8
 uv run pytest -q
 ```
 
@@ -70,6 +71,28 @@ casts and the embedding gather. ANE latency still grows faster than GPU latency 
 sequence length because the L×L attention matmuls dominate, so the FluidUse manager runs
 the 128 bucket on CPU+ANE and longer buckets on `.all`.
 
+## ANE profile
+
+`coreml-cli --ops -n 20` on every bucket (`reports/ane-profile-L*.json`), Apple M5 Pro. The
+percentages are the profiler's estimated runtime share per device for the CPU+ANE configuration;
+op counts are 973 of 978 on the ANE for every bucket (`reports/ane-fallback-L*.json`), the five
+CPU ops being the int32 casts and the embedding gather.
+
+| Bucket | Cold compile | CPU only | CPU+GPU | CPU+ANE | All units |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| L128 | 4.9 s | 14.1 ms | 4.6 ms | 3.9 ms (ANE 33% / CPU 67%) | 4.1 ms (GPU) |
+| L256 | 5.5 s | 27.1 ms | 5.3 ms | 9.7 ms (ANE 52% / CPU 48%) | 6.4 ms (GPU) |
+| L512 | 6.0 s | 58.9 ms | 8.8 ms | 28.0 ms (ANE 71% / CPU 29%) | 8.8 ms (GPU) |
+| L1024 | 8.5 s | 149.6 ms | 18.1 ms | 80.4 ms (ANE 87% / CPU 13%) | 17.9 ms (GPU) |
+
+Two things follow. `all` never picks the ANE for this graph; it runs 100% on the GPU, so
+`.all` and `.cpuAndGPU` are the same thing here. And the ANE wins only at 128 tokens: its
+estimated share grows with length but so does its cost per token, because the L×L attention
+scores at fp16 are the dominant ops and the ANE handles them worse than the GPU. The ANE
+configuration's variance is the lowest of the four (std 0.04 ms at L128 vs 0.33 ms on the GPU),
+which matters for a decision loop that fires many short questions. That is why the FluidUse
+manager defaults the 128 bucket to CPU+ANE and every longer bucket to all units.
+
 ## Accuracy benchmark — laya's published suites on device
 
 `benchmark.py` rebuilds the application suites from laya's own research scripts (same datasets,
@@ -105,6 +128,59 @@ Reports: [benchmark-reference.json](reports/benchmark-reference.json),
 [benchmark-coreml.json](reports/benchmark-coreml.json). Reproduce with
 `uv run python benchmark.py` then
 `swift run -c release FluidUseLaya benchmark --suites benchmark/suites.jsonl --reference benchmark/reference-rows.jsonl --model-dir build/laya-coreml`.
+
+## Weight compression
+
+`quantize.py` applies `coremltools.optimize.coreml` post-training compression to an exported bucket
+and `verify.py --precision <tag>` re-runs the parity gates. Compression is restricted by name to the
+2-D linear weight matrices and the embedding gather: the default `weight_threshold` would also
+sweep the additive attention masks, the RoPE cos/sin tables and the biases into compression. Results
+at L128 (16 fixture questions, argmax agreement · max Δprob vs PyTorch):
+
+| Tag | Scheme | Package | ALL | CPU+ANE | Gate |
+| --- | --- | ---: | ---: | ---: | --- |
+| `fp16` | reference | 644 MB | 16/16 · 0.002 | 16/16 · 0.013 | **pass** |
+| `e8` | int8 embedding table, fp16 encoder + head | 448 MB | 16/16 · 0.015 | 16/16 · 0.014 | **pass** |
+| `w8head` | int8 decision head + scorer only | 629 MB | 16/16 · 0.002 | 16/16 · 0.013 | **pass** |
+| `w8enc` | int8 encoder linears (per-channel) | 534 MB | 16/16 · 0.032 | 11/16 · 0.665 | fail |
+| `w8e` | int8 encoder + head linears | 519 MB | 16/16 · 0.029 | 11/16 · 0.666 | fail |
+| `w8` | int8 everything | 324 MB | 16/16 · 0.042 | 11/16 · 0.668 | fail |
+| `w6` | 6-bit k-means palette, encoder + head | 488 MB | 15/16 · 0.114 | 15/16 · 0.118 | fail |
+| `w4` | 4-bit k-means palette, encoder + head | 456 MB | 12/16 · 0.727 | 12/16 · 0.728 | fail |
+| `w6e8` | 6-bit palette + int8 embedding | 292 MB | 15/16 · 0.117 | 15/16 · 0.120 | fail |
+| `w4e8` | 4-bit palette + int8 embedding | 261 MB | 11/16 · 0.734 | 11/16 · 0.729 | fail |
+
+Only the embedding table tolerates compression. Every scheme that touches the encoder's linear
+weights fails: per-channel int8 stays within 0.03 on the GPU but collapses on the Neural Engine
+(11/16 argmax, Δprob 0.67, identical for `w8`, `w8e`, `w8enc`, so it is the encoder int8 path on
+the ANE, not the head), and 6-/4-bit k-means palettes fail on both devices. Per-block int8 needs an
+iOS 18 deployment target and was not tried. This matches the upstream Core ML port, which also
+published no 6-/4-bit variants.
+
+`e8` is published for every bucket (`laya_multilingual_e8_L*_options32.mlmodelc`):
+
+| Bucket | Package | CPU+ANE Δprob | CPU+ANE p50 | ALL Δprob | ALL p50 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| L128 | 448 MB | 0.014 | 3.6 ms | 0.015 | 3.8 ms |
+| L256 | 449 MB | 0.014 | 9.6 ms | 0.006 | 5.8 ms |
+| L512 | 450 MB | 0.014 | 27.7 ms | 0.006 | 9.1 ms |
+| L1024 | 453 MB | 0.014 | 80.1 ms | 0.006 | 17.9 ms |
+
+On the full 3,899-question benchmark (`reports/benchmark-coreml-e8.json`) e8 keeps every suite's
+accuracy within 0.5 points of fp16 at the same latency (p50 5.3 ms):
+
+| Suite | fp16 | e8 | Row agreement | Max Δprob |
+| --- | ---: | ---: | ---: | ---: |
+| jev.ag_news | 0.935 | **0.935** | 1.000 | 0.055 |
+| jev.emotion | 0.537 | **0.535** | 0.995 | 0.086 |
+| massive_intent.en | 0.657 | **0.653** | 0.987 | 0.144 |
+| app.support_triage | 0.542 | **0.537** | 0.998 | 0.052 |
+| app.email_spam | 0.993 | **0.993** | 1.000 | 0.024 |
+| app.phishing | 0.993 | **0.993** | 1.000 | 0.035 |
+| app.guardrails_jailbreak | 0.805 | **0.810** | 0.990 | 0.801 |
+| app.moderation_toxicity | 0.535 | **0.535** | 1.000 | 0.016 |
+| app.rag_relevance | 0.672 | **0.675** | 0.993 | 0.031 |
+| app.model_routing_domain | 0.441 | **0.454** | 0.975 | 0.078 |
 
 ## Input and output contract
 

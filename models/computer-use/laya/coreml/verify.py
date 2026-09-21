@@ -121,6 +121,7 @@ def main() -> None:
     parser.add_argument("--variant", default="multilingual")
     parser.add_argument("--length", type=int, default=128)
     parser.add_argument("--max-options", type=int, default=32)
+    parser.add_argument("--precision", default="fp16", help="package precision tag, e.g. fp16, w8, w4")
     parser.add_argument("--build-dir", type=Path, default=ROOT / "build")
     parser.add_argument("--cases", type=Path, default=ROOT / "fixtures" / "cases.json")
     parser.add_argument("--report", type=Path, default=None)
@@ -134,7 +135,9 @@ def main() -> None:
     agent = laya.load(str(checkpoint_dir(args.variant)), device="cpu")
     agent.model.eval()
     shape = Shape(args.length, args.max_options)
-    package = args.build_dir / f"{package_name(args.variant, shape.length, shape.max_options)}.mlpackage"
+    package = (
+        args.build_dir / f"{package_name(args.variant, shape.length, shape.max_options, args.precision)}.mlpackage"
+    )
     cases = json.loads(args.cases.read_text())
     chip = subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True, text=True).stdout.strip()
     report = {
@@ -147,6 +150,8 @@ def main() -> None:
         "variant": args.variant,
         "length": shape.length,
         "max_options": shape.max_options,
+        "precision": args.precision,
+        "package_bytes": sum(p.stat().st_size for p in package.rglob("*") if p.is_file()),
         "environment": {
             "chip": chip,
             "os": platform.mac_ver()[0],
@@ -168,7 +173,8 @@ def main() -> None:
             f"load={result['load_seconds']:.2f}s passed={result['passed']} skipped={len(result['skipped'])}"
         )
     report["passed"] = all(r["passed"] for r in report["runs"].values())
-    out = args.report or (ROOT / "reports" / f"verification-{args.variant}-L{shape.length}.json")
+    suffix = "" if args.precision == "fp16" else f"-{args.precision}"
+    out = args.report or (ROOT / "reports" / f"verification-{args.variant}-L{shape.length}{suffix}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2) + "\n")
     print(f"Wrote {out}")

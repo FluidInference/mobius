@@ -11,8 +11,8 @@ from laya.common import QTYPES, build_sequence, render_options
 MAX_OPTIONS = 32
 
 
-def package_name(variant: str, length: int, max_options: int) -> str:
-    return f"laya_{variant}_fp16_L{length}_options{max_options}"
+def package_name(variant: str, length: int, max_options: int, precision: str = "fp16") -> str:
+    return f"laya_{variant}_{precision}_L{length}_options{max_options}"
 
 
 @dataclass(frozen=True)
