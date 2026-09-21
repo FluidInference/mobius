@@ -4,3 +4,5 @@ artifacts/
 __pycache__/
 
 benchmark/_hub/
+
+artifacts/english/

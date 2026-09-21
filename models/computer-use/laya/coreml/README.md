@@ -181,6 +181,17 @@ accuracy within 0.5 points of fp16 at the same latency (p50 5.3 ms):
 | app.rag_relevance | 0.672 | **0.675** | 0.993 | 0.031 |
 | app.model_routing_domain | 0.441 | **0.454** | 0.975 | 0.078 |
 
+## The "Laya vs Jev, measured" five tasks
+
+`benchmark-jev.py` rebuilds the five-task table from the laya Tetris post (100 examples per task,
+first rows of the public test splits, laya's question wording; Jev column copied from the post since
+it is closed) and scores both checkpoints with PyTorch; `FluidUseLaya benchmark --suites
+benchmark/jev-suites.jsonl --reference benchmark/jev-reference-rows.jsonl` scores the Core ML
+buckets. Reports: `reports/benchmark-jev-reference.json`, `reports/benchmark-jev-coreml.json`.
+Core ML equals its PyTorch reference on every task (52.8% over the 500 vs the post's 66.8% for the
+English checkpoint, which is a different model; the English checkpoint scores 73.2% here). Full
+table in FluidUse `Benchmarks.md`.
+
 ## Input and output contract
 
 One prediction scores one question. The host builds the sequence exactly like

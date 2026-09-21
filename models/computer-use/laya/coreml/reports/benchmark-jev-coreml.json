@@ -1,0 +1,103 @@
+{
+  "chip" : "Apple M5 Pro",
+  "elapsed_s" : 2.7073659896850586,
+  "latency_ms" : {
+    "p50" : 4.4866669999999997,
+    "p95" : 9.6365829999999999
+  },
+  "lengths" : [
+    128,
+    256,
+    512,
+    1024
+  ],
+  "load_s" : 2.0176939964294434,
+  "questions" : 500,
+  "suites" : {
+    "emotion" : {
+      "accuracy" : 0.57999999999999996,
+      "buckets" : {
+        "L128" : 100
+      },
+      "dropped" : 0,
+      "latency_ms" : {
+        "p50" : 4.0849580000000003,
+        "p95" : 4.5919999999999996
+      },
+      "max_probability_delta_vs_reference" : 0.014793992042541504,
+      "n" : 100,
+      "reference_argmax_agreement" : 1,
+      "reference_compared" : 100,
+      "state_truncated" : 0
+    },
+    "news_topic" : {
+      "accuracy" : 0.96999999999999997,
+      "buckets" : {
+        "L128" : 86,
+        "L256" : 14
+      },
+      "dropped" : 0,
+      "latency_ms" : {
+        "p50" : 5.5224159999999998,
+        "p95" : 9.2874169999999996
+      },
+      "max_probability_delta_vs_reference" : 0.010490596294403076,
+      "n" : 100,
+      "reference_argmax_agreement" : 1,
+      "reference_compared" : 100,
+      "state_truncated" : 0
+    },
+    "prompt_injection" : {
+      "accuracy" : 0.65000000000000002,
+      "buckets" : {
+        "L128" : 96,
+        "L256" : 4
+      },
+      "dropped" : 0,
+      "latency_ms" : {
+        "p50" : 4.3983749999999997,
+        "p95" : 6.5922919999999996
+      },
+      "max_probability_delta_vs_reference" : 0.02795100212097168,
+      "n" : 100,
+      "reference_argmax_agreement" : 0.98999999999999999,
+      "reference_compared" : 100,
+      "state_truncated" : 0
+    },
+    "review_stars" : {
+      "accuracy" : 0.34999999999999998,
+      "buckets" : {
+        "L128" : 28,
+        "L256" : 35,
+        "L512" : 26,
+        "L1024" : 11
+      },
+      "dropped" : 0,
+      "latency_ms" : {
+        "p50" : 5.9012919999999998,
+        "p95" : 18.642083
+      },
+      "max_probability_delta_vs_reference" : 0.0017490386962890625,
+      "n" : 100,
+      "reference_argmax_agreement" : 1,
+      "reference_compared" : 100,
+      "state_truncated" : 0
+    },
+    "sms_spam" : {
+      "accuracy" : 0.57999999999999996,
+      "buckets" : {
+        "L128" : 100
+      },
+      "dropped" : 0,
+      "latency_ms" : {
+        "p50" : 4.1685420000000004,
+        "p95" : 5.0857080000000003
+      },
+      "max_probability_delta_vs_reference" : 0.020002603530883789,
+      "n" : 100,
+      "reference_argmax_agreement" : 1,
+      "reference_compared" : 100,
+      "state_truncated" : 0
+    }
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "protocol": "Reproduce the five-task \"Laya vs Jev, measured\" table (brainfunctioncollapse.com/laya) on device.\n\nThe post gives task names, 100 labelled examples per task, laya 0.3.4 English checkpoint on an M1 Max\nGPU, and Jev's accuracy, but not its datasets, sampling or question wording. This script uses the\nobvious public dataset for each task, the first 100 rows of its test split (train for SMS spam, which\nhas no test split), and laya's own question wording where one exists. Jev is a closed API and is not\nmeasured here; its column is copied from the post. Both laya checkpoints are scored with the\nunmodified PyTorch runtime so the English numbers can be compared with the post and the\nmultilingual rows give the reference for the Core ML buckets (`FluidUseLaya benchmark`).\n\nOutputs:\n  benchmark/jev-suites.jsonl           the 500 questions with serialized states and gold labels\n  benchmark/jev-reference-rows.jsonl   multilingual PyTorch answers per row\n  reports/benchmark-jev-reference.json accuracy per task for both checkpoints",
+  "n_per_task": 100,
+  "post": {
+    "news_topic": {
+      "laya_english_m1max": 0.93,
+      "jev": 0.92
+    },
+    "sms_spam": {
+      "laya_english_m1max": 0.96,
+      "jev": 0.96
+    },
+    "emotion": {
+      "laya_english_m1max": 0.45,
+      "jev": 0.53
+    },
+    "review_stars": {
+      "laya_english_m1max": 0.35,
+      "jev": 0.7
+    },
+    "prompt_injection": {
+      "laya_english_m1max": 0.65,
+      "jev": 0.71
+    },
+    "all": {
+      "laya_english_m1max": 0.668,
+      "jev": 0.764
+    }
+  },
+  "checkpoints": {
+    "multilingual": {
+      "max_len": 1024,
+      "seconds": 21.3,
+      "ms_per_question": 42.55,
+      "emotion": {
+        "n": 100,
+        "accuracy": 0.58,
+        "max_tokens": 82
+      },
+      "news_topic": {
+        "n": 100,
+        "accuracy": 0.97,
+        "max_tokens": 226
+      },
+      "prompt_injection": {
+        "n": 100,
+        "accuracy": 0.64,
+        "max_tokens": 177
+      },
+      "review_stars": {
+        "n": 100,
+        "accuracy": 0.35,
+        "max_tokens": 782
+      },
+      "sms_spam": {
+        "n": 100,
+        "accuracy": 0.58,
+        "max_tokens": 118
+      },
+      "all": {
+        "n": 500,
+        "accuracy": 0.624
+      }
+    },
+    "english": {
+      "max_len": 512,
+      "seconds": 48.9,
+      "ms_per_question": 97.87,
+      "emotion": {
+        "n": 100,
+        "accuracy": 0.65,
+        "max_tokens": 83
+      },
+      "news_topic": {
+        "n": 100,
+        "accuracy": 0.95,
+        "max_tokens": 232
+      },
+      "prompt_injection": {
+        "n": 100,
+        "accuracy": 0.79,
+        "max_tokens": 252
+      },
+      "review_stars": {
+        "n": 100,
+        "accuracy": 0.39,
+        "max_tokens": 512
+      },
+      "sms_spam": {
+        "n": 100,
+        "accuracy": 0.88,
+        "max_tokens": 116
+      },
+      "all": {
+        "n": 500,
+        "accuracy": 0.732
+      }
+    }
+  }
+}
