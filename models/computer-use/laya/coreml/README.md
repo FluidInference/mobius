@@ -188,8 +188,8 @@ first rows of the public test splits, laya's question wording; Jev column copied
 it is closed) and scores both checkpoints with PyTorch; `FluidUseLaya benchmark --suites
 benchmark/jev-suites.jsonl --reference benchmark/jev-reference-rows.jsonl` scores the Core ML
 buckets. Reports: `reports/benchmark-jev-reference.json`, `reports/benchmark-jev-coreml.json`.
-Core ML equals its PyTorch reference on every task (52.8% over the 500 vs the post's 66.8% for the
-English checkpoint, which is a different model; the English checkpoint scores 73.2% here). Full
+Core ML equals its PyTorch reference on every task (62.6% over the 500; the post's 66.8% is the
+English checkpoint, which scores 73.2% here on these datasets). Full
 table in FluidUse `Benchmarks.md`.
 
 ## Input and output contract
