@@ -67,7 +67,7 @@ worst case is the two-option prompt-injection question; every other question is 
 
 The graph is 99.5% Neural Engine (973 of 978 ops); the five CPU ops are the int32
 casts and the embedding gather. ANE latency still grows faster than GPU latency with
-sequence length because the L×L attention matmuls dominate, so the Swift manager runs
+sequence length because the L×L attention matmuls dominate, so the FluidUse manager runs
 the 128 bucket on CPU+ANE and longer buckets on `.all`.
 
 ## Accuracy benchmark — laya's published suites on device
@@ -75,7 +75,7 @@ the 128 bucket on CPU+ANE and longer buckets on `.all`.
 `benchmark.py` rebuilds the application suites from laya's own research scripts (same datasets,
 seed 13, 400 cases per task, 300 MASSIVE cases with 20 options; banking77 skipped because its 77
 labels exceed the 32 option slots) and scores them with the unmodified PyTorch model on CPU at
-`max_len` 1024. `fluidaudiocli laya-benchmark` then answers the same 3,899 questions with the Core
+`max_len` 1024. `FluidUseLaya benchmark` (FluidInference/FluidUse) then answers the same 3,899 questions with the Core
 ML buckets (128/256/512/1024, smallest that fits) from Swift and compares row by row.
 
 Apple M5 Pro, macOS 27.0, September 21, 2026:
@@ -104,7 +104,7 @@ published 0.123 looks like an upstream run artefact (0.441 here from the same sc
 Reports: [benchmark-reference.json](reports/benchmark-reference.json),
 [benchmark-coreml.json](reports/benchmark-coreml.json). Reproduce with
 `uv run python benchmark.py` then
-`fluidaudiocli laya-benchmark --suites benchmark/suites.jsonl --reference benchmark/reference-rows.jsonl --model-dir build/laya-coreml`.
+`swift run -c release FluidUseLaya benchmark --suites benchmark/suites.jsonl --reference benchmark/reference-rows.jsonl --model-dir build/laya-coreml`.
 
 ## Input and output contract
 

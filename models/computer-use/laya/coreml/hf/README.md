@@ -21,8 +21,7 @@ generated tokens. Weights are unchanged from
 [`convaiinnovations/laya`](https://huggingface.co/convaiinnovations/laya) `multilingual/` at
 revision `1c5edc17a7acd8701df6fc341c0d179f1c62c982`.
 
-Runs through [FluidAudio](https://github.com/FluidInference/FluidAudio) (`LayaManager`) on
-macOS 14+ / iOS 17+.
+Runs through [FluidUse](https://github.com/FluidInference/FluidUse) (`LayaManager`) on macOS 14+.
 
 ```swift
 let laya = try await LayaManager.load()  // downloads the 128 + 512 buckets and tokenizer.json
@@ -33,9 +32,10 @@ print(answer.noul!)  // P(true)
 ```
 
 ```bash
-swift run -c release fluidaudiocli laya --state "…" --type choice \
+swift run -c release FluidUseLaya answer --state "…" --type choice \
     --instructions "What does the customer want?" --options "refund|order status|technical help"
-swift run -c release fluidaudiocli laya-tetris   # headless Tetris played by laya decisions
+swift run -c release FluidUseLaya tetris      # headless Tetris played by laya decisions
+swift run -c release LayaTetrisDemo           # SwiftUI demo
 ```
 
 ## Files
@@ -49,7 +49,7 @@ swift run -c release fluidaudiocli laya-tetris   # headless Tetris played by lay
 | `tokenizer.json` | | mmBERT / Gemma vocabulary (256k), byte fallback |
 
 Each bucket is a complete FP16 model (614 MB, 393 MB of which is the embedding table) with
-32 option slots. `FluidAudio` picks the smallest loaded bucket that fits a prompt and truncates
+32 option slots. `FluidUse` picks the smallest loaded bucket that fits a prompt and truncates
 the state on the right for the largest one, exactly like laya's `max_len`.
 
 Inputs: `input_ids` int32 `[1, L]`, `attention_mask` int32 `[1, L]`, `marker_map` float32
