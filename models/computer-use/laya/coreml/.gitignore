@@ -2,3 +2,5 @@ build/
 artifacts/
 .venv/
 __pycache__/
+
+benchmark/_hub/

@@ -3,8 +3,8 @@
 Converts the pinned **laya-multilingual** checkpoint (Convai Innovations, Apache-2.0;
 mmBERT-base encoder + two-layer decision head, 321.9M parameters) into fixed-shape
 **FP16 Core ML programs** that answer typed `choice` / `score` / `noul` questions in one
-encoder pass. Three sequence-length buckets are exported: **128, 256, 512 tokens**, each
-with 32 option slots. The whole model, including the 256k-row embedding table, the
+encoder pass. Four sequence-length buckets are exported: **128, 256, 512, 1024 tokens**, each
+with 32 option slots (1024 is upstream's `max_len`). The whole model, including the 256k-row embedding table, the
 encoder, the decision head, the option scorer and the action head, lives in the graph.
 
 This is a bounded local conversion verification on 16 fixture questions (Tetris
@@ -32,7 +32,7 @@ dynamic shapes with fixed ones.
 
 Outputs:
 
-- `build/laya_multilingual_fp16_L{128,256,512}_options32.mlpackage` — portable Core ML models.
+- `build/laya_multilingual_fp16_L{128,256,512,1024}_options32.mlpackage` — portable Core ML models.
 - `build/*.conversion.json` — versions, source revision, package hashes.
 - [reports/verification-multilingual-L128.json](reports/verification-multilingual-L128.json)
   (and L256, L512) — per-question parity and timing on `ALL` and `CPU_AND_NE`.
@@ -53,6 +53,8 @@ max action-probability error ≤ 0.02, finite outputs, padded option slots at �
 | L256 | CPU_AND_NE | 16 | 16/16 | 0.0126 | 9.88 ms | 10.14 ms | 4.4 s |
 | L512 | ALL | 16 | 16/16 | 0.0021 | **9.00 ms** | 9.37 ms | 2.5 s |
 | L512 | CPU_AND_NE | 16 | 16/16 | 0.0126 | 27.45 ms | 27.90 ms | 4.8 s |
+| L1024 | ALL | 16 | 16/16 | 0.0023 | **17.89 ms** | 18.32 ms | 2.0 s |
+| L1024 | CPU_AND_NE | 16 | 16/16 | 0.0126 | 80.07 ms | 80.43 ms | 6.9 s |
 
 Timing is one `predict` call per question after 5 warm-up calls (20 repeats), measured
 from Python, so it includes the Core ML call overhead but not tokenization. Upstream
@@ -67,6 +69,42 @@ The graph is 99.5% Neural Engine (973 of 978 ops); the five CPU ops are the int3
 casts and the embedding gather. ANE latency still grows faster than GPU latency with
 sequence length because the L×L attention matmuls dominate, so the Swift manager runs
 the 128 bucket on CPU+ANE and longer buckets on `.all`.
+
+## Accuracy benchmark — laya's published suites on device
+
+`benchmark.py` rebuilds the application suites from laya's own research scripts (same datasets,
+seed 13, 400 cases per task, 300 MASSIVE cases with 20 options; banking77 skipped because its 77
+labels exceed the 32 option slots) and scores them with the unmodified PyTorch model on CPU at
+`max_len` 1024. `fluidaudiocli laya-benchmark` then answers the same 3,899 questions with the Core
+ML buckets (128/256/512/1024, smallest that fits) from Swift and compares row by row.
+
+Apple M5 Pro, macOS 27.0, September 21, 2026:
+
+| Suite | n | Upstream (T4) | PyTorch CPU here | Core ML (Swift) | Row agreement | p50 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| jev.ag_news | 400 | 0.930 | 0.935 | **0.935** | 1.000 | 3.8 ms |
+| jev.emotion | 400 | 0.530 | 0.537 | **0.537** | 1.000 | 3.7 ms |
+| massive_intent.en | 300 | 0.657 | 0.657 | **0.657** | 1.000 | 5.2 ms |
+| app.support_triage | 400 | 0.522 | 0.540 | **0.542** | 0.998 | 5.3 ms |
+| app.email_spam | 400 | 0.993 | 0.993 | **0.993** | 1.000 | 5.8 ms |
+| app.phishing | 400 | 0.993 | 0.993 | **0.993** | 1.000 | 9.0 ms |
+| app.guardrails_jailbreak | 400 | 0.755 | 0.805 | **0.805** | 0.995 | 3.8 ms |
+| app.moderation_toxicity | 400 | 0.525 | 0.535 | **0.535** | 1.000 | 3.8 ms |
+| app.rag_relevance | 400 | 0.657 | 0.672 | **0.672** | 1.000 | 5.3 ms |
+| app.model_routing_domain | 399 | 0.123 | 0.441 | **0.441** | 1.000 | 5.3 ms |
+
+Whole run: **3,899 questions in 22.9 s, p50 5.2 ms, p95 18.0 ms** from Swift, versus
+61.6 ms per question for PyTorch FP32 on this Mac's CPU (4 threads) and 32.8 ms per question
+upstream reports on a Tesla T4. Accuracy is identical to the reference on every suite to within
+two flipped rows (support triage 0.542 vs 0.540); the largest per-row probability delta is on a
+guardrails row the reference itself scores at ~0.5. `upstream` is laya's BENCHMARKS.md
+laya-multilingual column; the PyTorch column reproduces it here except model routing, where the
+published 0.123 looks like an upstream run artefact (0.441 here from the same script).
+
+Reports: [benchmark-reference.json](reports/benchmark-reference.json),
+[benchmark-coreml.json](reports/benchmark-coreml.json). Reproduce with
+`uv run python benchmark.py` then
+`fluidaudiocli laya-benchmark --suites benchmark/suites.jsonl --reference benchmark/reference-rows.jsonl --model-dir build/laya-coreml`.
 
 ## Input and output contract
 

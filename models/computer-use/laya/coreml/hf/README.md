@@ -45,6 +45,7 @@ swift run -c release fluidaudiocli laya-tetris   # headless Tetris played by lay
 | `laya_multilingual_fp16_L128_options32.mlmodelc` | 128 | Short prompts; runs on CPU + Neural Engine |
 | `laya_multilingual_fp16_L256_options32.mlmodelc` | 256 | |
 | `laya_multilingual_fp16_L512_options32.mlmodelc` | 512 | Long states; GPU is faster than ANE here |
+| `laya_multilingual_fp16_L1024_options32.mlmodelc` | 1024 | Upstream `max_len`; GPU |
 | `tokenizer.json` | | mmBERT / Gemma vocabulary (256k), byte fallback |
 
 Each bucket is a complete FP16 model (614 MB, 393 MB of which is the embedding table) with
@@ -67,6 +68,24 @@ Apple M5 Pro, macOS 27.0, 16 fixture questions vs. the unmodified PyTorch FP32 r
 | L128 | **3.6 ms** | 3.9 ms |
 | L256 | 9.9 ms | **5.2 ms** |
 | L512 | 27.5 ms | **9.0 ms** |
+| L1024 | 80.1 ms | **17.9 ms** |
+
+On laya's published application suites (3,899 questions, seed 13, rebuilt from upstream's scripts),
+the Core ML buckets answered from Swift match the PyTorch reference's accuracy on every suite at
+5.2 ms median per question (p95 18 ms):
+
+| Suite | Upstream (T4, PyTorch) | Core ML (M5 Pro) |
+| --- | ---: | ---: |
+| jev.ag_news | 0.930 | **0.935** |
+| jev.emotion | 0.530 | **0.537** |
+| massive_intent.en | 0.657 | **0.657** |
+| app.support_triage | 0.522 | **0.542** |
+| app.email_spam | 0.993 | **0.993** |
+| app.phishing | 0.993 | **0.993** |
+| app.guardrails_jailbreak | 0.755 | **0.805** |
+| app.moderation_toxicity | 0.525 | **0.535** |
+| app.rag_relevance | 0.657 | **0.672** |
+| app.model_routing_domain | 0.123 | **0.441** |
 
 Conversion pipeline, verification reports, and Swift parity fixtures:
 [mobius `models/computer-use/laya/coreml`](https://github.com/FluidInference/mobius).

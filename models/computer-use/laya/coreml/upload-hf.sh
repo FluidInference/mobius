@@ -5,7 +5,7 @@ set -eu
 cd "$(dirname "$0")"
 REPO="${1:-FluidInference/laya-coreml}"
 hf repos create "$REPO" --type model 2>/dev/null || true
-for L in 128 256 512; do
+for L in 128 256 512 1024; do
     NAME="laya_multilingual_fp16_L${L}_options32"
     [ -d "build/$NAME.mlmodelc" ] || uv run python -c "import coremltools as ct; ct.utils.compile_model('build/$NAME.mlpackage', destination_path='build/$NAME.mlmodelc')"
     hf upload "$REPO" "build/$NAME.mlmodelc" "$NAME.mlmodelc" --commit-message "Add $NAME"
