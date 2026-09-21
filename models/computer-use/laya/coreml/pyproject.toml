@@ -1,0 +1,29 @@
+[project]
+name = "laya-coreml"
+version = "0.1.0"
+description = "Pinned laya (multilingual) decision-model Core ML conversion and parity verification"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "coremltools==9.0",
+    "huggingface-hub>=0.34",
+    "laya==0.3.4",
+    "numpy<2.3",
+    "safetensors>=0.5",
+    "tokenizers>=0.21",
+    "torch==2.7.0",
+    "transformers>=5.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.4", "ruff>=0.13"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
