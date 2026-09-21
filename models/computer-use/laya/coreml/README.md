@@ -111,7 +111,7 @@ Apple M5 Pro, macOS 27.0, September 21, 2026:
 | app.support_triage | 400 | 0.522 | 0.540 | **0.542** | 0.998 | 5.3 ms |
 | app.email_spam | 400 | 0.993 | 0.993 | **0.993** | 1.000 | 5.8 ms |
 | app.phishing | 400 | 0.993 | 0.993 | **0.993** | 1.000 | 9.0 ms |
-| app.guardrails_jailbreak | 400 | 0.755 | 0.805 | **0.805** | 0.995 | 3.8 ms |
+| app.guardrails_jailbreak | 400 | 0.755 | 0.805 | **0.808** | 0.998 | 4.2 ms |
 | app.moderation_toxicity | 400 | 0.525 | 0.535 | **0.535** | 1.000 | 3.8 ms |
 | app.rag_relevance | 400 | 0.657 | 0.672 | **0.672** | 1.000 | 5.3 ms |
 | app.model_routing_domain | 399 | 0.123 | 0.441 | **0.441** | 1.000 | 5.3 ms |
@@ -119,8 +119,7 @@ Apple M5 Pro, macOS 27.0, September 21, 2026:
 Whole run: **3,899 questions in 22.9 s, p50 5.2 ms, p95 18.0 ms** from Swift, versus
 61.6 ms per question for PyTorch FP32 on this Mac's CPU (4 threads) and 32.8 ms per question
 upstream reports on a Tesla T4. Accuracy is identical to the reference on every suite to within
-two flipped rows (support triage 0.542 vs 0.540); the largest per-row probability delta is on a
-guardrails row the reference itself scores at ~0.5. `upstream` is laya's BENCHMARKS.md
+two flipped rows (support triage 0.542 vs 0.540); the largest per-row probability delta is 0.021 (emotion). `upstream` is laya's BENCHMARKS.md
 laya-multilingual column; the PyTorch column reproduces it here except model routing, where the
 published 0.123 looks like an upstream run artefact (0.441 here from the same script).
 

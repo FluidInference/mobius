@@ -1,9 +1,9 @@
 {
   "chip" : "Apple M5 Pro",
-  "elapsed_s" : 22.913529992103577,
+  "elapsed_s" : 23.682847023010254,
   "latency_ms" : {
-    "p50" : 5.2010420000000002,
-    "p95" : 17.967292
+    "p50" : 5.3144580000000001,
+    "p95" : 18.081707999999999
   },
   "lengths" : [
     128,
@@ -11,7 +11,7 @@
     512,
     1024
   ],
-  "load_s" : 2.2602130174636841,
+  "load_s" : 2.8048709630966187,
   "questions" : 3899,
   "suites" : {
     "app.email_spam" : {
@@ -24,8 +24,8 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 5.8082500000000001,
-        "p95" : 18.628333000000001
+        "p50" : 6.297625,
+        "p95" : 18.979500000000002
       },
       "max_probability_delta_vs_reference" : 0.0070431232452392578,
       "n" : 400,
@@ -34,7 +34,7 @@
       "state_truncated" : 9
     },
     "app.guardrails_jailbreak" : {
-      "accuracy" : 0.80500000000000005,
+      "accuracy" : 0.8075,
       "buckets" : {
         "L128" : 285,
         "L256" : 59,
@@ -43,12 +43,12 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 3.8389169999999999,
-        "p95" : 9.5504999999999995
+        "p50" : 4.1935419999999999,
+        "p95" : 9.8876670000000004
       },
-      "max_probability_delta_vs_reference" : 0.80200904607772827,
+      "max_probability_delta_vs_reference" : 0.01729881763458252,
       "n" : 400,
-      "reference_argmax_agreement" : 0.995,
+      "reference_argmax_agreement" : 0.99750000000000005,
       "reference_compared" : 400,
       "state_truncated" : 0
     },
@@ -61,10 +61,10 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 5.2591669999999997,
-        "p95" : 5.8784999999999998
+        "p50" : 5.391,
+        "p95" : 6.2202919999999997
       },
-      "max_probability_delta_vs_reference" : 0.027976274490356445,
+      "max_probability_delta_vs_reference" : 0.014412820339202881,
       "n" : 399,
       "reference_argmax_agreement" : 1,
       "reference_compared" : 399,
@@ -80,10 +80,10 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 3.8188749999999998,
-        "p95" : 9.387041
+        "p50" : 3.8999999999999999,
+        "p95" : 9.4122920000000008
       },
-      "max_probability_delta_vs_reference" : 0.0043558478355407715,
+      "max_probability_delta_vs_reference" : 0.0036969184875488281,
       "n" : 400,
       "reference_argmax_agreement" : 1,
       "reference_compared" : 400,
@@ -99,8 +99,8 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 9.0027089999999994,
-        "p95" : 19.462250000000001
+        "p50" : 8.9892920000000007,
+        "p95" : 18.856666000000001
       },
       "max_probability_delta_vs_reference" : 0.003923460841178894,
       "n" : 400,
@@ -117,8 +117,8 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 5.3082500000000001,
-        "p95" : 6.2931670000000004
+        "p50" : 5.4204169999999996,
+        "p95" : 6.3289999999999997
       },
       "max_probability_delta_vs_reference" : 0.0088013410568237305,
       "n" : 400,
@@ -134,8 +134,8 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 5.297625,
-        "p95" : 8.8684999999999992
+        "p50" : 5.5369999999999999,
+        "p95" : 9.0276250000000005
       },
       "max_probability_delta_vs_reference" : 0.0048961937427520752,
       "n" : 400,
@@ -151,8 +151,8 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 3.7891249999999999,
-        "p95" : 6.5880419999999997
+        "p50" : 4.6144170000000004,
+        "p95" : 7.2706249999999999
       },
       "max_probability_delta_vs_reference" : 0.010490596294403076,
       "n" : 400,
@@ -167,8 +167,8 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 3.7059579999999999,
-        "p95" : 3.8140000000000001
+        "p50" : 4.0142920000000002,
+        "p95" : 4.3915829999999998
       },
       "max_probability_delta_vs_reference" : 0.020582765340805054,
       "n" : 400,
@@ -183,8 +183,8 @@
       },
       "dropped" : 0,
       "latency_ms" : {
-        "p50" : 5.2149999999999999,
-        "p95" : 5.4784579999999998
+        "p50" : 5.3079169999999998,
+        "p95" : 6.1710409999999998
       },
       "max_probability_delta_vs_reference" : 0.019814342260360718,
       "n" : 300,

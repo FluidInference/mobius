@@ -84,7 +84,7 @@ the Core ML buckets answered from Swift match the PyTorch reference's accuracy o
 | app.support_triage | 0.522 | **0.542** |
 | app.email_spam | 0.993 | **0.993** |
 | app.phishing | 0.993 | **0.993** |
-| app.guardrails_jailbreak | 0.755 | **0.805** |
+| app.guardrails_jailbreak | 0.755 | **0.808** |
 | app.moderation_toxicity | 0.525 | **0.535** |
 | app.rag_relevance | 0.657 | **0.672** |
 | app.model_routing_domain | 0.123 | **0.441** |
