@@ -66,6 +66,10 @@ Verdict (`heman10x/rlcd-modernbert-151m`) was also converted and profiled at the
 shape. Its best viable result is 3.565 ms FP16; LUT8 halves its 303.2 MB package but slows it to
 3.769 ms. More aggressive variants lose too many decisions or run slower. See [VERDICT.md](VERDICT.md).
 
+ANE boundary experiments reached 100% placement by gathering token embeddings on the host, but the
+larger input made complete calls slower. A smaller float-mask change preserves every application-suite
+choice and is 0.62% faster in a paired Swift Tetris run. See [ANE_OPTIMIZATION.md](ANE_OPTIMIZATION.md).
+
 ## Reproduce
 
 Run from this directory. Model and dataset revisions are pinned in `assets.lock.json`. Generated
