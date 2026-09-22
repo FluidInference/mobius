@@ -1,0 +1,251 @@
+{
+  "date": "2026-09-22",
+  "machine": "Apple M5 Pro, 24 GB, macOS 27.0",
+  "model": {
+    "name": "Verdict",
+    "repo": "heman10x/rlcd-modernbert-151m",
+    "revision": "8af2496eb63c7fa66d7d234e1f62629380030eb4",
+    "parameters": 151378177
+  },
+  "shape": {
+    "batch": 1,
+    "length": 128,
+    "max_options": 25
+  },
+  "method": {
+    "latency": "coreml-cli, five warmups then 100 timed predictions per compute-unit configuration",
+    "parity": "3,899-request FluidUse application suite; compressed Core ML compared with FP16 Core ML"
+  },
+  "variants": {
+    "fp16": {
+      "package_bytes": 303210568,
+      "timings": {
+        "all": {
+          "compile_ms": 72.991,
+          "median_ms": 3.724,
+          "mean_ms": 3.822,
+          "min_ms": 3.558,
+          "max_ms": 5.537,
+          "std_ms": 0.299,
+          "iterations": 100
+        },
+        "cpu_only": {
+          "compile_ms": 0.396,
+          "median_ms": 11.758,
+          "mean_ms": 11.841,
+          "min_ms": 11.49,
+          "max_ms": 12.874,
+          "std_ms": 0.273,
+          "iterations": 100
+        },
+        "cpu_and_gpu": {
+          "compile_ms": 0.657,
+          "median_ms": 4.091,
+          "mean_ms": 4.375,
+          "min_ms": 3.667,
+          "max_ms": 14.819,
+          "std_ms": 1.239,
+          "iterations": 100
+        },
+        "cpu_and_neural_engine": {
+          "compile_ms": 21.601,
+          "median_ms": 3.565,
+          "mean_ms": 3.563,
+          "min_ms": 3.404,
+          "max_ms": 3.854,
+          "std_ms": 0.111,
+          "iterations": 100
+        }
+      }
+    },
+    "lut8_per_tensor": {
+      "package_bytes": 151878360,
+      "timings": {
+        "all": {
+          "compile_ms": 36.662,
+          "median_ms": 3.769,
+          "mean_ms": 3.945,
+          "min_ms": 3.671,
+          "max_ms": 16.414,
+          "std_ms": 1.263,
+          "iterations": 100
+        },
+        "cpu_only": {
+          "compile_ms": 0.513,
+          "median_ms": 172.317,
+          "mean_ms": 175.576,
+          "min_ms": 165.513,
+          "max_ms": 267.734,
+          "std_ms": 15.495,
+          "iterations": 100
+        },
+        "cpu_and_gpu": {
+          "compile_ms": 0.634,
+          "median_ms": 4.755,
+          "mean_ms": 4.759,
+          "min_ms": 4.555,
+          "max_ms": 5.087,
+          "std_ms": 0.149,
+          "iterations": 100
+        },
+        "cpu_and_neural_engine": {
+          "compile_ms": 34.271,
+          "median_ms": 3.77,
+          "mean_ms": 3.801,
+          "min_ms": 3.641,
+          "max_ms": 4.335,
+          "std_ms": 0.131,
+          "iterations": 100
+        }
+      },
+      "parity": {
+        "supported_rows": 3899,
+        "argmax_agreement": 0.9825596306745319,
+        "reference_micro_accuracy": 0.4452423698384201,
+        "candidate_micro_accuracy": 0.44703770197486536,
+        "mean_logit_absolute_error": 0.10829954193166112,
+        "max_logit_absolute_error": 1.20263671875
+      }
+    },
+    "lut6_per_tensor": {
+      "package_bytes": 113988721,
+      "timings": {
+        "all": {
+          "compile_ms": 26.007,
+          "median_ms": 3.579,
+          "mean_ms": 3.604,
+          "min_ms": 3.504,
+          "max_ms": 4.132,
+          "std_ms": 0.088,
+          "iterations": 100
+        },
+        "cpu_only": {
+          "compile_ms": 0.369,
+          "median_ms": 24.423,
+          "mean_ms": 26.145,
+          "min_ms": 23.975,
+          "max_ms": 49.299,
+          "std_ms": 3.818,
+          "iterations": 100
+        },
+        "cpu_and_gpu": {
+          "compile_ms": 0.807,
+          "median_ms": 3.953,
+          "mean_ms": 4.181,
+          "min_ms": 3.631,
+          "max_ms": 6.503,
+          "std_ms": 0.611,
+          "iterations": 100
+        },
+        "cpu_and_neural_engine": {
+          "compile_ms": 24.425,
+          "median_ms": 3.451,
+          "mean_ms": 3.459,
+          "min_ms": 3.406,
+          "max_ms": 3.566,
+          "std_ms": 0.033,
+          "iterations": 100
+        }
+      },
+      "parity": {
+        "supported_rows": 3899,
+        "argmax_agreement": 0.869966658117466,
+        "reference_micro_accuracy": 0.4452423698384201,
+        "candidate_micro_accuracy": 0.42087714798666326,
+        "mean_logit_absolute_error": 0.9718679547999622,
+        "max_logit_absolute_error": 8.119140625
+      }
+    },
+    "lut4_per_tensor": {
+      "package_bytes": 76130865,
+      "timings": {
+        "all": {
+          "compile_ms": 23.303,
+          "median_ms": 3.565,
+          "mean_ms": 3.573,
+          "min_ms": 3.508,
+          "max_ms": 3.723,
+          "std_ms": 0.04,
+          "iterations": 100
+        },
+        "cpu_only": {
+          "compile_ms": 0.454,
+          "median_ms": 12.107,
+          "mean_ms": 12.131,
+          "min_ms": 11.975,
+          "max_ms": 13.11,
+          "std_ms": 0.145,
+          "iterations": 100
+        },
+        "cpu_and_gpu": {
+          "compile_ms": 0.701,
+          "median_ms": 3.747,
+          "mean_ms": 3.914,
+          "min_ms": 3.659,
+          "max_ms": 5.833,
+          "std_ms": 0.412,
+          "iterations": 100
+        },
+        "cpu_and_neural_engine": {
+          "compile_ms": 44.105,
+          "median_ms": 3.951,
+          "mean_ms": 4.526,
+          "min_ms": 3.692,
+          "max_ms": 11.572,
+          "std_ms": 1.554,
+          "iterations": 100
+        }
+      },
+      "parity": {
+        "supported_rows": 3899,
+        "argmax_agreement": 0.49217748140548856,
+        "reference_micro_accuracy": 0.4452423698384201,
+        "candidate_micro_accuracy": 0.35855347525006415,
+        "mean_logit_absolute_error": 2.3230797824782927,
+        "max_logit_absolute_error": 8.9716796875
+      }
+    },
+    "lut4_group32_ios18": {
+      "package_bytes": 247097622,
+      "timings": {
+        "all": {
+          "compile_ms": 46.121,
+          "median_ms": 6.244,
+          "mean_ms": 6.522,
+          "min_ms": 5.739,
+          "max_ms": 9.203,
+          "std_ms": 0.758,
+          "iterations": 100
+        },
+        "cpu_only": {
+          "compile_ms": 20.377,
+          "median_ms": 80.243,
+          "mean_ms": 91.821,
+          "min_ms": 65.523,
+          "max_ms": 260.412,
+          "std_ms": 31.575,
+          "iterations": 100
+        },
+        "cpu_and_gpu": {
+          "compile_ms": 0.814,
+          "median_ms": 6.258,
+          "mean_ms": 6.421,
+          "min_ms": 5.6,
+          "max_ms": 9.167,
+          "std_ms": 0.69,
+          "iterations": 100
+        },
+        "cpu_and_neural_engine": {
+          "compile_ms": 94.338,
+          "median_ms": 66.054,
+          "mean_ms": 87.419,
+          "min_ms": 58.47,
+          "max_ms": 239.567,
+          "std_ms": 39.273,
+          "iterations": 100
+        }
+      }
+    }
+  },
+  "conclusion": "Reject Verdict for FluidUse: FP16 is Laya-class speed and lower quality; LUT8 halves size without speeding up; LUT6 accuracy/parity loss is too large; both 4-bit variants fail."
+}

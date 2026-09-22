@@ -50,6 +50,7 @@ def main():
     parser.add_argument("--output", default="build/coreml")
     parser.add_argument("--length", type=int, default=128)
     parser.add_argument("--max-options", type=int, default=25)
+    parser.add_argument("--target", choices=["iOS17", "iOS18"], default="iOS17")
     args = parser.parse_args()
 
     torch.set_num_threads(4)
@@ -87,10 +88,11 @@ def main():
     with torch.no_grad():
         traced = torch.jit.trace(export, tensors)
     started = time.perf_counter()
+    deployment_target = {"iOS17": ct.target.iOS17, "iOS18": ct.target.iOS18}[args.target]
     converted = ct.convert(
         traced,
         convert_to="mlprogram",
-        minimum_deployment_target=ct.target.iOS17,
+        minimum_deployment_target=deployment_target,
         compute_precision=ct.precision.FLOAT16,
         compute_units=ct.ComputeUnit.CPU_ONLY,
         inputs=[
@@ -115,6 +117,7 @@ def main():
             "base_model": "knowledgator/gliclass-edge-v3.0",
             "length": str(args.length),
             "max_options": str(args.max_options),
+            "minimum_deployment_target": args.target,
             "sequence_format": "labels + SEP + instruction + serialized state",
         }
     )
@@ -137,6 +140,7 @@ def main():
         "package_bytes": sum(path.stat().st_size for path in package.rglob("*") if path.is_file()),
         "length": args.length,
         "max_options": args.max_options,
+        "minimum_deployment_target": args.target,
         "pytorch_wrapper_max_logit_error": max_logit_error,
         "coreml_max_logit_error": coreml_error,
         "argmax": coreml_argmax,

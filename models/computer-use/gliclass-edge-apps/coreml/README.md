@@ -62,6 +62,10 @@ application accuracy within sampling noise. It is a size optimization: CPU+ANE m
 0.903 ms instead of 0.843 ms for FP16. Six-bit LUT is 24.8 MB but changes 8.3% of choices; four-bit
 LUT is rejected because accuracy falls from 71.94% to 56.19% on the L128-supported rows.
 
+Verdict (`heman10x/rlcd-modernbert-151m`) was also converted and profiled at the same L128/25-option
+shape. Its best viable result is 3.565 ms FP16; LUT8 halves its 303.2 MB package but slows it to
+3.769 ms. More aggressive variants lose too many decisions or run slower. See [VERDICT.md](VERDICT.md).
+
 ## Reproduce
 
 Run from this directory. Model and dataset revisions are pinned in `assets.lock.json`. Generated
