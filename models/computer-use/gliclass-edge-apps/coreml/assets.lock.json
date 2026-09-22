@@ -1,0 +1,19 @@
+{
+  "base_model": {
+    "repo": "knowledgator/gliclass-edge-v3.0",
+    "revision": "df03993a2ed98e5e4a0d2dd7efbbd105abe874cf",
+    "license": "Apache-2.0"
+  },
+  "datasets": {
+    "mteb/amazon_massive_intent": "940fd47a81eaa7f2cc7b129674d945d618ac38c2",
+    "fancyzhx/ag_news": "eb185aade064a813bc0b7f42de02595523103ca4",
+    "dair-ai/emotion": "cab853a1dbdf4c42c2b3ef2173804746df8825fe",
+    "Tobi-Bueck/customer-support-tickets": "ddf1c81a5475992c4fa6752bf1e8b4e31f07bbeb",
+    "SetFit/enron_spam": "1916f66c89d52221ae33eb57d44498b4f3a5df22",
+    "zefang-liu/phishing-email-dataset": "34085a032c123ca237f314a01a67909cdea35e34",
+    "lmsys/toxic-chat": "29df8e4dba60e1f4af4b4075c0705c5b313548a8",
+    "microsoft/ms_marco": "a47ee7aae8d7d466ba15f9f0bfac3b3681087b3a",
+    "openai/gsm8k": "740312add88f781978c0658806c59bc2815b9866",
+    "google-research-datasets/mbpp": "4bb6404fdc6cacfda99d4ac4205087b89d32030c"
+  }
+}

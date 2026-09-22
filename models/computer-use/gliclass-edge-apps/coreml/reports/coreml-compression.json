@@ -1,0 +1,93 @@
+{
+  "date": "2026-09-22",
+  "machine": "Apple M5 Pro",
+  "suite": "FluidUse 3,899-request application suite, L128 only",
+  "reference": {
+    "precision": "fp16",
+    "package_bytes": 65665277,
+    "micro_accuracy": 0.7194152346755578,
+    "cpu_ane_median_ms": 0.843
+  },
+  "variants": [
+    {
+      "precision": "lut4",
+      "bits": 4,
+      "package_bytes": 16564321,
+      "compression_ratio": 3.964260110631761,
+      "argmax_agreement": 0.6347781482431393,
+      "micro_accuracy": 0.5619389587073609,
+      "micro_accuracy_delta": -0.1574762759681969,
+      "mean_logit_absolute_error": 3.160118531745895,
+      "max_logit_absolute_error": 15.82421875,
+      "cpu_ane_median_ms": 0.903
+    },
+    {
+      "precision": "lut6",
+      "bits": 6,
+      "package_bytes": 24753633,
+      "compression_ratio": 2.652753113048093,
+      "argmax_agreement": 0.9169017696845345,
+      "micro_accuracy": 0.7137727622467299,
+      "micro_accuracy_delta": -0.005642472428827872,
+      "mean_logit_absolute_error": 0.454019722896919,
+      "max_logit_absolute_error": 8.7119140625,
+      "cpu_ane_median_ms": 0.884
+    },
+    {
+      "precision": "lut8",
+      "bits": 8,
+      "package_bytes": 32959320,
+      "compression_ratio": 1.992312857182733,
+      "argmax_agreement": 0.971018209797384,
+      "micro_accuracy": 0.7217235188509874,
+      "micro_accuracy_delta": 0.002308284175429609,
+      "mean_logit_absolute_error": 0.14741103855128193,
+      "max_logit_absolute_error": 1.887939453125,
+      "cpu_ane_median_ms": 0.903
+    }
+  ],
+  "tetris_lut8": {
+    "piece_cap": 5000,
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "pieces": [
+      5000,
+      1840,
+      5000,
+      3196,
+      4605,
+      338,
+      5000,
+      1688,
+      5000,
+      5000
+    ],
+    "lines": [
+      1998,
+      726,
+      1997,
+      1264,
+      1828,
+      122,
+      1998,
+      663,
+      1998,
+      1998
+    ],
+    "mean_pieces": 3666.7,
+    "mean_lines": 1459.2,
+    "seeds_reaching_cap": 5,
+    "mean_of_run_median_ms": 4.9186873,
+    "mean_heuristic_top_agreement": 0.98387596057
+  }
+}
