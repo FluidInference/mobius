@@ -1,0 +1,38 @@
+{
+  "package": "lfm350_rlcd_fp16_stable_fp32lse_L256_B8_V16.mlpackage",
+  "source_revision": "deb589d803d141cabd158ef55f6617b128529f36",
+  "package_files_sha256": {
+    "Data/com.apple.CoreML/model.mlmodel": "be9def7942188aeead969d93f2dd6d6340dd2c9902fdedfdc1591bab7a01bf9f",
+    "Data/com.apple.CoreML/weights/weight.bin": "b7ecf05949a1c96540c0741ae27cd0efc0e27b72839c2fa3a5a4ed1a3b531f65",
+    "Manifest.json": "e885e4e6a044f9a1665c9330de7a3219bac5459720cbdf06f7e7c982555a5a79"
+  },
+  "compute_units": "cpu-ane",
+  "fixture_set": "coreml-fixture",
+  "max_log_likelihood_error": 2.677867889404297,
+  "same_selected_values": true,
+  "cases": [
+    {
+      "case_id": "coreml-fixture",
+      "candidates": 5,
+      "max_log_likelihood_error": 2.677867889404297,
+      "same_selected_values": true,
+      "model_call_ms": [
+        220.7777079893276
+      ],
+      "expected": [
+        -37.235984802246094,
+        -37.77170181274414,
+        -38.73257064819336,
+        -10.411249160766602,
+        -13.490367889404297
+      ],
+      "actual": [
+        -36.625,
+        -37.84375,
+        -39.03125,
+        -7.7578125,
+        -10.8125
+      ]
+    }
+  ]
+}

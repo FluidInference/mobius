@@ -1,0 +1,63 @@
+{
+  "id": "BFCL-tool-selection:simple:simple_254",
+  "family": "BFCL-tool-selection",
+  "state": {
+    "conversation": [
+      [
+        {
+          "role": "user",
+          "content": "Retrieve the historic dates and facts related to Christianity between year 300 and 400."
+        }
+      ]
+    ],
+    "functions": [
+      {
+        "name": "get_religion_history",
+        "description": "Retrieves historic events and facts related to a specified religion for a given period.",
+        "parameters": {
+          "type": "dict",
+          "properties": {
+            "religion": {
+              "type": "string",
+              "description": "The name of the religion."
+            },
+            "start_year": {
+              "type": "integer",
+              "description": "The starting year of the period."
+            },
+            "end_year": {
+              "type": "integer",
+              "description": "The end year of the period."
+            },
+            "event_type": {
+              "type": "string",
+              "enum": [
+                "all",
+                "crusade",
+                "schism",
+                "reform"
+              ],
+              "description": "Optional parameter specifying the type of event. Default is 'all'."
+            }
+          },
+          "required": [
+            "religion",
+            "start_year",
+            "end_year"
+          ]
+        }
+      }
+    ],
+    "task": "BFCL tool-name selection"
+  },
+  "questions": {
+    "tool_get_religion_history": {
+      "type": "choice",
+      "instructions": "Given the complete user conversation and the published function schemas in state, mark each candidate tool yes if it should be invoked to answer the request, or no otherwise. This evaluates tool-name selection only; do not produce arguments or call ordering.\n\n\n\nCandidate tool: get_religion_history",
+      "criteria": {
+        "yes": "Invoke this tool.",
+        "no": "Do not invoke this tool."
+      }
+    }
+  }
+}

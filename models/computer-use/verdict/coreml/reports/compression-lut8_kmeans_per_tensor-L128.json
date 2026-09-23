@@ -1,0 +1,13 @@
+{
+  "source": "build/verdict_fp16_L128_candidates25.mlpackage",
+  "output": "build/verdict_lut8_kmeans_per_tensor_L128_candidates25.mlpackage",
+  "length": 128,
+  "bits": 8,
+  "mode": "kmeans",
+  "granularity": "per_tensor",
+  "group_size": 32,
+  "source_bytes": 303210832,
+  "output_bytes": 151878624,
+  "compression_seconds": 63.7199045419693,
+  "coremltools": "9.0"
+}

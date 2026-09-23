@@ -1,0 +1,27 @@
+{
+  "source_repo": "akash-kamat/system-one-gemma",
+  "source_revision": "cc75aa8042dec965003210fdba033fee8759735e",
+  "source_url": "https://github.com/akash-kamat/system-one-gemma",
+  "base_repo": "google/gemma-3-270m",
+  "base_revision": "9b0cfec892e2bc2afd938c98eabe4e4a7b1e0ca1",
+  "base_license": "gemma",
+  "trained_weights_license": "noncommercial restriction stated by upstream README; redistribution permission unresolved",
+  "files": {
+    "pretrained-scorer/adapter_model.safetensors": "1cbbc16e5006a1b8bcd4874a8e135e6f09428fc87005260eaa2ba0d4d724c113",
+    "pretrained-scorer/adapter_config.json": "20bb5a2892f112f7eedb5934d733e1e29623b8f8a45209945e6632e6c1959839",
+    "pretrained-scorer/tokenizer.json": "daab2354f8a74e70d70b4d1f804939b68a8c9624dd06cb7858e52dd8970e9726",
+    "pretrained-scorer/tokenizer_config.json": "689a314d20c6f4406ab4115979926f4791cbc68d191eb0833afe6d1661b5af67",
+    "pretrained-scorer/metrics.json": "6015b9e766c4947f119768080b173626d7abab2210576fb5e0020d4e93ca3f05",
+    "demos.json": "d0553aaab7b777204068679e4f8e913eb24ede6f8778eb6490cb0e4bdfd1018e",
+    "infer.py": "1a98e04a1431862bec1b79969822c8a156d4e0d9a19c81ad4c604733afc26f67",
+    "app.py": "c4f7d71973ec36f852feb6a0440ebf617284c98d42fa88ef93778c2d28d57fd2"
+  },
+  "native_serving": {
+    "reference": "app.py",
+    "max_length": 256,
+    "temperature": 2.35,
+    "trained_score_tensor": "base_model.model.score.weight",
+    "score_shape": [1, 640]
+  },
+  "historical_revision_verified": false
+}

@@ -221,6 +221,41 @@ layers) and RoPE tables are constants per bucket; padding is applied as an addit
   right, as upstream does for `max_len`; a question whose options do not fit is rejected.
 - The FP16 embedding table is 393 MB of the 614 MB package; the three buckets share
   weights on disk only if the caller dedups them, so ship the buckets you need.
-- Only the multilingual checkpoint is converted here. The English ModernBERT-large root
-  checkpoint uses a different tokenizer and 421M parameters; `assets.lock.json` can take
-  a second variant entry.
+- The English root checkpoint uses a different tokenizer and 421M parameters. It is
+  separately pinned and exported with `--variant english`; see the section below.
+
+## English root checkpoint (Decision Index candidate)
+
+The source repository's root `model.safetensors` is a **421,293,827-parameter**
+ModernBERT-large decision model. It is distinct from the ~322M multilingual checkpoint above
+and from the separate `typed-decisions/` checkpoint in the same upstream repository. The source
+revision is the same pinned `convaiinnovations/laya` commit. The historical tracker adapter's
+checkpoint selection has not yet been authenticated, so this conversion must not inherit the
+tracker's 16.39 score without an identity audit.
+
+```bash
+uv run python assets.py --variant english
+uv run python convert-coreml.py --variant english --length 128
+uv run python verify.py --variant english --length 128
+uv run python convert-coreml.py --variant english --length 512
+uv run python verify.py --variant english --length 512
+```
+
+The L128 and L512 FP16 exports each contain 421,293,827 parameters. The graph
+returns raw option logits and an action distribution. Unlike multilingual, the English checkpoint
+has **non-unit temperatures** by question type and option count. The host must apply the released
+`rl_agent_config.json` using `calibration.temperature_for` and
+`calibration.calibrated_probabilities` before reporting probabilities or scores. `verify.py`
+checks both raw and calibrated probabilities against the native PyTorch agent. The native English
+config allows 512 tokens and sets `head_max_len=192`; use no longer prompt buckets than the
+released checkpoint's limit. The package has 32 option slots; requests beyond that capacity
+must be rejected. Use L512 for 129–512 token inputs; no L256 package is needed for correctness.
+
+The English L128 `ALL` run passed 16/16 fixture decisions, with maximum calibrated probability
+error 0.00225 and median prediction time 7.79 ms on Apple M5 Pro. Forced CPU+ANE matched all
+16 choices but failed the 0.02 calibrated probability gate (worst 0.0355 on a 20-option case,
+where the trained temperature is 0.10058). The verified release uses `.all`; do not present
+this root package as ANE-validated. L512 also passed 16/16 on `.all` (maximum calibrated
+probability error 0.00425, p50 20.79 ms); forced CPU+ANE again failed at 0.03546 and ran
+at p50 58.89 ms. See `reports/verification-english-L128.json` and
+`reports/verification-english-L512.json`.

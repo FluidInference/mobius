@@ -1,0 +1,213 @@
+{
+  "variant": "multilingual",
+  "length": 128,
+  "units": "all",
+  "packages": {
+    "fp16": "laya_multilingual_fp16_L128_options32.mlpackage",
+    "candidate": "laya_multilingual_e8_L128_options32.mlpackage"
+  },
+  "cases_file": "cases.json",
+  "cases_sha256": "4de4e34309c421913524209b62bb7c8a0a232928bd228ec12e884347ce65eeed",
+  "chip": "arm",
+  "macos": "27.0",
+  "questions": 16,
+  "load_seconds": {
+    "fp16": 2.476015667023603,
+    "candidate": 6.509264916996472
+  },
+  "timing": {
+    "fp16": {
+      "p50_request_ms": 4.518229485256597,
+      "p95_request_ms": 9.223935767658986
+    },
+    "candidate": {
+      "p50_request_ms": 4.102833481738344,
+      "p95_request_ms": 4.741750322864391
+    }
+  },
+  "selection_agreements": 16,
+  "worst_calibrated_probability_error": 0.014959639779878353,
+  "worst_action_probability_error": 0.0,
+  "rows": [
+    {
+      "case": "tetris_clean",
+      "question": "clean",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.0024370806080912244,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "tetris_flat",
+      "question": "clean",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.0004408972371108301,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "tetris_lane",
+      "question": "lane",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.0017214312998056203,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "tetris_lane",
+      "question": "risk",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.0011316023734604108,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "form_field",
+      "question": "action",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.004756918808670796,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "support_triage",
+      "question": "intent",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 3.5221266743490354e-05,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "support_triage",
+      "question": "frustration",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.0008144136734475338,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "support_triage",
+      "question": "churn",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.00011658136055192614,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "zh",
+      "question": "intent",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 4.7485790919732374e-05,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "zh",
+      "question": "urgent",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.00039608220597953103,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "ja",
+      "question": "intent",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 1.3993246253951597e-06,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "de",
+      "question": "intent",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.0004515459284917646,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "many_options",
+      "question": "lane",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.014959639779878353,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "guard",
+      "question": "injection",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.005115983244991851,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "long_state",
+      "question": "ready",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.0002584546718842236,
+      "max_action_probability_error": 0.0
+    },
+    {
+      "case": "long_state",
+      "question": "owner",
+      "selection_agrees": true,
+      "max_calibrated_probability_error": 0.0055962032815087825,
+      "max_action_probability_error": 0.0
+    }
+  ],
+  "passed_against_fp16": true,
+  "selected_manifest": [
+    {
+      "case": "tetris_clean",
+      "question": "clean"
+    },
+    {
+      "case": "tetris_flat",
+      "question": "clean"
+    },
+    {
+      "case": "tetris_lane",
+      "question": "lane"
+    },
+    {
+      "case": "tetris_lane",
+      "question": "risk"
+    },
+    {
+      "case": "form_field",
+      "question": "action"
+    },
+    {
+      "case": "support_triage",
+      "question": "intent"
+    },
+    {
+      "case": "support_triage",
+      "question": "frustration"
+    },
+    {
+      "case": "support_triage",
+      "question": "churn"
+    },
+    {
+      "case": "zh",
+      "question": "intent"
+    },
+    {
+      "case": "zh",
+      "question": "urgent"
+    },
+    {
+      "case": "ja",
+      "question": "intent"
+    },
+    {
+      "case": "de",
+      "question": "intent"
+    },
+    {
+      "case": "many_options",
+      "question": "lane"
+    },
+    {
+      "case": "guard",
+      "question": "injection"
+    },
+    {
+      "case": "long_state",
+      "question": "ready"
+    },
+    {
+      "case": "long_state",
+      "question": "owner"
+    }
+  ],
+  "power_audit_after_run": "Now drawing from Battery Power; InternalBattery 59% discharging at 2026-09-22 22:08:47 UTC (after timing runs)"
+}

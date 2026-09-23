@@ -1,0 +1,7 @@
+{
+  "source": "build/gliner2_small_classification_fp16_L128_K8.mlpackage",
+  "output": "build/gliner2_small_classification_lut8_L128_K8.mlpackage",
+  "source_bytes": 151542752,
+  "output_bytes": 76211068,
+  "compression_seconds": 50.24783995799953
+}

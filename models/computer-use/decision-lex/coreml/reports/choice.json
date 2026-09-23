@@ -1,0 +1,26 @@
+{
+  "source_repo": "llm-semantic-router/Decision-1.0-Lex-0.6B",
+  "source_revision": "ee8e74d912fca8328a353c11d174b44da3f91781",
+  "kind": "choice",
+  "native_parameter_count": 571909635,
+  "shape": {
+    "batch": 1,
+    "tokens": 128,
+    "candidates": 3
+  },
+  "wrapper_parity": {
+    "kind": "choice",
+    "record_count": 1,
+    "tokens": 128,
+    "candidates": 3,
+    "max_abs_logit_error": 0.0
+  },
+  "trace_max_abs_logit_error": 0.0,
+  "package_sha256": "ca17de5b8525362b354a47e1e5786af771a105c8d6bedf61d3831b576116202f",
+  "package_bytes": 643804060,
+  "coreml_max_abs_logit_error": 0.003941535949707031,
+  "coreml_choice_agreement": true,
+  "flexible": false,
+  "flexible_checks": [],
+  "historical_tracker_revision_verified": false
+}

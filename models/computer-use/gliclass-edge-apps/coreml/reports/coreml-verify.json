@@ -1,0 +1,197 @@
+{
+  "model": "build/checkpoint-v2",
+  "rows": 3899,
+  "compute_units": "all",
+  "bucket_counts": {
+    "128": 2259,
+    "256": 1151,
+    "512": 489
+  },
+  "macro": 0.7274937343358396,
+  "micro": 0.7289048473967684,
+  "coreml_p50_ms_python": 1.0283339652232826,
+  "coreml_p95_ms_python": 8.220041985623538,
+  "argmax_disagreements": 18,
+  "disagreement_examples": [
+    {
+      "row": 42,
+      "suite": "massive_intent.en",
+      "bucket": 128,
+      "coreml": 9,
+      "pytorch": 19
+    },
+    {
+      "row": 237,
+      "suite": "massive_intent.en",
+      "bucket": 128,
+      "coreml": 17,
+      "pytorch": 10
+    },
+    {
+      "row": 928,
+      "suite": "jev.emotion",
+      "bucket": 128,
+      "coreml": 1,
+      "pytorch": 2
+    },
+    {
+      "row": 965,
+      "suite": "jev.emotion",
+      "bucket": 128,
+      "coreml": 1,
+      "pytorch": 2
+    },
+    {
+      "row": 989,
+      "suite": "jev.emotion",
+      "bucket": 128,
+      "coreml": 1,
+      "pytorch": 2
+    },
+    {
+      "row": 1132,
+      "suite": "app.support_triage",
+      "bucket": 256,
+      "coreml": 9,
+      "pytorch": 7
+    },
+    {
+      "row": 1133,
+      "suite": "app.support_triage",
+      "bucket": 256,
+      "coreml": 3,
+      "pytorch": 9
+    },
+    {
+      "row": 1135,
+      "suite": "app.support_triage",
+      "bucket": 256,
+      "coreml": 7,
+      "pytorch": 9
+    },
+    {
+      "row": 1173,
+      "suite": "app.support_triage",
+      "bucket": 256,
+      "coreml": 3,
+      "pytorch": 0
+    },
+    {
+      "row": 1196,
+      "suite": "app.support_triage",
+      "bucket": 256,
+      "coreml": 0,
+      "pytorch": 9
+    },
+    {
+      "row": 1433,
+      "suite": "app.support_triage",
+      "bucket": 256,
+      "coreml": 0,
+      "pytorch": 7
+    },
+    {
+      "row": 1456,
+      "suite": "app.support_triage",
+      "bucket": 256,
+      "coreml": 8,
+      "pytorch": 9
+    },
+    {
+      "row": 1488,
+      "suite": "app.support_triage",
+      "bucket": 256,
+      "coreml": 1,
+      "pytorch": 9
+    },
+    {
+      "row": 2567,
+      "suite": "app.guardrails_jailbreak",
+      "bucket": 128,
+      "coreml": 1,
+      "pytorch": 0
+    },
+    {
+      "row": 2746,
+      "suite": "app.moderation_toxicity",
+      "bucket": 128,
+      "coreml": 1,
+      "pytorch": 0
+    },
+    {
+      "row": 2886,
+      "suite": "app.moderation_toxicity",
+      "bucket": 128,
+      "coreml": 1,
+      "pytorch": 0
+    },
+    {
+      "row": 3147,
+      "suite": "app.rag_relevance",
+      "bucket": 256,
+      "coreml": 0,
+      "pytorch": 1
+    },
+    {
+      "row": 3360,
+      "suite": "app.rag_relevance",
+      "bucket": 256,
+      "coreml": 1,
+      "pytorch": 0
+    }
+  ],
+  "max_logit_absolute_error": 0.2099146842956543,
+  "mean_logit_absolute_error": 0.016456271121731418,
+  "suites": {
+    "jev.ag_news": {
+      "n": 400,
+      "ok": 343,
+      "accuracy": 0.8575
+    },
+    "jev.emotion": {
+      "n": 400,
+      "ok": 222,
+      "accuracy": 0.555
+    },
+    "massive_intent.en": {
+      "n": 300,
+      "ok": 201,
+      "accuracy": 0.67
+    },
+    "app.support_triage": {
+      "n": 400,
+      "ok": 104,
+      "accuracy": 0.26
+    },
+    "app.email_spam": {
+      "n": 400,
+      "ok": 371,
+      "accuracy": 0.9275
+    },
+    "app.phishing": {
+      "n": 400,
+      "ok": 377,
+      "accuracy": 0.9425
+    },
+    "app.guardrails_jailbreak": {
+      "n": 400,
+      "ok": 349,
+      "accuracy": 0.8725
+    },
+    "app.moderation_toxicity": {
+      "n": 400,
+      "ok": 288,
+      "accuracy": 0.72
+    },
+    "app.rag_relevance": {
+      "n": 400,
+      "ok": 198,
+      "accuracy": 0.495
+    },
+    "app.model_routing_domain": {
+      "n": 399,
+      "ok": 389,
+      "accuracy": 0.974937343358396
+    }
+  }
+}

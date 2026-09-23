@@ -1,0 +1,15 @@
+{
+  "source_repo": "heman10x/rlcd-modernbert-151m",
+  "source_revision": "8af2496eb63c7fa66d7d234e1f62629380030eb4",
+  "source_code": "Heman10x-NGU/Verdict-open-jev",
+  "source_code_revision_audited": "30f15564821626ca5c1ad5b2638c4eb7078787dd",
+  "license": "Apache-2.0",
+  "historical_tracker_checkpoint_verified": false,
+  "files": {
+    "model.safetensors": "d252823994d47a7933217fc86449493299643af6a0c0d83d6bd5a7666d3253ef",
+    "config.json": "303f8eef1009cfdcb0cfba3e653247e625f16a4501e2351bad1a633f1f644695",
+    "tokenizer.json": "8bb449eb0c037aae44115b65905bb339b8f3f74eb37067c19127feb3c0755723",
+    "tokenizer_config.json": "fb54f027372062b2ca52282efb04d178a8b57167a00cd8f4e816515823a2c016",
+    "calibrator.json": "af2a876993148efa0726b6ccf710fe2303897d20c0ce8c7c9036eb50f64d23de"
+  }
+}

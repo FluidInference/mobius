@@ -1,0 +1,9 @@
+{
+  "source": "build/gliner2_small_classification_fp16_L128_K8.mlpackage",
+  "output": "build/gliner2_small_classification_w8_pc_L128_K8.mlpackage",
+  "method": "linear",
+  "granularity": "per_channel",
+  "source_bytes": 151542752,
+  "output_bytes": 76664593,
+  "compression_seconds": 2.327086499950383
+}

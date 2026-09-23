@@ -1,0 +1,30 @@
+{
+  "kind": "score",
+  "source_repo": "llm-semantic-router/Decision-1.0-Kai-0.6B",
+  "source_revision": "7185f514f54b8f93c55998b1e8f9c5cc67f0d029",
+  "shape": {
+    "batch": 1,
+    "tokens": 128,
+    "candidates": 3
+  },
+  "request_count": 2,
+  "max_abs_logit_error": 0.0015668869018554688,
+  "max_abs_probability_error": 0.0004849433898925781,
+  "choice_agreement": true,
+  "rows": [
+    {
+      "record_id": "sentiment",
+      "valid_candidates": 3,
+      "max_abs_logit_error": 0.0015668869018554688,
+      "max_abs_probability_error": 0.00032892823219299316,
+      "same_choice": true
+    },
+    {
+      "record_id": "systemone:2",
+      "valid_candidates": 3,
+      "max_abs_logit_error": 0.0012090206146240234,
+      "max_abs_probability_error": 0.0004849433898925781,
+      "same_choice": true
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "source_revision": "d0a4e53d09cebe6bc963dd9be319d4279084bb2d",
+  "package": "JeffDecision-L128-W8.mlpackage",
+  "package_bytes": 488374793,
+  "fp16_package_bytes": 922812014,
+  "package_files_sha256": {
+    "Data/com.apple.CoreML/model.mlmodel": "7f6c1c290d3723229bf5e6c22f9fa9db187957f33ed72b3063ebbf88c8073e6f",
+    "Data/com.apple.CoreML/weights/weight.bin": "10bd21357d7313872abd964923b2483c817dddc66e0ea667d10c262dcc834aae",
+    "Manifest.json": "1744498652aebc3ab6068de32aefcf32bc46c4ab1faaba1bdd1a479c8ed94049"
+  },
+  "compressed_constants": 146,
+  "native_fixture_count": 4,
+  "native_choice_agreement": 4,
+  "max_logit_error": 0.1294689178466797,
+  "release_logit_error_gate": 0.25,
+  "automatic_full_request_p50_ms": 10.0669375,
+  "fp16_automatic_full_request_p50_ms": 10.119333,
+  "forced_cpu_ane_full_request_p50_ms": 19.097396,
+  "timing_scope": "exploratory local battery-powered real-request smoke test",
+  "scope": "Optional W8 size artifact verified on four native classification fixtures; no Decision Index or 2048 claim and no measured speed advantage."
+}

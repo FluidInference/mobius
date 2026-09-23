@@ -1,0 +1,108 @@
+{
+  "model": "jeff",
+  "package": "/Users/hanweng/Documents/mobius-kev06-nanojev/models/computer-use/jeff/coreml/build/JeffDecision-L128-FP16.mlpackage",
+  "package_bytes": 922812014,
+  "compute_units": "cpu-ne",
+  "macos": "27.0",
+  "machine": "arm64",
+  "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=35651683)\t59%; discharging; 1:02 remaining present: true",
+  "timing_scope": "exploratory local battery-powered real-request smoke test",
+  "load_and_prepare_ms": 9248.059041972738,
+  "warmups": 1,
+  "rounds": 2,
+  "request_count": 8,
+  "full_request_p50_ms": 19.7065,
+  "full_request_p95_ms": 20.047417,
+  "cases": [
+    {
+      "name": "billing",
+      "latency_ms": 20.047417,
+      "result": {
+        "chosen": "billing: invoice or payment issue",
+        "probabilities": [
+          0.999962329864502,
+          0.001192549243569374
+        ]
+      }
+    },
+    {
+      "name": "technical",
+      "latency_ms": 19.861542,
+      "result": {
+        "chosen": "support: technical product issue",
+        "probabilities": [
+          4.495181656238856e-06,
+          0.9999984502792358
+        ]
+      }
+    },
+    {
+      "name": "three_way",
+      "latency_ms": 19.713167,
+      "result": {
+        "chosen": "schedule: appointment request",
+        "probabilities": [
+          0.995566189289093,
+          5.6824351304385345e-06,
+          0.00011147904297104105
+        ]
+      }
+    },
+    {
+      "name": "boolean",
+      "latency_ms": 19.840584,
+      "result": {
+        "chosen": "yes",
+        "probabilities": [
+          0.7362110018730164,
+          0.255158007144928
+        ]
+      }
+    },
+    {
+      "name": "billing",
+      "latency_ms": 19.533209,
+      "result": {
+        "chosen": "billing: invoice or payment issue",
+        "probabilities": [
+          0.999962329864502,
+          0.001192549243569374
+        ]
+      }
+    },
+    {
+      "name": "technical",
+      "latency_ms": 19.699833,
+      "result": {
+        "chosen": "support: technical product issue",
+        "probabilities": [
+          4.495181656238856e-06,
+          0.9999984502792358
+        ]
+      }
+    },
+    {
+      "name": "three_way",
+      "latency_ms": 19.368291,
+      "result": {
+        "chosen": "schedule: appointment request",
+        "probabilities": [
+          0.995566189289093,
+          5.6824351304385345e-06,
+          0.00011147904297104105
+        ]
+      }
+    },
+    {
+      "name": "boolean",
+      "latency_ms": 19.270041,
+      "result": {
+        "chosen": "yes",
+        "probabilities": [
+          0.7362110018730164,
+          0.255158007144928
+        ]
+      }
+    }
+  ]
+}

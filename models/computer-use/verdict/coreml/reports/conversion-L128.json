@@ -1,0 +1,15 @@
+{
+  "package": "verdict_fp16_L128_candidates25.mlpackage",
+  "source_repo": "heman10x/rlcd-modernbert-151m",
+  "source_revision": "8af2496eb63c7fa66d7d234e1f62629380030eb4",
+  "source_weight_sha256": "d252823994d47a7933217fc86449493299643af6a0c0d83d6bd5a7666d3253ef",
+  "parameters": 151378177,
+  "wrapper_max_logit_error": 1.9073486328125e-06,
+  "conversion_seconds": 5.913961540965829,
+  "package_bytes": 303210832,
+  "package_files_sha256": {
+    "Manifest.json": "fc5d31df174a9f450bfb9ba406307c379c30fabba5cad38fcaf8717b806c69a8",
+    "Data/com.apple.CoreML/model.mlmodel": "6cc079930a63c1069a7a2c259f4c086879981021047767f2bb4d68b6d1f02b00",
+    "Data/com.apple.CoreML/weights/weight.bin": "a982e14147982df9abb99a3637075a0193835c6b99edc396a52c1a43c2a4854a"
+  }
+}

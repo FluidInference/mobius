@@ -1,0 +1,200 @@
+{
+  "model": "kev05",
+  "package": "/Users/hanweng/Documents/mobius-laya/models/computer-use/kev-0.5b/coreml/build/rms/kev_0_5b_fp16_L128_options32.mlpackage",
+  "package_bytes": 989581157,
+  "compute_units": "cpu-ne",
+  "macos": "27.0",
+  "machine": "arm64",
+  "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=35651683)\t61%; discharging; 1:04 remaining present: true",
+  "timing_scope": "exploratory local battery-powered real-request smoke test",
+  "load_and_prepare_ms": 8948.147249990143,
+  "warmups": 1,
+  "rounds": 2,
+  "request_count": 6,
+  "full_request_p50_ms": 7.709875,
+  "full_request_p95_ms": 8.414792,
+  "cases": [
+    {
+      "name": "fixture-0",
+      "latency_ms": 8.414792,
+      "result": {
+        "model": "kev-latest",
+        "answers": {
+          "q": {
+            "type": "choice",
+            "choice": "risky",
+            "confidence": 0.71,
+            "probabilities": {
+              "clean": 0.15,
+              "risky": 0.85
+            }
+          }
+        },
+        "usage": {
+          "input_tokens": 45,
+          "output_tokens": 48
+        },
+        "option_keys": [
+          "clean",
+          "risky"
+        ],
+        "probabilities": [
+          0.1451416015625,
+          0.85498046875
+        ],
+        "chosen": "risky"
+      }
+    },
+    {
+      "name": "fixture-1",
+      "latency_ms": 8.314542,
+      "result": {
+        "model": "kev-latest",
+        "answers": {
+          "q": {
+            "type": "noul",
+            "noul": 0.81
+          }
+        },
+        "usage": {
+          "input_tokens": 35,
+          "output_tokens": 20
+        },
+        "option_keys": [
+          "false",
+          "true"
+        ],
+        "probabilities": [
+          0.1898193359375,
+          0.81005859375
+        ],
+        "chosen": "true"
+      }
+    },
+    {
+      "name": "fixture-2",
+      "latency_ms": 7.959875,
+      "result": {
+        "model": "kev-latest",
+        "answers": {
+          "q": {
+            "type": "choice",
+            "choice": "billing",
+            "confidence": 0.76,
+            "probabilities": {
+              "billing": 0.84,
+              "technical": 0.13,
+              "sales": 0.03
+            }
+          }
+        },
+        "usage": {
+          "input_tokens": 40,
+          "output_tokens": 55
+        },
+        "option_keys": [
+          "billing",
+          "technical",
+          "sales"
+        ],
+        "probabilities": [
+          0.84130859375,
+          0.128173828125,
+          0.0305328369140625
+        ],
+        "chosen": "billing"
+      }
+    },
+    {
+      "name": "fixture-0",
+      "latency_ms": 7.459875,
+      "result": {
+        "model": "kev-latest",
+        "answers": {
+          "q": {
+            "type": "choice",
+            "choice": "risky",
+            "confidence": 0.71,
+            "probabilities": {
+              "clean": 0.15,
+              "risky": 0.85
+            }
+          }
+        },
+        "usage": {
+          "input_tokens": 45,
+          "output_tokens": 48
+        },
+        "option_keys": [
+          "clean",
+          "risky"
+        ],
+        "probabilities": [
+          0.1451416015625,
+          0.85498046875
+        ],
+        "chosen": "risky"
+      }
+    },
+    {
+      "name": "fixture-1",
+      "latency_ms": 7.241834,
+      "result": {
+        "model": "kev-latest",
+        "answers": {
+          "q": {
+            "type": "noul",
+            "noul": 0.81
+          }
+        },
+        "usage": {
+          "input_tokens": 35,
+          "output_tokens": 20
+        },
+        "option_keys": [
+          "false",
+          "true"
+        ],
+        "probabilities": [
+          0.1898193359375,
+          0.81005859375
+        ],
+        "chosen": "true"
+      }
+    },
+    {
+      "name": "fixture-2",
+      "latency_ms": 7.366625,
+      "result": {
+        "model": "kev-latest",
+        "answers": {
+          "q": {
+            "type": "choice",
+            "choice": "billing",
+            "confidence": 0.76,
+            "probabilities": {
+              "billing": 0.84,
+              "technical": 0.13,
+              "sales": 0.03
+            }
+          }
+        },
+        "usage": {
+          "input_tokens": 40,
+          "output_tokens": 55
+        },
+        "option_keys": [
+          "billing",
+          "technical",
+          "sales"
+        ],
+        "probabilities": [
+          0.84130859375,
+          0.128173828125,
+          0.0305328369140625
+        ],
+        "chosen": "billing"
+      }
+    }
+  ]
+}

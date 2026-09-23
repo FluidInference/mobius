@@ -1,0 +1,177 @@
+{
+  "source_repo": "heman10x/rlcd-modernbert-151m",
+  "source_revision": "8af2496eb63c7fa66d7d234e1f62629380030eb4",
+  "package": "verdict_e8_L128_candidates25.mlpackage",
+  "chip": "arm",
+  "macos": "27.0",
+  "max_calibrated_probability_error": 0.005178889463581804,
+  "selected_id_agreements": 4,
+  "questions": 4,
+  "rows": [
+    {
+      "name": "lost card",
+      "type": "choice",
+      "tokens": 53,
+      "candidates_including_abstention": 3,
+      "native": {
+        "type": "choice",
+        "selected_id": "card_lost",
+        "selected_probability": 0.627995456676331,
+        "probabilities": {
+          "card_lost": 0.627995456676331,
+          "pin_reset": 0.12699368118294335,
+          "__insufficient_evidence__": 0.2450108621407256
+        },
+        "concentration": 0.18185863532617996,
+        "is_abstention": false,
+        "p_abstain": 0.2450108621407256,
+        "calibration_status": "calibrated_for_scope",
+        "choice": "card_lost"
+      },
+      "coreml": {
+        "type": "choice",
+        "selected_id": "card_lost",
+        "selected_probability": 0.6228165672127493,
+        "probabilities": {
+          "card_lost": 0.6228165672127493,
+          "pin_reset": 0.1283538716851194,
+          "__insufficient_evidence__": 0.24882956110213134
+        },
+        "concentration": 0.17666105931050247,
+        "is_abstention": false,
+        "p_abstain": 0.24882956110213134,
+        "calibration_status": "calibrated_for_scope",
+        "choice": "card_lost"
+      },
+      "max_calibrated_probability_error": 0.005178889463581804,
+      "selected_id_agrees": true,
+      "median_model_call_ms": 3.707874973770231
+    },
+    {
+      "name": "binary inquiry",
+      "type": "noul",
+      "tokens": 50,
+      "candidates_including_abstention": 3,
+      "native": {
+        "type": "noul",
+        "selected_id": "true",
+        "selected_probability": 0.46928461522757403,
+        "probabilities": {
+          "true": 0.46928461522757403,
+          "false": 0.24040802067067693,
+          "__insufficient_evidence__": 0.29030736410174907
+        },
+        "concentration": 0.03808313508410699,
+        "is_abstention": false,
+        "p_abstain": 0.29030736410174907,
+        "calibration_status": "calibrated_for_scope",
+        "noul": 0.6612505068952915,
+        "selected_outcome": "true"
+      },
+      "coreml": {
+        "type": "noul",
+        "selected_id": "true",
+        "selected_probability": 0.4679252680073035,
+        "probabilities": {
+          "true": 0.4679252680073035,
+          "false": 0.24014919498475823,
+          "__insufficient_evidence__": 0.2919255370079382
+        },
+        "concentration": 0.03753933464122139,
+        "is_abstention": false,
+        "p_abstain": 0.2919255370079382,
+        "calibration_status": "calibrated_for_scope",
+        "noul": 0.6608418922919826,
+        "selected_outcome": "true"
+      },
+      "max_calibrated_probability_error": 0.0016181729061891525,
+      "selected_id_agrees": true,
+      "median_model_call_ms": 3.6417500232346356
+    },
+    {
+      "name": "urgency score",
+      "type": "score",
+      "tokens": 55,
+      "candidates_including_abstention": 4,
+      "native": {
+        "type": "score",
+        "selected_id": "__insufficient_evidence__",
+        "selected_probability": 0.3259147064757007,
+        "probabilities": {
+          "low": 0.1979320574725608,
+          "medium": 0.289823573347529,
+          "high": 0.18632966270420953,
+          "__insufficient_evidence__": 0.3259147064757007
+        },
+        "concentration": 0.02039159311536931,
+        "is_abstention": true,
+        "p_abstain": 0.3259147064757007,
+        "calibration_status": "calibrated_for_scope",
+        "score": null,
+        "selected_level_id": "__insufficient_evidence__",
+        "selected_value": null
+      },
+      "coreml": {
+        "type": "score",
+        "selected_id": "__insufficient_evidence__",
+        "selected_probability": 0.32863267751097225,
+        "probabilities": {
+          "low": 0.19664229023269905,
+          "medium": 0.2861803334431354,
+          "high": 0.18854469881319322,
+          "__insufficient_evidence__": 0.32863267751097225
+        },
+        "concentration": 0.02030788836665276,
+        "is_abstention": true,
+        "p_abstain": 0.32863267751097225,
+        "calibration_status": "calibrated_for_scope",
+        "score": null,
+        "selected_level_id": "__insufficient_evidence__",
+        "selected_value": null
+      },
+      "max_calibrated_probability_error": 0.0036432399043935804,
+      "selected_id_agrees": true,
+      "median_model_call_ms": 3.706166986376047
+    },
+    {
+      "name": "insufficient evidence",
+      "type": "choice",
+      "tokens": 41,
+      "candidates_including_abstention": 3,
+      "native": {
+        "type": "choice",
+        "selected_id": "__insufficient_evidence__",
+        "selected_probability": 0.6003394036234859,
+        "probabilities": {
+          "visa": 0.19581438090218925,
+          "mastercard": 0.20384621547432477,
+          "__insufficient_evidence__": 0.6003394036234859
+        },
+        "concentration": 0.1354395684855455,
+        "is_abstention": true,
+        "p_abstain": 0.6003394036234859,
+        "calibration_status": "calibrated_for_scope",
+        "choice": "__insufficient_evidence__"
+      },
+      "coreml": {
+        "type": "choice",
+        "selected_id": "__insufficient_evidence__",
+        "selected_probability": 0.6026952659314171,
+        "probabilities": {
+          "visa": 0.1935390483599307,
+          "mastercard": 0.20376568570865233,
+          "__insufficient_evidence__": 0.6026952659314171
+        },
+        "concentration": 0.13785534761720808,
+        "is_abstention": true,
+        "p_abstain": 0.6026952659314171,
+        "calibration_status": "calibrated_for_scope",
+        "choice": "__insufficient_evidence__"
+      },
+      "max_calibrated_probability_error": 0.002355862307931167,
+      "selected_id_agrees": true,
+      "median_model_call_ms": 3.6122080055065453
+    }
+  ],
+  "passed": true
+}

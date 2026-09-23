@@ -1,0 +1,210 @@
+{
+  "model": "kev06",
+  "package": "/Users/hanweng/Documents/mobius-kev06-nanojev/models/computer-use/kev-0.6b/coreml/build/kev_0_6b_w8_L128_options32.mlpackage",
+  "package_bytes": 598679941,
+  "compute_units": "all",
+  "macos": "27.0",
+  "machine": "arm64",
+  "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=35651683)\t60%; discharging; 1:15 remaining present: true",
+  "timing_scope": "exploratory local battery-powered real-request smoke test",
+  "load_and_prepare_ms": 8927.470416994765,
+  "warmups": 1,
+  "rounds": 2,
+  "request_count": 8,
+  "full_request_p50_ms": 15.094333500000001,
+  "full_request_p95_ms": 18.856833,
+  "cases": [
+    {
+      "name": "fixture-0",
+      "latency_ms": 18.856833,
+      "result": {
+        "answers": {
+          "q": {
+            "type": "choice",
+            "choice": "risky",
+            "confidence": 0.97,
+            "probabilities": {
+              "clean": 0.01,
+              "risky": 0.99
+            }
+          }
+        },
+        "probabilities": [
+          0.012698199599981308,
+          0.9873018264770508
+        ],
+        "input_tokens": 45,
+        "output_tokens": 48
+      }
+    },
+    {
+      "name": "fixture-1",
+      "latency_ms": 14.990667,
+      "result": {
+        "answers": {
+          "q": {
+            "type": "noul",
+            "noul": 0.77
+          }
+        },
+        "probabilities": [
+          0.23022675514221191,
+          0.7697731852531433
+        ],
+        "input_tokens": 35,
+        "output_tokens": 20
+      }
+    },
+    {
+      "name": "fixture-2",
+      "latency_ms": 15.404125,
+      "result": {
+        "answers": {
+          "q": {
+            "type": "choice",
+            "choice": "billing",
+            "confidence": 0.95,
+            "probabilities": {
+              "billing": 0.97,
+              "technical": 0.03,
+              "sales": 0.0
+            }
+          }
+        },
+        "probabilities": [
+          0.9675226211547852,
+          0.030321234837174416,
+          0.0021560839377343655
+        ],
+        "input_tokens": 40,
+        "output_tokens": 54
+      }
+    },
+    {
+      "name": "fixture-3",
+      "latency_ms": 15.324792,
+      "result": {
+        "answers": {
+          "q": {
+            "type": "score",
+            "score": 1.07,
+            "legend": {
+              "0": "Low impact",
+              "1": "Moderate impact",
+              "2": "High impact"
+            },
+            "probabilities": {
+              "0": 0.06,
+              "1": 0.8,
+              "2": 0.13
+            },
+            "confidence": 0.9
+          }
+        },
+        "probabilities": [
+          0.060595009475946426,
+          0.8044429421424866,
+          0.1349620670080185
+        ],
+        "input_tokens": 35,
+        "output_tokens": 81
+      }
+    },
+    {
+      "name": "fixture-0",
+      "latency_ms": 13.541209,
+      "result": {
+        "answers": {
+          "q": {
+            "type": "choice",
+            "choice": "risky",
+            "confidence": 0.97,
+            "probabilities": {
+              "clean": 0.01,
+              "risky": 0.99
+            }
+          }
+        },
+        "probabilities": [
+          0.012698199599981308,
+          0.9873018264770508
+        ],
+        "input_tokens": 45,
+        "output_tokens": 48
+      }
+    },
+    {
+      "name": "fixture-1",
+      "latency_ms": 12.942375,
+      "result": {
+        "answers": {
+          "q": {
+            "type": "noul",
+            "noul": 0.77
+          }
+        },
+        "probabilities": [
+          0.23022675514221191,
+          0.7697731852531433
+        ],
+        "input_tokens": 35,
+        "output_tokens": 20
+      }
+    },
+    {
+      "name": "fixture-2",
+      "latency_ms": 15.198,
+      "result": {
+        "answers": {
+          "q": {
+            "type": "choice",
+            "choice": "billing",
+            "confidence": 0.95,
+            "probabilities": {
+              "billing": 0.97,
+              "technical": 0.03,
+              "sales": 0.0
+            }
+          }
+        },
+        "probabilities": [
+          0.9675226211547852,
+          0.030321234837174416,
+          0.0021560839377343655
+        ],
+        "input_tokens": 40,
+        "output_tokens": 54
+      }
+    },
+    {
+      "name": "fixture-3",
+      "latency_ms": 13.086917,
+      "result": {
+        "answers": {
+          "q": {
+            "type": "score",
+            "score": 1.07,
+            "legend": {
+              "0": "Low impact",
+              "1": "Moderate impact",
+              "2": "High impact"
+            },
+            "probabilities": {
+              "0": 0.06,
+              "1": 0.8,
+              "2": 0.13
+            },
+            "confidence": 0.9
+          }
+        },
+        "probabilities": [
+          0.060595009475946426,
+          0.8044429421424866,
+          0.1349620670080185
+        ],
+        "input_tokens": 35,
+        "output_tokens": 81
+      }
+    }
+  ]
+}

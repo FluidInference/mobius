@@ -1,0 +1,29 @@
+[project]
+name = "verdict-coreml"
+version = "0.1.0"
+description = "Verdict native decision parity and Core ML conversion"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "coremltools==9.0",
+    "decision-index @ git+https://github.com/apolinario/decision-index.git@52a698928a9ae5bdf16b75687c903871db29c6e5",
+    "gliclass==0.1.20",
+    "huggingface-hub>=0.34",
+    "numpy<2.3",
+    "scikit-learn==1.5.1",
+    "torch==2.7.0",
+    "transformers==5.17.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.4", "ruff>=0.13"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

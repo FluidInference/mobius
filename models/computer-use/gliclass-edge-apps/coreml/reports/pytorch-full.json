@@ -1,0 +1,64 @@
+{
+  "model": "candidates/work/gliclass-edge-apps-v2",
+  "params_m": 32.705154,
+  "rows": 3899,
+  "label_format": "description",
+  "instruction_in_text": false,
+  "max_length": 512,
+  "macro": 0.7267437343358396,
+  "micro": 0.7281354193382918,
+  "ms_p50": 7.057124981656671,
+  "ms_p95": 22.407958982512355,
+  "suites": {
+    "massive_intent.en": {
+      "n": 300,
+      "ok": 201,
+      "accuracy": 0.67
+    },
+    "jev.ag_news": {
+      "n": 400,
+      "ok": 343,
+      "accuracy": 0.8575
+    },
+    "jev.emotion": {
+      "n": 400,
+      "ok": 223,
+      "accuracy": 0.5575
+    },
+    "app.support_triage": {
+      "n": 400,
+      "ok": 101,
+      "accuracy": 0.2525
+    },
+    "app.email_spam": {
+      "n": 400,
+      "ok": 371,
+      "accuracy": 0.9275
+    },
+    "app.phishing": {
+      "n": 400,
+      "ok": 377,
+      "accuracy": 0.9425
+    },
+    "app.guardrails_jailbreak": {
+      "n": 400,
+      "ok": 350,
+      "accuracy": 0.875
+    },
+    "app.moderation_toxicity": {
+      "n": 400,
+      "ok": 288,
+      "accuracy": 0.72
+    },
+    "app.rag_relevance": {
+      "n": 400,
+      "ok": 196,
+      "accuracy": 0.49
+    },
+    "app.model_routing_domain": {
+      "n": 399,
+      "ok": 389,
+      "accuracy": 0.974937343358396
+    }
+  }
+}

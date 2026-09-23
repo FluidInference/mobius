@@ -1,0 +1,9 @@
+# Lex conversion status
+
+- Native checkpoint: pinned in `assets.lock.json`; all four weight files and complete 571,909,635-parameter runtime are available locally.
+- Provenance: native manifest, model code, config, and all four weight hashes match the last Hub commit before the tracker snapshot. The tracker serving adapter and exact evaluated checkpoint remain unverified.
+- CPU native parity: Choice, Noul, and Score matched their typed exporter wrappers exactly on two real source requests each.
+- Core ML: all three FP16 paths exported at L128. Choice uses K3, Noul K2, and Score K3. Across the source repository's six real examples, all top decisions match. Maximum probability errors were Choice 0.000516, Noul 0.001136, and Score 0.000466. Each package is 643,804,060 bytes; installed total is 1,931,412,180 bytes because the independent graphs duplicate shared embeddings. See `reports/` for exact evidence. The public 1,024-token and variable-candidate contract is not yet covered.
+- Host runtime: a complete three-question System One request succeeded against the staged Core ML packages, returning Choice, Noul, and Score answers. The host keeps one typed Core ML package resident at a time because retaining two proxies caused a native Core ML crash on this Mac.
+- Hugging Face: [FluidInference/decision-1.0-lex-coreml](https://huggingface.co/FluidInference/decision-1.0-lex-coreml) is the fixed-L128 preview, with tokenizer, code, licensing, and reports. See `published.json` for the upload revision after remote verification.
+- Optional embedding-only W8 Noul and Score each save 195.8 MB and pass 2/2 pinned native decisions per path under the 0.02 probability gate. Choice remains FP16: symmetric and asymmetric W8 each flipped the pinned `route` decision. The Noul W8 compute plan assigned 926/938 executable ops to ANE, with no repeatable latency gain. See `reports/embedding-w8.json`.

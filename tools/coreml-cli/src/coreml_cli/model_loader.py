@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 
@@ -18,12 +17,6 @@ def compile_mlpackage(mlpackage_path: Path) -> Path:
     """Compile .mlpackage to .mlmodelc using coremltools."""
     import coremltools as ct
 
-    model = ct.models.MLModel(str(mlpackage_path))
-    tmp_dir = tempfile.mkdtemp(prefix="coreml_cli_")
-    out_path = Path(tmp_dir) / (mlpackage_path.stem + ".mlmodelc")
-    model.save(str(out_path))
-    if out_path.exists() and _is_mlmodelc(out_path):
-        return out_path
     compiled = ct.utils.compile_model(str(mlpackage_path))
     return Path(compiled)
 

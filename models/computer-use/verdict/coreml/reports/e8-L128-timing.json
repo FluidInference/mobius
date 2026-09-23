@@ -1,0 +1,91 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-22T22:03:35.310948+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/var/folders/hg/l0263vy543b3r7rfwgxkt_680000gn/T/verdict_e8_L128_candidates25_261A7B00-B2A3-47A7-8A5B-21E0C0ABC445.mlmodelc",
+      "model_name": "verdict_e8_L128_candidates25_261A7B00-B2A3-47A7-8A5B-21E0C0ABC445",
+      "metadata": {
+        "description": "Verdict decision logits; use abstention and per-K calibration in host; int8 token embedding, FP16 encoder/head",
+        "author": "Heman10x-NGU (Verdict weights); Fluid Inference (Core ML conversion)",
+        "license": "Apache-2.0"
+      },
+      "cold_compile_ms": 4618.776,
+      "results": [
+        {
+          "compute_units": "all",
+          "summary": {
+            "cpu_percent": 31.78,
+            "gpu_percent": 0.0,
+            "ane_percent": 68.22
+          },
+          "latency": {
+            "compile_ms": 44.182,
+            "median_ms": 4.049,
+            "mean_ms": 4.071,
+            "min_ms": 3.954,
+            "max_ms": 4.298,
+            "std_ms": 0.101,
+            "iterations": 10
+          }
+        },
+        {
+          "compute_units": "cpu_only",
+          "summary": {
+            "cpu_percent": 100.0,
+            "gpu_percent": 0.0,
+            "ane_percent": 0.0
+          },
+          "latency": {
+            "compile_ms": 0.69,
+            "median_ms": 13.766,
+            "mean_ms": 13.764,
+            "min_ms": 12.653,
+            "max_ms": 15.002,
+            "std_ms": 0.714,
+            "iterations": 10
+          }
+        },
+        {
+          "compute_units": "cpu_and_gpu",
+          "summary": {
+            "cpu_percent": 0.0,
+            "gpu_percent": 100.0,
+            "ane_percent": 0.0
+          },
+          "latency": {
+            "compile_ms": 0.644,
+            "median_ms": 4.405,
+            "mean_ms": 4.498,
+            "min_ms": 4.124,
+            "max_ms": 5.345,
+            "std_ms": 0.365,
+            "iterations": 10
+          }
+        },
+        {
+          "compute_units": "cpu_and_neural_engine",
+          "summary": {
+            "cpu_percent": 31.78,
+            "gpu_percent": 0.0,
+            "ane_percent": 68.22
+          },
+          "latency": {
+            "compile_ms": 22.264,
+            "median_ms": 3.766,
+            "mean_ms": 3.723,
+            "min_ms": 3.495,
+            "max_ms": 3.858,
+            "std_ms": 0.124,
+            "iterations": 10
+          }
+        }
+      ]
+    }
+  ]
+}

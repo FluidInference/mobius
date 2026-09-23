@@ -1,0 +1,212 @@
+{
+  "reference": "build/gliner2_small_classification_fp16_L128_K8.mlpackage",
+  "candidate": "build/gliner2_small_classification_embedding_w8_L128_K8.mlpackage",
+  "manifest": "fixtures/optimization-selected20.jsonl",
+  "compute_units": "cpu-ane",
+  "processor": "arm",
+  "machine": "arm64",
+  "macos": "27.0",
+  "power_audit_after_run": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35651683)\t35%; charging; (no estimate) present: true",
+  "reference_load_ms": 2346.74583299784,
+  "candidate_load_ms": 3309.3039579689503,
+  "warmup_calls_per_model": 1,
+  "timed_order": "alternating reference-first/candidate-first by request",
+  "checked": 14,
+  "skipped": [
+    {
+      "suite": "app.phishing",
+      "index": 0,
+      "reason": "Input exceeds bucket or classification markers were truncated"
+    },
+    {
+      "suite": "app.phishing",
+      "index": 1,
+      "reason": "Input exceeds bucket or classification markers were truncated"
+    },
+    {
+      "suite": "app.phishing",
+      "index": 4,
+      "reason": "Input exceeds bucket or classification markers were truncated"
+    },
+    {
+      "suite": "app.model_routing_domain",
+      "index": 0,
+      "reason": "Input exceeds bucket or classification markers were truncated"
+    },
+    {
+      "suite": "app.model_routing_domain",
+      "index": 2,
+      "reason": "Input exceeds bucket or classification markers were truncated"
+    },
+    {
+      "suite": "app.model_routing_domain",
+      "index": 3,
+      "reason": "Input exceeds bucket or classification markers were truncated"
+    }
+  ],
+  "choice_agreement": 14,
+  "max_probability_error": 0.017578125,
+  "probability_error_limit": 0.02,
+  "reference_p50_ms": 3.2854789751581848,
+  "candidate_p50_ms": 3.289312473498285,
+  "reference_p95_ms": 3.494042030069977,
+  "candidate_p95_ms": 3.3776669879443944,
+  "reference_total_p50_ms": 3.7023129989393055,
+  "candidate_total_p50_ms": 3.6675420124083757,
+  "cases": [
+    {
+      "suite": "jev.ag_news",
+      "index": 0,
+      "choice_agrees": true,
+      "max_probability_error": 0.0040283203125,
+      "prepare_ms": 5.009791988413781,
+      "reference_ms": 3.3950000070035458,
+      "candidate_ms": 3.3776669879443944,
+      "reference_total_ms": 8.404791995417327,
+      "candidate_total_ms": 8.387458976358175
+    },
+    {
+      "suite": "jev.ag_news",
+      "index": 1,
+      "choice_agrees": true,
+      "max_probability_error": 0.017578125,
+      "prepare_ms": 1.03854201734066,
+      "reference_ms": 3.494042030069977,
+      "candidate_ms": 3.3097920240834355,
+      "reference_total_ms": 4.532584047410637,
+      "candidate_total_ms": 4.348334041424096
+    },
+    {
+      "suite": "jev.ag_news",
+      "index": 2,
+      "choice_agrees": true,
+      "max_probability_error": 0.00439453125,
+      "prepare_ms": 1.0530000436119735,
+      "reference_ms": 3.3029590267688036,
+      "candidate_ms": 3.3412500051781535,
+      "reference_total_ms": 4.355959070380777,
+      "candidate_total_ms": 4.394250048790127
+    },
+    {
+      "suite": "jev.ag_news",
+      "index": 3,
+      "choice_agrees": true,
+      "max_probability_error": 0.00390625,
+      "prepare_ms": 0.6998750031925738,
+      "reference_ms": 3.2783339847810566,
+      "candidate_ms": 3.2704590121284127,
+      "reference_total_ms": 3.9782089879736304,
+      "candidate_total_ms": 3.9703340153209865
+    },
+    {
+      "suite": "jev.ag_news",
+      "index": 4,
+      "choice_agrees": true,
+      "max_probability_error": 0.0029296875,
+      "prepare_ms": 0.4724999889731407,
+      "reference_ms": 3.3395829959772527,
+      "candidate_ms": 3.255374962463975,
+      "reference_total_ms": 3.8120829849503934,
+      "candidate_total_ms": 3.7278749514371157
+    },
+    {
+      "suite": "jev.emotion",
+      "index": 0,
+      "choice_agrees": true,
+      "max_probability_error": 0.0029296875,
+      "prepare_ms": 0.3194170421920717,
+      "reference_ms": 3.3317499910481274,
+      "candidate_ms": 3.287792031187564,
+      "reference_total_ms": 3.651167033240199,
+      "candidate_total_ms": 3.607209073379636
+    },
+    {
+      "suite": "jev.emotion",
+      "index": 1,
+      "choice_agrees": true,
+      "max_probability_error": 0.0009765625,
+      "prepare_ms": 0.20474998746067286,
+      "reference_ms": 3.2854159944690764,
+      "candidate_ms": 3.289374988526106,
+      "reference_total_ms": 3.4901659819297493,
+      "candidate_total_ms": 3.4941249759867787
+    },
+    {
+      "suite": "jev.emotion",
+      "index": 2,
+      "choice_agrees": true,
+      "max_probability_error": 0.00390625,
+      "prepare_ms": 0.24145800853148103,
+      "reference_ms": 3.2376659801229835,
+      "candidate_ms": 3.2137499656528234,
+      "reference_total_ms": 3.4791239886544645,
+      "candidate_total_ms": 3.4552079741843045
+    },
+    {
+      "suite": "jev.emotion",
+      "index": 3,
+      "choice_agrees": true,
+      "max_probability_error": 0.01513671875,
+      "prepare_ms": 0.2579169813543558,
+      "reference_ms": 3.2402919605374336,
+      "candidate_ms": 3.2786669908091426,
+      "reference_total_ms": 3.4982089418917894,
+      "candidate_total_ms": 3.5365839721634984
+    },
+    {
+      "suite": "jev.emotion",
+      "index": 4,
+      "choice_agrees": true,
+      "max_probability_error": 5.7220458984375e-06,
+      "prepare_ms": 0.9694579639472067,
+      "reference_ms": 3.2319999882020056,
+      "candidate_ms": 3.2892499584704638,
+      "reference_total_ms": 4.201457952149212,
+      "candidate_total_ms": 4.2587079224176705
+    },
+    {
+      "suite": "app.phishing",
+      "index": 2,
+      "choice_agrees": true,
+      "max_probability_error": 0.0,
+      "prepare_ms": 0.1432499848306179,
+      "reference_ms": 3.2535000354982913,
+      "candidate_ms": 3.3028339967131615,
+      "reference_total_ms": 3.396750020328909,
+      "candidate_total_ms": 3.4460839815437794
+    },
+    {
+      "suite": "app.phishing",
+      "index": 3,
+      "choice_agrees": true,
+      "max_probability_error": 0.00244140625,
+      "prepare_ms": 0.46791700879111886,
+      "reference_ms": 3.285541955847293,
+      "candidate_ms": 3.28716600779444,
+      "reference_total_ms": 3.753458964638412,
+      "candidate_total_ms": 3.7550830165855587
+    },
+    {
+      "suite": "app.model_routing_domain",
+      "index": 1,
+      "choice_agrees": true,
+      "max_probability_error": 0.0009765625,
+      "prepare_ms": 0.1925830147229135,
+      "reference_ms": 3.277582989539951,
+      "candidate_ms": 3.34716698853299,
+      "reference_total_ms": 3.4701660042628646,
+      "candidate_total_ms": 3.5397500032559037
+    },
+    {
+      "suite": "app.model_routing_domain",
+      "index": 4,
+      "choice_agrees": true,
+      "max_probability_error": 0.00341796875,
+      "prepare_ms": 0.2633749973028898,
+      "reference_ms": 3.3152500400319695,
+      "candidate_ms": 3.3124579931609333,
+      "reference_total_ms": 3.5786250373348594,
+      "candidate_total_ms": 3.575832990463823
+    }
+  ]
+}

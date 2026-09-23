@@ -1,0 +1,18 @@
+{
+  "model": "laya_english_e8_L128_options32.mlpackage",
+  "source": "laya_english_fp16_L128_options32.mlpackage",
+  "precision": "e8",
+  "scheme": {
+    "embedding": "int8",
+    "other_weights": "fp16"
+  },
+  "source_bytes": 843174305,
+  "package_bytes": 791749909,
+  "seconds": 15.6,
+  "coremltools": "9.0",
+  "package_files": {
+    "Data/com.apple.CoreML/model.mlmodel": "4699a7a470b3a0fe5f57931e80cfa4b5746ad39fb6edbf05845a4b6684256821",
+    "Data/com.apple.CoreML/weights/weight.bin": "5e719033ac4febf8e7d7fcec6abbad17f9c3cd0b8e7f82832339867d5b3765cf",
+    "Manifest.json": "4788a0a0ed1774797f77d7f39a6d0c31b6ada9547782c0549c164468d189bf26"
+  }
+}

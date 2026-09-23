@@ -1,0 +1,121 @@
+{
+  "source_revision": "ee8e74d912fca8328a353c11d174b44da3f91781",
+  "scope": "optional L128 typed paths on two pinned native requests each; no Decision Index or 2048 score",
+  "published_paths": {
+    "noul": {
+      "package_bytes": 447981151,
+      "source_bytes": 643804060,
+      "package_sha256": "edc38d5c143ea9f944106451f7645095d74744ac210922c2e63b2179ba72d2b6",
+      "quantization": {
+        "type": "weight-only linear quantization",
+        "mode": "linear_symmetric",
+        "dtype": "int8",
+        "granularity": "per_channel",
+        "weight_threshold": 2048,
+        "scope": "embedding",
+        "selected_weights": [
+          "embeddings_tok_embeddings_weight_to_fp16"
+        ]
+      },
+      "native_requests": 2,
+      "choice_agreement": true,
+      "max_probability_error": 0.003230452537536621,
+      "max_logit_error": 0.010071039199829102,
+      "case_ids": [
+        "evidence",
+        "systemone:0"
+      ]
+    },
+    "score": {
+      "package_bytes": 447981151,
+      "source_bytes": 643804060,
+      "package_sha256": "db94154246aebbe1cafe6a9d56b24230a86eaa5694fe67db5f29a26fc87ad9ad",
+      "quantization": {
+        "type": "weight-only linear quantization",
+        "mode": "linear_symmetric",
+        "dtype": "int8",
+        "granularity": "per_channel",
+        "weight_threshold": 2048,
+        "scope": "embedding",
+        "selected_weights": [
+          "embeddings_tok_embeddings_weight_to_fp16"
+        ]
+      },
+      "native_requests": 2,
+      "choice_agreement": true,
+      "max_probability_error": 0.0010151267051696777,
+      "max_logit_error": 0.020479440689086914,
+      "case_ids": [
+        "sentiment",
+        "systemone:2"
+      ]
+    }
+  },
+  "compute_plan_representative": {
+    "path": "noul",
+    "total_ops": 938,
+    "ane_ops": 926,
+    "cpu_ops": 12,
+    "reasons": [
+      [
+        "Unsupported tensor data type: int32",
+        9
+      ],
+      [
+        "Unable to resolve operation input \"y\".",
+        2
+      ],
+      [
+        "ANE not available for this op",
+        1
+      ]
+    ]
+  },
+  "selected_request_timing": {
+    "power_audit": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35651683)\t93%; charging; 0:28 remaining present: true",
+    "run_order": "FP16 then W8; reverse W8 then FP16",
+    "path": "noul",
+    "timings": {
+      "fp16-ac": {
+        "full_request_p50_ms": 4.214521,
+        "full_request_p95_ms": 4.307208,
+        "load_ms": 4171.566208,
+        "iterations": 10,
+        "warmup": 2
+      },
+      "embedding-w8-ac": {
+        "full_request_p50_ms": 4.028125,
+        "full_request_p95_ms": 4.155667,
+        "load_ms": 11515.266708,
+        "iterations": 10,
+        "warmup": 2
+      },
+      "embedding-w8-ac-reverse": {
+        "full_request_p50_ms": 4.7926245,
+        "full_request_p95_ms": 5.165459,
+        "load_ms": 10710.747875,
+        "iterations": 10,
+        "warmup": 2
+      },
+      "fp16-ac-reverse": {
+        "full_request_p50_ms": 4.500083,
+        "full_request_p95_ms": 4.883416,
+        "load_ms": 6639.243125,
+        "iterations": 10,
+        "warmup": 2
+      }
+    },
+    "conclusion": "size option; ten calls on two fixtures do not establish a speed gain"
+  },
+  "choice_w8_rejected": {
+    "symmetric": {
+      "choice_agreement": false,
+      "max_probability_error": 0.014515191316604614
+    },
+    "asymmetric": {
+      "choice_agreement": false,
+      "max_probability_error": 0.008592724800109863
+    },
+    "reason": "both variants changed pinned route decision; keep FP16 Choice"
+  }
+}

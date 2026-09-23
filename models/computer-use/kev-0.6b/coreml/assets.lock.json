@@ -1,0 +1,18 @@
+{
+  "checkpoint": {
+    "repo": "jaredpalmer/kev-0.6b",
+    "revision": "dece6dba8d43f0f7ded45e9f5b9df12474d90843",
+    "files": {
+      "adapter_model.safetensors": "deaab63b61f95d628503831e8b336e1c3e334b9a42d3530d979a5149b429c492",
+      "head.pt": "ce6cd9ffc54db41c179b65a33d60973dc8280c29e886218eb3ec07dc28d6f28b"
+    }
+  },
+  "base": {
+    "repo": "Qwen/Qwen3-0.6B-Base",
+    "revision": "da87bfb608c14b7cf20ba1ce41287e8de496c0cd"
+  },
+  "upstream_code": {
+    "repo": "https://github.com/jaredpalmer/kev.git",
+    "revision": "90990a5fac2995b9faa3190f7d437e84f2067768"
+  }
+}

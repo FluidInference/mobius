@@ -1,0 +1,28 @@
+{
+  "source_repo": "notnotsamuel/LFM2.5-350M-RLCD",
+  "source_revision": "deb589d803d141cabd158ef55f6617b128529f36",
+  "device": "cpu",
+  "shape": {
+    "length": 256,
+    "candidates": 8,
+    "max_value_tokens": 16
+  },
+  "candidates": 5,
+  "max_log_likelihood_error": 0.0,
+  "same_selected_values": true,
+  "seconds": 1.64,
+  "expected": [
+    -37.235984802246094,
+    -37.77170181274414,
+    -38.73257064819336,
+    -10.411249160766602,
+    -13.490367889404297
+  ],
+  "actual": [
+    -37.235984802246094,
+    -37.77170181274414,
+    -38.73257064819336,
+    -10.411249160766602,
+    -13.490367889404297
+  ]
+}

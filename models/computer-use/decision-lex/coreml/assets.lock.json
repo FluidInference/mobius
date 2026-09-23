@@ -1,0 +1,47 @@
+{
+  "engine": "decision-lex",
+  "source_repo": "llm-semantic-router/Decision-1.0-Lex-0.6B",
+  "source_revision": "ee8e74d912fca8328a353c11d174b44da3f91781",
+  "historical_revision_verified": false,
+  "license_metadata": "apache-2.0",
+  "selected_weight_files": [
+    {
+      "path": "native/choice_encoder.safetensors",
+      "bytes": 441337216,
+      "sha256": "9516cc841c485c98b27b4f63d2ea8e604fe8064121173064b113da8a6bf57ef6"
+    },
+    {
+      "path": "native/decision_heads.safetensors",
+      "bytes": 177241884,
+      "sha256": "bce3ee658a978a19c48c605b921cff994f892e7fc17abd6f8645f07428fbc36f"
+    },
+    {
+      "path": "native/encoder/model.safetensors",
+      "bytes": 1227771752,
+      "sha256": "daaafd81c4ed767d203e24226d78e792800068a7dac344aa043844b82a6306c7"
+    },
+    {
+      "path": "native/score_encoder.safetensors",
+      "bytes": 441337080,
+      "sha256": "4f45795977846ef4c31b34e4f35bf95dabf5951d71358bab32c9a94814a84a53"
+    }
+  ],
+  "full_params_from_current_config_or_metadata": 571909635,
+  "native_manifest_sha256": "f288d873999832a3f37c6a7c4268c2ab309691e621794dbf7acab891acbbb7e6",
+  "pre_tracker_snapshot_revision": "e8856390ad5c9d54ad11f776e6a39d0dea5d8a16",
+  "pre_tracker_snapshot_native_manifest_same_as_current": true,
+  "pre_tracker_snapshot_checked_files": [
+    "native/MANIFEST.json",
+    "native/decision_config.json",
+    "native/model.py",
+    "native/choice_encoder.safetensors",
+    "native/decision_heads.safetensors",
+    "native/encoder/model.safetensors",
+    "native/score_encoder.safetensors"
+  ],
+  "tracker_renderer_and_served_checkpoint_unverified": true,
+  "system_one_fixture_sha256": "0b8320ecbeded8c3229dccc52f5045f00e8d1968183bc9d1371d24e949925dcf",
+  "system_one_renderer_sha256": "0dc61f7558eed31c9ac186827b2050c0d391c69ea3684c02e8cd9c71400b1690",
+  "decision_fixture_sha256": "d4b89583ccc9aa35e74dd28c46e01884103ea7a0fa018de8c34d4f88a94287f1",
+  "system_one_rows_sha256": "e56dc6a39f35fc43fcb772036734d69dd3b4febe4a830a59f2a6eeab71e82bb3"
+}

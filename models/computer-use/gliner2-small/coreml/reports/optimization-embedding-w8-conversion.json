@@ -1,0 +1,12 @@
+{
+  "source": "build/gliner2_small_classification_fp16_L128_K8.mlpackage",
+  "output": "build/gliner2_small_classification_embedding_w8_L128_K8.mlpackage",
+  "method": "embedding",
+  "granularity": "per_channel",
+  "selected_weights": [
+    "encoder_embeddings_word_embeddings_weight_to_fp16"
+  ],
+  "source_bytes": 151542752,
+  "output_bytes": 102771476,
+  "compression_seconds": 2.445869125018362
+}

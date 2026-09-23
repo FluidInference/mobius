@@ -1,0 +1,53 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-22T07:20:07.143781+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/var/folders/hg/l0263vy543b3r7rfwgxkt_680000gn/T/gliclass_edge_apps_fp16_L256_options25_4A77E2B5-093B-43E2-B8BF-15466039802E.mlmodelc",
+      "model_name": "gliclass_edge_apps_fp16_L256_options25_4A77E2B5-093B-43E2-B8BF-15466039802E",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 437,
+        "ane_ops": 432,
+        "gpu_ops": 0,
+        "cpu_ops": 5,
+        "ane_percent": 98.9,
+        "reasons": [
+          {
+            "reason": "Unsupported tensor data type: int32",
+            "count": 4,
+            "estimated_cpu_runtime_ms": 0.5722,
+            "op_types": {
+              "ios17.cast": 1,
+              "ios17.add": 1,
+              "select": 1,
+              "ios17.gather": 1
+            },
+            "ops": [
+              "attention_mask_to_fp16",
+              "add_0",
+              "select_0",
+              "input_3_cast_fp16"
+            ]
+          },
+          {
+            "reason": "Unable to resolve operation input \"y\".",
+            "count": 1,
+            "estimated_cpu_runtime_ms": 0.001,
+            "op_types": {
+              "ios17.greater_equal": 1
+            },
+            "ops": [
+              "greater_equal_0"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

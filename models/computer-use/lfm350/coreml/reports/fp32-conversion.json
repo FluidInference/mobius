@@ -1,0 +1,13 @@
+{
+  "model": "lfm350_rlcd_fp32_L256_B8_V16.mlpackage",
+  "precision": "fp32",
+  "length": 256,
+  "candidate_batch": 8,
+  "max_value_tokens": 16,
+  "parameters": 354483968,
+  "trace_error": 0.0,
+  "conversion_seconds": 6.6,
+  "python": "3.12.13",
+  "torch": "2.7.0",
+  "coremltools": "9.0"
+}

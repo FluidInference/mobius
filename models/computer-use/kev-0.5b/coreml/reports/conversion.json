@@ -1,0 +1,27 @@
+{
+  "model": "kev_0_5b_fp16_L128_options32.mlpackage",
+  "precision": "float16",
+  "minimum_target": "iOS17/macOS14",
+  "length": 128,
+  "max_options": 32,
+  "parameters": 494492032,
+  "export_seconds": 11.2,
+  "pytorch_wrapper_max_logit_error": 1.3113021850585938e-05,
+  "python": "3.12.13",
+  "torch": "2.7.0",
+  "coremltools": "9.0",
+  "sources": {
+    "checkpoint": {
+      "repo": "jaredpalmer/kev-0.5b",
+      "revision": "9ce2fd39db3a397c89733f94af948e3d1fdfffcd"
+    },
+    "base": {
+      "repo": "Qwen/Qwen2.5-0.5B",
+      "revision": "060db6499f32faf8b98477b0a26969ef7d8b9987"
+    },
+    "upstream_code": {
+      "repo": "https://github.com/jaredpalmer/kev.git",
+      "revision": "90990a5fac2995b9faa3190f7d437e84f2067768"
+    }
+  }
+}

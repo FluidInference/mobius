@@ -1,0 +1,20 @@
+{
+  "audit_date": "2026-09-22",
+  "source_repo": "akash-kamat/system-one-gemma",
+  "source_revision": "cc75aa8042dec965003210fdba033fee8759735e",
+  "base_repo": "google/gemma-3-270m",
+  "base_revision": "9b0cfec892e2bc2afd938c98eabe4e4a7b1e0ca1",
+  "base_access": "GatedRepoError HTTP 403 for authenticated config.json request",
+  "trained_adapter_sha256": "1cbbc16e5006a1b8bcd4874a8e135e6f09428fc87005260eaa2ba0d4d724c113",
+  "trained_head_tensor": "base_model.model.score.weight",
+  "trained_head_shape": [1, 640],
+  "trained_head_dtype": "BF16",
+  "peft_modules_to_save_includes_score": true,
+  "released_web_runtime_max_tokens": 256,
+  "released_web_runtime_temperature": 2.35,
+  "historical_tracker_revision_verified": false,
+  "coreml_converted": false,
+  "coreml_parity_verified": false,
+  "trained_weight_redistribution_permission_resolved": false,
+  "source_contract_unit_tests": "4 passed"
+}

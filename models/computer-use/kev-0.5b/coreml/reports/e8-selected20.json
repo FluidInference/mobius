@@ -1,0 +1,153 @@
+{
+  "source_revision": "9ce2fd39db3a397c89733f94af948e3d1fdfffcd",
+  "published_package_name": "kev_0_5b_e8_L128_options32.mlpackage",
+  "package_bytes": 853903798,
+  "fp16_package_bytes": 989581157,
+  "package_files_sha256": {
+    "Data/com.apple.CoreML/model.mlmodel": "179eb772df2060b32407fe280f21b059b7a6f3576762326fa40431761d9d9bdf",
+    "Data/com.apple.CoreML/weights/weight.bin": "4e8b8bc861774f0bd3dec4dfe27caea67c01bba5ad532fff5a54c5da5aebc6b7",
+    "Manifest.json": "a3986c27452e6f1bb29aa4fa981044ca5e306f9d68afeca1ace90929a9244b24"
+  },
+  "quantization": "embedding-only per-channel symmetric int8; other weights FP16",
+  "validation_manifest": "first two rows per application suite in source order, 20 selected plus three fixed native fixtures; no gold label used to select cases",
+  "source_suite": "models/computer-use/laya/coreml/benchmark/suites.jsonl",
+  "selected_requests": 23,
+  "evaluated": 19,
+  "choice_agreement": 19,
+  "maximum_probability_error_rounded": 0.010888,
+  "probability_error_gate": 0.02,
+  "cases": [
+    {
+      "index": 0,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.000992
+    },
+    {
+      "index": 1,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.002626
+    },
+    {
+      "index": 2,
+      "options": 3,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.001482
+    },
+    {
+      "index": 3,
+      "skipped": "question branch needs 166 tokens and does not fit length 128"
+    },
+    {
+      "index": 4,
+      "skipped": "question branch needs 178 tokens and does not fit length 128"
+    },
+    {
+      "index": 5,
+      "options": 4,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.000109
+    },
+    {
+      "index": 6,
+      "options": 4,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.010888
+    },
+    {
+      "index": 7,
+      "options": 6,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.001054
+    },
+    {
+      "index": 8,
+      "options": 6,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.002524
+    },
+    {
+      "index": 9,
+      "skipped": "question branch needs 132 tokens and does not fit length 128"
+    },
+    {
+      "index": 10,
+      "skipped": "question branch needs 132 tokens and does not fit length 128"
+    },
+    {
+      "index": 11,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.00057
+    },
+    {
+      "index": 12,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.000713
+    },
+    {
+      "index": 13,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.000277
+    },
+    {
+      "index": 14,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.001604
+    },
+    {
+      "index": 15,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.00102
+    },
+    {
+      "index": 16,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.00045
+    },
+    {
+      "index": 17,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.001944
+    },
+    {
+      "index": 18,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.001105
+    },
+    {
+      "index": 19,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.001134
+    },
+    {
+      "index": 20,
+      "options": 2,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.001298
+    },
+    {
+      "index": 21,
+      "options": 6,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.00104
+    },
+    {
+      "index": 22,
+      "options": 6,
+      "choice_agrees": true,
+      "max_probability_error_rounded": 0.001254
+    }
+  ],
+  "timing_note": "No speed claim: separate battery-powered passes measured 9.90 ms W8 vs 9.60 ms FP16 request p50; this validation run is not a paired latency benchmark.",
+  "scope": "Selected native parity for typed Choice/Noul requests only; no complete Decision Index or 2048 benchmark."
+}

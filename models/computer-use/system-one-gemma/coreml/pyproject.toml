@@ -1,0 +1,28 @@
+[project]
+name = "system-one-gemma-coreml"
+version = "0.1.0"
+description = "Pinned trained System One Gemma scorer conversion, gated pending model access"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "coremltools==9.0",
+    "huggingface-hub>=0.34",
+    "numpy<2.3",
+    "peft==0.20.0",
+    "safetensors>=0.6",
+    "torch==2.7.0",
+    "transformers==5.17.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.4", "ruff>=0.13"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
