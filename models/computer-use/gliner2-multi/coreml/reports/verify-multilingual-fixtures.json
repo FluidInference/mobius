@@ -1,0 +1,62 @@
+[
+  {
+    "text": "La sélection a remporté le championnat de football.",
+    "native": {
+      "label": "sports",
+      "confidence": 0.9999890327453613
+    },
+    "fp16": {
+      "label": "sports",
+      "confidence": 0.9999892711639404
+    },
+    "fp32": {
+      "label": "sports",
+      "confidence": 0.9999890327453613
+    }
+  },
+  {
+    "text": "El parlamento aprobó el presupuesto.",
+    "native": {
+      "label": "politics",
+      "confidence": 0.9999994039535522
+    },
+    "fp16": {
+      "label": "politics",
+      "confidence": 0.9999994039535522
+    },
+    "fp32": {
+      "label": "politics",
+      "confidence": 0.9999994039535522
+    }
+  },
+  {
+    "text": "科学家发现了一颗新的行星。",
+    "native": {
+      "label": "science",
+      "confidence": 0.9999904632568359
+    },
+    "fp16": {
+      "label": "science",
+      "confidence": 0.9999902248382568
+    },
+    "fp32": {
+      "label": "science",
+      "confidence": 0.9999904632568359
+    }
+  },
+  {
+    "text": "Das Team gewann die Meisterschaft.",
+    "native": {
+      "label": "sports",
+      "confidence": 0.9999986886978149
+    },
+    "fp16": {
+      "label": "sports",
+      "confidence": 0.9999986886978149
+    },
+    "fp32": {
+      "label": "sports",
+      "confidence": 0.9999986886978149
+    }
+  }
+]

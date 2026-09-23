@@ -1,0 +1,849 @@
+{
+  "source_model": "fastino/gliner2.5-multi-v1",
+  "source_revision": "a221b77a8baf4a613b8f8652661d41fa10a5641e",
+  "precision": "fp16",
+  "selected_manifest": "fifteen fixed real-text schema fixtures, not a Decision Index score",
+  "matched": 14,
+  "total": 15,
+  "cases": [
+    {
+      "name": "entities",
+      "text": "Alice founded Acme in Toronto in 2020.",
+      "native": {
+        "entities": {
+          "person": [
+            {
+              "text": "Alice",
+              "confidence": 0.9971066117286682,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "organization": [
+            {
+              "text": "Acme",
+              "confidence": 0.993619978427887,
+              "start": 14,
+              "end": 18
+            }
+          ],
+          "location": [
+            {
+              "text": "Toronto",
+              "confidence": 0.9991662502288818,
+              "start": 22,
+              "end": 29
+            }
+          ]
+        }
+      },
+      "coreml": {
+        "entities": {
+          "person": [
+            {
+              "text": "Alice",
+              "confidence": 0.9968024492263794,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "organization": [
+            {
+              "text": "Acme",
+              "confidence": 0.9933589100837708,
+              "start": 14,
+              "end": 18
+            }
+          ],
+          "location": [
+            {
+              "text": "Toronto",
+              "confidence": 0.9990890026092529,
+              "start": 22,
+              "end": 29
+            }
+          ]
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.00030416250228881836
+    },
+    {
+      "name": "entities_multi",
+      "text": "Marie Curie was born in Warsaw and worked in Paris.",
+      "native": {
+        "entities": {
+          "person": [
+            {
+              "text": "Marie Curie",
+              "confidence": 0.9977118968963623,
+              "start": 0,
+              "end": 11
+            }
+          ],
+          "city": [
+            {
+              "text": "Paris",
+              "confidence": 0.9992535710334778,
+              "start": 45,
+              "end": 50
+            },
+            {
+              "text": "Warsaw",
+              "confidence": 0.9987508058547974,
+              "start": 24,
+              "end": 30
+            }
+          ]
+        }
+      },
+      "coreml": {
+        "entities": {
+          "person": [
+            {
+              "text": "Marie Curie",
+              "confidence": 0.9976586103439331,
+              "start": 0,
+              "end": 11
+            }
+          ],
+          "city": [
+            {
+              "text": "Paris",
+              "confidence": 0.9993201494216919,
+              "start": 45,
+              "end": 50
+            },
+            {
+              "text": "Warsaw",
+              "confidence": 0.9988213181495667,
+              "start": 24,
+              "end": 30
+            }
+          ]
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 7.051229476928711e-05
+    },
+    {
+      "name": "relations",
+      "text": "Alice founded Acme in Toronto.",
+      "native": {
+        "relation_extraction": {
+          "founded": [
+            {
+              "head": {
+                "text": "Alice",
+                "start": 0,
+                "end": 5,
+                "confidence": 0.6135826110839844
+              },
+              "tail": {
+                "text": "Acme",
+                "start": 14,
+                "end": 18,
+                "confidence": 0.6135826110839844
+              }
+            }
+          ]
+        }
+      },
+      "coreml": {
+        "relation_extraction": {
+          "founded": [
+            {
+              "head": {
+                "text": "Alice",
+                "start": 0,
+                "end": 5,
+                "confidence": 0.6124835014343262
+              },
+              "tail": {
+                "text": "Acme",
+                "start": 14,
+                "end": 18,
+                "confidence": 0.6124835014343262
+              }
+            }
+          ]
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.0010991096496582031
+    },
+    {
+      "name": "relations_two",
+      "text": "Steve Jobs founded Apple.",
+      "native": {
+        "relation_extraction": {
+          "founded": [
+            {
+              "head": {
+                "text": "Steve Jobs",
+                "start": 0,
+                "end": 10,
+                "confidence": 0.6887430548667908
+              },
+              "tail": {
+                "text": "Apple",
+                "start": 19,
+                "end": 24,
+                "confidence": 0.6887430548667908
+              }
+            }
+          ]
+        }
+      },
+      "coreml": {
+        "relation_extraction": {
+          "founded": [
+            {
+              "head": {
+                "text": "Steve Jobs",
+                "start": 0,
+                "end": 10,
+                "confidence": 0.7065955400466919
+              },
+              "tail": {
+                "text": "Apple",
+                "start": 19,
+                "end": 24,
+                "confidence": 0.7065955400466919
+              }
+            }
+          ]
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.017852485179901123
+    },
+    {
+      "name": "record_natural",
+      "text": "Alice works at Acme. Bob works at Beta.",
+      "native": {
+        "employment": [
+          {
+            "person": {
+              "text": "Alice",
+              "confidence": 0.9879767298698425,
+              "start": 0,
+              "end": 5
+            },
+            "company": {
+              "text": "Acme",
+              "confidence": 0.8241090774536133,
+              "start": 15,
+              "end": 19
+            }
+          },
+          {
+            "person": {
+              "text": "Bob",
+              "confidence": 0.9651215672492981,
+              "start": 21,
+              "end": 24
+            },
+            "company": {
+              "text": "Beta",
+              "confidence": 0.6678691506385803,
+              "start": 34,
+              "end": 38
+            }
+          }
+        ]
+      },
+      "coreml": {
+        "employment": [
+          {
+            "person": {
+              "text": "Alice",
+              "confidence": 0.987616240978241,
+              "start": 0,
+              "end": 5
+            },
+            "company": {
+              "text": "Acme",
+              "confidence": 0.7892336845397949,
+              "start": 15,
+              "end": 19
+            }
+          },
+          {
+            "person": {
+              "text": "Bob",
+              "confidence": 0.9630224108695984,
+              "start": 21,
+              "end": 24
+            },
+            "company": {
+              "text": "Beta",
+              "confidence": 0.653237521648407,
+              "start": 34,
+              "end": 38
+            }
+          }
+        ]
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.03487539291381836
+    },
+    {
+      "name": "record_latent",
+      "text": "Alice works at Acme. Bob works at Beta.",
+      "native": {
+        "employment": [
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.5839666128158569,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Acme",
+              "confidence": 0.6181439161300659,
+              "start": 15,
+              "end": 19
+            }
+          },
+          {
+            "person": {
+              "text": "Alice",
+              "confidence": 0.9672633409500122,
+              "start": 0,
+              "end": 5
+            },
+            "company": null
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.8805453777313232,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.8966390490531921,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.7147471904754639,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Acme",
+              "confidence": 0.6521790027618408,
+              "start": 15,
+              "end": 19
+            }
+          },
+          {
+            "person": {
+              "text": "Bob",
+              "confidence": 0.5080211162567139,
+              "start": 21,
+              "end": 24
+            },
+            "company": null
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.5336229205131531,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Acme",
+              "confidence": 0.6106622815132141,
+              "start": 15,
+              "end": 19
+            }
+          }
+        ]
+      },
+      "coreml": {
+        "employment": [
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.5487339496612549,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.5954337120056152,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": {
+              "text": "Alice",
+              "confidence": 0.9568765759468079,
+              "start": 0,
+              "end": 5
+            },
+            "company": null
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.8806945085525513,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.8680456876754761,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.6771538853645325,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Acme",
+              "confidence": 0.6240644454956055,
+              "start": 15,
+              "end": 19
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.5099550485610962,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Acme",
+              "confidence": 0.5437113642692566,
+              "start": 15,
+              "end": 19
+            }
+          }
+        ]
+      },
+      "structure_match": false,
+      "maximum_confidence_error": 0.037593305110931396
+    },
+    {
+      "name": "record_anchorless",
+      "text": "Alice works at Acme. Bob works at Beta.",
+      "native": {},
+      "coreml": {},
+      "structure_match": true,
+      "maximum_confidence_error": null
+    },
+    {
+      "name": "attributes",
+      "text": "Alice founded Acme.",
+      "native": {
+        "entities": {
+          "person": [
+            {
+              "text": "Alice",
+              "confidence": 0.9935710430145264,
+              "start": 0,
+              "end": 5,
+              "role": {
+                "label": "founder",
+                "confidence": 0.999847412109375
+              }
+            }
+          ],
+          "organization": [
+            {
+              "text": "Acme",
+              "confidence": 0.9912181496620178,
+              "start": 14,
+              "end": 18,
+              "role": {
+                "label": "founder",
+                "confidence": 0.9899052977561951
+              }
+            }
+          ]
+        }
+      },
+      "coreml": {
+        "entities": {
+          "person": [
+            {
+              "text": "Alice",
+              "confidence": 0.993854820728302,
+              "start": 0,
+              "end": 5,
+              "role": {
+                "label": "founder",
+                "confidence": 0.9998377561569214
+              }
+            }
+          ],
+          "organization": [
+            {
+              "text": "Acme",
+              "confidence": 0.9906960725784302,
+              "start": 14,
+              "end": 18,
+              "role": {
+                "label": "founder",
+                "confidence": 0.9916600584983826
+              }
+            }
+          ]
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.0017547607421875
+    },
+    {
+      "name": "mixed_classification",
+      "text": "Alice founded Acme.",
+      "native": {
+        "entities": {
+          "person": [
+            {
+              "text": "Alice",
+              "confidence": 0.9987186193466187,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "organization": [
+            {
+              "text": "Acme",
+              "confidence": 0.9962791800498962,
+              "start": 14,
+              "end": 18
+            }
+          ]
+        },
+        "sentiment": {
+          "label": "positive",
+          "confidence": 0.9953342080116272
+        }
+      },
+      "coreml": {
+        "entities": {
+          "person": [
+            {
+              "text": "Alice",
+              "confidence": 0.9987550973892212,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "organization": [
+            {
+              "text": "Acme",
+              "confidence": 0.9962051510810852,
+              "start": 14,
+              "end": 18
+            }
+          ]
+        },
+        "sentiment": {
+          "label": "positive",
+          "confidence": 0.9948803186416626
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.0004538893699645996
+    },
+    {
+      "name": "classification_only",
+      "text": "The rocket launched successfully.",
+      "native": {
+        "topic": {
+          "label": "sports",
+          "confidence": 0.5060790777206421
+        }
+      },
+      "coreml": {
+        "topic": {
+          "label": "sports",
+          "confidence": 0.5021564364433289
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.003922641277313232
+    },
+    {
+      "name": "enum_choice",
+      "text": "The item is electronics.",
+      "native": {
+        "product": [
+          {
+            "category": {
+              "text": "electronics",
+              "confidence": 0.9997705817222595
+            }
+          }
+        ]
+      },
+      "coreml": {
+        "product": [
+          {
+            "category": {
+              "text": "electronics",
+              "confidence": 0.9997565150260925
+            }
+          }
+        ]
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 1.4066696166992188e-05
+    },
+    {
+      "name": "es_entities",
+      "text": "María trabaja en Madrid para Telefónica.",
+      "native": {
+        "entities": {
+          "persona": [
+            {
+              "text": "María",
+              "confidence": 0.997144877910614,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "organización": [
+            {
+              "text": "Telefónica",
+              "confidence": 0.9903497695922852,
+              "start": 29,
+              "end": 39
+            }
+          ],
+          "ciudad": [
+            {
+              "text": "Madrid",
+              "confidence": 0.9995064735412598,
+              "start": 17,
+              "end": 23
+            }
+          ]
+        }
+      },
+      "coreml": {
+        "entities": {
+          "persona": [
+            {
+              "text": "María",
+              "confidence": 0.9972207546234131,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "organización": [
+            {
+              "text": "Telefónica",
+              "confidence": 0.9890975952148438,
+              "start": 29,
+              "end": 39
+            }
+          ],
+          "ciudad": [
+            {
+              "text": "Madrid",
+              "confidence": 0.9995102882385254,
+              "start": 17,
+              "end": 23
+            }
+          ]
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.0012521743774414062
+    },
+    {
+      "name": "fr_entities",
+      "text": "Jean Dupont travaille à Paris pour Airbus.",
+      "native": {
+        "entities": {
+          "personne": [
+            {
+              "text": "Jean Dupont",
+              "confidence": 0.9973317384719849,
+              "start": 0,
+              "end": 11
+            }
+          ],
+          "entreprise": [
+            {
+              "text": "Airbus",
+              "confidence": 0.9904603958129883,
+              "start": 35,
+              "end": 41
+            }
+          ],
+          "ville": [
+            {
+              "text": "Paris",
+              "confidence": 0.9991673231124878,
+              "start": 24,
+              "end": 29
+            }
+          ]
+        }
+      },
+      "coreml": {
+        "entities": {
+          "personne": [
+            {
+              "text": "Jean Dupont",
+              "confidence": 0.997285008430481,
+              "start": 0,
+              "end": 11
+            }
+          ],
+          "entreprise": [
+            {
+              "text": "Airbus",
+              "confidence": 0.9899086952209473,
+              "start": 35,
+              "end": 41
+            }
+          ],
+          "ville": [
+            {
+              "text": "Paris",
+              "confidence": 0.9991958737373352,
+              "start": 24,
+              "end": 29
+            }
+          ]
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.0005517005920410156
+    },
+    {
+      "name": "zh_entities",
+      "text": "张伟在北京大学工作。",
+      "native": {
+        "entities": {
+          "人物": [
+            {
+              "text": "张伟在北京大学工作",
+              "confidence": 0.9425729513168335,
+              "start": 0,
+              "end": 9
+            }
+          ],
+          "机构": [],
+          "地点": []
+        }
+      },
+      "coreml": {
+        "entities": {
+          "人物": [
+            {
+              "text": "张伟在北京大学工作",
+              "confidence": 0.9488224983215332,
+              "start": 0,
+              "end": 9
+            }
+          ],
+          "机构": [],
+          "地点": []
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.006249547004699707
+    },
+    {
+      "name": "de_entities",
+      "text": "Angela Merkel besuchte Berlin.",
+      "native": {
+        "entities": {
+          "Person": [
+            {
+              "text": "Angela Merkel",
+              "confidence": 0.9966775178909302,
+              "start": 0,
+              "end": 13
+            }
+          ],
+          "Stadt": [
+            {
+              "text": "Berlin",
+              "confidence": 0.9987296462059021,
+              "start": 23,
+              "end": 29
+            }
+          ]
+        }
+      },
+      "coreml": {
+        "entities": {
+          "Person": [
+            {
+              "text": "Angela Merkel",
+              "confidence": 0.996434211730957,
+              "start": 0,
+              "end": 13
+            }
+          ],
+          "Stadt": [
+            {
+              "text": "Berlin",
+              "confidence": 0.998798131942749,
+              "start": 23,
+              "end": 29
+            }
+          ]
+        }
+      },
+      "structure_match": true,
+      "maximum_confidence_error": 0.00024330615997314453
+    }
+  ]
+}

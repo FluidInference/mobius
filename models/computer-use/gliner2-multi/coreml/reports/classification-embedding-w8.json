@@ -1,0 +1,195 @@
+{
+  "source_revision": "a221b77a8baf4a613b8f8652661d41fa10a5641e",
+  "shape": "L128/K8 classification",
+  "candidate_package": "gliner2_multi_classification_embedding_w8_linear_L128_K8.mlpackage",
+  "weight_sha256": "655460ce8e9420b55130f3b6b976d4797aa197cd14c909aee96967cea24d766e",
+  "compression": {
+    "source": "build/gliner2_multi_classification_fp16_L128_K8.mlpackage",
+    "output": "build/gliner2_multi_classification_embedding_w8_linear_L128_K8.mlpackage",
+    "method": "embedding",
+    "linear_mode": "linear",
+    "granularity": "per_channel",
+    "selected_weights": [
+      "encoder_embeddings_word_embeddings_weight_to_fp16"
+    ],
+    "source_bytes": 576528829,
+    "output_bytes": 385193894,
+    "compression_seconds": 8.913622624997515
+  },
+  "paired_first_manifest_all": {
+    "reference": "build/gliner2_multi_classification_fp16_L128_K8.mlpackage",
+    "candidate": "build/gliner2_multi_classification_embedding_w8_linear_L128_K8.mlpackage",
+    "manifest": "../../gliner2-small/coreml/fixtures/optimization-selected20.jsonl",
+    "compute_units": "all",
+    "processor": "arm",
+    "machine": "arm64",
+    "macos": "27.0",
+    "power_audit_after_run": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35651683)\t54%; charging; 1:28 remaining present: true",
+    "reference_load_ms": 1845.6649580039084,
+    "candidate_load_ms": 9780.855583027005,
+    "warmup_calls_per_model": 1,
+    "timed_order": "alternating reference-first/candidate-first by request",
+    "checked": 11,
+    "choice_agreement": 11,
+    "max_probability_error": 0.009812116622924805,
+    "probability_error_limit": 0.02,
+    "reference_p50_ms": 4.1459170170128345,
+    "candidate_p50_ms": 4.150375025346875,
+    "reference_p95_ms": 163.46729098586366,
+    "candidate_p95_ms": 6.024667003657669,
+    "reference_total_p50_ms": 4.51075000455603,
+    "candidate_total_p50_ms": 4.414833034388721
+  },
+  "paired_first_manifest_cpu_ane": {
+    "reference": "build/gliner2_multi_classification_fp16_L128_K8.mlpackage",
+    "candidate": "build/gliner2_multi_classification_embedding_w8_linear_L128_K8.mlpackage",
+    "manifest": "../../gliner2-small/coreml/fixtures/optimization-selected20.jsonl",
+    "compute_units": "cpu-ane",
+    "processor": "arm",
+    "machine": "arm64",
+    "macos": "27.0",
+    "power_audit_after_run": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35651683)\t57%; charging; 1:29 remaining present: true",
+    "reference_load_ms": 3513.596833043266,
+    "candidate_load_ms": 8090.890416002367,
+    "warmup_calls_per_model": 1,
+    "timed_order": "alternating reference-first/candidate-first by request",
+    "checked": 11,
+    "choice_agreement": 11,
+    "max_probability_error": 0.013671875,
+    "probability_error_limit": 0.02,
+    "reference_p50_ms": 16.67683298001066,
+    "candidate_p50_ms": 8.458416035864502,
+    "reference_p95_ms": 55.540582980029285,
+    "candidate_p95_ms": 24.02945898938924,
+    "reference_total_p50_ms": 20.127543015405536,
+    "candidate_total_p50_ms": 10.100875049829483
+  },
+  "native_selected100": {
+    "model": "fastino/gliner2.5-multi-v1",
+    "revision": "a221b77a8baf4a613b8f8652661d41fa10a5641e",
+    "package": "build/gliner2_multi_classification_embedding_w8_linear_L128_K8.mlpackage",
+    "selected_manifest": "first eligible rows in source suite order; no gold labels used",
+    "counts": {
+      "checked": 100,
+      "too_many_options": 300,
+      "too_long": 31,
+      "duplicate_labels": 0,
+      "mismatches": 1
+    },
+    "maximum_confidence_error": 0.010161519050598145,
+    "mean_confidence_error": 0.001292918026447296,
+    "model_call_p50_ms": 10.690250026527792,
+    "model_call_p95_ms": 13.426374993287027,
+    "failures": [
+      {
+        "suite": "jev.ag_news",
+        "index": 100,
+        "native": {
+          "label": "sports",
+          "confidence": 0.4976130723953247
+        },
+        "coreml": "world news and international politics"
+      }
+    ]
+  },
+  "compute_plan_forced_cpu_ane": {
+    "total_ops": 516,
+    "ane_ops": 496,
+    "cpu_ops": 20,
+    "ane_percent": 96.1,
+    "reasons": [
+      {
+        "reason": "Unsupported tensor data type: int32",
+        "count": 17,
+        "estimated_cpu_runtime_ms": 5.643,
+        "op_types": {
+          "ios17.expand_dims": 5,
+          "ios17.cast": 5,
+          "ios17.add": 2,
+          "select": 2,
+          "ios17.gather": 1,
+          "ios17.mul": 1,
+          "tile": 1
+        },
+        "ops": [
+          "add_0",
+          "select_0",
+          "add_0_1",
+          "select_0_1",
+          "inputs_embeds_cast_fp16",
+          "mask_3",
+          "mask_3_to_fp16",
+          "var_86",
+          "extended_attention_mask",
+          "extended_attention_mask_to_uint16",
+          "var_88_cast_int16_to_int32",
+          "var_89",
+          "attention_mask_1",
+          "var_272",
+          "var_2537",
+          "indices",
+          "indices_to_int16"
+        ]
+      },
+      {
+        "reason": "Unable to resolve operation input \"y\".",
+        "count": 2,
+        "estimated_cpu_runtime_ms": 0.002,
+        "op_types": {
+          "ios17.greater_equal": 2
+        },
+        "ops": [
+          "greater_equal_0",
+          "greater_equal_0_1"
+        ]
+      },
+      {
+        "reason": "ANE not available for this op",
+        "count": 1,
+        "estimated_cpu_runtime_ms": 0,
+        "op_types": {
+          "ios16.constexpr_affine_dequantize": 1
+        },
+        "ops": [
+          "encoder_embeddings_word_embeddings_weight_to_fp16_quantized"
+        ]
+      }
+    ]
+  },
+  "scope": "Selected real classification requests only; no Decision Index or 2048 score; extraction packages are separate.",
+  "paired_selected100_all": {
+    "reference": "build/gliner2_multi_classification_fp16_L128_K8.mlpackage",
+    "candidate": "build/gliner2_multi_classification_embedding_w8_linear_L128_K8.mlpackage",
+    "manifest": "../../laya/coreml/benchmark/suites.jsonl",
+    "compute_units": "all",
+    "processor": "arm",
+    "machine": "arm64",
+    "macos": "27.0",
+    "power_audit_after_run": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35651683)\t57%; charging; 1:29 remaining present: true",
+    "reference_load_ms": 3544.6128330077045,
+    "candidate_load_ms": 9875.835624989122,
+    "warmup_calls_per_model": 1,
+    "timed_order": "alternating reference-first/candidate-first by request",
+    "checked": 100,
+    "choice_agreement": 100,
+    "max_probability_error": 0.019410669803619385,
+    "probability_error_limit": 0.02,
+    "reference_p50_ms": 3.750520496396348,
+    "candidate_p50_ms": 3.736187005415559,
+    "reference_p95_ms": 4.256416985299438,
+    "candidate_p95_ms": 4.230167018249631,
+    "reference_total_p50_ms": 4.283291986212134,
+    "candidate_total_p50_ms": 4.264604998752475
+  },
+  "native_fp16_known_failure": [
+    {
+      "suite": "jev.ag_news",
+      "index": 100,
+      "native": {
+        "label": "sports",
+        "confidence": 0.4976130723953247
+      },
+      "coreml": "world news and international politics"
+    }
+  ]
+}

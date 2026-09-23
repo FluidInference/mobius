@@ -1,0 +1,18 @@
+{
+  "model": "fastino/gliner2.5-multi-v1",
+  "revision": "a221b77a8baf4a613b8f8652661d41fa10a5641e",
+  "package": "build/gliner2_multi_classification_fp32_L128_K8.mlpackage",
+  "selected_manifest": "first eligible rows in source suite order; no gold labels used",
+  "counts": {
+    "checked": 100,
+    "too_many_options": 300,
+    "too_long": 31,
+    "duplicate_labels": 0,
+    "mismatches": 0
+  },
+  "maximum_confidence_error": 8.046627044677734e-06,
+  "mean_confidence_error": 7.531046867370605e-07,
+  "model_call_p50_ms": 11.235417041461915,
+  "model_call_p95_ms": 19.665875006467104,
+  "failures": []
+}

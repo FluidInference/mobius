@@ -1,0 +1,149 @@
+{
+  "source_revision": "1a8bc24e00dc7300b9017c81d63e3dcdabb26596",
+  "shape": "L128/K8 classification",
+  "candidate_package": "gliner2_base_classification_embedding_w8_L128_K8.mlpackage",
+  "weight_sha256": "037f91cb176d31a38bc1795272d99c47531f3ac235b6f4533bab0df9ae4de327",
+  "compression": {
+    "source": "build/gliner2_base_classification_fp16_L128_K8.mlpackage",
+    "output": "build/gliner2_base_classification_embedding_w8_L128_K8.mlpackage",
+    "method": "embedding",
+    "granularity": "per_channel",
+    "selected_weights": [
+      "encoder_embeddings_word_embeddings_weight_to_fp16"
+    ],
+    "source_bytes": 388981604,
+    "output_bytes": 291053994,
+    "compression_seconds": 5.819930917001329
+  },
+  "paired_first_manifest_all": {
+    "reference": "build/gliner2_base_classification_fp16_L128_K8.mlpackage",
+    "candidate": "build/gliner2_base_classification_embedding_w8_L128_K8.mlpackage",
+    "manifest": "../../gliner2-small/coreml/fixtures/optimization-selected20.jsonl",
+    "compute_units": "all",
+    "processor": "arm",
+    "machine": "arm64",
+    "macos": "27.0",
+    "power_audit_after_run": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35651683)\t50%; charging; 1:25 remaining present: true",
+    "reference_load_ms": 2044.181875011418,
+    "candidate_load_ms": 4582.357916980982,
+    "warmup_calls_per_model": 1,
+    "timed_order": "alternating reference-first/candidate-first by request",
+    "checked": 14,
+    "choice_agreement": 14,
+    "max_probability_error": 0.00992196798324585,
+    "probability_error_limit": 0.02,
+    "reference_p50_ms": 3.334374981932342,
+    "candidate_p50_ms": 3.261812496930361,
+    "reference_p95_ms": 9.934750036336482,
+    "candidate_p95_ms": 5.232541996520013,
+    "reference_total_p50_ms": 3.6611664691008627,
+    "candidate_total_p50_ms": 3.6319584760349244
+  },
+  "paired_first_manifest_cpu_ane": {
+    "reference": "build/gliner2_base_classification_fp16_L128_K8.mlpackage",
+    "candidate": "build/gliner2_base_classification_embedding_w8_L128_K8.mlpackage",
+    "manifest": "../../gliner2-small/coreml/fixtures/optimization-selected20.jsonl",
+    "compute_units": "cpu-ane",
+    "processor": "arm",
+    "machine": "arm64",
+    "macos": "27.0",
+    "power_audit_after_run": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35651683)\t51%; charging; 1:33 remaining present: true",
+    "reference_load_ms": 3068.8863749965094,
+    "candidate_load_ms": 5926.175208995119,
+    "warmup_calls_per_model": 1,
+    "timed_order": "alternating reference-first/candidate-first by request",
+    "checked": 14,
+    "choice_agreement": 14,
+    "max_probability_error": 0.0068359375,
+    "probability_error_limit": 0.02,
+    "reference_p50_ms": 7.578062970424071,
+    "candidate_p50_ms": 7.721708010649309,
+    "reference_p95_ms": 8.475541020743549,
+    "candidate_p95_ms": 9.883625025395304,
+    "reference_total_p50_ms": 9.168104501441121,
+    "candidate_total_p50_ms": 9.666354482760653
+  },
+  "native_selected100": {
+    "model": "fastino/gliner2.5-base-v1",
+    "revision": "1a8bc24e00dc7300b9017c81d63e3dcdabb26596",
+    "package": "build/gliner2_base_classification_embedding_w8_L128_K8.mlpackage",
+    "selected_manifest": "first eligible rows in source suite order; no gold labels used",
+    "counts": {
+      "checked": 100,
+      "too_many_options": 300,
+      "too_long": 7,
+      "duplicate_labels": 0,
+      "mismatches": 0
+    },
+    "maximum_confidence_error": 0.013702988624572754,
+    "mean_confidence_error": 0.001015886664390564,
+    "model_call_p50_ms": 10.512874985579401,
+    "model_call_p95_ms": 14.00475000264123,
+    "failures": []
+  },
+  "compute_plan_forced_cpu_ane": {
+    "total_ops": 516,
+    "ane_ops": 496,
+    "cpu_ops": 20,
+    "ane_percent": 96.1,
+    "reasons": [
+      {
+        "reason": "Unsupported tensor data type: int32",
+        "count": 17,
+        "estimated_cpu_runtime_ms": 2.8975,
+        "op_types": {
+          "ios17.expand_dims": 5,
+          "ios17.cast": 5,
+          "ios17.add": 2,
+          "select": 2,
+          "ios17.gather": 1,
+          "ios17.mul": 1,
+          "tile": 1
+        },
+        "ops": [
+          "add_0",
+          "select_0",
+          "add_0_1",
+          "select_0_1",
+          "inputs_embeds_cast_fp16",
+          "mask_3",
+          "mask_3_to_fp16",
+          "var_86",
+          "extended_attention_mask",
+          "extended_attention_mask_to_uint16",
+          "var_88_cast_int16_to_int32",
+          "var_89",
+          "attention_mask_1",
+          "var_272",
+          "var_2537",
+          "indices",
+          "indices_to_int16"
+        ]
+      },
+      {
+        "reason": "Unable to resolve operation input \"y\".",
+        "count": 2,
+        "estimated_cpu_runtime_ms": 0.002,
+        "op_types": {
+          "ios17.greater_equal": 2
+        },
+        "ops": [
+          "greater_equal_0",
+          "greater_equal_0_1"
+        ]
+      },
+      {
+        "reason": "ANE not available for this op",
+        "count": 1,
+        "estimated_cpu_runtime_ms": 0,
+        "op_types": {
+          "ios16.constexpr_affine_dequantize": 1
+        },
+        "ops": [
+          "encoder_embeddings_word_embeddings_weight_to_fp16_quantized"
+        ]
+      }
+    ]
+  },
+  "scope": "Selected real classification requests only; no Decision Index or 2048 score; extraction packages are separate."
+}

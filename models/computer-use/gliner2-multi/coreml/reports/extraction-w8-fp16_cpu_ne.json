@@ -1,0 +1,470 @@
+{
+  "source_revision": "a221b77a8baf4a613b8f8652661d41fa10a5641e",
+  "selected_manifest": "pinned real-text schema fixtures, not a Decision Index score",
+  "feature_package": "gliner2_multi_extraction_features_w8_embedding_linear_fp16_L128_W64_Q8.mlpackage",
+  "precision": "fp16",
+  "compute_units": "cpu_and_neural_engine",
+  "matched": 14,
+  "total": 15,
+  "cases": [
+    {
+      "name": "entities",
+      "structure_match": true,
+      "maximum_confidence_error": 4.106760025024414e-05,
+      "coreml": {
+        "entities": {
+          "person": [
+            {
+              "text": "Alice",
+              "confidence": 0.9971439242362976,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "organization": [
+            {
+              "text": "Acme",
+              "confidence": 0.9936610460281372,
+              "start": 14,
+              "end": 18
+            }
+          ],
+          "location": [
+            {
+              "text": "Toronto",
+              "confidence": 0.9991735816001892,
+              "start": 22,
+              "end": 29
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "entities_multi",
+      "structure_match": true,
+      "maximum_confidence_error": 5.6624412536621094e-05,
+      "coreml": {
+        "entities": {
+          "person": [
+            {
+              "text": "Marie Curie",
+              "confidence": 0.9977656602859497,
+              "start": 0,
+              "end": 11
+            }
+          ],
+          "city": [
+            {
+              "text": "Paris",
+              "confidence": 0.9993040561676025,
+              "start": 45,
+              "end": 50
+            },
+            {
+              "text": "Warsaw",
+              "confidence": 0.998807430267334,
+              "start": 24,
+              "end": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "relations",
+      "structure_match": true,
+      "maximum_confidence_error": 0.003583967685699463,
+      "coreml": {
+        "relation_extraction": {
+          "founded": [
+            {
+              "head": {
+                "text": "Alice",
+                "start": 0,
+                "end": 5,
+                "confidence": 0.6171665787696838
+              },
+              "tail": {
+                "text": "Acme",
+                "start": 14,
+                "end": 18,
+                "confidence": 0.6171665787696838
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "relations_two",
+      "structure_match": true,
+      "maximum_confidence_error": 0.0041626691818237305,
+      "coreml": {
+        "relation_extraction": {
+          "founded": [
+            {
+              "head": {
+                "text": "Steve Jobs",
+                "start": 0,
+                "end": 10,
+                "confidence": 0.684580385684967
+              },
+              "tail": {
+                "text": "Apple",
+                "start": 19,
+                "end": 24,
+                "confidence": 0.684580385684967
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "record_natural",
+      "structure_match": true,
+      "maximum_confidence_error": 0.016394853591918945,
+      "coreml": {
+        "employment": [
+          {
+            "person": {
+              "text": "Alice",
+              "confidence": 0.9884026646614075,
+              "start": 0,
+              "end": 5
+            },
+            "company": {
+              "text": "Acme",
+              "confidence": 0.8344069123268127,
+              "start": 15,
+              "end": 19
+            }
+          },
+          {
+            "person": {
+              "text": "Bob",
+              "confidence": 0.9633687138557434,
+              "start": 21,
+              "end": 24
+            },
+            "company": {
+              "text": "Beta",
+              "confidence": 0.6842640042304993,
+              "start": 34,
+              "end": 38
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "record_latent",
+      "structure_match": false,
+      "maximum_confidence_error": 0.025238752365112305,
+      "coreml": {
+        "employment": [
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.596550703048706,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.6208515167236328,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": {
+              "text": "Alice",
+              "confidence": 0.9655764698982239,
+              "start": 0,
+              "end": 5
+            },
+            "company": null
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.8875949382781982,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.9059898257255554,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.7203682661056519,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Acme",
+              "confidence": 0.6446726322174072,
+              "start": 15,
+              "end": 19
+            }
+          },
+          {
+            "person": {
+              "text": "Bob",
+              "confidence": 0.5009422302246094,
+              "start": 21,
+              "end": 24
+            },
+            "company": {
+              "text": "Beta",
+              "confidence": 0.5094440579414368,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Beta",
+              "confidence": 0.5506979823112488,
+              "start": 34,
+              "end": 38
+            }
+          },
+          {
+            "person": null,
+            "company": {
+              "text": "Acme",
+              "confidence": 0.6359010338783264,
+              "start": 15,
+              "end": 19
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "record_anchorless",
+      "structure_match": true,
+      "maximum_confidence_error": null,
+      "coreml": {}
+    },
+    {
+      "name": "attributes",
+      "structure_match": true,
+      "maximum_confidence_error": 0.0003001689910888672,
+      "coreml": {
+        "entities": {
+          "person": [
+            {
+              "text": "Alice",
+              "confidence": 0.9936610460281372,
+              "start": 0,
+              "end": 5,
+              "role": {
+                "label": "founder",
+                "confidence": 0.9998525381088257
+              }
+            }
+          ],
+          "organization": [
+            {
+              "text": "Acme",
+              "confidence": 0.9911182522773743,
+              "start": 14,
+              "end": 18,
+              "role": {
+                "label": "founder",
+                "confidence": 0.9902054667472839
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "mixed_classification",
+      "structure_match": true,
+      "maximum_confidence_error": 0.00011724233627319336,
+      "coreml": {
+        "entities": {
+          "person": [
+            {
+              "text": "Alice",
+              "confidence": 0.9987744688987732,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "organization": [
+            {
+              "text": "Acme",
+              "confidence": 0.996292769908905,
+              "start": 14,
+              "end": 18
+            }
+          ]
+        },
+        "sentiment": {
+          "label": "positive",
+          "confidence": 0.995216965675354
+        }
+      }
+    },
+    {
+      "name": "classification_only",
+      "structure_match": true,
+      "maximum_confidence_error": 0.011062800884246826,
+      "coreml": {
+        "topic": {
+          "label": "sports",
+          "confidence": 0.49501627683639526
+        }
+      }
+    },
+    {
+      "name": "enum_choice",
+      "structure_match": true,
+      "maximum_confidence_error": 1.0728836059570312e-06,
+      "coreml": {
+        "product": [
+          {
+            "category": {
+              "text": "electronics",
+              "confidence": 0.9997695088386536
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "es_entities",
+      "structure_match": true,
+      "maximum_confidence_error": 0.00017154216766357422,
+      "coreml": {
+        "entities": {
+          "persona": [
+            {
+              "text": "María",
+              "confidence": 0.9971216320991516,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "organización": [
+            {
+              "text": "Telefónica",
+              "confidence": 0.9901782274246216,
+              "start": 29,
+              "end": 39
+            }
+          ],
+          "ciudad": [
+            {
+              "text": "Madrid",
+              "confidence": 0.9994946718215942,
+              "start": 17,
+              "end": 23
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "fr_entities",
+      "structure_match": true,
+      "maximum_confidence_error": 3.17692756652832e-05,
+      "coreml": {
+        "entities": {
+          "personne": [
+            {
+              "text": "Jean Dupont",
+              "confidence": 0.9973061084747314,
+              "start": 0,
+              "end": 11
+            }
+          ],
+          "entreprise": [
+            {
+              "text": "Airbus",
+              "confidence": 0.9904406070709229,
+              "start": 35,
+              "end": 41
+            }
+          ],
+          "ville": [
+            {
+              "text": "Paris",
+              "confidence": 0.9991990923881531,
+              "start": 24,
+              "end": 29
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "zh_entities",
+      "structure_match": true,
+      "maximum_confidence_error": 0.00035566091537475586,
+      "coreml": {
+        "entities": {
+          "人物": [
+            {
+              "text": "张伟在北京大学工作",
+              "confidence": 0.9429286122322083,
+              "start": 0,
+              "end": 9
+            }
+          ],
+          "机构": [],
+          "地点": []
+        }
+      }
+    },
+    {
+      "name": "de_entities",
+      "structure_match": true,
+      "maximum_confidence_error": 3.6716461181640625e-05,
+      "coreml": {
+        "entities": {
+          "Person": [
+            {
+              "text": "Angela Merkel",
+              "confidence": 0.9967142343521118,
+              "start": 0,
+              "end": 13
+            }
+          ],
+          "Stadt": [
+            {
+              "text": "Berlin",
+              "confidence": 0.9987056255340576,
+              "start": 23,
+              "end": 29
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
