@@ -1,12 +1,14 @@
-# Benchmark data — PRELIMINARY
+# Benchmark data
 
-> **PRELIMINARY — NOT FINAL, NOT NVIDIA'S OFFICIAL RESULTS.** Every number below was
-> measured by Fluid Inference on the *early-access preview* checkpoint, on one M5 Pro
-> MacBook, with our own harness. They are working notes from the conversion, not a
-> release benchmark: the public checkpoint may differ, protocols are described per
-> table, and figures will be re-run and finalized after NVIDIA's public release.
-> Treat them as outdated the day the public weights land. NVIDIA's model card is the
-> official source for the model's accuracy.
+> Measured by Fluid Inference on one M5 Pro MacBook with our own harness, against the
+> general-access checkpoint (`Nemotron-3-Diarization.nemo`, sha256 `867c53f5…`) under
+> OpenMDW 1.1. Protocols are stated per table; AMI, AliMeeting and NOTSOFAR1 use the
+> forced-alignment references NVIDIA's card cites
+> ([nttcslab-sp/diar-forced-alignment](https://github.com/nttcslab-sp/diar-forced-alignment)),
+> collar 0. NVIDIA's model card remains the official source for the model's accuracy.
+>
+> Rows still marked *preview* were measured on the earlier early-access checkpoint and
+> have not yet been re-run; they are retained only where no general-access figure exists.
 
 
 ## Card-protocol results (headline)

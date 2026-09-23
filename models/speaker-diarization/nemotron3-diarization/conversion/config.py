@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-NEMO_CHECKPOINT = "/Users/hanweng/Documents/nemotron3-diar-preview/Nemotron-3-Diarization-preview.nemo"
+NEMO_CHECKPOINT = "/Users/hanweng/Documents/nemotron3-diar-preview/Nemotron-3-Diarization.nemo"
 
 SUBSAMPLING = 8
 FEAT_DIM = 128

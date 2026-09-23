@@ -1,26 +1,23 @@
-# Nemotron 3 Diarization preview — CoreML
+# Nemotron 3 Diarization — CoreML
 
-CoreML conversion of [nvidia/Nemotron-3-Diarization-preview](https://huggingface.co/nvidia/Nemotron-3-Diarization-preview)
-(early-access streaming Sortformer successor: 8 speakers, 100M params, 31-layer RoPE
-Transformer encoder, 10 ms output resolution).
+CoreML conversion of [nvidia/Nemotron-3-Diarization](https://huggingface.co/nvidia/Nemotron-3-Diarization)
+(streaming Sortformer successor: 8 speakers, 100M params, 31-layer RoPE Transformer
+encoder, 10 ms output resolution).
 
-> **License.** The preview checkpoint is under the NVIDIA Software and Model Evaluation
-> License. Converted presets are published at
-> [`FluidInference/nemotron-3-diarization-coreml`](https://huggingface.co/FluidInference/nemotron-3-diarization-coreml)
-> with NVIDIA's permission (gated until the public release). `build/` is gitignored.
+> **License.** The checkpoint is released under OpenMDW 1.1, which permits commercial
+> use. Converted presets are published at
+> [`FluidInference/nemotron-3-diarization-coreml`](https://huggingface.co/FluidInference/nemotron-3-diarization-coreml).
+> `build/` is gitignored.
 
-> **PRELIMINARY — NOT FINAL, NOT NVIDIA'S OFFICIAL RESULTS.** Every number below was
-> measured by Fluid Inference on the *early-access preview* checkpoint, on one M5 Pro
-> MacBook, with our own harness. They are working notes from the conversion, not a
-> release benchmark: the public checkpoint may differ, protocols are described per
-> table, and figures will be re-run and finalized after NVIDIA's public release.
-> Treat them as outdated the day the public weights land. NVIDIA's model card is the
+> **Numbers below were measured by Fluid Inference**, on one M5 Pro MacBook, with our
+> own harness, against the general-access checkpoint (`Nemotron-3-Diarization.nemo`,
+> sha256 `867c53f5…`). Protocols are stated per table. NVIDIA's model card remains the
 > official source for the model's accuracy.
 
 
 ## Architecture vs Streaming Sortformer v2
 
-| | v2 (`diar_streaming_sortformer_4spk-v2.1`) | Nemotron 3 preview |
+| | v2 (`diar_streaming_sortformer_4spk-v2.1`) | Nemotron 3 |
 |---|---|---|
 | Speakers | 4 | 8 |
 | Encoder | Fast-Conformer (NEST) + 18-layer Transformer | single 31-layer Transformer, RoPE, FlexAttention |
@@ -47,13 +44,60 @@ NVIDIA's ONNX export does not have; enables 10 ms host output).
 
 spkcache_len = 264 for all variants; left_context = 0.
 
+## Results — general-access checkpoint (2026-09-23)
+
+AMI MHM test, 16 meetings, forced-alignment references
+([nttcslab-sp/diar-forced-alignment](https://github.com/nttcslab-sp/diar-forced-alignment)),
+collar 0, overlap included — NVIDIA's card protocol. M5 Pro, single stream.
+SCA = fraction of meetings whose speaker count is exactly right.
+
+| Preset | Chunk/RC/FIFO | Packed T | Latency | DER | SCA | Wall RTFx | Weights |
+|---|---|---|---|---|---|---|---|
+| `fast128` | 128/4/40 | 436 | 10.56 s | **9.36** | **100.0** | 546x | 190 MB |
+| `offline` | 340/40/40 | 684 | 30.40 s | 9.47 | 87.5 | **904x** | 190 MB |
+| `fast32` | 32/4/40 | 340 | 2.88 s | 9.53 | 93.8 | 179x | 190 MB |
+| `c128-split-w8a8` | 128/4/40 | 436 | 10.56 s | 9.63 | **100.0** | 364x | **95 MB** |
+| `low` | 9/4/264 | 541 | 1.04 s | 9.75 | 75.0 | 31x | 190 MB |
+| `fast32-split-w8a8` | 32/4/40 | 340 | 2.88 s | 9.76 | 75.0 | 185x | **95 MB** |
+| `fast` | 9/4/40 | 317 | 1.04 s | 10.07 | 68.8 | 44x | 190 MB |
+
+NVIDIA's published AMI MHM numbers under the same protocol: 9.25 DER / 87.5 SCA at
+30.4 s, 9.48 / 81.25 at 1.04 s. Our `offline` and `low` land ~0.25 above, consistently
+across presets — that is the fp16 CoreML runtime against their bf16 GPU figures, not a
+conversion defect (single-chunk parity is 1.9e-4; see Verification).
+
+**Window size drives speaker counting, not quantization.** On the 10.24 s window the
+W8A8 split build matches fp16 at 16/16 meetings for 0.27 DER. On the 2.56 s window the
+same quantization costs 18.8 points of counting. Short windows are fragile in fp16 too
+(`low` 75.0, `fast` 68.8 on a 0.72 s window), so this is a window-length effect that
+quantization amplifies, not a quantization artefact.
+
+**`low` vs `fast`** run the same 0.72 s window at the same 1.04 s latency; only the FIFO
+differs (264 vs 40), taking packed T from 317 to 541. That buys 0.32 DER and 6.2 points
+of SCA for roughly a third of the throughput.
+
+### What changed vs the preview checkpoint
+
+The general-access release is a **retrained model**, not a repack: of 359 shared tensors
+**none is bit-identical**, dtype moved fp32 -> bf16, median relative-L2 change is 13.6%,
+and the Sortformer head is effectively re-initialised (`encoder_proj` cos 0.338,
+`subpixel_upsample.bias` 0.224, `first_hidden_to_hidden` 0.362, `learnable_sil_emb`
+0.426). It adds four `sortformer_modules.activity_head.*` tensors behind a new auxiliary
+activity loss — inference-irrelevant (returned only under `return_logits`). Training
+config also moved `BCELoss` -> `BCEWithLogitsLoss`, but `forward_speaker_sigmoids` still
+applies the sigmoid, so host-side 0.5 thresholding is unchanged. Streaming presets are
+identical to the preview's.
+
+Every published artefact was regenerated from it — including `learnable_sil_emb.bin`,
+which changed almost completely (cos 0.426); shipping the old one would have corrupted
+speaker-cache compression silently.
+
 ## Verification (all on M5 Pro, macOS 26.7)
 
-_Preliminary, preview checkpoint — see the note at the top._
-
 - Patched attention (export) vs FlexAttention reference: bit-exact in torch (0.0 diff).
-- Single-chunk CoreML vs torch across cold-start/warm/full/partial states:
-  preds ≤ 1.7e-4, hires ≤ 5e-4 (fp16).
+- Single-chunk CoreML vs torch across cold-start/warm/full/partial states, all seven
+  shipped presets, general-access checkpoint: torch-vs-torch exactly 0.0, CoreML fp16
+  preds ≤ **1.9e-4**, hires ≤ 4.2e-4 (`conversion/verify.py`).
 - Closed-loop 120 s real audio (earnings22), CoreML forward inside NeMo's
   `streaming_update_async` loop vs pure torch: **99.98–99.995% frame agreement**
   (0.5 threshold), mean abs diff ~3e-4, identical active rates — fp16 state feedback
@@ -88,7 +132,7 @@ _Preliminary, preview checkpoint — see the note at the top._
 
 ## Speed push (2026-08-28, mirrors the Nemotron ASR int8/ANE campaign)
 
-_Preliminary, preview checkpoint — see the note at the top._
+_Timings below were measured on the preview checkpoint. The architecture is unchanged, so per-call costs carry over; any DER figures here are superseded by the general-access table above._
 
 The compute profile is unlike the ASR case: 96.9% of ops are already ANE-resident and the
 CPU stragglers cost <0.2 ms, so placement is solved — per-chunk cost is pure compute over
@@ -203,8 +247,8 @@ transformer+head (`packed`/`attn_bias`/`output_mask` inputs). Requires
 | fast32 ANE | 12.5 ms | **11.2 ms** |
 | c192/c256 | ANECCompile FAILS | **compile + run** |
 | c256 throughput | — | 29.1 ms / 20.48 s = **~704x model-only ANE**, 590x wall |
-| W8A8 | evicted to CPU (60 ms) | **works**: 9.7 ms ANE, 95 MB weights; single-chunk 0.5-threshold decisions match fp16 (max prob diff 5e-4); DER +0.12 on 4-meeting spot (PRELIMINARY) |
-| DER (4-meeting spot, PRELIMINARY) | 25.41 (GPU route) | 24.93 (ANE route) — confounds split execution, fp32 host embs, and compute route; full gates + controls pending |
+| W8A8 | evicted to CPU (60 ms) | **works**: 9.7 ms ANE, 95 MB weights; single-chunk 0.5-threshold decisions match fp16 (max prob diff 5e-4). Full-gate cost on the GA checkpoint: +0.27 DER at a 10.24 s window (counting intact), +0.23 DER but −18.8 pts SCA at 2.56 s |
+| DER (4-meeting spot, preview ckpt) | 25.41 (GPU route) | 24.93 (ANE route) — subset spot check, confounded by split execution / fp32 host embs / compute route. Superseded by the full 16-meeting GA table above; retained only as a record of the trial |
 
 Swift closed-loop parity on the 120 s fixture: 99.995% frame agreement vs NeMo torch
 (mean abs prob diff 5e-4 — slightly above the monolithic path's 1e-4 because host
@@ -350,7 +394,7 @@ card numbers because this harness's word-aligned ground truth counts pauses/back
 Key checkpoint facts the port relies on:
 - `use_learnable_sil_emb: true` -> the running silence profile (`mean_sil_emb` /
   `n_sil_frames`) is dead code; compression uses the fixed learned embedding.
-- All preview profiles have `chunk_left_context = 0`.
+- All shipped profiles have `chunk_left_context = 0`.
 - First compression uses FRESH cache-region predictions; later compressions use the
   stored (frozen) predictions — `spkcache_compressed` gates this.
 - 10 ms output: gather `speaker_preds_10ms[(spkcache_len+fifo_len+lc)*8 : +chunk*8]`

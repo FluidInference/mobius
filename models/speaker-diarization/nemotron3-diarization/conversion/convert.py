@@ -1,4 +1,4 @@
-"""Convert Nemotron 3 Diarization preview to CoreML, one mlpackage per latency variant.
+"""Convert Nemotron 3 Diarization to CoreML, one mlpackage per latency variant.
 
 Usage:
     uv run python convert.py --variants low            # single variant
@@ -86,8 +86,8 @@ def convert_variant(model, name: str, v: dict, out_dir: Path):
         convert_to="mlprogram",
     )
     mlmodel.short_description = (
-        f"Nemotron 3 Diarization preview ({name}, latency {(v['chunk_len'] + v['right_context']) * 0.08:.2f}s, "
-        f"8 speakers). Internal evaluation only — NVIDIA eval license, do not redistribute."
+        f"NVIDIA Nemotron 3 Diarization ({name}, latency {(v['chunk_len'] + v['right_context']) * 0.08:.2f}s, "
+        f"8 speakers). Converted from the OpenMDW-1.1 general-access checkpoint."
     )
     out_path = out_dir / f"Nemotron3Diarizer_{name}.mlpackage"
     mlmodel.save(str(out_path))
