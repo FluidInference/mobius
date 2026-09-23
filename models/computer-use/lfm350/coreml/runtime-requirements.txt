@@ -1,0 +1,4 @@
+coremltools==9.0
+transformers==5.16.1
+jsonschema==4.26.0
+numpy>=2.5.3

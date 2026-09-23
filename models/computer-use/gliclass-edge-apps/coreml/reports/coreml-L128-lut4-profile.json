@@ -1,0 +1,91 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-22T14:55:37.114813+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/var/folders/hg/l0263vy543b3r7rfwgxkt_680000gn/T/gliclass_edge_apps_lut4_kmeans_per_tensor_L128_options25.mlmodelc",
+      "model_name": "gliclass_edge_apps_lut4_kmeans_per_tensor_L128_options25",
+      "metadata": {
+        "description": "Application-tuned GLiClass Edge: dynamic single-label decisions; 4-bit weight LUT",
+        "author": "Knowledgator (base); Fluid Inference (application tuning and Core ML conversion)",
+        "license": "Apache-2.0"
+      },
+      "cold_compile_ms": 2255.529,
+      "results": [
+        {
+          "compute_units": "all",
+          "summary": {
+            "cpu_percent": 51.08,
+            "gpu_percent": 0.0,
+            "ane_percent": 48.92
+          },
+          "latency": {
+            "compile_ms": 17.08,
+            "median_ms": 0.912,
+            "mean_ms": 0.922,
+            "min_ms": 0.878,
+            "max_ms": 1.025,
+            "std_ms": 0.033,
+            "iterations": 50
+          }
+        },
+        {
+          "compute_units": "cpu_only",
+          "summary": {
+            "cpu_percent": 100.0,
+            "gpu_percent": 0.0,
+            "ane_percent": 0.0
+          },
+          "latency": {
+            "compile_ms": 0.367,
+            "median_ms": 2.03,
+            "mean_ms": 2.038,
+            "min_ms": 1.99,
+            "max_ms": 2.231,
+            "std_ms": 0.04,
+            "iterations": 50
+          }
+        },
+        {
+          "compute_units": "cpu_and_gpu",
+          "summary": {
+            "cpu_percent": 0.0,
+            "gpu_percent": 100.0,
+            "ane_percent": 0.0
+          },
+          "latency": {
+            "compile_ms": 0.529,
+            "median_ms": 1.52,
+            "mean_ms": 1.658,
+            "min_ms": 1.475,
+            "max_ms": 2.395,
+            "std_ms": 0.272,
+            "iterations": 50
+          }
+        },
+        {
+          "compute_units": "cpu_and_neural_engine",
+          "summary": {
+            "cpu_percent": 51.08,
+            "gpu_percent": 0.0,
+            "ane_percent": 48.92
+          },
+          "latency": {
+            "compile_ms": 15.426,
+            "median_ms": 0.903,
+            "mean_ms": 0.913,
+            "min_ms": 0.87,
+            "max_ms": 1.032,
+            "std_ms": 0.037,
+            "iterations": 50
+          }
+        }
+      ]
+    }
+  ]
+}

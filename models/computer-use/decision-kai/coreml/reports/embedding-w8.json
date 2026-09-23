@@ -1,0 +1,134 @@
+{
+  "source_revision": "7185f514f54b8f93c55998b1e8f9c5cc67f0d029",
+  "scope": "optional L128 typed paths on two pinned native requests each; no Decision Index or 2048 score",
+  "published_paths": {
+    "choice": {
+      "package_bytes": 447981151,
+      "source_bytes": 643804060,
+      "package_sha256": "18b4358b95eb03de1bceda1f0fbf90e45a88e3bd591a84f74f044c33e2af40da",
+      "quantization": {
+        "type": "weight-only linear quantization",
+        "mode": "linear_symmetric",
+        "dtype": "int8",
+        "granularity": "per_channel",
+        "weight_threshold": 2048,
+        "scope": "embedding",
+        "selected_weights": [
+          "embeddings_tok_embeddings_weight_to_fp16"
+        ]
+      },
+      "native_requests": 2,
+      "choice_agreement": true,
+      "max_probability_error": 0.008866436779499054,
+      "max_logit_error": 0.07664191722869873,
+      "case_ids": [
+        "route",
+        "systemone:1"
+      ]
+    },
+    "noul": {
+      "package_bytes": 447981151,
+      "source_bytes": 643804060,
+      "package_sha256": "9990734a066750bd43591194c2fc9d87d879d11bc6627875c6c4611fd6bb12f1",
+      "quantization": {
+        "type": "weight-only linear quantization",
+        "mode": "linear_symmetric",
+        "dtype": "int8",
+        "granularity": "per_channel",
+        "weight_threshold": 2048,
+        "scope": "embedding",
+        "selected_weights": [
+          "embeddings_tok_embeddings_weight_to_fp16"
+        ]
+      },
+      "native_requests": 2,
+      "choice_agreement": true,
+      "max_probability_error": 0.004702463746070862,
+      "max_logit_error": 0.0368649959564209,
+      "case_ids": [
+        "evidence",
+        "systemone:0"
+      ]
+    },
+    "score": {
+      "package_bytes": 447981151,
+      "source_bytes": 643804060,
+      "package_sha256": "56439cb242570769c05fb05ec6adbdee2e170461708d7d7959ea34c170720a7b",
+      "quantization": {
+        "type": "weight-only linear quantization",
+        "mode": "linear_symmetric",
+        "dtype": "int8",
+        "granularity": "per_channel",
+        "weight_threshold": 2048,
+        "scope": "embedding",
+        "selected_weights": [
+          "embeddings_tok_embeddings_weight_to_fp16"
+        ]
+      },
+      "native_requests": 2,
+      "choice_agreement": true,
+      "max_probability_error": 0.00038501620292663574,
+      "max_logit_error": 0.0054732561111450195,
+      "case_ids": [
+        "sentiment",
+        "systemone:2"
+      ]
+    }
+  },
+  "compute_plan_representative": {
+    "path": "choice",
+    "total_ops": 938,
+    "ane_ops": 926,
+    "cpu_ops": 12,
+    "reasons": [
+      [
+        "Unsupported tensor data type: int32",
+        9
+      ],
+      [
+        "Unable to resolve operation input \"y\".",
+        2
+      ],
+      [
+        "ANE not available for this op",
+        1
+      ]
+    ]
+  },
+  "selected_request_timing": {
+    "power_audit": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35651683)\t93%; charging; 0:28 remaining present: true",
+    "run_order": "FP16 then W8; reverse W8 then FP16",
+    "path": "choice",
+    "timings": {
+      "fp16-ac": {
+        "full_request_p50_ms": 4.408042,
+        "full_request_p95_ms": 5.048375,
+        "load_ms": 5155.205958,
+        "iterations": 10,
+        "warmup": 2
+      },
+      "embedding-w8-ac": {
+        "full_request_p50_ms": 4.085688,
+        "full_request_p95_ms": 4.440958,
+        "load_ms": 10851.6185,
+        "iterations": 10,
+        "warmup": 2
+      },
+      "embedding-w8-ac-reverse": {
+        "full_request_p50_ms": 4.327667,
+        "full_request_p95_ms": 4.801291,
+        "load_ms": 11469.824292,
+        "iterations": 10,
+        "warmup": 2
+      },
+      "fp16-ac-reverse": {
+        "full_request_p50_ms": 4.3708545,
+        "full_request_p95_ms": 5.241709,
+        "load_ms": 5409.69425,
+        "iterations": 10,
+        "warmup": 2
+      }
+    },
+    "conclusion": "size option; ten calls on two fixtures do not establish a speed gain"
+  }
+}

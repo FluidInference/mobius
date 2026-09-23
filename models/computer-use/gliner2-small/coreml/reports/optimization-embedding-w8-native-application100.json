@@ -1,0 +1,18 @@
+{
+  "model": "fastino/gliner2.5-small-v1",
+  "revision": "7e6f537f10337497069276892a5ef435028252ce",
+  "package": "build/gliner2_small_classification_embedding_w8_L128_K8.mlpackage",
+  "selected_manifest": "first eligible rows in source suite order; no gold labels used",
+  "counts": {
+    "checked": 100,
+    "too_many_options": 300,
+    "too_long": 7,
+    "duplicate_labels": 0,
+    "mismatches": 0
+  },
+  "maximum_confidence_error": 0.01684504747390747,
+  "mean_confidence_error": 0.001827487051486969,
+  "model_call_p50_ms": 8.228541992139071,
+  "model_call_p95_ms": 11.051417037378997,
+  "failures": []
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "score",
+  "source_repo": "llm-semantic-router/Decision-1.0-Lex-0.6B",
+  "source_revision": "ee8e74d912fca8328a353c11d174b44da3f91781",
+  "shape": {
+    "batch": 1,
+    "tokens": 128,
+    "candidates": 3
+  },
+  "request_count": 2,
+  "max_abs_logit_error": 0.006317615509033203,
+  "max_abs_probability_error": 0.0004659295082092285,
+  "choice_agreement": true,
+  "rows": [
+    {
+      "record_id": "sentiment",
+      "valid_candidates": 3,
+      "max_abs_logit_error": 0.0039357393980026245,
+      "max_abs_probability_error": 0.0004659295082092285,
+      "same_choice": true
+    },
+    {
+      "record_id": "systemone:2",
+      "valid_candidates": 3,
+      "max_abs_logit_error": 0.006317615509033203,
+      "max_abs_probability_error": 0.0004414021968841553,
+      "same_choice": true
+    }
+  ]
+}

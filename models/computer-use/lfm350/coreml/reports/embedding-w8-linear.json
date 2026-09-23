@@ -1,0 +1,99 @@
+{
+  "source_revision": "deb589d803d141cabd158ef55f6617b128529f36",
+  "package": "lfm350_rlcd_embedding_w8_linear_L256_B8_V16.mlpackage",
+  "package_files_sha256": {
+    "Data/com.apple.CoreML/model.mlmodel": "3d5a909406b7cad3dabc15e63241e7559a1265dcb289215cdee8ab5e9aa7d9c3",
+    "Data/com.apple.CoreML/weights/weight.bin": "8e2b8ab4bdfad653bc9c206f2251cb3938b78709e87eb5858986e82418d34589",
+    "Manifest.json": "d181293fe763a074e873432b75a6ee4a93ccd1f8dff39326055f23fe51ebbac1"
+  },
+  "compression": {
+    "source": "build/lfm350_rlcd_fp16_L256_B8_V16.mlpackage",
+    "output": "build/lfm350_rlcd_embedding_w8_linear_L256_B8_V16.mlpackage",
+    "selected_weights": [
+      "model_embed_tokens_weight_to_fp16"
+    ],
+    "linear_mode": "linear",
+    "source_bytes": 709563326,
+    "output_bytes": 642651900,
+    "compression_seconds": 8.031415125005879
+  },
+  "native_selected9": {
+    "case_ids": [
+      "support-1",
+      "support-2",
+      "support-3",
+      "support-4",
+      "sentiment-1",
+      "sentiment-2",
+      "sentiment-3",
+      "sentiment-4",
+      "routing-1"
+    ],
+    "same_selected_values": true,
+    "max_log_likelihood_error": 0.2912712097167969
+  },
+  "symmetric_candidate_rejected": {
+    "same_selected_values": false,
+    "changed_case_ids": [
+      "support-1"
+    ],
+    "max_log_likelihood_error": 0.3003387451171875
+  },
+  "forced_cpu_ane_rejected": {
+    "same_selected_values": true,
+    "max_log_likelihood_error": 45402.764015197754
+  },
+  "paired_selected3": {
+    "reference": "build/lfm350_rlcd_fp16_L256_B8_V16.mlpackage",
+    "candidate": "build/lfm350_rlcd_embedding_w8_linear_L256_B8_V16.mlpackage",
+    "selected_case_ids": [
+      "support-1",
+      "support-2",
+      "support-3"
+    ],
+    "protocol": "first three upstream cases, five repetitions, alternating model order, warmup once per model",
+    "macos": "27.0",
+    "power": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35651683)\t70%; charging; 1:12 remaining present: true",
+    "max_paired_score_difference": 0.25,
+    "timing": {
+      "reference": {
+        "prepare_ms": {
+          "p50_ms": 0.9692080202512443,
+          "p95_ms": 4.012000048533082
+        },
+        "model_ms": {
+          "p50_ms": 64.48400003137067,
+          "p95_ms": 949.0198339917697
+        },
+        "total_ms": {
+          "p50_ms": 65.43641601456329,
+          "p95_ms": 952.4242919869721
+        }
+      },
+      "candidate": {
+        "prepare_ms": {
+          "p50_ms": 0.9622919606044888,
+          "p95_ms": 1.1863749823532999
+        },
+        "model_ms": {
+          "p50_ms": 63.58537496998906,
+          "p95_ms": 72.49620801303536
+        },
+        "total_ms": {
+          "p50_ms": 64.5162919536233,
+          "p95_ms": 73.4585000318475
+        }
+      }
+    }
+  },
+  "scope": "Local experimental W8 size variant; fails the existing 0.1 release score-error gate and forced CPU+ANE parity. No package is published.",
+  "release_gate": {
+    "max_log_likelihood_error": 0.1,
+    "candidate_error": 0.2912712097167969,
+    "passed": false
+  },
+  "block32_attempt": {
+    "result": "Core ML Tools rejected per-block W8 because the package deployment target is iOS 17 and per-block quantization requires iOS 18",
+    "package_published": false
+  }
+}

@@ -1,0 +1,23 @@
+[project]
+name = "nanojev-coreml"
+version = "0.1.0"
+description = "Pinned NanoJev Core ML conversion"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "coremltools==9.0",
+    "huggingface-hub>=1.0",
+    "numpy>=2.5.3",
+    "safetensors>=0.7",
+    "torch==2.7.0",
+    "transformers>=4.51,<6",
+]
+[dependency-groups]
+dev = ["pytest>=9.1", "ruff>=0.13"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+[tool.ruff.lint]
+select = ["E", "F", "I"]

@@ -1,0 +1,36 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-22T22:11:43.738199+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/Users/hanweng/Documents/mobius-ane-kev-jeff/tools/decision-coreml-profile/build/compiled/JeffDecision-L128-FP16.mlmodelc",
+      "model_name": "JeffDecision-L128-FP16",
+      "metadata": {},
+      "cold_compile_ms": 6849.627,
+      "results": [
+        {
+          "compute_units": "all",
+          "summary": {
+            "cpu_percent": 0.0,
+            "gpu_percent": 100.0,
+            "ane_percent": 0.0
+          },
+          "latency": {
+            "compile_ms": 44.165,
+            "median_ms": 8.993,
+            "mean_ms": 9.089,
+            "min_ms": 8.808,
+            "max_ms": 9.467,
+            "std_ms": 0.277,
+            "iterations": 3
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "source": "verdict_fp16_L128_candidates25.mlpackage",
+  "package": "verdict_e8_L128_candidates25.mlpackage",
+  "embedding_weights": [
+    "embeddings_tok_embeddings_weight_to_fp16"
+  ],
+  "source_bytes": 303210832,
+  "package_bytes": 264679130,
+  "seconds": 4.638494957995135,
+  "coremltools": "9.0",
+  "package_files_sha256": {
+    "Manifest.json": "75800d6266c5927f46f86f9b0af8c93366d4060c858f5e8d7148201b974ef86f",
+    "Data/com.apple.CoreML/model.mlmodel": "000f774575eba4bd8c43e33ba30e5ed12b302814f8f4d77355816b6c5a86161a",
+    "Data/com.apple.CoreML/weights/weight.bin": "c432399ef77ff9f114fa252ef51a27ce6a06c2c4d388c2ab6b478f696325dc0c"
+  },
+  "parity_verified": false
+}

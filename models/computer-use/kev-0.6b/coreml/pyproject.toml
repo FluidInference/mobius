@@ -1,0 +1,25 @@
+[project]
+name = "kev-0-6b-coreml"
+version = "0.1.0"
+description = "Pinned Kev 0.6B Core ML conversion and parity verification"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "coremltools==9.0",
+    "kev @ git+https://github.com/jaredpalmer/kev.git@90990a5fac2995b9faa3190f7d437e84f2067768",
+    "numpy>=2.5.3",
+    "torch==2.7.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=9.1", "ruff>=0.13"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

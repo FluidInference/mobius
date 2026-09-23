@@ -1,0 +1,67 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-22T22:02:46.080135+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/var/folders/hg/l0263vy543b3r7rfwgxkt_680000gn/T/verdict_e8_L128_candidates25.mlmodelc",
+      "model_name": "verdict_e8_L128_candidates25",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 915,
+        "ane_ops": 906,
+        "gpu_ops": 0,
+        "cpu_ops": 9,
+        "ane_percent": 99.0,
+        "reasons": [
+          {
+            "reason": "Unsupported tensor data type: int32",
+            "count": 6,
+            "estimated_cpu_runtime_ms": 1.1405,
+            "op_types": {
+              "ios17.add": 2,
+              "select": 2,
+              "ios17.cast": 1,
+              "ios17.gather": 1
+            },
+            "ops": [
+              "attention_mask_to_fp16",
+              "add_0",
+              "select_0",
+              "add_0_1",
+              "select_0_1",
+              "input_3_cast_fp16"
+            ]
+          },
+          {
+            "reason": "Unable to resolve operation input \"y\".",
+            "count": 2,
+            "estimated_cpu_runtime_ms": 0.002,
+            "op_types": {
+              "ios17.greater_equal": 2
+            },
+            "ops": [
+              "greater_equal_0",
+              "greater_equal_0_1"
+            ]
+          },
+          {
+            "reason": "ANE not available for this op",
+            "count": 1,
+            "estimated_cpu_runtime_ms": 0,
+            "op_types": {
+              "ios16.constexpr_affine_dequantize": 1
+            },
+            "ops": [
+              "embeddings_tok_embeddings_weight_to_fp16_quantized"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

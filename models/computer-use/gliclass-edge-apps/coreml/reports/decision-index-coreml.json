@@ -1,0 +1,292 @@
+{
+  "model": "GLiClass Edge apps v2 Core ML",
+  "base_model": "knowledgator/gliclass-edge-v3.0",
+  "parameters": 32705154,
+  "hardware": "Apple M5 Pro, 24 GB RAM, macOS 27.0",
+  "date": "2026-09-22",
+  "decision_index_kit": {
+    "repository": "https://github.com/apolinario/decision-index",
+    "commit": "52a698928a9ae5bdf16b75687c903871db29c6e5",
+    "panel_id": "core25-observed-protocol-v1"
+  },
+  "protocol": {
+    "scope": "all 19 static headline benchmarks plus folded ChessBench",
+    "headline_requests": 77165,
+    "source": "rebuilt from the evaluation kit pinned upstream sources because multimodalart/decision-index-suite returned 404",
+    "exclusions": "official excluded-questions.json; sha256 331df32d4b719c7db43214d0e5d85859d39c3b2eb7d0b3812214cce150155e81",
+    "limits": {
+      "tokens": 512,
+      "options": 25
+    },
+    "truncation": false,
+    "unsupported_scoring": "wrong",
+    "tracker_submission_complete": false,
+    "tracker_submission_note": "The unavailable 132,422-request bundle also contains 18 display-only static benchmarks. They do not enter the headline index, but the official kit marks this headline-only run incomplete."
+  },
+  "result": {
+    "decision_index": 19.27,
+    "balanced_skill": 2.1,
+    "breadth_skill": 1.95,
+    "coverage": 0.5496,
+    "counts": {
+      "ok": 49354,
+      "unsupported": 27811
+    },
+    "request_latency_ms": {
+      "median": 2.0,
+      "p95": 9.1,
+      "mean": 6.4
+    },
+    "elapsed_seconds": 546.6,
+    "areas": [
+      {
+        "id": "knowledge",
+        "label": "Knowledge & Reasoning",
+        "raw": 0.2713,
+        "skill": 0.0186,
+        "coverage": 0.8522,
+        "pending": 0.0,
+        "n": 6,
+        "benchmarks": [
+          24,
+          25,
+          30,
+          43,
+          44,
+          31
+        ]
+      },
+      {
+        "id": "language",
+        "label": "Language Understanding",
+        "raw": 0.2102,
+        "skill": 0.0349,
+        "coverage": 0.6721,
+        "pending": 0.0,
+        "n": 3,
+        "benchmarks": [
+          11,
+          40,
+          41
+        ]
+      },
+      {
+        "id": "retrieval",
+        "label": "Retrieval & Classification",
+        "raw": 0.0611,
+        "skill": 0.0,
+        "coverage": 0.3992,
+        "pending": 0.0,
+        "n": 2,
+        "benchmarks": [
+          36,
+          37
+        ]
+      },
+      {
+        "id": "tools",
+        "label": "Tools & Automation",
+        "raw": 0.1316,
+        "skill": 0.0515,
+        "coverage": 0.2229,
+        "pending": 0.0,
+        "n": 3,
+        "benchmarks": [
+          1,
+          2,
+          6
+        ]
+      },
+      {
+        "id": "arts",
+        "label": "Arts & Human Judgment",
+        "raw": 0.2893,
+        "skill": 0.0,
+        "coverage": 0.6016,
+        "pending": 0.0,
+        "n": 5,
+        "benchmarks": [
+          20,
+          21,
+          22,
+          23,
+          50
+        ]
+      }
+    ]
+  },
+  "comparison": {
+    "laya_tracker_decision_index": 16.39,
+    "absolute_gain": 2.88,
+    "relative_gain_percent": 17.57,
+    "laya_tracker_coverage": 0.3872,
+    "model_profile_ms": {
+      "L128": {
+        "gliclass": 0.843,
+        "laya_optimized_e8": 3.6
+      },
+      "L256": {
+        "gliclass": 1.673,
+        "laya_optimized_e8": 5.8
+      },
+      "L512": {
+        "gliclass": 2.008,
+        "laya_optimized_e8": 9.1
+      }
+    }
+  },
+  "benchmarks": {
+    "1": {
+      "score": 0.8612,
+      "requests": 1694,
+      "answered": 735,
+      "unsupported": 959,
+      "errors": 0,
+      "median_ms": 4.2
+    },
+    "2": {
+      "score": 0.0894,
+      "requests": 7704,
+      "answered": 1809,
+      "unsupported": 5895,
+      "errors": 0,
+      "median_ms": 92.4
+    },
+    "6": {
+      "score": null,
+      "requests": 10000,
+      "answered": 0,
+      "unsupported": 10000,
+      "errors": 0,
+      "median_ms": null
+    },
+    "11": {
+      "score": 0.0541,
+      "requests": 123,
+      "answered": 2,
+      "unsupported": 121,
+      "errors": 0,
+      "median_ms": 274.5
+    },
+    "20": {
+      "score": 0.4848,
+      "requests": 5000,
+      "answered": 5000,
+      "unsupported": 0,
+      "errors": 0,
+      "median_ms": 2.0
+    },
+    "21": {
+      "score": 0.4844,
+      "requests": 2628,
+      "answered": 2628,
+      "unsupported": 0,
+      "errors": 0,
+      "median_ms": 0.9
+    },
+    "22": {
+      "score": null,
+      "requests": 2000,
+      "answered": 0,
+      "unsupported": 2000,
+      "errors": 0,
+      "median_ms": null
+    },
+    "23": {
+      "score": 0.4742,
+      "requests": 5000,
+      "answered": 5000,
+      "unsupported": 0,
+      "errors": 0,
+      "median_ms": 3.7
+    },
+    "24": {
+      "score": 0.2731,
+      "requests": 14033,
+      "answered": 13945,
+      "unsupported": 88,
+      "errors": 0,
+      "median_ms": 1.0
+    },
+    "25": {
+      "score": 0.2188,
+      "requests": 196,
+      "answered": 192,
+      "unsupported": 4,
+      "errors": 0,
+      "median_ms": 2.4
+    },
+    "30": {
+      "score": 0.188,
+      "requests": 2638,
+      "answered": 2638,
+      "unsupported": 0,
+      "errors": 0,
+      "median_ms": 2.0
+    },
+    "31": {
+      "score": 0.3008,
+      "requests": 5000,
+      "answered": 708,
+      "unsupported": 4292,
+      "errors": 0,
+      "median_ms": 4.0
+    },
+    "36": {
+      "score": 0.019,
+      "requests": 1297,
+      "answered": 169,
+      "unsupported": 1128,
+      "errors": 0,
+      "median_ms": 105.0
+    },
+    "37": {
+      "score": 0.2019,
+      "requests": 5000,
+      "answered": 3340,
+      "unsupported": 1660,
+      "errors": 0,
+      "median_ms": 2.9
+    },
+    "40": {
+      "score": 0.2504,
+      "requests": 4600,
+      "answered": 4600,
+      "unsupported": 0,
+      "errors": 0,
+      "median_ms": 0.9
+    },
+    "41": {
+      "score": 0.3793,
+      "requests": 3006,
+      "answered": 3006,
+      "unsupported": 0,
+      "errors": 0,
+      "median_ms": 2.1
+    },
+    "43": {
+      "score": 0.4077,
+      "requests": 570,
+      "answered": 569,
+      "unsupported": 1,
+      "errors": 0,
+      "median_ms": 2.0
+    },
+    "44": {
+      "score": 0.502,
+      "requests": 5000,
+      "answered": 5000,
+      "unsupported": 0,
+      "errors": 0,
+      "median_ms": 1.7
+    },
+    "50": {
+      "score": 0.5385,
+      "requests": 1676,
+      "answered": 13,
+      "unsupported": 1663,
+      "errors": 0,
+      "median_ms": 9.2
+    }
+  }
+}

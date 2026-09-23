@@ -1,0 +1,37 @@
+{
+  "source_model": "fastino/gliner2.5-small-v1",
+  "source_revision": "7e6f537f10337497069276892a5ef435028252ce",
+  "package": "build/gliner2_small_classification_fp16_L128_K8.mlpackage",
+  "package_bytes": 151542752,
+  "native_total_parameters": 73881879,
+  "exported_parameters": 70944385,
+  "wrapper_max_logit_error": 4.76837158203125e-07,
+  "coremltools": "9.0",
+  "torch": "2.7.0",
+  "cases": [
+    {
+      "text": "The rocket launched successfully.",
+      "native_label": "science",
+      "coreml_label": "science",
+      "native_confidence": 0.9989821314811707,
+      "coreml_confidence": 0.9989795088768005,
+      "absolute_confidence_error": 2.6226043701171875e-06
+    },
+    {
+      "text": "The team won the football championship.",
+      "native_label": "sports",
+      "coreml_label": "sports",
+      "native_confidence": 0.9999417066574097,
+      "coreml_confidence": 0.9999417066574097,
+      "absolute_confidence_error": 0.0
+    },
+    {
+      "text": "The budget was approved by parliament.",
+      "native_label": "politics",
+      "coreml_label": "politics",
+      "native_confidence": 0.9999653100967407,
+      "coreml_confidence": 0.9999654293060303,
+      "absolute_confidence_error": 1.1920928955078125e-07
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "suite_file": "selected-rows.jsonl.gz",
+  "suite_sha256": "340c61073530a7095b147ce1a4b3c36fb57983d051f431e1cdfba25521e17d93",
+  "selection_protocol": "First two eligible L128 requests per family in suite order; no gold labels used",
+  "chip": "arm",
+  "macos": "27.0",
+  "packages": {
+    "fp16": "verdict_fp16_L128_candidates25.mlpackage",
+    "candidate": "verdict_e8_L128_candidates25.mlpackage"
+  },
+  "requests": 12,
+  "selection_agreements": 12,
+  "abstention_agreements": 12,
+  "worst_calibrated_probability_error": 0.010422733099342052,
+  "timing": {
+    "fp16": {
+      "p50_request_ms": 3.6369164881762117,
+      "p95_request_ms": 3.8802080118330196
+    },
+    "candidate": {
+      "p50_request_ms": 3.626708028605208,
+      "p95_request_ms": 3.8041170017095283
+    }
+  },
+  "rows": [
+    {
+      "id": "Humicroedit:test:14007-588",
+      "family": "Humicroedit",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.0010869226811999755
+    },
+    {
+      "id": "Humicroedit:test:2170-12284",
+      "family": "Humicroedit",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.0028831417981201035
+    },
+    {
+      "id": "MMLU:test:6188",
+      "family": "MMLU",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.0015813330548591908
+    },
+    {
+      "id": "MMLU:test:8782",
+      "family": "MMLU",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.00629760719457334
+    },
+    {
+      "id": "GPQA-Diamond:test:169",
+      "family": "GPQA-Diamond",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.010422733099342052
+    },
+    {
+      "id": "GPQA-Diamond:test:79",
+      "family": "GPQA-Diamond",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.004574157467902906
+    },
+    {
+      "id": "GSM8K-10:test:1104",
+      "family": "GSM8K-10",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.0015680227687657478
+    },
+    {
+      "id": "GSM8K-4:test:639",
+      "family": "GSM8K-4",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.004105928371750167
+    },
+    {
+      "id": "GSM8K-4:test:872",
+      "family": "GSM8K-4",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.004441883111316103
+    },
+    {
+      "id": "iSarcasmEval-A-Ar:test:590",
+      "family": "iSarcasmEval-A-Ar",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.004126428997516862
+    },
+    {
+      "id": "iSarcasmEval-A-Ar:test:595",
+      "family": "iSarcasmEval-A-Ar",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.0022375505012838803
+    },
+    {
+      "id": "iSarcasmEval-A-En:test:245",
+      "family": "iSarcasmEval-A-En",
+      "selection_agrees": true,
+      "abstention_agrees": true,
+      "max_calibrated_probability_error": 0.0018545945629521443
+    }
+  ],
+  "passed": true,
+  "package_files_sha256": {
+    "fp16": {
+      "Manifest.json": "fc5d31df174a9f450bfb9ba406307c379c30fabba5cad38fcaf8717b806c69a8",
+      "Data/com.apple.CoreML/model.mlmodel": "6cc079930a63c1069a7a2c259f4c086879981021047767f2bb4d68b6d1f02b00",
+      "Data/com.apple.CoreML/weights/weight.bin": "a982e14147982df9abb99a3637075a0193835c6b99edc396a52c1a43c2a4854a"
+    },
+    "candidate": {
+      "Manifest.json": "75800d6266c5927f46f86f9b0af8c93366d4060c858f5e8d7148201b974ef86f",
+      "Data/com.apple.CoreML/model.mlmodel": "000f774575eba4bd8c43e33ba30e5ed12b302814f8f4d77355816b6c5a86161a",
+      "Data/com.apple.CoreML/weights/weight.bin": "c432399ef77ff9f114fa252ef51a27ce6a06c2c4d388c2ab6b478f696325dc0c"
+    }
+  },
+  "selected_manifest": [
+    {
+      "id": "Humicroedit:test:14007-588",
+      "family": "Humicroedit"
+    },
+    {
+      "id": "Humicroedit:test:2170-12284",
+      "family": "Humicroedit"
+    },
+    {
+      "id": "MMLU:test:6188",
+      "family": "MMLU"
+    },
+    {
+      "id": "MMLU:test:8782",
+      "family": "MMLU"
+    },
+    {
+      "id": "GPQA-Diamond:test:169",
+      "family": "GPQA-Diamond"
+    },
+    {
+      "id": "GPQA-Diamond:test:79",
+      "family": "GPQA-Diamond"
+    },
+    {
+      "id": "GSM8K-10:test:1104",
+      "family": "GSM8K-10"
+    },
+    {
+      "id": "GSM8K-4:test:639",
+      "family": "GSM8K-4"
+    },
+    {
+      "id": "GSM8K-4:test:872",
+      "family": "GSM8K-4"
+    },
+    {
+      "id": "iSarcasmEval-A-Ar:test:590",
+      "family": "iSarcasmEval-A-Ar"
+    },
+    {
+      "id": "iSarcasmEval-A-Ar:test:595",
+      "family": "iSarcasmEval-A-Ar"
+    },
+    {
+      "id": "iSarcasmEval-A-En:test:245",
+      "family": "iSarcasmEval-A-En"
+    }
+  ],
+  "power_audit_after_run": "Now drawing from Battery Power; InternalBattery 59% discharging at 2026-09-22 22:08:47 UTC (after timing runs)",
+  "package_hashes_verified": true
+}

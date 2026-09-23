@@ -1,0 +1,70 @@
+{
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-22T22:11:13.072364+00:00"
+  },
+  "models": [
+    {
+      "model_path": "/Users/hanweng/Documents/mobius-ane-kev-jeff/tools/decision-coreml-profile/build/compiled/JeffDecision-L128-FP16.mlmodelc",
+      "model_name": "JeffDecision-L128-FP16",
+      "fallback": {
+        "compute_units": "cpu_and_neural_engine",
+        "total_ops": 992,
+        "ane_ops": 973,
+        "gpu_ops": 0,
+        "cpu_ops": 19,
+        "ane_percent": 98.1,
+        "reasons": [
+          {
+            "reason": "Unsupported tensor data type: int32",
+            "count": 18,
+            "estimated_cpu_runtime_ms": 3.8588,
+            "op_types": {
+              "ios18.expand_dims": 6,
+              "ios18.cast": 6,
+              "tile": 2,
+              "ios18.add": 1,
+              "select": 1,
+              "ios18.gather": 1,
+              "ios18.mul": 1
+            },
+            "ops": [
+              "add_0",
+              "select_0",
+              "input_1_cast_fp16",
+              "mask",
+              "mask_to_fp16",
+              "var_111",
+              "extended_attention_mask",
+              "extended_attention_mask_to_uint16",
+              "var_113_cast_int16_to_int32",
+              "var_114",
+              "attention_mask_3",
+              "attention_mask_5",
+              "var_4819",
+              "parent_index",
+              "parent_index_to_int16",
+              "var_4835",
+              "child_index",
+              "child_index_to_uint16"
+            ]
+          },
+          {
+            "reason": "Unable to resolve operation input \"y\".",
+            "count": 1,
+            "estimated_cpu_runtime_ms": 0.001,
+            "op_types": {
+              "ios18.greater_equal": 1
+            },
+            "ops": [
+              "greater_equal_0"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

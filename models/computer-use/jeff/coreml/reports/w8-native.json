@@ -1,0 +1,77 @@
+[
+  {
+    "name": "billing",
+    "labels": [
+      "billing: invoice or payment issue",
+      "support: technical product issue"
+    ],
+    "native_logits": [
+      10.187458038330078,
+      -6.71131706237793
+    ],
+    "coreml_logits": [
+      10.1640625,
+      -6.76953125
+    ],
+    "max_logit_error": 0.05821418762207031,
+    "top_label_agreement": true,
+    "coreml_wall_ms": 591.8338329647668
+  },
+  {
+    "name": "technical",
+    "labels": [
+      "billing: invoice or payment issue",
+      "support: technical product issue"
+    ],
+    "native_logits": [
+      -12.322779655456543,
+      13.379047393798828
+    ],
+    "coreml_logits": [
+      -12.34375,
+      13.3125
+    ],
+    "max_logit_error": 0.06654739379882812,
+    "top_label_agreement": true,
+    "coreml_wall_ms": 18.682791967876256
+  },
+  {
+    "name": "three_way",
+    "labels": [
+      "schedule: appointment request",
+      "billing: payment issue",
+      "support: technical issue"
+    ],
+    "native_logits": [
+      5.41853141784668,
+      -12.076669692993164,
+      -9.080745697021484
+    ],
+    "coreml_logits": [
+      5.2890625,
+      -12.0,
+      -9.0234375
+    ],
+    "max_logit_error": 0.1294689178466797,
+    "top_label_agreement": true,
+    "coreml_wall_ms": 18.921707989647985
+  },
+  {
+    "name": "boolean",
+    "labels": [
+      "yes",
+      "no"
+    ],
+    "native_logits": [
+      1.0098832845687866,
+      -1.0589547157287598
+    ],
+    "coreml_logits": [
+      1.0498046875,
+      -1.123046875
+    ],
+    "max_logit_error": 0.06409215927124023,
+    "top_label_agreement": true,
+    "coreml_wall_ms": 9.147749980911613
+  }
+]

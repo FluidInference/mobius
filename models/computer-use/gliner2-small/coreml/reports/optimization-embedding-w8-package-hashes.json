@@ -1,0 +1,20 @@
+{
+  "package": "gliner2_small_classification_embedding_w8_L128_K8.mlpackage",
+  "package_bytes": 102771476,
+  "source_fp16_package_bytes": 151542752,
+  "coremltools": "9.0",
+  "files": {
+    "Data/com.apple.CoreML/model.mlmodel": {
+      "bytes": 597355,
+      "sha256": "b56af2cdc4863696b205caba6b1aea4efcee70e5040c31daf09ec8f8eaadc6ab"
+    },
+    "Data/com.apple.CoreML/weights/weight.bin": {
+      "bytes": 102173504,
+      "sha256": "0bb3f77dff1b85fac4ad8d1ea309eac23d30a626ad08a5f20fbe064ec12d9189"
+    },
+    "Manifest.json": {
+      "bytes": 617,
+      "sha256": "c3036b354640b9ec5cb8e899706a5e1238ab55916ee6733ca8cfcb09aae754d7"
+    }
+  }
+}

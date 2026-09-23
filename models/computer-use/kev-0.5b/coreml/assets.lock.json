@@ -1,0 +1,14 @@
+{
+  "checkpoint": {
+    "repo": "jaredpalmer/kev-0.5b",
+    "revision": "9ce2fd39db3a397c89733f94af948e3d1fdfffcd"
+  },
+  "base": {
+    "repo": "Qwen/Qwen2.5-0.5B",
+    "revision": "060db6499f32faf8b98477b0a26969ef7d8b9987"
+  },
+  "upstream_code": {
+    "repo": "https://github.com/jaredpalmer/kev.git",
+    "revision": "90990a5fac2995b9faa3190f7d437e84f2067768"
+  }
+}

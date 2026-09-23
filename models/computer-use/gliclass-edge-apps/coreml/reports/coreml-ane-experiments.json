@@ -1,0 +1,213 @@
+{
+  "date": "2026-09-22",
+  "machine": "Apple M5 Pro, 24 GB, macOS 27.0",
+  "shape": {
+    "length": 128,
+    "max_options": 25
+  },
+  "variants": {
+    "baseline": {
+      "inputs": [
+        "input_ids:int32",
+        "attention_mask:int32",
+        "class_marker_map:float32"
+      ],
+      "profile": {
+        "compile_ms": 32.489,
+        "median_ms": 0.84,
+        "mean_ms": 0.976,
+        "min_ms": 0.799,
+        "max_ms": 4.506,
+        "std_ms": 0.434,
+        "iterations": 200
+      },
+      "placement": {
+        "total_ops": 437,
+        "ane_ops": 432,
+        "cpu_ops": 5,
+        "ane_percent": 98.9,
+        "reasons": [
+          {
+            "reason": "Unsupported tensor data type: int32",
+            "count": 4,
+            "estimated_cpu_runtime_ms": 0.5707,
+            "op_types": {
+              "ios17.cast": 1,
+              "ios17.add": 1,
+              "select": 1,
+              "ios17.gather": 1
+            },
+            "ops": [
+              "attention_mask_to_fp16",
+              "add_0",
+              "select_0",
+              "input_3_cast_fp16"
+            ]
+          },
+          {
+            "reason": "Unable to resolve operation input \"y\".",
+            "count": 1,
+            "estimated_cpu_runtime_ms": 0.001,
+            "op_types": {
+              "ios17.greater_equal": 1
+            },
+            "ops": [
+              "greater_equal_0"
+            ]
+          }
+        ]
+      }
+    },
+    "float_mask": {
+      "inputs": [
+        "input_ids:int32",
+        "attention_bias:float32",
+        "class_marker_map:float32"
+      ],
+      "profile": {
+        "compile_ms": 12.676,
+        "median_ms": 0.816,
+        "mean_ms": 0.819,
+        "min_ms": 0.788,
+        "max_ms": 0.919,
+        "std_ms": 0.021,
+        "iterations": 100
+      },
+      "placement": {
+        "total_ops": 434,
+        "ane_ops": 430,
+        "cpu_ops": 4,
+        "ane_percent": 99.1,
+        "reasons": [
+          {
+            "reason": "Unsupported tensor data type: int32",
+            "count": 3,
+            "estimated_cpu_runtime_ms": 0.5697,
+            "op_types": {
+              "ios17.add": 1,
+              "select": 1,
+              "ios17.gather": 1
+            },
+            "ops": [
+              "add_0",
+              "select_0",
+              "input_3_cast_fp16"
+            ]
+          },
+          {
+            "reason": "Unable to resolve operation input \"y\".",
+            "count": 1,
+            "estimated_cpu_runtime_ms": 0.001,
+            "op_types": {
+              "ios17.greater_equal": 1
+            },
+            "ops": [
+              "greater_equal_0"
+            ]
+          }
+        ]
+      }
+    },
+    "preembedded": {
+      "inputs": [
+        "input_embeddings:float32",
+        "attention_bias:float32",
+        "class_marker_map:float32"
+      ],
+      "profile": {
+        "compile_ms": 12.322,
+        "median_ms": 0.807,
+        "mean_ms": 0.81,
+        "min_ms": 0.773,
+        "max_ms": 0.89,
+        "std_ms": 0.019,
+        "iterations": 100
+      },
+      "placement": {
+        "total_ops": 431,
+        "ane_ops": 431,
+        "cpu_ops": 0,
+        "ane_percent": 100.0,
+        "reasons": []
+      }
+    },
+    "preembedded_io16": {
+      "inputs": [
+        "input_embeddings:float16",
+        "attention_bias:float16",
+        "class_marker_map:float16"
+      ],
+      "profile": {
+        "compile_ms": 12.394,
+        "median_ms": 0.811,
+        "mean_ms": 0.82,
+        "min_ms": 0.768,
+        "max_ms": 0.91,
+        "std_ms": 0.03,
+        "iterations": 100
+      },
+      "placement": {
+        "total_ops": 426,
+        "ane_ops": 426,
+        "cpu_ops": 0,
+        "ane_percent": 100.0,
+        "reasons": []
+      }
+    }
+  },
+  "application_parity": {
+    "supported_rows": 3899,
+    "variants": {
+      "float_mask": {
+        "argmax_agreement": 1.0,
+        "mean_logit_absolute_error": 0.0,
+        "max_logit_absolute_error": 0.0
+      },
+      "preembedded": {
+        "argmax_agreement": 0.9992305719415234,
+        "mean_logit_absolute_error": 0.003490578558932008,
+        "max_logit_absolute_error": 0.10546875
+      }
+    }
+  },
+  "interleaved_end_to_end_python": {
+    "method": "2,000 randomized-order calls per variant, NumPy host embedding gather included",
+    "trials": [
+      {
+        "baseline": {
+          "median_ms": 0.735792,
+          "mean_ms": 0.783237645,
+          "p95_ms": 0.997666
+        },
+        "float_mask": {
+          "median_ms": 0.7382085,
+          "mean_ms": 0.8647089895,
+          "p95_ms": 1.009542
+        },
+        "preembedded": {
+          "median_ms": 0.7533125,
+          "mean_ms": 0.782099173,
+          "p95_ms": 0.960792
+        }
+      },
+      {
+        "baseline": {
+          "median_ms": 0.717625,
+          "mean_ms": 0.7690974075,
+          "p95_ms": 0.903958
+        },
+        "float_mask": {
+          "median_ms": 0.721896,
+          "mean_ms": 0.7693074685,
+          "p95_ms": 0.910625
+        },
+        "preembedded": {
+          "median_ms": 0.732333,
+          "mean_ms": 0.748837757,
+          "p95_ms": 0.796833
+        }
+      }
+    ]
+  },
+  "conclusion": "Keep float-mask as an optional exact-parity experiment. Reject host-preembedded as the default: it reaches 100% ANE but increases median end-to-end latency and requires an external embedding table."
+}

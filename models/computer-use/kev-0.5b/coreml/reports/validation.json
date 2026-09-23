@@ -1,0 +1,10 @@
+{
+  "selected_requests": 23,
+  "evaluated": 19,
+  "capacity_skipped": 4,
+  "argmax_agreement": 19,
+  "max_probability_error": 0.002068,
+  "python_predict_p50_ms": 18.01,
+  "python_predict_p95_ms": 22.3,
+  "source": "real fixtures plus first two rows per application suite, 2026-09-22 rerun"
+}

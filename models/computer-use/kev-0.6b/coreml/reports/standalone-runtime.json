@@ -1,0 +1,72 @@
+{
+  "tokenizer_repo": "FluidInference/kev-0.6b-coreml",
+  "tokenizer_revision": "03d97ac596ac64ec5e3671c7a5972c15eedb575a",
+  "config_repo": "jaredpalmer/kev-0.6b",
+  "config_revision": "dece6dba8d43f0f7ded45e9f5b9df12474d90843",
+  "offline": true,
+  "native_weights_loaded": false,
+  "source_fixtures": "verify.py fixtures 0, 1, and 3 without labels or src",
+  "checks": [
+    {
+      "variant": "fp16",
+      "kind": "choice",
+      "model": "kev-latest",
+      "answers": {
+        "q": {
+          "type": "choice",
+          "choice": "risky",
+          "confidence": 0.98,
+          "probabilities": {
+            "clean": 0.01,
+            "risky": 0.99
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 45,
+        "output_tokens": 48
+      }
+    },
+    {
+      "variant": "fp16",
+      "kind": "noul",
+      "model": "kev-latest",
+      "answers": {
+        "q": {
+          "type": "noul",
+          "noul": 0.76
+        }
+      },
+      "usage": {
+        "input_tokens": 35,
+        "output_tokens": 20
+      }
+    },
+    {
+      "variant": "w8",
+      "kind": "score",
+      "model": "kev-latest",
+      "answers": {
+        "q": {
+          "type": "score",
+          "score": 1.07,
+          "legend": {
+            "0": "Low impact",
+            "1": "Moderate impact",
+            "2": "High impact"
+          },
+          "probabilities": {
+            "0": 0.06,
+            "1": 0.8,
+            "2": 0.13
+          },
+          "confidence": 0.9
+        }
+      },
+      "usage": {
+        "input_tokens": 35,
+        "output_tokens": 81
+      }
+    }
+  ]
+}

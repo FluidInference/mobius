@@ -1,0 +1,47 @@
+{
+  "engine": "decision-kai",
+  "source_repo": "llm-semantic-router/Decision-1.0-Kai-0.6B",
+  "source_revision": "7185f514f54b8f93c55998b1e8f9c5cc67f0d029",
+  "historical_revision_verified": false,
+  "license_metadata": "apache-2.0",
+  "selected_weight_files": [
+    {
+      "path": "native/choice_encoder.safetensors",
+      "bytes": 441337216,
+      "sha256": "bb520f1e36035862b3f9b564a24647e46704b8993d8d2f8659b3470252299792"
+    },
+    {
+      "path": "native/decision_heads.safetensors",
+      "bytes": 177241884,
+      "sha256": "730fa21bac15e7ba7e239658ef521aa74948dd7d0a9dc417c4aef7d36c084267"
+    },
+    {
+      "path": "native/encoder/model.safetensors",
+      "bytes": 1227771752,
+      "sha256": "4c95e05a3abf24ec93ce209e22915c1e3f2199b4c9d9c76e88f27dee6a2123c3"
+    },
+    {
+      "path": "native/score_encoder.safetensors",
+      "bytes": 441337080,
+      "sha256": "400d1d9cd29452b50250a96ab121df31ca40c5cfbabe94ebe634ab96aec79678"
+    }
+  ],
+  "full_params_from_current_config_or_metadata": 571909635,
+  "native_manifest_sha256": "c1bf07ab1c4c3fa1f819256d3de858d1ed87869bdfa663553280d7e78b88bee4",
+  "pre_tracker_snapshot_revision": "52c81702356711b43b1a68e4aca8c98c84230155",
+  "pre_tracker_snapshot_native_manifest_same_as_current": true,
+  "pre_tracker_snapshot_checked_files": [
+    "native/MANIFEST.json",
+    "native/decision_config.json",
+    "native/model.py",
+    "native/choice_encoder.safetensors",
+    "native/decision_heads.safetensors",
+    "native/encoder/model.safetensors",
+    "native/score_encoder.safetensors"
+  ],
+  "tracker_renderer_and_served_checkpoint_unverified": true,
+  "system_one_fixture_sha256": "4f76e98c1216972a59ee1e44485f088b7c22283160a527d5259561b41b1acd03",
+  "system_one_renderer_sha256": "6efabe0b64cd30f4d6d24bc9d9a9da9a65251357d497134302ff0b9ee3834e02",
+  "decision_fixture_sha256": "d4b89583ccc9aa35e74dd28c46e01884103ea7a0fa018de8c34d4f88a94287f1",
+  "system_one_rows_sha256": "e56dc6a39f35fc43fcb772036734d69dd3b4febe4a830a59f2a6eeab71e82bb3"
+}
