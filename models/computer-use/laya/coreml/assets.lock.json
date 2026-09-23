@@ -1,0 +1,21 @@
+{
+  "repo": "convaiinnovations/laya",
+  "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982",
+  "upstream_code": "https://github.com/NandhaKishorM/laya",
+  "license": "Apache-2.0",
+  "variants": {
+    "multilingual": {
+      "subfolder": "multilingual",
+      "encoder": "jhu-clsp/mmBERT-base",
+      "parameters_note": "322M: 22-layer mmBERT-base + 2 head layers + scorer + action head",
+      "files": {
+        "model.safetensors": "9d628fd971b700382ac6f65920a86f149777b2e748e0c955fb3b19695aa8f204",
+        "rl_agent_config.json": "25061739243b617ad88d1219ba6f8a9c86c5881ca28df024fa2d9b3b2fcc30c6",
+        "encoder/config.json": "83f6916d13ef0f556ac461f28308dc2bffa7ebeadee8ec9e2db5812020ea5bb4",
+        "tokenizer/tokenizer.json": "609d8f4c067cd3950f88594c5a802616cea245823836ef5848ee4fc40aab5b6f",
+        "tokenizer/tokenizer_config.json": "6c6b2d8e3c84ce0e671c129cd6b374b235d6f9863042a5836358d00a89bbb5a1"
+      },
+      "tokenizer_config": "tokenizer/tokenizer_config.json"
+    }
+  }
+}
