@@ -1,0 +1,28 @@
+{
+  "model": "fastino/gliner2.5-multi-v1",
+  "revision": "a221b77a8baf4a613b8f8652661d41fa10a5641e",
+  "package": "build/gliner2_multi_classification_fp16_L128_K8.mlpackage",
+  "selected_manifest": "first eligible rows in source suite order; no gold labels used",
+  "counts": {
+    "checked": 300,
+    "too_many_options": 300,
+    "too_long": 75,
+    "duplicate_labels": 0,
+    "mismatches": 1
+  },
+  "maximum_confidence_error": 0.00924915075302124,
+  "mean_confidence_error": 0.0009126420815785726,
+  "model_call_p50_ms": 8.808917016722262,
+  "model_call_p95_ms": 13.894708012230694,
+  "failures": [
+    {
+      "suite": "jev.ag_news",
+      "index": 100,
+      "native": {
+        "label": "sports",
+        "confidence": 0.4976130723953247
+      },
+      "coreml": "world news and international politics"
+    }
+  ]
+}

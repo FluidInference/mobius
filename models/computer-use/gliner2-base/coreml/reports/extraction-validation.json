@@ -1,0 +1,89 @@
+{
+  "purpose": "selected local Core ML extraction parity and latency, not a Decision Index score",
+  "source_model": "fastino/gliner2.5-base-v1",
+  "source_revision": "1a8bc24e00dc7300b9017c81d63e3dcdabb26596",
+  "runtime": {
+    "coremltools": "9.0",
+    "gliner2": "2.0.0",
+    "mac": "M5 Pro, 24 GB, macOS 27.0"
+  },
+  "bucket": "L128/W64/Q8/K8; candidate C192, explicit S64, relation R4/P256, records F8/C192/I1536",
+  "fixtures": {
+    "fp32": {
+      "matched_structures": 11,
+      "fixture_count": 11,
+      "failed_cases": [],
+      "maximum_confidence_error": 1.1324882507324219e-06
+    },
+    "fp16": {
+      "matched_structures": 11,
+      "fixture_count": 11,
+      "failed_cases": [],
+      "maximum_confidence_error": 0.16530340909957886
+    }
+  },
+  "latency": {
+    "fp16_all": {
+      "p50_ms": 8.981791470432654,
+      "p95_ms": 16.104084032122046,
+      "warmup": 20,
+      "iterations": 200,
+      "shape": "L128/W64/Q8/C192"
+    },
+    "fp16_cpu_and_gpu": {
+      "p50_ms": 8.275083499029279,
+      "p95_ms": 13.875250006094575,
+      "warmup": 20,
+      "iterations": 200,
+      "shape": "L128/W64/Q8/C192"
+    },
+    "fp16_cpu_and_neural_engine": {
+      "p50_ms": 10.255208006128669,
+      "p95_ms": 14.293458021711558,
+      "warmup": 20,
+      "iterations": 200,
+      "shape": "L128/W64/Q8/C192"
+    },
+    "fp16_cpu_only": {
+      "p50_ms": 21.39054099097848,
+      "p95_ms": 33.066082978621125,
+      "warmup": 20,
+      "iterations": 200,
+      "shape": "L128/W64/Q8/C192"
+    },
+    "fp32_all": {
+      "p50_ms": 9.933604509569705,
+      "p95_ms": 10.4843340232037,
+      "warmup": 20,
+      "iterations": 200,
+      "shape": "L128/W64/Q8/C192"
+    }
+  },
+  "feature_compute_plan": {
+    "fp16-cpu_and_neural_engine": {
+      "cpu_percent": 46.87,
+      "gpu_percent": 0.0,
+      "ane_percent": 53.13
+    }
+  },
+  "compression": {
+    "attempt": "LUT8 per-tensor k-means on FP16 feature package using scikit-learn 1.5.1",
+    "source_bytes": 390998448,
+    "compressed_bytes": 196248206,
+    "matched_structures": 10,
+    "fixture_count": 11,
+    "failed_cases": [
+      "record_latent"
+    ],
+    "release": false
+  },
+  "published_extraction_precisions": [
+    "fp16",
+    "fp32"
+  ],
+  "limitations": [
+    "fixed shape; requests over capacity fail",
+    "small selected real-text fixtures only; no full Decision Index score",
+    "current pinned source revision is not established as the historical evaluation checkpoint"
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "purpose": "selected local Core ML extraction parity and latency, not a Decision Index score",
+  "source_model": "fastino/gliner2.5-multi-v1",
+  "source_revision": "a221b77a8baf4a613b8f8652661d41fa10a5641e",
+  "runtime": {
+    "coremltools": "9.0",
+    "gliner2": "2.0.0",
+    "mac": "M5 Pro, 24 GB, macOS 27.0"
+  },
+  "bucket": "L128/W64/Q8/K8; candidate C192, explicit S64, relation R4/P256, records F8/C192/I1536",
+  "fixtures": {
+    "fp32": {
+      "matched_structures": 15,
+      "fixture_count": 15,
+      "failed_cases": [],
+      "maximum_confidence_error": 4.887580871582031e-06
+    },
+    "fp16": {
+      "matched_structures": 14,
+      "fixture_count": 15,
+      "failed_cases": [
+        "record_latent"
+      ],
+      "maximum_confidence_error": 0.037593305110931396
+    }
+  },
+  "latency": {
+    "fp32_all": {
+      "p50_ms": 10.563604475464672,
+      "p95_ms": 12.338125030510128,
+      "warmup": 20,
+      "iterations": 200,
+      "shape": "L128/W64/Q8/C192"
+    },
+    "fp32_cpu_and_gpu": {
+      "p50_ms": 10.022375005064532,
+      "p95_ms": 10.64095797482878,
+      "warmup": 20,
+      "iterations": 200,
+      "shape": "L128/W64/Q8/C192"
+    },
+    "fp32_cpu_and_neural_engine": {
+      "p50_ms": 36.07562501565553,
+      "p95_ms": 52.11695801699534,
+      "warmup": 20,
+      "iterations": 200,
+      "shape": "L128/W64/Q8/C192"
+    },
+    "fp32_cpu_only": {
+      "p50_ms": 36.11889548483305,
+      "p95_ms": 62.56379099795595,
+      "warmup": 20,
+      "iterations": 200,
+      "shape": "L128/W64/Q8/C192"
+    }
+  },
+  "feature_compute_plan": {
+    "fp32-all": {
+      "cpu_percent": 0.0,
+      "gpu_percent": 100.0,
+      "ane_percent": 0.0
+    },
+    "fp32-cpu_and_neural_engine": {
+      "cpu_percent": 100.0,
+      "gpu_percent": 0.0,
+      "ane_percent": 0.0
+    }
+  },
+  "compression": {
+    "attempt": "LUT8 per-tensor k-means on FP32 feature package using scikit-learn 1.5.1",
+    "result": "stopped after two minutes with zero graph operations processed and repeated k-means divide-by-zero/overflow warnings",
+    "release": false
+  },
+  "published_extraction_precisions": [
+    "fp32"
+  ],
+  "limitations": [
+    "fixed shape; requests over capacity fail",
+    "small selected real-text fixtures only; no full Decision Index score",
+    "current pinned source revision is not established as the historical evaluation checkpoint"
+  ]
+}

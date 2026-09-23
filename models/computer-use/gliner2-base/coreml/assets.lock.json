@@ -1,0 +1,26 @@
+{
+  "source": "fastino/gliner2.5-base-v1",
+  "revision": "1a8bc24e00dc7300b9017c81d63e3dcdabb26596",
+  "files": {
+    "config.json": {
+      "size": 3150,
+      "sha256": "0eb92d00584d613aab32b2178f84a85176b62c87ae3689ce9084e83f6eba64d1"
+    },
+    "encoder_config/config.json": {
+      "size": 857,
+      "sha256": "d36a845b9f25dcaf1ec45a1c4bdf65ea4ac20596537e14530ec9f660a63aeca4"
+    },
+    "model.safetensors": {
+      "size": 774366564,
+      "sha256": "7274094de2e0c2a37a386f55fc4e23061a954da5bd7a335e7dfe56f2743c277a"
+    },
+    "tokenizer.json": {
+      "size": 8341713,
+      "sha256": "cbc8ae6037812709c9c26f2a160f8dc48b0440bcb79c8141804259ae2d6adac3"
+    },
+    "tokenizer_config.json": {
+      "size": 645,
+      "sha256": "0bf3ea0873234bd9bfdd3853c440395009ac6365a925b91654daed5396d655e1"
+    }
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "source_model": "fastino/gliner2.5-multi-v1",
+  "source_revision": "a221b77a8baf4a613b8f8652661d41fa10a5641e",
+  "coremltools": "9.0",
+  "quantization_scope": "trained word embedding only; int8 per-channel weight-only; activations and remaining weights retain exported precision",
+  "package_files": [
+    {
+      "package": "gliner2_multi_extraction_features_w8_embedding_linear_fp16_L128_W64_Q8.mlpackage",
+      "bytes": 387210787,
+      "files": [
+        {
+          "path": "gliner2_multi_extraction_features_w8_embedding_linear_fp16_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 1046842,
+          "sha256": "25c0251fbbd22083eb156897c4dd075315f18326f6c2e5107463882175db8f5a"
+        },
+        {
+          "path": "gliner2_multi_extraction_features_w8_embedding_linear_fp16_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 386163328,
+          "sha256": "04ec00914fcd74e7a6d6f827832621e8d4d8a317eb96a934c0ef93aa46955533"
+        },
+        {
+          "path": "gliner2_multi_extraction_features_w8_embedding_linear_fp16_L128_W64_Q8.mlpackage/Manifest.json",
+          "bytes": 617,
+          "sha256": "dbefec606e8e299c14baff9fd7aac685d4ee879bc16d8dd5a5c28d9a9cb5ffa1"
+        }
+      ],
+      "source_package": "gliner2_multi_extraction_features_fp16_L128_W64_Q8.mlpackage",
+      "source_bytes": 578545680,
+      "method": "linear int8 per-channel weight-only"
+    },
+    {
+      "package": "gliner2_multi_extraction_features_w8_embedding_fp32_L128_W64_Q8.mlpackage",
+      "bytes": 580986690,
+      "files": [
+        {
+          "path": "gliner2_multi_extraction_features_w8_embedding_fp32_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 1013141,
+          "sha256": "1be2896ededfe989d059b021a4b3213ce4156e9756bbe85b78e867d11a0ac65c"
+        },
+        {
+          "path": "gliner2_multi_extraction_features_w8_embedding_fp32_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 579972932,
+          "sha256": "ddef5f5a28b195ce0e9ab5e4cd6f83b42e2e71c151d6d74583754e80807c8ebc"
+        },
+        {
+          "path": "gliner2_multi_extraction_features_w8_embedding_fp32_L128_W64_Q8.mlpackage/Manifest.json",
+          "bytes": 617,
+          "sha256": "e2aa08eaba4755b4bea21e0ca6a85bd7fa4f451a1988e697e0c637587a717df6"
+        }
+      ],
+      "source_package": "gliner2_multi_extraction_features_fp32_L128_W64_Q8.mlpackage",
+      "source_bytes": 1155993314,
+      "method": "linear_symmetric int8 per-channel weight-only"
+    },
+    {
+      "package": "gliner2_multi_explicit_fp16_W64_Q8_S64.mlpackage",
+      "bytes": 614019,
+      "files": [
+        {
+          "path": "gliner2_multi_explicit_fp16_W64_Q8_S64.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 61018,
+          "sha256": "3d31baa0cbe241bbdb574c313447ccd47856c8fd9aa10ee3f7b7887f62050a30"
+        },
+        {
+          "path": "gliner2_multi_explicit_fp16_W64_Q8_S64.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 552384,
+          "sha256": "17e65c6985fd285abe612bf07fb1b282206c3070d1e229fd0bbf60285e21c169"
+        },
+        {
+          "path": "gliner2_multi_explicit_fp16_W64_Q8_S64.mlpackage/Manifest.json",
+          "bytes": 617,
+          "sha256": "a74bccb2e4a3be79751a07a57be2a9889daeff63b885fab6a76b2a228d6ddee1"
+        }
+      ]
+    },
+    {
+      "package": "gliner2_multi_extraction_scorer_fp16_L128_W64_Q8.mlpackage",
+      "bytes": 903163,
+      "files": [
+        {
+          "path": "gliner2_multi_extraction_scorer_fp16_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 42962,
+          "sha256": "7989c66ba0d0282b5359243006fdf007e3d996eb7ae8e7f9b10a46f8f0fd7add"
+        },
+        {
+          "path": "gliner2_multi_extraction_scorer_fp16_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 859584,
+          "sha256": "524efc11ca823cad23cc996d34cc7b3baec66bd2bccdf5d3047f83998e77e234"
+        },
+        {
+          "path": "gliner2_multi_extraction_scorer_fp16_L128_W64_Q8.mlpackage/Manifest.json",
+          "bytes": 617,
+          "sha256": "8ff09daba5da43d903677168e46189e716589ab7276d6d6c50240d457fc1deb0"
+        }
+      ]
+    },
+    {
+      "package": "gliner2_multi_record_anchorless_fp16_F8_C192_I1536.mlpackage",
+      "bytes": 1443024,
+      "files": [
+        {
+          "path": "gliner2_multi_record_anchorless_fp16_F8_C192_I1536.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 6567,
+          "sha256": "1d84a0d996a5579fa1bb29da6ce2eec94e4c9e9c8da2265069f52dbc81aeec2c"
+        },
+        {
+          "path": "gliner2_multi_record_anchorless_fp16_F8_C192_I1536.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 1435840,
+          "sha256": "2bd01de3587d6e381bfc7809b59d3555c7a06f2afad05ccfb4d02e6aec6c20e2"
+        },
+        {
+          "path": "gliner2_multi_record_anchorless_fp16_F8_C192_I1536.mlpackage/Manifest.json",
+          "bytes": 617,
+          "sha256": "4786e7ee95dd64ab0d6423f1c562d14aad65f4fbe46e49c5db67aa313721fcd9"
+        }
+      ]
+    },
+    {
+      "package": "gliner2_multi_record_assignment_fp16_F8_C192_I1536.mlpackage",
+      "bytes": 605167,
+      "files": [
+        {
+          "path": "gliner2_multi_record_assignment_fp16_F8_C192_I1536.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 9990,
+          "sha256": "e55b74b80ff515dca663ba4495d4cb0e1dfae0793f7cb85703b13dd6e237f3f8"
+        },
+        {
+          "path": "gliner2_multi_record_assignment_fp16_F8_C192_I1536.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 594560,
+          "sha256": "4c3714dc4a90bd2cba48e355d0d37b4bec91c9e98c1d9015b107820d8809bf8c"
+        },
+        {
+          "path": "gliner2_multi_record_assignment_fp16_F8_C192_I1536.mlpackage/Manifest.json",
+          "bytes": 617,
+          "sha256": "83eefaaca5795ec7b668aa647d8c7e262038f3c87e2fa0c79fbdcdb7e0a582d7"
+        }
+      ]
+    },
+    {
+      "package": "gliner2_multi_relation_fp16_W64_R4_P256.mlpackage",
+      "bytes": 11848716,
+      "files": [
+        {
+          "path": "gliner2_multi_relation_fp16_W64_R4_P256.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 32419,
+          "sha256": "97177682648258bb98feea081f1159d8eaf90d083c8bb32b7149db253240ac3d"
+        },
+        {
+          "path": "gliner2_multi_relation_fp16_W64_R4_P256.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 11815680,
+          "sha256": "d335d72da6645bad3de8c53f0f1cabaf872a1f8c59b24b4b88cd03fc30922e08"
+        },
+        {
+          "path": "gliner2_multi_relation_fp16_W64_R4_P256.mlpackage/Manifest.json",
+          "bytes": 617,
+          "sha256": "2fe43de8a585b5370f4e10abeffa9e4b361a198560428f091f32b2878ba6e2c9"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+{
+  "purpose": "Selected real-text extraction parity and local latency; not a Decision Index score",
+  "source_revision": "1a8bc24e00dc7300b9017c81d63e3dcdabb26596",
+  "hardware": {
+    "device": "arm64",
+    "chip": "Apple M5 Pro",
+    "ram": "24GB",
+    "os_version": "macOS 27.0",
+    "timestamp": "2026-09-22T23:17:16.156585+00:00"
+  },
+  "quantization": "int8 per-channel weight-only word embedding; other weights and activations retain exported precision",
+  "native_parity": {
+    "fp16_cpu_ne": {
+      "report": "reports/extraction-w8-fp16_cpu_ne.json",
+      "matched": 11,
+      "total": 11,
+      "maximum_confidence_error_on_matching_cases": 0.16603904962539673,
+      "mismatched_fixtures": []
+    },
+    "fp32_all": {
+      "report": "reports/extraction-w8-fp32_all.json",
+      "matched": 11,
+      "total": 11,
+      "maximum_confidence_error_on_matching_cases": 0.003341853618621826,
+      "mismatched_fixtures": []
+    }
+  },
+  "fp16_w8_feature_private_profile": {
+    "compute_units": "cpu_and_neural_engine",
+    "total_ops": 652,
+    "ane_ops": 620,
+    "gpu_ops": 0,
+    "cpu_ops": 32,
+    "ane_percent": 95.1,
+    "reasons": [
+      {
+        "reason": "Unsupported tensor data type: int32",
+        "count": 26,
+        "estimated_cpu_runtime_ms": 2.9117,
+        "op_types": {
+          "ios17.expand_dims": 8,
+          "ios17.cast": 8,
+          "tile": 3,
+          "ios17.add": 2,
+          "select": 2,
+          "ios17.gather": 1,
+          "ios17.mul": 1,
+          "ios17.reshape": 1
+        },
+        "ops": [
+          "add_0",
+          "select_0",
+          "add_0_1",
+          "select_0_1",
+          "inputs_embeds_cast_fp16",
+          "mask_3",
+          "mask_3_to_fp16",
+          "var_104",
+          "extended_attention_mask",
+          "extended_attention_mask_to_uint16",
+          "var_106_cast_int16_to_int32",
+          "var_107",
+          "attention_mask_1",
+          "var_290",
+          "var_2555",
+          "text_idx",
+          "var_2571",
+          "query_idx",
+          "text_idx_to_int16",
+          "query_idx_to_uint16",
+          "var_2599",
+          "cls_idx",
+          "cls_idx_to_uint16",
+          "var_2674_cast_fp16_to_int32",
+          "var_2705",
+          "var_2734"
+        ]
+      },
+      {
+        "reason": "Unable to resolve operation input \"y\".",
+        "count": 2,
+        "estimated_cpu_runtime_ms": 0.002,
+        "op_types": {
+          "ios17.greater_equal": 2
+        },
+        "ops": [
+          "greater_equal_0",
+          "greater_equal_0_1"
+        ]
+      },
+      {
+        "reason": "Unable to resolve operation input \"x\".",
+        "count": 2,
+        "estimated_cpu_runtime_ms": 0.002,
+        "op_types": {
+          "ios17.equal": 1,
+          "ios17.less_equal": 1
+        },
+        "ops": [
+          "var_2706",
+          "mask"
+        ]
+      },
+      {
+        "reason": "ANE not available for this op",
+        "count": 1,
+        "estimated_cpu_runtime_ms": 0,
+        "op_types": {
+          "ios16.constexpr_affine_dequantize": 1
+        },
+        "ops": [
+          "encoder_embeddings_word_embeddings_weight_to_fp16_quantized"
+        ]
+      },
+      {
+        "reason": "Unsupported MIL operation \"cumsum\".",
+        "count": 1,
+        "estimated_cpu_runtime_ms": 0.001,
+        "op_types": {
+          "ios16.cumsum": 1
+        },
+        "ops": [
+          "var_2968_cast_fp16"
+        ]
+      }
+    ]
+  },
+  "end_to_end_entity_latency": {
+    "fp32_baseline_all": {
+      "compute_units": "all",
+      "warmup": 20,
+      "iterations": 200,
+      "p50_ms": 9.933604509569705,
+      "p95_ms": 10.4843340232037,
+      "machine": "arm64",
+      "macos": "27.0"
+    },
+    "fp16_baseline_cpu_ne": {
+      "compute_units": "cpu_and_neural_engine",
+      "warmup": 20,
+      "iterations": 200,
+      "p50_ms": 10.255208006128669,
+      "p95_ms": 14.293458021711558,
+      "machine": "arm64",
+      "macos": "27.0"
+    },
+    "fp16_w8_cpu_ne": {
+      "compute_units": "cpu_and_neural_engine",
+      "warmup": 10,
+      "iterations": 100,
+      "p50_ms": 10.29393749195151,
+      "p95_ms": 13.262332999147475,
+      "machine": "arm64",
+      "macos": "27.0"
+    },
+    "fp16_w8_all": {
+      "compute_units": "all",
+      "warmup": 10,
+      "iterations": 100,
+      "p50_ms": 9.193917008815333,
+      "p95_ms": 12.049457989633083,
+      "machine": "arm64",
+      "macos": "27.0"
+    },
+    "fp32_w8_all": {
+      "compute_units": "all",
+      "warmup": 10,
+      "iterations": 100,
+      "p50_ms": 12.354270496871322,
+      "p95_ms": 16.967333969660103,
+      "machine": "arm64",
+      "macos": "27.0"
+    }
+  },
+  "fp16_stage_profile": [
+    {
+      "package": "gliner2_base_explicit_fp16_W64_Q8_S64.mlpackage",
+      "profiled_package": "uncompressed FP16 stage; W8 release changes only feature weights",
+      "private_executable_ops": {
+        "ane": 0,
+        "cpu": 204,
+        "total": 204
+      },
+      "public_compute_plan_ane_percent": 0.0,
+      "principal_cpu_fallbacks": [
+        {
+          "reason": "ANE supported but scheduler chose CPU",
+          "count": 159
+        },
+        {
+          "reason": "Unsupported tensor data type: int32",
+          "count": 32
+        }
+      ]
+    },
+    {
+      "package": "gliner2_base_extraction_features_fp16_L128_W64_Q8.mlpackage",
+      "profiled_package": "uncompressed FP16 stage; W8 release changes only feature weights",
+      "private_executable_ops": {
+        "ane": 620,
+        "cpu": 28,
+        "total": 648
+      },
+      "public_compute_plan_ane_percent": 53.13,
+      "principal_cpu_fallbacks": [
+        {
+          "reason": "Unsupported tensor data type: int32",
+          "count": 24
+        },
+        {
+          "reason": "Unable to resolve operation input \"x\".",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "package": "gliner2_base_extraction_scorer_fp16_L128_W64_Q8.mlpackage",
+      "profiled_package": "uncompressed FP16 stage; W8 release changes only feature weights",
+      "private_executable_ops": {
+        "ane": 0,
+        "cpu": 137,
+        "total": 137
+      },
+      "public_compute_plan_ane_percent": 0.0,
+      "principal_cpu_fallbacks": [
+        {
+          "reason": "ANE supported but scheduler chose CPU",
+          "count": 90
+        },
+        {
+          "reason": "Unsupported tensor data type: int32",
+          "count": 36
+        }
+      ]
+    },
+    {
+      "package": "gliner2_base_record_anchorless_fp16_F8_C192_I1536.mlpackage",
+      "profiled_package": "uncompressed FP16 stage; W8 release changes only feature weights",
+      "private_executable_ops": {
+        "ane": 17,
+        "cpu": 0,
+        "total": 17
+      },
+      "public_compute_plan_ane_percent": 100.0,
+      "principal_cpu_fallbacks": []
+    },
+    {
+      "package": "gliner2_base_record_assignment_fp16_F8_C192_I1536.mlpackage",
+      "profiled_package": "uncompressed FP16 stage; W8 release changes only feature weights",
+      "private_executable_ops": {
+        "ane": 24,
+        "cpu": 0,
+        "total": 24
+      },
+      "public_compute_plan_ane_percent": 100.0,
+      "principal_cpu_fallbacks": []
+    },
+    {
+      "package": "gliner2_base_relation_fp16_W64_R4_P256.mlpackage",
+      "profiled_package": "uncompressed FP16 stage; W8 release changes only feature weights",
+      "private_executable_ops": {
+        "ane": 49,
+        "cpu": 66,
+        "total": 115
+      },
+      "public_compute_plan_ane_percent": 93.49,
+      "principal_cpu_fallbacks": [
+        {
+          "reason": "Unsupported tensor data type: int32",
+          "count": 33
+        },
+        {
+          "reason": "Unable to resolve operation input \"y\".",
+          "count": 30
+        }
+      ]
+    }
+  ],
+  "profile_count_note": "Private executable-op counts and public compute-plan percentages use different counting methods; compute placement is hardware- and OS-specific."
+}

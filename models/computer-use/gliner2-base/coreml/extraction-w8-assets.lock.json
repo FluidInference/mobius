@@ -1,0 +1,56 @@
+{
+  "source_model": "fastino/gliner2.5-base-v1",
+  "source_revision": "1a8bc24e00dc7300b9017c81d63e3dcdabb26596",
+  "coremltools": "9.0",
+  "quantization_scope": "trained word embedding only; int8 per-channel weight-only; activations and remaining weights retain exported precision",
+  "package_files": [
+    {
+      "package": "gliner2_base_extraction_features_w8_embedding_fp16_L128_W64_Q8.mlpackage",
+      "bytes": 293070914,
+      "files": [
+        {
+          "path": "gliner2_base_extraction_features_w8_embedding_fp16_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 1046745,
+          "sha256": "7ac6f14e179f675f3d6463e53dde48275a507afb51bcbb5022da19979c1a727b"
+        },
+        {
+          "path": "gliner2_base_extraction_features_w8_embedding_fp16_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 292023552,
+          "sha256": "b1daf744d68702f1b3d786fc068da14b5d1b8e4d50ce1908b0ddce23f5229f54"
+        },
+        {
+          "path": "gliner2_base_extraction_features_w8_embedding_fp16_L128_W64_Q8.mlpackage/Manifest.json",
+          "bytes": 617,
+          "sha256": "de7d04fdf13e08eda59babd38b9881d016504f4e375d4f071929491cfbe3a7c0"
+        }
+      ],
+      "source_package": "gliner2_base_extraction_features_fp16_L128_W64_Q8.mlpackage",
+      "source_bytes": 390998448,
+      "method": "linear_symmetric int8 per-channel weight-only"
+    },
+    {
+      "package": "gliner2_base_extraction_features_w8_embedding_fp32_L128_W64_Q8.mlpackage",
+      "bytes": 486602631,
+      "files": [
+        {
+          "path": "gliner2_base_extraction_features_w8_embedding_fp32_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/model.mlmodel",
+          "bytes": 1013082,
+          "sha256": "97f4ff45b92fe94346b8cdaa3fb3bd37b9c21445809527994b4f167f8d55fea9"
+        },
+        {
+          "path": "gliner2_base_extraction_features_w8_embedding_fp32_L128_W64_Q8.mlpackage/Data/com.apple.CoreML/weights/weight.bin",
+          "bytes": 485588932,
+          "sha256": "b0e6b3f549be7d8736d1e1424b33e3203429da3af46bb00c03b8c1ef980272d0"
+        },
+        {
+          "path": "gliner2_base_extraction_features_w8_embedding_fp32_L128_W64_Q8.mlpackage/Manifest.json",
+          "bytes": 617,
+          "sha256": "64c721ebcc0561d6bf9524c5cb1bc79c2497ed40ecf2d8310b298814c5937e05"
+        }
+      ],
+      "source_package": "gliner2_base_extraction_features_fp32_L128_W64_Q8.mlpackage",
+      "source_bytes": 780899033,
+      "method": "linear_symmetric int8 per-channel weight-only"
+    }
+  ]
+}
