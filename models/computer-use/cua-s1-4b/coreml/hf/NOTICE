@@ -1,0 +1,12 @@
+cua-s1-4b-coreml
+
+Core ML conversion of Cua-S1-4B-0.2 merged into Qwen3.5-4B.
+
+- Qwen/Qwen3.5-4B, Copyright Alibaba Cloud (Qwen team), Apache License 2.0
+  https://huggingface.co/Qwen/Qwen3.5-4B
+- cua-ai/cua-s1-4b-0.2 LoRA adapters, Copyright Cua, Apache License 2.0
+  https://huggingface.co/cua-ai/cua-s1-4b-0.2
+
+Modifications: each LoRA adapter merged into the base weights in fp32 and stored in fp16;
+converted to Core ML (four decoder parts, host-side embedding table, vision tower);
+optional int8 and GPTQ int4/int8 weight compression.

@@ -231,7 +231,7 @@ def main() -> None:
     ap.add_argument("--length", type=int, default=1024)
     ap.add_argument("--nsamples", type=int, default=32)
     ap.add_argument("--block", type=int, default=16)
-    ap.add_argument("--tag", default="g4b16")
+    ap.add_argument("--tag", default="gptq")
     ap.add_argument("--build", type=Path, default=Path("build"))
     ap.add_argument("--device", default="mps", help="calibration forwards dominate; cpu is ~10x slower")
     ap.add_argument("--gui360-train", type=Path, default=Path("data/gui360/train/data"))
