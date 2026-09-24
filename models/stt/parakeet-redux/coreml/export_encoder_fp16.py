@@ -33,9 +33,10 @@ def main() -> None:
     ap.add_argument("--work", type=Path, default=Path("~/Documents/parakeet-redux-work").expanduser())
     ap.add_argument("--stock", action="store_true", help="Export the stock nvidia v3 encoder instead of redux")
     ap.add_argument("--target", default="ios18", choices=["ios17", "ios18"])
+    ap.add_argument("--name", default="redux", help="Tag for output files (e.g. ultra)")
     args = ap.parse_args()
     args.work.mkdir(parents=True, exist_ok=True)
-    tag = ("stock" if args.stock else "redux") + ("" if args.target == "ios18" else "_ios17")
+    tag = ("stock" if args.stock else args.name) + ("" if args.target == "ios18" else "_ios17")
     target = ct.target.iOS18 if args.target == "ios18" else ct.target.iOS17
 
     model = nemo_asr.models.EncDecRNNTBPEModel.from_pretrained("nvidia/parakeet-tdt-0.6b-v3", map_location="cpu")

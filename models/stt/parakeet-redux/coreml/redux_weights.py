@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unpack moondream/parakeet-redux ternary weights and map them onto the NeMo parakeet-tdt-0.6b-v3 module tree.
+"""Unpack moondream/parakeet-redux ternary weights (or load parakeet-ultra full-precision weights) and map them onto the NeMo parakeet-tdt-0.6b-v3 module tree.
 
 Ternary packing (ternary.json, format "thrush-ternary-v2"):
   * qweight: uint8 [out, ceil(in/5)], 5 base-3 digits per byte, least-significant digit first
@@ -63,10 +63,13 @@ def load_redux(hf_dir: Path) -> Tuple[Dict[str, torch.Tensor], Dict[str, Tuple[n
     """Returns (nemo_state_dict fp32, ternary {nemo_name: (codes int8, scales fp16)}, vad_head tensors)."""
     from safetensors import safe_open
 
-    meta = json.loads((hf_dir / "ternary.json").read_text())
-    assert meta["format"] == "thrush-ternary-v2", meta["format"]
-    assert meta["quant"]["group_size"] == GROUP
-    qmods = {m["name"]: m for m in meta["quantized_modules"]}
+    # parakeet-ultra ships the same tree in full precision, without ternary.json.
+    qmods = {}
+    if (hf_dir / "ternary.json").exists():
+        meta = json.loads((hf_dir / "ternary.json").read_text())
+        assert meta["format"] == "thrush-ternary-v2", meta["format"]
+        assert meta["quant"]["group_size"] == GROUP
+        qmods = {m["name"]: m for m in meta["quantized_modules"]}
 
     f = safe_open(str(hf_dir / "model.safetensors"), "np")
     raw = {k: f.get_tensor(k) for k in f.keys()}
@@ -154,9 +157,10 @@ if __name__ == "__main__":
     ternary, vad, report = load_into_nemo(m, args.hf_dir)
     # Sanity: every dequantized ternary tensor has <= 3 unique values per (row, group)
     k0 = "encoder.layers.0.feed_forward1.linear1.weight"
-    codes, scales = ternary[k0]
-    print("layer0 ff1.linear1 code histogram:", np.bincount(codes.flatten().astype(np.int64), minlength=3))
-    print("layer0 ff1.linear1 scales range:", float(scales.min()), float(scales.max()))
+    if k0 in ternary:
+        codes, scales = ternary[k0]
+        print("layer0 ff1.linear1 code histogram:", np.bincount(codes.flatten().astype(np.int64), minlength=3))
+        print("layer0 ff1.linear1 scales range:", float(scales.min()), float(scales.max()))
     if args.out:
         torch.save(m.state_dict(), args.out)
         print("saved", args.out)
