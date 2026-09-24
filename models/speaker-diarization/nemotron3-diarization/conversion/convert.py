@@ -52,9 +52,10 @@ def example_inputs(v: dict):
     )
 
 
-def convert_variant(model, name: str, v: dict, out_dir: Path):
+def convert_variant(model, name: str, v: dict, out_dir: Path, fp16_outputs: bool = False, gather_free: bool = False,
+                    fp16_inputs: bool = False):
     apply_variant(model, v)
-    wrapper = Nemotron3ExportWrapper(model, config.packed_frames(v))
+    wrapper = Nemotron3ExportWrapper(model, config.packed_frames(v), gather_free=gather_free)
     wrapper.eval()
 
     ex = example_inputs(v)
@@ -62,19 +63,21 @@ def convert_variant(model, name: str, v: dict, out_dir: Path):
         traced = torch.jit.trace(wrapper, ex)
 
     mel_frames = config.chunk_mel_frames(v)
+    in_dtype = np.float16 if fp16_inputs else np.float32
     inputs = [
-        ct.TensorType(name="chunk", shape=(1, mel_frames, config.FEAT_DIM), dtype=np.float32),
+        ct.TensorType(name="chunk", shape=(1, mel_frames, config.FEAT_DIM), dtype=in_dtype),
         ct.TensorType(name="chunk_lengths", shape=(1,), dtype=np.int32),
-        ct.TensorType(name="spkcache", shape=(1, v["spkcache_len"], config.EMB_DIM), dtype=np.float32),
+        ct.TensorType(name="spkcache", shape=(1, v["spkcache_len"], config.EMB_DIM), dtype=in_dtype),
         ct.TensorType(name="spkcache_lengths", shape=(1,), dtype=np.int32),
-        ct.TensorType(name="fifo", shape=(1, v["fifo_len"], config.EMB_DIM), dtype=np.float32),
+        ct.TensorType(name="fifo", shape=(1, v["fifo_len"], config.EMB_DIM), dtype=in_dtype),
         ct.TensorType(name="fifo_lengths", shape=(1,), dtype=np.int32),
     ]
+    out_dtype = np.float16 if fp16_outputs else np.float32
     outputs = [
-        ct.TensorType(name="speaker_preds", dtype=np.float32),
-        ct.TensorType(name="chunk_pre_encode_embs", dtype=np.float32),
+        ct.TensorType(name="speaker_preds", dtype=out_dtype),
+        ct.TensorType(name="chunk_pre_encode_embs", dtype=out_dtype),
         ct.TensorType(name="chunk_pre_encode_lengths", dtype=np.int32),
-        ct.TensorType(name="speaker_preds_10ms", dtype=np.float32),
+        ct.TensorType(name="speaker_preds_10ms", dtype=out_dtype),
     ]
 
     mlmodel = ct.convert(
@@ -100,6 +103,9 @@ def main():
     parser.add_argument("--variants", nargs="*", help="variant names (defaults to every available variant)")
     parser.add_argument("--manifest", help="JSON campaign manifest with additional/overridden variants")
     parser.add_argument("--output-dir", default="build")
+    parser.add_argument("--fp16-outputs", action="store_true", help="declare float outputs fp16 (no final fp32 casts)")
+    parser.add_argument("--gather-free", action="store_true", help="pack state via one-hot matmul instead of gather")
+    parser.add_argument("--fp16-inputs", action="store_true", help="declare float inputs fp16")
     args = parser.parse_args()
 
     variants = dict(config.VARIANTS)
@@ -115,7 +121,7 @@ def main():
 
     model = apply_patches(load_model())
     for name in selected:
-        convert_variant(model, name, variants[name], out_dir)
+        convert_variant(model, name, variants[name], out_dir, args.fp16_outputs, args.gather_free, args.fp16_inputs)
 
 
 if __name__ == "__main__":

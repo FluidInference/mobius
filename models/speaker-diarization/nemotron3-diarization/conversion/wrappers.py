@@ -53,13 +53,44 @@ def fixed_concat_and_pad(embs, lengths, max_total_len):
     return output, total_length
 
 
+def matmul_concat_and_pad(embs, lengths, max_total_len):
+    """``fixed_concat_and_pad`` with the gather replaced by a one-hot selection matmul.
+
+    Same packing, but no ``gather_along_axis`` (int16 indices), which M3-generation ANEs
+    can't run (FluidAudio #951). Exact in fp16: each output row sums one selected frame
+    and zeros.
+    """
+    size0, size1, size2 = embs[0].shape[1], embs[1].shape[1], embs[2].shape[1]
+    total_input_size = size0 + size1 + size2
+
+    full_concat = torch.cat(embs, dim=1)  # (B, total_input_size, D)
+
+    len0 = lengths[0].reshape(())
+    len1 = lengths[1].reshape(())
+    len2 = lengths[2].reshape(())
+    total_length = len0 + len1 + len2
+
+    out_pos = torch.arange(max_total_len, dtype=torch.long)
+    in_seg1_or_2 = (out_pos >= len0).long()
+    in_seg2 = (out_pos >= len0 + len1).long()
+    offset = in_seg1_or_2 * (size0 - len0) + in_seg2 * (size1 - len1)
+    src_idx = (out_pos + offset).clamp(0, total_input_size - 1)
+    valid = (out_pos < total_length).float()
+
+    src_pos = torch.arange(total_input_size, dtype=torch.long)
+    select = (src_idx.unsqueeze(-1) == src_pos.unsqueeze(0)).float() * valid.unsqueeze(-1)
+    output = torch.matmul(select.unsqueeze(0), full_concat)  # (B, max_total_len, D)
+    return output, total_length
+
+
 class Nemotron3ExportWrapper(nn.Module):
     """chunk mel + spkcache/fifo state -> speaker preds (80 ms + 10 ms) + chunk embs."""
 
-    def __init__(self, model, packed_len: int):
+    def __init__(self, model, packed_len: int, gather_free: bool = False):
         super().__init__()
         self.model = model
         self.packed_len = packed_len
+        self.concat_and_pad = matmul_concat_and_pad if gather_free else fixed_concat_and_pad
 
     def forward(self, chunk, chunk_lengths, spkcache, spkcache_lengths, fifo, fifo_lengths):
         sm = self.model.sortformer_modules
@@ -76,7 +107,7 @@ class Nemotron3ExportWrapper(nn.Module):
             chunk_lengths.to(torch.int32) + (stack.subsampling_factor - 1), stack.subsampling_factor
         ).to(torch.int64)
 
-        packed, packed_length = fixed_concat_and_pad(
+        packed, packed_length = self.concat_and_pad(
             [spkcache, fifo, chunk_embs],
             [spkcache_lengths.to(torch.int64), fifo_lengths.to(torch.int64), chunk_enc_lengths],
             self.packed_len,
