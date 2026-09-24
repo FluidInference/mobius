@@ -1,0 +1,60 @@
+{
+  "train": {
+    "tasks": 41836,
+    "families": {
+      "search_filter": 28517,
+      "form_filling": 4966,
+      "multi_step_submit": 6661,
+      "pagination": 577,
+      "login_auth": 416,
+      "safety_gate": 141,
+      "consent_checkbox": 558
+    },
+    "sources": {
+      "GUI-360": 41152,
+      "synthetic": 684
+    },
+    "dataset_hash": "0ceaee9c61a52df08cfe1d517744aab60a2362da19ec17993b5c16572216b806"
+  },
+  "val": {
+    "tasks": 4662,
+    "families": {
+      "multi_step_submit": 793,
+      "search_filter": 3114,
+      "login_auth": 45,
+      "pagination": 52,
+      "form_filling": 572,
+      "consent_checkbox": 67,
+      "safety_gate": 19
+    },
+    "sources": {
+      "GUI-360": 4586,
+      "synthetic": 76
+    },
+    "dataset_hash": "bec8654a55d107bdd51d0613526749521b73a7dded76f89150ed2bc447d29b63"
+  },
+  "test": {
+    "tasks": 613,
+    "families": {
+      "multi_step_submit": 507,
+      "form_filling": 37,
+      "search_filter": 44,
+      "pagination": 7,
+      "login_auth": 12,
+      "consent_checkbox": 6
+    },
+    "sources": {
+      "GUI-360": 613
+    },
+    "dataset_hash": "e305de962fae21523cd972fa53f0984879f25554c1519f001ad25470c67ac2f6"
+  },
+  "recipe": {
+    "gui360_train_episodes": {
+      "train": 12375,
+      "val": 1375
+    },
+    "synthetic_seed": 424242,
+    "synthetic_per_app": 40,
+    "split_seed": 0
+  }
+}
