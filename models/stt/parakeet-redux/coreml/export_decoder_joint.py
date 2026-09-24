@@ -43,7 +43,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--hf-dir", type=Path, default=Path("~/Documents/parakeet-redux-work/hf").expanduser())
     ap.add_argument("--out", type=Path, default=Path("~/Documents/parakeet-redux-work/components").expanduser())
+    ap.add_argument("--name", default="redux", help="Model name used in the mlpackage descriptions")
     args = ap.parse_args()
+    title = f"Parakeet-{args.name}"
     args.out.mkdir(parents=True, exist_ok=True)
 
     model = nemo_asr.models.EncDecRNNTBPEModel.from_pretrained("nvidia/parakeet-tdt-0.6b-v3", map_location="cpu")
@@ -85,7 +87,7 @@ def main() -> None:
         ],
         settings,
     )
-    save(decoder_model, args.out / "Decoder.mlpackage", "Parakeet-redux decoder (RNNT prediction network)")
+    save(decoder_model, args.out / "Decoder.mlpackage", f"{title} decoder (RNNT prediction network)")
 
     vocab_size = int(model.tokenizer.vocab_size)
     num_extra = int(model.joint.num_extra_outputs)
@@ -106,7 +108,7 @@ def main() -> None:
         ],
         settings,
     )
-    save(jd_model, args.out / "JointDecisionv3.mlpackage", "Parakeet-redux single-step joint decision (top-K 64)")
+    save(jd_model, args.out / "JointDecisionv3.mlpackage", f"{title} single-step joint decision (top-K 64)")
 
     # Parity on the trace inputs (CPU)
     with torch.inference_mode():
