@@ -1,0 +1,84 @@
+{
+  "id": "parallel_mixed_002",
+  "audio_sha256": "4f6df06ac0d742e9431fa79a43af63079e9e372f6f9afc0b1ffd107a834977a2",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": "Dmeeting明天早上開始",
+    "detected_language": "zh",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 2.8000000000000003,
+        "text": "Dmeeting明天早上開始",
+        "avg_logprob": -0.5297644355080344,
+        "no_speech_prob": 6.015992825431082e-12
+      }
+    ],
+    "metric": "MER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "the meeting 明天早上开始",
+    "hypothesis_normalized": "dmeeting明天早上开始",
+    "reference_units": [
+      "the",
+      "meeting",
+      "明",
+      "天",
+      "早",
+      "上",
+      "开",
+      "始"
+    ],
+    "hypothesis_units": [
+      "dmeeting",
+      "明",
+      "天",
+      "早",
+      "上",
+      "开",
+      "始"
+    ],
+    "errors": 2,
+    "substitutions": 1,
+    "deletions": 1,
+    "insertions": 0,
+    "reference_tokens": 8,
+    "hypothesis_tokens": 7,
+    "rate": 0.25,
+    "auto_language_diagnostic": {
+      "hypothesis": "Dmeeting明天早上開始",
+      "language": "zh",
+      "metric": "MER",
+      "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+      "reference_normalized": "the meeting 明天早上开始",
+      "hypothesis_normalized": "dmeeting明天早上开始",
+      "reference_units": [
+        "the",
+        "meeting",
+        "明",
+        "天",
+        "早",
+        "上",
+        "开",
+        "始"
+      ],
+      "hypothesis_units": [
+        "dmeeting",
+        "明",
+        "天",
+        "早",
+        "上",
+        "开",
+        "始"
+      ],
+      "errors": 2,
+      "substitutions": 1,
+      "deletions": 1,
+      "insertions": 0,
+      "reference_tokens": 8,
+      "hypothesis_tokens": 7,
+      "rate": 0.25
+    }
+  },
+  "elapsed_seconds": 0.6430317499907687
+}

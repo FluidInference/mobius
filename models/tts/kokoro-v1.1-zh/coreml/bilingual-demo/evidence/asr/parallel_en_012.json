@@ -1,0 +1,48 @@
+{
+  "id": "parallel_en_012",
+  "audio_sha256": "9c34791113dd08acd93baec5a6e38b240814c61805ce8a2e3c6eda745934f8aa",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": " The new version fixes pronunciation problem.",
+    "detected_language": "en",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 3.0,
+        "text": " The new version fixes pronunciation problem.",
+        "avg_logprob": -0.4286187171936035,
+        "no_speech_prob": 1.7536707763027293e-12
+      }
+    ],
+    "metric": "WER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "the new version fixes a pronunciation problem",
+    "hypothesis_normalized": "the new version fixes pronunciation problem",
+    "reference_units": [
+      "the",
+      "new",
+      "version",
+      "fixes",
+      "a",
+      "pronunciation",
+      "problem"
+    ],
+    "hypothesis_units": [
+      "the",
+      "new",
+      "version",
+      "fixes",
+      "pronunciation",
+      "problem"
+    ],
+    "errors": 1,
+    "substitutions": 0,
+    "deletions": 1,
+    "insertions": 0,
+    "reference_tokens": 7,
+    "hypothesis_tokens": 6,
+    "rate": 0.14285714285714285
+  },
+  "elapsed_seconds": 0.21965762495528907
+}

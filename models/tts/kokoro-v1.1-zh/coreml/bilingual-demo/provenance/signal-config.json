@@ -1,0 +1,19 @@
+{
+  "stage": "signal",
+  "evaluator": {
+    "method": "signal-yin-v1",
+    "silence_dbfs": -50,
+    "f0_bounds_hz": [
+      60,
+      500
+    ]
+  },
+  "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+  "lock_sha256": "2b4d2c889a646fabf400a70083045cdc9c74a37b4f47c6ed9e82f6ac6957d307",
+  "source_sha256": {
+    "evaluate.py": "d86c7859cc6a24d08de76f9fd1003ace168485d927873a31e8c1c834a124bfbd",
+    "scorers.py": "0f175665da4ff0af96a08caa49020f4b5266b816d7b2205595010ff21ecdf621",
+    "metrics.py": "05ce2794ace35f24a69a23ac3bec4081553f390a846cca925dcf5bd3fc5c1822",
+    "corpus.py": "cfa1cb0c03d428bdf2ec363b014fb12cc3a5b6223e3af8bedd30586fcea0f0d5"
+  }
+}

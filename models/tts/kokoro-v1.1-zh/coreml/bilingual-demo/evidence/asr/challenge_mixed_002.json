@@ -1,0 +1,102 @@
+{
+  "id": "challenge_mixed_002",
+  "audio_sha256": "6a2571a60041b4c18e3cee9c3c9c5afbfccb5530ca85ff1633b8ea0cc8447718",
+  "config_sha256": "1d65589eb97459b645b334623535b2ed6d1343ee28419cd4afe76c4bb1b2c82c",
+  "status": "ok",
+  "result": {
+    "hypothesis": "这个RP已经更新了,请check the documentation。",
+    "detected_language": "zh",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 3.36,
+        "text": "这个RP已经更新了,请check the documentation。",
+        "avg_logprob": -0.3564582824707031,
+        "no_speech_prob": 6.75561559818072e-12
+      }
+    ],
+    "metric": "MER",
+    "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+    "reference_normalized": "这个 api 已经更新了 请 check the documentation",
+    "hypothesis_normalized": "这个rp已经更新了 请check the documentation",
+    "reference_units": [
+      "这",
+      "个",
+      "api",
+      "已",
+      "经",
+      "更",
+      "新",
+      "了",
+      "请",
+      "check",
+      "the",
+      "documentation"
+    ],
+    "hypothesis_units": [
+      "这",
+      "个",
+      "rp",
+      "已",
+      "经",
+      "更",
+      "新",
+      "了",
+      "请",
+      "check",
+      "the",
+      "documentation"
+    ],
+    "errors": 1,
+    "substitutions": 1,
+    "deletions": 0,
+    "insertions": 0,
+    "reference_tokens": 12,
+    "hypothesis_tokens": 12,
+    "rate": 0.08333333333333333,
+    "auto_language_diagnostic": {
+      "hypothesis": "这个RP已经更新了,请check the documentation。",
+      "language": "zh",
+      "metric": "MER",
+      "normalization": "nfkc-simplified-lower-punctuation-space-v1",
+      "reference_normalized": "这个 api 已经更新了 请 check the documentation",
+      "hypothesis_normalized": "这个rp已经更新了 请check the documentation",
+      "reference_units": [
+        "这",
+        "个",
+        "api",
+        "已",
+        "经",
+        "更",
+        "新",
+        "了",
+        "请",
+        "check",
+        "the",
+        "documentation"
+      ],
+      "hypothesis_units": [
+        "这",
+        "个",
+        "rp",
+        "已",
+        "经",
+        "更",
+        "新",
+        "了",
+        "请",
+        "check",
+        "the",
+        "documentation"
+      ],
+      "errors": 1,
+      "substitutions": 1,
+      "deletions": 0,
+      "insertions": 0,
+      "reference_tokens": 12,
+      "hypothesis_tokens": 12,
+      "rate": 0.08333333333333333
+    }
+  },
+  "elapsed_seconds": 0.6680077499477193
+}

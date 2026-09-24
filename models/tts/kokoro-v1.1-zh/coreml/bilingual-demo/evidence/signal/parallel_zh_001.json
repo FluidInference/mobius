@@ -1,0 +1,22 @@
+{
+  "id": "parallel_zh_001",
+  "audio_sha256": "b7f631428693e472cd4457b734fb0d07e713dc653a2418f7d1ccbe344edbe291",
+  "config_sha256": "c9e72296d7e6503b2d46a5581b3addc610553c53cd64e07a4c70904f084fd397",
+  "status": "ok",
+  "result": {
+    "duration_seconds": 3.3,
+    "sample_rate": 24000,
+    "peak": 0.5745478868484497,
+    "rms": 0.0812210813164711,
+    "dc_offset": 1.0044447662949096e-05,
+    "clipping_fraction": 0.0,
+    "silence_threshold_dbfs": -50,
+    "leading_silence_seconds": 0.26,
+    "trailing_silence_seconds": 0.72,
+    "longest_internal_quiet_seconds": 0.02,
+    "f0_method": "YIN 60–500 Hz, energy-screened; not validated voicing or tone accuracy",
+    "f0_median_hz": 272.24212669418716,
+    "f0_iqr_hz": 59.23267760647997
+  },
+  "elapsed_seconds": 0.009381667012348771
+}
