@@ -1,5 +1,8 @@
 # Cua-S1-4B-0.2 → Core ML
 
+> **Status: experimental.** Converted and verified locally; not published to Hugging Face and
+> not wired into a released runtime. Parked 2026-09-23 to revisit later.
+
 Converts [`cua-ai/cua-s1-4b-0.2`](https://huggingface.co/cua-ai/cua-s1-4b-0.2) (Apache-2.0 LoRA
 adapters, `text/` and `multimodal/`, on the frozen Apache-2.0
 [`Qwen/Qwen3.5-4B`](https://huggingface.co/Qwen/Qwen3.5-4B)) into FP16 Core ML programs for
@@ -68,7 +71,27 @@ Apple **M5 Pro, 24 GB, macOS 27.0**, September 23, 2026. Reference = fp32 transf
 (`reference_fp32.py`). The shipped bf16 `FourBModel` runtime itself flips 3/38 argmaxes
 against that fp32 reference (near-ties), so it is not used as the parity target.
 
-RESULTS_TABLE
+| Build | Size | Fixture argmax (38) | Median / max \|Δp\| | GUI-360 text (613) | Median latency |
+| --- | ---: | ---: | --- | ---: | ---: |
+| text fp16 L1024 | 6.8 GB | 38/38 | 0.0013 / 0.0053 | **85.5%** | 1.05 s |
+| text GPTQ: MLP int4 (block 16) + int8 rest | 2.6 GB | 38/38 | 0.022 / 0.133 | **85.5%** | 1.19 s |
+| text int8 (all linears, RTN) | 3.4 GB | 37/38 | 0.006 / 0.019 | — | — |
+| text MLP int4 b16 + int8 (RTN) | 2.6 GB | 35/38 | 0.031 / 0.081 | — | — |
+| text int4 b32 (RTN, all) | 1.9 GB | 27/38 | — / 0.29 | — | — |
+| text 4 / 3 / 2-bit palettes | 1.7 / 1.3 / 0.9 GB | 28 / 24 / 6 | — / 0.64-0.81 | — | — |
+| multimodal fp16 L2048 + vision P4096 | 6.8 + 0.6 GB | 38/38 | — / 0.15 (fp16 ViT) | not run | 1.65 s |
+
+Same first 100 GUI-360 tasks: PyTorch bf16 `FourBModel` (MPS) 84%, Core ML fp16 88% (same task
+outcome on 96/100), GPTQ 87% (97/100). The GUI-360 split is rebuilt with Cua's own converter
+(`make_gui360.py`, 613 tasks); Cua's frozen 615-task split is published by hash only. ANE:
+37/38 but 19 s/decision (CPU fallback), so GPU only.
+
+GPTQ (`gptq.py`) calibrates on GUI-360 *train* + generator prompts (seed disjoint from fixtures),
+runs 4 layers per process on CPU (torch 2.7 MPS segfaults inside MPSGraph under GPTQ; processes
+also died at teardown once), ~2.5 min/layer.
+
+Open: multimodal GPTQ/w8 + GUI-360 multimodal run; GPTQ int4 on all linears (~1.9 GB);
+int8 embedding table; 2048 text bucket (2/613 prompts exceed 1024); HF upload.
 
 Latency was measured while other GPU work was running on the machine (desktop session, a
 parallel PyTorch run); treat it as an upper bound.

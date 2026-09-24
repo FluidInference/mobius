@@ -1,0 +1,251 @@
+{
+  "summary": {
+    "backend": "coreml",
+    "variant": "m4gu",
+    "reference": "fp32",
+    "compute_units": "CPU_AND_GPU",
+    "length": 1024,
+    "tasks": 38,
+    "skipped_too_long": 0,
+    "argmax_agree": 35,
+    "max_abs_dprob": 0.11393320929632184,
+    "vision_median_ms": null,
+    "part_median_ms": [
+      398.25599995674565,
+      417.4119159579277,
+      360.41520797880366,
+      317.00962502509356
+    ],
+    "total_median_ms": 1493.0927489185706
+  },
+  "rows": [
+    {
+      "id": "clinic_intake-20283883-bc689231",
+      "tokens": 768,
+      "argmax_ok": true,
+      "max_dp": 0.07423367184291418
+    },
+    {
+      "id": "clinic_intake-20400778-53a51f75",
+      "tokens": 795,
+      "argmax_ok": false,
+      "max_dp": 0.11393320929632184
+    },
+    {
+      "id": "job_application-21044850-e0fefe99",
+      "tokens": 579,
+      "argmax_ok": true,
+      "max_dp": 0.034915014432512104
+    },
+    {
+      "id": "job_application-21012745-f7d6406e",
+      "tokens": 602,
+      "argmax_ok": true,
+      "max_dp": 0.04979448164232131
+    },
+    {
+      "id": "vendor_onboarding-20329340-836e7d71",
+      "tokens": 664,
+      "argmax_ok": true,
+      "max_dp": 0.029414872780939155
+    },
+    {
+      "id": "vendor_onboarding-20943483-12390c86",
+      "tokens": 709,
+      "argmax_ok": false,
+      "max_dp": 0.028822491676468137
+    },
+    {
+      "id": "saucedemo_login-21182467-8bf83912",
+      "tokens": 445,
+      "argmax_ok": true,
+      "max_dp": 0.03173019440403124
+    },
+    {
+      "id": "saucedemo_login-20893662-ce098616",
+      "tokens": 450,
+      "argmax_ok": true,
+      "max_dp": 0.053034737449147495
+    },
+    {
+      "id": "portal_login-20685703-bc0d7f51",
+      "tokens": 500,
+      "argmax_ok": true,
+      "max_dp": 0.06502178840458794
+    },
+    {
+      "id": "portal_login-21146867-6d21d521",
+      "tokens": 481,
+      "argmax_ok": true,
+      "max_dp": 0.06925277511174643
+    },
+    {
+      "id": "clinic_consent-21227628-e458c37c",
+      "tokens": 404,
+      "argmax_ok": true,
+      "max_dp": 0.03959378748721776
+    },
+    {
+      "id": "clinic_consent-20673985-696bdc40",
+      "tokens": 404,
+      "argmax_ok": true,
+      "max_dp": 0.03959378748721776
+    },
+    {
+      "id": "signup_consent-20620985-aa3f2d4b",
+      "tokens": 452,
+      "argmax_ok": true,
+      "max_dp": 0.03122654980007289
+    },
+    {
+      "id": "signup_consent-21012904-a193c88c",
+      "tokens": 485,
+      "argmax_ok": true,
+      "max_dp": 0.05031619067151866
+    },
+    {
+      "id": "cookie_consent-21194772-58cc8067",
+      "tokens": 493,
+      "argmax_ok": true,
+      "max_dp": 0.022659311378469382
+    },
+    {
+      "id": "cookie_consent-20840184-c06eda3c",
+      "tokens": 493,
+      "argmax_ok": true,
+      "max_dp": 0.022659311378469382
+    },
+    {
+      "id": "patient_registration-20585731-862b3203",
+      "tokens": 558,
+      "argmax_ok": true,
+      "max_dp": 0.06509421940795102
+    },
+    {
+      "id": "patient_registration-20432990-75a864b7",
+      "tokens": 462,
+      "argmax_ok": true,
+      "max_dp": 0.025420309509618932
+    },
+    {
+      "id": "auto_claim-20910192-1e258e12",
+      "tokens": 445,
+      "argmax_ok": true,
+      "max_dp": 0.029090351931476355
+    },
+    {
+      "id": "auto_claim-20612919-4f1b18b4",
+      "tokens": 518,
+      "argmax_ok": true,
+      "max_dp": 0.026135034295975357
+    },
+    {
+      "id": "results_pager-21213339-d5041ea7",
+      "tokens": 358,
+      "argmax_ok": true,
+      "max_dp": 0.05961716899244618
+    },
+    {
+      "id": "results_pager-20362478-e4b57d39",
+      "tokens": 358,
+      "argmax_ok": true,
+      "max_dp": 0.06407758504308447
+    },
+    {
+      "id": "directory_pager-20783164-d32388b2",
+      "tokens": 340,
+      "argmax_ok": true,
+      "max_dp": 0.00012077113361275149
+    },
+    {
+      "id": "directory_pager-20674764-f028ed82",
+      "tokens": 362,
+      "argmax_ok": true,
+      "max_dp": 0.06620208586082599
+    },
+    {
+      "id": "inbox_pager-21188522-314b8677",
+      "tokens": 491,
+      "argmax_ok": true,
+      "max_dp": 0.042839363085095186
+    },
+    {
+      "id": "inbox_pager-20523952-90dcae07",
+      "tokens": 491,
+      "argmax_ok": true,
+      "max_dp": 0.042839363085095186
+    },
+    {
+      "id": "flight_search-20992474-8c3b227d",
+      "tokens": 638,
+      "argmax_ok": true,
+      "max_dp": 0.02558610782574927
+    },
+    {
+      "id": "flight_search-20404065-fccc21db",
+      "tokens": 673,
+      "argmax_ok": false,
+      "max_dp": 0.04379938451184043
+    },
+    {
+      "id": "shop_filter-20481321-b40d9384",
+      "tokens": 479,
+      "argmax_ok": true,
+      "max_dp": 0.05872126528193622
+    },
+    {
+      "id": "shop_filter-20318615-7c05f11e",
+      "tokens": 506,
+      "argmax_ok": true,
+      "max_dp": 0.02140930945915795
+    },
+    {
+      "id": "account_settings-20548707-93883a27",
+      "tokens": 499,
+      "argmax_ok": true,
+      "max_dp": 0.07109879973000854
+    },
+    {
+      "id": "account_settings-21050921-39b3271c",
+      "tokens": 511,
+      "argmax_ok": true,
+      "max_dp": 0.06369565217422934
+    },
+    {
+      "id": "order_lookup-20370971-3108be55",
+      "tokens": 488,
+      "argmax_ok": true,
+      "max_dp": 0.031120112815562595
+    },
+    {
+      "id": "order_lookup-20862290-73301ee7",
+      "tokens": 433,
+      "argmax_ok": true,
+      "max_dp": 0.022082565798689474
+    },
+    {
+      "id": "dev_portal_profile-21060759-7a38b335",
+      "tokens": 520,
+      "argmax_ok": true,
+      "max_dp": 0.03065849725280187
+    },
+    {
+      "id": "dev_portal_profile-20848041-32c736b7",
+      "tokens": 499,
+      "argmax_ok": true,
+      "max_dp": 0.028059829821286103
+    },
+    {
+      "id": "subscription_manage-20772973-bd02f49c",
+      "tokens": 475,
+      "argmax_ok": true,
+      "max_dp": 0.028449193484745505
+    },
+    {
+      "id": "subscription_manage-20657376-2e7dfb6f",
+      "tokens": 500,
+      "argmax_ok": true,
+      "max_dp": 0.05851506715185559
+    }
+  ]
+}

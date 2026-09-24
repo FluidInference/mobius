@@ -175,7 +175,8 @@ class GatedDeltaNet(nn.Module):
         self.register_buffer("strict_lower", (idx[None, :] < idx[:, None]).float(), persistent=False)
         self.register_buffer("eye", torch.eye(C), persistent=False)
         assert C & (C - 1) == 0, "delta-rule chunk size must be a power of two"
-        self.block_eye = {C // (2 * s): torch.eye(C // (2 * s)) for s in (2**i for i in range(int(math.log2(C))))}
+        for n in (C // (2 * s) for s in (2**i for i in range(int(math.log2(C))))):
+            self.register_buffer(f"block_eye_{n}", torch.eye(n), persistent=False)
 
     def unit_lower_inverse(self, t: torch.Tensor) -> torch.Tensor:
         """Inverse of unit-lower-triangular [..., C, C] by recursive 2x2 blocking:
@@ -187,12 +188,12 @@ class GatedDeltaNet(nn.Module):
         lead = t.shape[:-2]
         t = t.reshape(-1, C, C)  # Core ML tensors are rank <= 5
         b = t.shape[0]
-        inv = torch.ones(b, C, 1, 1, dtype=t.dtype)  # 1x1 diagonal blocks of a unit triangle
+        inv = torch.ones(b, C, 1, 1, dtype=t.dtype, device=t.device)  # 1x1 diagonal blocks of a unit triangle
         s = 1
         while s < C:
             n2 = C // (2 * s)
             # diagonal 2s x 2s blocks of t, then their lower-left s x s part
-            blocks = (t.reshape(b, n2, 2 * s, n2, 2 * s) * self.block_eye[n2][:, None, :, None]).sum(-2)
+            blocks = (t.reshape(b, n2, 2 * s, n2, 2 * s) * getattr(self, f"block_eye_{n2}")[:, None, :, None]).sum(-2)
             x = blocks[..., s:, :s]  # [b, n2, s, s]
             pair = inv.reshape(b, n2, 2, s, s)
             a_inv, b_inv = pair[..., 0, :, :], pair[..., 1, :, :]
@@ -253,7 +254,7 @@ class GatedDeltaNet(nn.Module):
         k_dec = k * torch.exp(to_end)[..., None]
         chunk_decay = torch.exp(cum[..., -1:])[..., None]  # [H, N, 1, 1]
 
-        state = torch.zeros(H, Dk, Dv, dtype=x.dtype)
+        state = torch.zeros(H, Dk, Dv, dtype=x.dtype, device=x.device)
         outs = []
         for i in range(N):
             v_new = new_v[:, i] - torch.matmul(k_cumdecay[:, i], state)
