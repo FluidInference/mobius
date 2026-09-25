@@ -1,0 +1,923 @@
+{
+  "manifest": "blind-manifest.txt",
+  "expected_unique_clips": 800,
+  "notes": [
+    "Saved measurements; publishing these artifacts did not rerun inference or scoring.",
+    "Blank CSV values and null summary values mean not scored or no eligible ERLE frame, as specified for each run.",
+    "Challenge runs include rated DNSMOS; the saved upstream runs skipped DNSMOS. Their OVRL columns must not be presented as direct measurements.",
+    "Upstream AECMOS scores the first 20 seconds; upstream gated ERLE uses the full clip.",
+    "The torch configuration experiments are diagnostics, not replacement quality benchmarks."
+  ],
+  "runs": [
+    {
+      "file": "blind/challenge-coreml-v1.2.csv",
+      "sha256": "1f5c09287437a50f1e4578ebc552714017d88a71494d1ed9b8d2ded14bad37d5",
+      "protocol": "challenge",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": true,
+      "role": "comparison",
+      "summary": {
+        "doubletalk": {
+          "echo": 4.201905071217081,
+          "deg": 3.6283881788668424,
+          "erle": 5.090767930375169,
+          "ovrl": 2.769690484257763,
+          "sig": 3.1374236495034373,
+          "bak": 3.7685050560586877,
+          "p808": 3.5452973490175994,
+          "erle_gated": 6.244350284469866,
+          "erle_gated_n": 113,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 4.130344388936017,
+          "deg": 3.567635924751694,
+          "erle": 4.5356547547579815,
+          "ovrl": 2.733800608645346,
+          "sig": 3.0976972657554644,
+          "bak": 3.7541350923478087,
+          "p808": 3.517649436641384,
+          "erle_gated": 6.012394695684476,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 3.921205516173461,
+          "deg": 4.999328194377578,
+          "erle": 45.658407708194765,
+          "ovrl": 1.8942715179073315,
+          "sig": 2.334988682433096,
+          "bak": 3.877318499658412,
+          "p808": 2.4462374816431063,
+          "erle_gated": 53.223643430074056,
+          "erle_gated_n": 105,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 4.134921025118062,
+          "deg": 4.999113448543252,
+          "erle": 38.1522812769203,
+          "ovrl": 1.7961524617582172,
+          "sig": 2.2168783227186575,
+          "bak": 3.866782435744047,
+          "p808": 2.372726467606935,
+          "erle_gated": 47.25547966283029,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.9949737071990965,
+          "deg": 4.093220177292824,
+          "erle": 0.19463847436010837,
+          "ovrl": 3.1697977832555613,
+          "sig": 3.442650532256823,
+          "bak": 4.0813825464407945,
+          "p808": 3.8571144413948057,
+          "erle_gated": 2.1128062703369173,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/challenge-coreml-v1.3.csv",
+      "sha256": "b9e855b0938b63183ae8ef37601afb0622098782f25a60f6e32a3d6acdc44fcb",
+      "protocol": "challenge",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": true,
+      "role": "comparison",
+      "summary": {
+        "doubletalk": {
+          "echo": 4.348703531596971,
+          "deg": 3.933604537922403,
+          "erle": 5.2522896324810775,
+          "ovrl": 2.8914398730438604,
+          "sig": 3.2571203375888618,
+          "bak": 3.825965108459948,
+          "p808": 3.668705299626226,
+          "erle_gated": 6.2997204780051135,
+          "erle_gated_n": 113,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 4.350666988862527,
+          "deg": 3.858564415493527,
+          "erle": 4.719881749555872,
+          "ovrl": 2.843722891439866,
+          "sig": 3.2117988458910873,
+          "bak": 3.803340363378096,
+          "p808": 3.627953763910242,
+          "erle_gated": 6.088665000122527,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 2.493007251035387,
+          "deg": 4.999850754425904,
+          "erle": 54.09798507824122,
+          "ovrl": 1.9492828914084712,
+          "sig": 2.4759944178580984,
+          "bak": 3.800782834860692,
+          "p808": 2.6953385165918653,
+          "erle_gated": 54.183615652720135,
+          "erle_gated_n": 105,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 3.077917839579014,
+          "deg": 4.999634088012221,
+          "erle": 54.9785827873902,
+          "ovrl": 1.9632873896628293,
+          "sig": 2.497391052492045,
+          "bak": 3.8434107155847212,
+          "p808": 2.6018585961099734,
+          "erle_gated": 55.90987800678033,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.994398775100708,
+          "deg": 4.139816235899925,
+          "erle": 0.5609310442372225,
+          "ovrl": 3.1705281379288532,
+          "sig": 3.4411152755627143,
+          "bak": 4.090155931308373,
+          "p808": 3.8686565124988554,
+          "erle_gated": 2.3244098917834015,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/challenge-unprocessed.csv",
+      "sha256": "85e049b887c42909699cf988761c01133268603ebaa03ce09fbc666c5e08a098",
+      "protocol": "challenge",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": true,
+      "role": "comparison",
+      "summary": {
+        "doubletalk": {
+          "echo": 2.1665300348530643,
+          "deg": 4.088659974803095,
+          "erle": 0.0,
+          "ovrl": 2.3111397219460326,
+          "sig": 3.325717941270869,
+          "bak": 2.411982579901398,
+          "p808": 3.3019478030826734,
+          "erle_gated": 0.0,
+          "erle_gated_n": 113,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 2.2091885863123712,
+          "deg": 4.044696071985606,
+          "erle": 0.0,
+          "ovrl": 2.264993047172404,
+          "sig": 3.237493881338362,
+          "bak": 2.3822186063230144,
+          "p808": 3.258459763913541,
+          "erle_gated": 0.0,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 1.9467756057454046,
+          "deg": 4.9999604849057775,
+          "erle": 0.0,
+          "ovrl": 1.8900263712297374,
+          "sig": 2.549694964839159,
+          "bak": 2.107304258901536,
+          "p808": 2.9464379760706536,
+          "erle_gated": 0.0,
+          "erle_gated_n": 105,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 2.2307170734504345,
+          "deg": 4.99989168878664,
+          "erle": 0.0,
+          "ovrl": 1.7511336164129174,
+          "sig": 2.3135391191493344,
+          "bak": 2.0339801906050266,
+          "p808": 2.8582307563544553,
+          "erle_gated": 0.0,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.997032928466797,
+          "deg": 4.066433452367782,
+          "erle": 0.0,
+          "ovrl": 3.123770697840091,
+          "sig": 3.504805533548798,
+          "bak": 3.8831138122300435,
+          "p808": 3.78002769947052,
+          "erle_gated": 0.0,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-coreml-v1.2.csv",
+      "sha256": "d7b20c01e3002b1b6dd69897fa16d11acaff2d2866285117fe7cb64afbc71294",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": false,
+      "role": "comparison",
+      "summary": {
+        "doubletalk": {
+          "echo": 4.716359235929406,
+          "deg": 2.38755172231923,
+          "erle": 4.254772302249203,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 8.457519276100292,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 4.644358445502617,
+          "deg": 2.306909503807893,
+          "erle": 3.811946832066452,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 8.085999711406538,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 4.0723151469899115,
+          "deg": 4.928857502536239,
+          "erle": 38.46162577878649,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 47.636178346737374,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 4.27349939618086,
+          "deg": 4.963622310000998,
+          "erle": 30.350141092903257,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 41.25462064318632,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.998246886730194,
+          "deg": 4.165839649438858,
+          "erle": 0.19463847436010837,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 2.1128062703369173,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-coreml-v1.3.csv",
+      "sha256": "f7e3b4743863cad5f1ebcd6a5f6ce72f806ef68ce68fbf8612229b78bfd42b57",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": false,
+      "role": "comparison",
+      "summary": {
+        "doubletalk": {
+          "echo": 4.73208351549895,
+          "deg": 2.615472031676251,
+          "erle": 4.5937983703354135,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 8.534660403927168,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 4.662407610867475,
+          "deg": 2.4440833974528955,
+          "erle": 4.194315521137135,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 8.207230134340731,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 3.5438492331549387,
+          "deg": 4.820149437289372,
+          "erle": 42.97697843569461,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 50.14628497159706,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 3.7514853576304383,
+          "deg": 4.956083619532808,
+          "erle": 40.118034456678004,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 49.5640875631602,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.996503448486328,
+          "deg": 4.180659410953521,
+          "erle": 0.5609310442372225,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 2.3244098917834015,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-ggml-v1.2.csv",
+      "sha256": "0d5b8319565f5e53aa91b9294c5d686da0603d00e1a19a69a1bad9f7ceca56d2",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": false,
+      "role": "comparison",
+      "summary": {
+        "doubletalk": {
+          "echo": 4.7092567423115606,
+          "deg": 2.2364016937172932,
+          "erle": 4.259017466850903,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 8.112745134715448,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 4.658236796791489,
+          "deg": 2.185781951852747,
+          "erle": 3.8154193532124565,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 7.624758200436506,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 4.142159259207895,
+          "deg": 4.923962773563706,
+          "erle": 38.727530034346,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 47.951755110385285,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 4.31871507328409,
+          "deg": 4.965413912590304,
+          "erle": 30.47178425813586,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 41.135361254527304,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.997987008094787,
+          "deg": 4.088639034628868,
+          "erle": 0.1996694001927972,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 1.1333900707132423,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-ggml-v1.3.csv",
+      "sha256": "60de667bc3885b5a32f972cedeb7d3618ff53ad42b5d1be2687efe0e3c8fb7b1",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": false,
+      "role": "comparison",
+      "summary": {
+        "doubletalk": {
+          "echo": 4.730726192308508,
+          "deg": 2.4696744483450184,
+          "erle": 4.597565360691236,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 8.193592951485986,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 4.677841457160744,
+          "deg": 2.337558527894922,
+          "erle": 4.197706902188224,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 7.764993813617722,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 3.663888688399413,
+          "deg": 4.817332625389099,
+          "erle": 42.953186556557625,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 50.87910024175104,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 3.8400666163993007,
+          "deg": 4.953705653625449,
+          "erle": 40.096992892922515,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 49.3831972851179,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.996182861328125,
+          "deg": 4.116311680674553,
+          "erle": 0.5658308129908982,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 0.9784576745198065,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-torch-v1.2-T1.csv",
+      "sha256": "b1b2442004ede08d452527983f15fb52ca6304f2eca69d22c6bd45f946c9280b",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": true,
+      "role": "diagnostic",
+      "summary": {
+        "doubletalk": {
+          "echo": 3.8101652808811353,
+          "deg": 2.598611170312633,
+          "erle": 2.089960191174127,
+          "ovrl": 2.546050838699236,
+          "sig": 3.163069584654346,
+          "bak": 3.191754996864659,
+          "p808": 3.4900979581086533,
+          "erle_gated": 3.4932623143193493,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 3.95659898873922,
+          "deg": 2.501343353374584,
+          "erle": 2.3750569671442783,
+          "ovrl": 2.539361273892378,
+          "sig": 3.1292421645057082,
+          "bak": 3.2513903662664934,
+          "p808": 3.4950592440527837,
+          "erle_gated": 4.1734919921753155,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 2.785598642358156,
+          "deg": 4.774875578479232,
+          "erle": 10.538490819179009,
+          "ovrl": 1.9885168696819635,
+          "sig": 2.2606610605936823,
+          "bak": 3.740885101011005,
+          "p808": 2.7885395344172683,
+          "erle_gated": 13.435654007179558,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 3.0159638842152807,
+          "deg": 4.908704905312296,
+          "erle": 12.274608869877659,
+          "ovrl": 1.8302287909701735,
+          "sig": 2.0834932948940152,
+          "bak": 3.759743192096927,
+          "p808": 2.6514619681501634,
+          "erle_gated": 12.940942512795875,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.999572591781616,
+          "deg": 4.209190296530724,
+          "erle": 0.10405665125930681,
+          "ovrl": 3.1964745007026556,
+          "sig": 3.4702611944358295,
+          "bak": 4.086708012287117,
+          "p808": 3.861928428411484,
+          "erle_gated": 1.3941330325162187,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-torch-v1.2-dmax32-arch2.csv",
+      "sha256": "8a97fd6b66eb6ce4b8561e1754f432c42bf7ae51eb19e4be1b98617b4af3fab3",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": false,
+      "role": "diagnostic",
+      "summary": {
+        "doubletalk": {
+          "echo": 2.783105122524759,
+          "deg": 3.298913945322451,
+          "erle": -8.839854016511337,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -8.259763642361289,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 2.7506129670787502,
+          "deg": 3.300575731251691,
+          "erle": -8.83445926485835,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -8.309579468291739,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 2.1746168548815716,
+          "deg": 4.87671886203445,
+          "erle": -6.614040032725468,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -7.163422827450734,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 2.38515597921579,
+          "deg": 4.938815554188941,
+          "erle": -6.771302325853721,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -7.17566721351983,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.983058520555496,
+          "deg": 2.9693900632858274,
+          "erle": -10.822850592136383,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -10.366530281029,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-torch-v1.2-dmax32-ggmlemu.csv",
+      "sha256": "a9715183490cd03a0c814ddacc939f3a85678d017380b4f0af1eba46d23f7a49",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": false,
+      "role": "diagnostic",
+      "summary": {
+        "doubletalk": {
+          "echo": 4.697049754598867,
+          "deg": 2.2430329146592514,
+          "erle": 4.177132531741391,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 8.169912806205582,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 4.663314189782014,
+          "deg": 2.188629230293068,
+          "erle": 3.81023573754607,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 7.632326841678308,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 4.315334666555173,
+          "deg": 4.871029442715868,
+          "erle": 35.92723766609887,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 43.76239681047089,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 4.426494660155143,
+          "deg": 4.9643503353385725,
+          "erle": 29.977619205114138,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 39.77749216993442,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.997477629184723,
+          "deg": 4.107973060011863,
+          "erle": 0.20114522357471287,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 0.1732681407361902,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-torch-v1.2-dmax32.csv",
+      "sha256": "24f1fb79da579897fa31b44409bd545c17648164083ef3e420219d64e52fa479",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": true,
+      "role": "diagnostic",
+      "summary": {
+        "doubletalk": {
+          "echo": 4.698789208868275,
+          "deg": 2.4047164595645407,
+          "erle": 4.176516710869644,
+          "ovrl": 2.77929485075197,
+          "sig": 3.1554844276203955,
+          "bak": 3.750242227638543,
+          "p808": 3.5523249646891717,
+          "erle_gated": 8.573457246548251,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 4.647166673557178,
+          "deg": 2.3157373048163747,
+          "erle": 3.8100233620485744,
+          "ovrl": 2.7556404860700647,
+          "sig": 3.125112628989674,
+          "bak": 3.7517741561969773,
+          "p808": 3.5346526029947642,
+          "erle_gated": 8.09665082210837,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 4.285327026777178,
+          "deg": 4.877121469684851,
+          "erle": 36.0472019189429,
+          "ovrl": 1.9786337281063284,
+          "sig": 2.443196801106684,
+          "bak": 3.8990592786472904,
+          "p808": 2.4264564090800063,
+          "erle_gated": 44.864913637345694,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 4.41484811021874,
+          "deg": 4.958927589994638,
+          "erle": 30.12774526578775,
+          "ovrl": 1.8595736048524052,
+          "sig": 2.3050410817487075,
+          "bak": 3.895008559639501,
+          "p808": 2.3472386685060096,
+          "erle_gated": 40.46249208806073,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.997341775894165,
+          "deg": 4.170590806007385,
+          "erle": 0.2002462578425184,
+          "ovrl": 3.1869474557591024,
+          "sig": 3.4587696786427045,
+          "bak": 4.08851991517286,
+          "p808": 3.8605885112285616,
+          "erle_gated": 1.486157889921983,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-torch-v1.2-dmax64-arch2.csv",
+      "sha256": "e8deed9b6161f6b94f2941db83af1b7a962f4552e53656bbbbe277236967779c",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": false,
+      "role": "diagnostic",
+      "summary": {
+        "doubletalk": {
+          "echo": 2.7809973861860193,
+          "deg": 3.312957969955776,
+          "erle": -8.77801167031993,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -8.160420777504903,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 2.756430138124002,
+          "deg": 3.3004225047858986,
+          "erle": -8.794813422898988,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -8.25147209737612,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 2.1880069402890783,
+          "deg": 4.891315999432145,
+          "erle": -6.561835131912588,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -7.075859058578059,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 2.3844208877939015,
+          "deg": 4.921148301406228,
+          "erle": -6.722605817630969,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -7.13502332989458,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.97875091791153,
+          "deg": 2.9765071368217466,
+          "erle": -10.702103126049042,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": -10.206055472228702,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    },
+    {
+      "file": "blind/upstream-unprocessed.csv",
+      "sha256": "378f3f00bb157530910f5d173a5ee551f51f3e398c9061ca043a43271a4debe9",
+      "protocol": "upstream",
+      "dnsmos_region": "rated",
+      "dnsmos_scored": false,
+      "role": "comparison",
+      "summary": {
+        "doubletalk": {
+          "echo": 2.6688292264938354,
+          "deg": 3.8944519789322563,
+          "erle": 0.0,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 0.0,
+          "erle_gated_n": 114,
+          "n": 115
+        },
+        "doubletalk-with-movement": {
+          "echo": 2.5648310403566104,
+          "deg": 3.842586156484243,
+          "erle": 0.0,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 0.0,
+          "erle_gated_n": 184,
+          "n": 185
+        },
+        "farend-singletalk": {
+          "echo": 1.9030130589119743,
+          "deg": 4.888242454172294,
+          "erle": 0.0,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 0.0,
+          "erle_gated_n": 106,
+          "n": 107
+        },
+        "farend-singletalk-with-movement": {
+          "echo": 2.1348727626504056,
+          "deg": 4.930615583232029,
+          "erle": 0.0,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 0.0,
+          "erle_gated_n": 191,
+          "n": 193
+        },
+        "nearend-singletalk": {
+          "echo": 4.999952728748322,
+          "deg": 4.071565544605255,
+          "erle": 0.0,
+          "ovrl": null,
+          "sig": null,
+          "bak": null,
+          "p808": null,
+          "erle_gated": 0.0,
+          "erle_gated_n": 151,
+          "n": 200
+        }
+      }
+    }
+  ]
+}

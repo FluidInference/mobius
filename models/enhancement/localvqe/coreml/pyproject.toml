@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "localvqe-coreml"
+version = "0.1.0"
+description = "LocalVQE (neural AEC + NS + dereverb) PyTorch -> Core ML conversion"
+readme = "README.md"
+requires-python = "==3.10.12"
+dependencies = [
+  "coremltools>=9.0",
+  "torch==2.7.0",
+  "numpy<2",
+  "einops>=0.8.0",
+  "pyyaml>=6.0",
+  "soundfile>=0.13.1",
+  "huggingface-hub>=0.30",
+]
+
+[project.optional-dependencies]
+eval = [
+  "onnxruntime>=1.17",
+  "librosa>=0.10",
+  "scipy>=1.15",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/localvqe_coreml"]
