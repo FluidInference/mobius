@@ -778,7 +778,10 @@ def main():
     else:
         print(f'\n[3/7] Alignment — SKIP (reusing {align_path.name})')
 
-    # ═══ 4/7: Prosody (fp16+int8pal) ═══
+    # ═══ 4/7: Prosody (fp16 I/O, fp32 compute, int8pal) ═══
+    # fp32 compute: the Core ML CPU/ANE fp16 path corrupts F0/N at the start
+    # of the sequence for many T_a >= 400 (FluidAudio #947); GPU fp16 and
+    # fp32 are exact. KokoroProsody_v2 on HF.
     pros_path = OUTDIR / 'KokoroProsody.mlpackage'
     pros_feed = {"en": en.numpy().astype(np.float16),
                  "style_s": s.numpy().astype(np.float16)}
@@ -789,8 +792,8 @@ def main():
         with torch.no_grad():
             traced = torch.jit.trace(prosody, (en, s), strict=False)
         ml = ct.convert(traced,
-            inputs=[ct.TensorType(name="en", shape=(1, 640, T_a_dim), dtype=np.float32),
-                    ct.TensorType(name="style_s", shape=(1, 128), dtype=np.float32)],
+            inputs=[ct.TensorType(name="en", shape=(1, 640, T_a_dim), dtype=np.float16),
+                    ct.TensorType(name="style_s", shape=(1, 128), dtype=np.float16)],
             outputs=[ct.TensorType(name="F0"), ct.TensorType(name="N")],
             convert_to="mlprogram", minimum_deployment_target=ct.target.iOS17,
             compute_precision=ct.precision.FLOAT32, compute_units=ct.ComputeUnit.ALL)
