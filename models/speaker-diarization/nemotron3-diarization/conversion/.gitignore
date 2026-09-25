@@ -1,0 +1,4 @@
+# Converted models are published to HuggingFace, not committed here.
+build/
+.venv/
+__pycache__/
