@@ -1,4 +1,4 @@
-"""Packed question pass and fused pass vs the single-row KevRow, all PyTorch fp32, on real records."""
+"""Fused pass vs the single-row KevRow (and vs the two-stage packed pass), all PyTorch fp32, on real records."""
 import argparse
 import json
 import random
@@ -30,7 +30,9 @@ def main():
     tok = load_tokenizer("Qwen/Qwen3.5-0.8B-Base", "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68")
     row, cfg, meta, embed = load_kev_row(args.merged, 1024, 80)
     first, _, _, _, _ = load_stages(args.merged, args.state_len, 32, 2, args.max_options)
-    packed = load_packed(args.merged, args.state_len, args.packed_len, args.batch, args.max_options)
+    # the two-stage packed pass keeps a power-of-two chunk; the fused pass takes any packed length
+    power_of_two = args.packed_len & (args.packed_len - 1) == 0
+    packed = load_packed(args.merged, args.state_len, args.packed_len, args.batch, args.max_options) if power_of_two else None
     fused = load_fused(args.merged, args.state_len, args.packed_len, args.batch, args.max_options)
     worst, flips, n, worst_fused = 0.0, 0, 0, 0.0
     for suite in ("evals/documents-v1", "evals/v7/decision-v7", "evals/v4/transfer-v4"):
@@ -56,15 +58,17 @@ def main():
                 keys, values, states, tails = first(*state_in)
                 got = []
                 for group in groups:
+                    fused_probs = fused(*fused_inputs(cfg, embed, state_ids, [(r["ids"], r["decide"], r["opts"]) for r in group],
+                                                      args.state_len, args.packed_len, args.batch, args.max_options,
+                                                      meta["pad_id"]))[1]
+                    got += [fused_probs[b, : len(r["opts"])] for b, r in enumerate(group)]
+                    if packed is None:
+                        continue
                     hidden, cos, sin, segment, keep, lag_tail, decide, options, mask = packed_inputs(
                         cfg, embed, len(state_ids), [(r["ids"], r["decide"], r["opts"]) for r in group],
                         args.packed_len, args.batch, args.max_options, meta["pad_id"], lane=lane)
                     probs = packed(hidden, cos, sin, keys, values, state_in[3], states, tails, segment, keep, lag_tail,
                                    decide, options, mask)[1]
-                    got += [probs[b, : len(r["opts"])] for b, r in enumerate(group)]
-                    fused_probs = fused(*fused_inputs(cfg, embed, state_ids, [(r["ids"], r["decide"], r["opts"]) for r in group],
-                                                      args.state_len, args.packed_len, args.batch, args.max_options,
-                                                      meta["pad_id"]))[1]
                     worst_fused = max(worst_fused, float((fused_probs - probs).abs().max()))
             for g, ref in zip(got, reference):
                 worst = max(worst, float((g - ref).abs().max())); flips += int(g.argmax() != ref.argmax()); n += 1

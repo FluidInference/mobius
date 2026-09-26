@@ -44,7 +44,8 @@ def main() -> None:
     args = ap.parse_args()
     S, Q, B, K = args.length, args.question_len, args.batch, args.max_options
     chunk = min(args.chunk_size, S)
-    first, second, cfg, meta, embed = load_stages(args.merged, S, Q, B, K, chunk)
+    # only the question stage uses `second`; its per-row chunk must be a power of two, packed lengths need not
+    first, second, cfg, meta, embed = load_stages(args.merged, S, Q if args.stage == "question" else 32, B, K, chunk)
     special = meta["special_tokens"]
     state_ids = [special["state"]] + list(range(100, 100 + min(40, S - 1)))
     branch = [special["q"], 300, special["opt"], 400, special["close_opt"], special["opt"], 500, special["close_opt"], special["decide"]]
