@@ -1,0 +1,15 @@
+[project]
+name = "siglip2-coreml"
+version = "0.1.0"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "torch==2.7.0",
+    "coremltools==9.0",
+    "transformers>=4.56",
+    "numpy<2.3",
+    "pillow",
+    "datasets",
+    "huggingface_hub",
+    "sentencepiece",
+    "protobuf",
+]

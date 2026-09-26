@@ -1,0 +1,15 @@
+{
+  "model_id": "google/siglip2-base-patch16-256",
+  "precision": "fp16",
+  "compute_units": "cpu_and_ne",
+  "template": "this is a photo of {}.",
+  "images": 50000,
+  "text_cosine_min": 0.9989445805549622,
+  "text_cosine_mean": 0.9999794960021973,
+  "image_cosine_min": 0.9751110672950745,
+  "image_cosine_mean": 0.9998997390294075,
+  "top1_agreement": 0.99324,
+  "top1_pytorch": 0.76794,
+  "top1_coreml": 0.76764,
+  "image_latency_ms_median": 5.638834089040756
+}
