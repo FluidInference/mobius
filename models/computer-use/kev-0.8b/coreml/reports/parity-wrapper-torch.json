@@ -1,0 +1,121 @@
+{
+ "summary": {
+  "questions": 22,
+  "records_skipped_over_bucket": 0,
+  "max_dp": 3.0249357223510742e-06,
+  "mean_dp": 5.328977501697161e-07,
+  "argmax_flips": 0
+ },
+ "rows": [
+  {
+   "suite": "evals/v7/decision-v7",
+   "max_dp": 8.940696716308594e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/v7/decision-v7",
+   "max_dp": 9.238719940185547e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/v7/decision-v7",
+   "max_dp": 2.35741026699543e-09,
+   "flip": 0
+  },
+  {
+   "suite": "evals/v7/decision-v7",
+   "max_dp": 2.384185791015625e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/v7/decision-v7",
+   "max_dp": 1.7881393432617188e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/v7/decision-v7",
+   "max_dp": 2.8312206268310547e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/v7/decision-v7",
+   "max_dp": 5.662441253662109e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/v7/decision-v7",
+   "max_dp": 3.4924596548080444e-09,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 3.0249357223510742e-06,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 4.172325134277344e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 4.172325134277344e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 1.0132789611816406e-06,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 1.3690441846847534e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 3.5762786865234375e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 3.5390257835388184e-08,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 4.936009645462036e-08,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 2.980232238769531e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 1.5497207641601562e-06,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 8.940696716308594e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 1.1920928955078125e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 2.384185791015625e-07,
+   "flip": 0
+  },
+  {
+   "suite": "evals/documents-v1",
+   "max_dp": 8.195638656616211e-08,
+   "flip": 0
+  }
+ ]
+}

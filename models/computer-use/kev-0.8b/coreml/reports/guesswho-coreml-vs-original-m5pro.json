@@ -1,0 +1,48 @@
+{
+  "workload": "Guess Who wall: 80 Wikipedia people (DBpedia-14 test, artist/athlete/politician, seed 7, first 80) x 12 yes/no questions = 960 decisions; one request per bio",
+  "machine": "MacBook Pro M5 Pro, 24 GB",
+  "coreml": {
+    "runtime": "FluidUse KevCheck bios (KevFastManager, fused fp16, GPU), FluidInference/kev-0.8b-coreml@8fa70891, second launch",
+    "total_s": 2.980198709,
+    "median_ms": 36.633917000000004,
+    "load_s": 0.435871084,
+    "warm_s": 10.9899325,
+    "peak_memory_footprint_gb": 0.666,
+    "memory_mapped_weights_gb": 1.449,
+    "weights_on_disk_gb": {
+      "fused package + embeddings (this workload)": 1.449,
+      "whole repo incl. row fallbacks": 3.55
+    }
+  },
+  "original_fp32": {
+    "runtime": "Kev Checkpoint.load(mps) default dtype, serving path (to_record -> encode -> forward), KEV_BACKEND=torch",
+    "dtype": "torch.float32",
+    "total_s": 123.87737154203933,
+    "median_ms": 1286.589416093193,
+    "peak_memory_footprint_gb": 9.453
+  },
+  "original_bf16": {
+    "runtime": "same, KEV_DTYPE=bf16",
+    "dtype": "torch.bfloat16/torch.float32",
+    "total_s": 98.58529537497088,
+    "median_ms": 1070.437291986309,
+    "peak_memory_footprint_gb": 6.612
+  },
+  "original_weights_download_gb": {
+    "Qwen/Qwen3.5-0.8B-Base@dc7cdfe2 model.safetensors (bf16)": 1.747,
+    "jaredpalmer/kev-0.8b adapter + head": 0.045
+  },
+  "agreement": {
+    "coreml_vs_original_fp32": {
+      "decisions": 960,
+      "disagree": 0,
+      "max_abs_dp": 0.016728132963180542
+    },
+    "original_bf16_vs_fp32": {
+      "decisions": 960,
+      "disagree": 3,
+      "max_abs_dp": 0.030582964420318604
+    }
+  },
+  "notes": "Peak memory footprint = /usr/bin/time -l (Activity Monitor's Memory). Core ML maps its fp16 weights from disk (clean, file-backed pages, not in the footprint); count them as resident for a conservative total (~2.1 GB). PyTorch on a Mac runs Qwen3.5's Gated DeltaNet and causal conv through transformers' reference implementations (flash-linear-attention / causal_conv1d kernels are not available there)."
+}

@@ -1,0 +1,32 @@
+{
+  "run": "jaredpalmer/kev-0.8b",
+  "device": "mps",
+  "backend": "mlx",
+  "dtype": "bfloat16",
+  "cases": {
+    "2 questions, short state": {
+      "tokens": 89,
+      "first_ms": 2685.7,
+      "new_ms": 26.55,
+      "cached_ms": 15.0
+    },
+    "6 questions, short state": {
+      "tokens": 253,
+      "first_ms": 41.1,
+      "new_ms": 51.5,
+      "cached_ms": 39.5
+    },
+    "5 questions, 370-token state": {
+      "tokens": 567,
+      "first_ms": 97.6,
+      "new_ms": 69.6,
+      "cached_ms": 36.4
+    },
+    "5 questions, 2,200-token state": {
+      "tokens": 2392,
+      "first_ms": 518.4,
+      "new_ms": 222.65,
+      "cached_ms": 41.25
+    }
+  }
+}
