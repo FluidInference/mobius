@@ -8,6 +8,7 @@ image and text encoders, starting with
 
 Both towers are exported, so labels can be written as text at runtime
 (zero-shot classification) instead of being fixed at conversion time.
+Published packages: [FluidInference/siglip2-base-patch16-256-coreml](https://huggingface.co/FluidInference/siglip2-base-patch16-256-coreml).
 
 ## Packages
 
@@ -33,6 +34,8 @@ Both towers are exported, so labels can be written as text at runtime
 uv sync
 uv run python convert-coreml.py                      # build/siglip2-base-patch16-256/
 uv run python compare-models.py --limit 1000         # Core ML vs PyTorch on ImageNet-1k
+uv run python score-pets.py                          # Core ML vs PyTorch on Oxford-IIIT Pets
+uv run python bench-pytorch-pets.py --batch 32       # PyTorch timing baseline for FluidUse ImageSortCheck
 ```
 
 `compare-models.py` downloads the ImageNet-1k test split from
@@ -68,6 +71,22 @@ compares Core ML with PyTorch, not with Google's number.
 | Core ML, CPU only | 17.4 ms | 4.1 ms |
 | PyTorch fp32, MPS | 19.1 ms | — |
 | PyTorch fp32, CPU | 91.4 ms | — |
+
+**Oxford-IIIT Pets** (`score-pets.py`, 3,669 test photos, 37 breeds, prompt
+`a photo of a {breed}, a type of pet.`): Core ML 94.77%, PyTorch 94.74%, 99.89% identical top-1
+([report](reports/oxford-pets-zeroshot-base-256-fp16-ane.json)).
+
+**End to end against PyTorch** (`bench-pytorch-pets.py` vs the FluidUse Swift `ImageSortCheck`, 7,349 Pets
+photos, decode + resize + encoder + scoring, after model load;
+[report](reports/pets-7349-coreml-vs-pytorch.json)):
+
+| | Core ML (Swift, 4 in flight) | transformers fp32, MPS, batch 32 |
+| --- | ---: | ---: |
+| Time | 36.3 s | 102.2 s |
+| Photos per second | 202 | 72 |
+| Peak memory | 262 MB | 4.24 GB |
+| Model on disk | 715 MB | 1.50 GB |
+| Accuracy | 94.26% | 94.11% |
 
 ## Notes
 
