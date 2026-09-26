@@ -75,6 +75,27 @@ the ANE. Weight-only int8 / int4 (`linear_quantize_weights`) leave GPU time unch
 the weights (955 → 480 / 271 MB). A function left idle for a while pays a 0.3–0.8 s re-setup on its next call,
 independent of the inputs; warm before latency-sensitive work.
 
+## Against the original model: Guess Who, 80 Wikipedia bios
+
+Same machine (M5 Pro, 24 GB), same requests: 80 Wikipedia people (DBpedia-14 test split) × 12 yes/no questions, one
+request per bio, 960 decisions (`reports/guesswho-80-workload.json`, `reports/guesswho-coreml-vs-original-m5pro.json`).
+The original is Kev's own checkpoint loader and serving path in PyTorch on the GPU (MPS); the Core ML side is FluidUse
+`KevCheck bios` on the published package.
+
+| | Core ML fused (fp16) | Original, PyTorch bf16 | Original, PyTorch fp32 (default) |
+| --- | ---: | ---: | ---: |
+| 80 bios × 12 questions | **2.98 s** | 98.6 s | 123.9 s |
+| per bio (12 answers) | **36.6 ms** | 1,070 ms | 1,287 ms |
+| peak memory footprint | **0.67 GB** (+1.45 GB weights mapped from disk) | 6.6 GB | 9.5 GB |
+| weights | 1.45 GB fp16 (fused package + embeddings) | 1.79 GB download (bf16 base + LoRA/head) | same |
+| answers vs original fp32 | 0 / 960 differ (max \|Δp\| 0.017) | 3 / 960 differ | reference |
+
+PyTorch on a Mac runs Qwen3.5's Gated DeltaNet and causal conv through transformers' reference implementations
+(`flash-linear-attention` and `causal_conv1d` kernels are not available there), which is most of its time. Peak memory
+footprint is `/usr/bin/time -l` (Activity Monitor's Memory); Core ML maps its weights from disk as clean pages, so count
+them as resident for a conservative ~2.1 GB. Reproduce: `bench_original_bios.py` from a Kev clone, and
+`swift run -c release KevCheck bios <model dir> reports/guesswho-80-workload.json out.json` in FluidUse.
+
 ## Reproduce
 
 ```bash
