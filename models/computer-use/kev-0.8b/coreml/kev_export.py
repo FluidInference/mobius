@@ -26,8 +26,10 @@ class KevRow(nn.Module):
         self.q = nn.Linear(cfg.hidden_size, pointer_dim)
         self.k = nn.Linear(cfg.hidden_size, pointer_dim)
         self.max_options = max_options
-        self.register_buffer("pointer_scale", torch.tensor(pointer_dim ** -0.5))
-        self.register_buffer("inverse_temperature", torch.tensor(1.0))
+        # 1-element (not 0-d) so no rank-0 constant reaches the GPU: MPSGraph intermittently asserted on one
+        # (`shape.count = 0 != strides.count = 1`).
+        self.register_buffer("pointer_scale", torch.tensor([pointer_dim ** -0.5]))
+        self.register_buffer("inverse_temperature", torch.tensor([1.0]))
 
     def forward(self, hidden, cos, sin, decide_onehot, option_onehot, option_mask):
         """hidden [1, L, D] (host embedding gather), cos/sin [L, R], decide_onehot [1, L], option_onehot [K, L],

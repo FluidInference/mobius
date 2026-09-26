@@ -31,7 +31,7 @@ def main() -> None:
     args = ap.parse_args()
     L, K = args.length, args.max_options
     row, cfg, meta, embed = load_kev_row(args.merged, L, K, args.chunk_size)
-    out = args.build / f"L{L}_K{K}"
+    out = args.build / (f"L{L}_K{K}" if args.chunk_size == 64 else f"L{L}_K{K}_C{args.chunk_size}")
     out.mkdir(parents=True, exist_ok=True)
     emb_path = out / "embeddings.f16"
     if not emb_path.exists():
@@ -60,7 +60,7 @@ def main() -> None:
     package = out / f"KevRow_{args.precision}.mlpackage"
     model.save(str(package))
     config = {"source_run": meta["run"], "length": L, "max_options": K, "hidden_size": cfg.hidden_size,
-              "rotary_dim": cfg.rotary_dim, "vocab_size": int(embed.shape[0]), "pad_id": meta["pad_id"],
+              "rotary_dim": cfg.rotary_dim, "rope_theta": cfg.rope_theta, "vocab_size": int(embed.shape[0]), "pad_id": meta["pad_id"],
               "special_tokens": special, "temperature": meta["temperature"], "precision": args.precision}
     (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
     print(f"saved {package} in {time.time() - start:.0f} s")
