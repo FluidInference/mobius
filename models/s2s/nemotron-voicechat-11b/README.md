@@ -57,14 +57,18 @@ Per-frame budget is **80 ms**. Measured on M5 Pro / 24 GB, macOS 26.6 (2026-08-0
 | 9B LLM decode (MLX 4-bit) | **21.2 ms/tok** (47.2 tok/s) | mlx-community/NVIDIA-Nemotron-Nano-9B-v2-4bits via mlx-lm 0.31.3; peak 5.24 GB. Confirms CoreML non-viability call (riva-translate-4b GEMV floor ⇒ 9B ≈ 80–90 ms/tok). |
 | 9B LLM prefill (MLX 4-bit) | **546 tok/s** | 1442-token system prompt ingests in 2.6 s at session start (one-time). |
 | RNNT decoder+joint step | **0.5 ms** (CPU; 0.23 + 0.27 ms split) | cached `decoder_joint.mlmodelc` / `decoder` / `joint`; negligible. |
-| TTS backbone + MoG step | ~6 ms est. (×2 with CFG ≈ 12 ms) | proxy: magpie decoder_step host-cache rewrite measured 6.0 ms/step 100% ANE on this machine (similar-class decoder). Measure after Phase 2. |
-| Codec decoder | unmeasured | 108 M convnet, expect low single-digit ms per 80 ms frame. (NeuCodec-fp16 batch decode was profiled as a candidate proxy — 366 ms ANE-off — but it is a far heavier vocoder doing whole-utterance decode; not representative.) |
+| TTS backbone + MoG step | **22 ms measured** (backbone 14.2 GPU incl. CFG batch-2 + 8 MoG iterations × 0.96) | Phase 2b actuals — the ~6 ms magpie proxy under-counted the 8-iteration MaskGIT RVQ refinement and CFG. Levers: guidance off → batch-1 backbone; fewer refinement iterations. |
+| Codec decoder | **3.2 ms measured** (per-frame T=1, GPU) | Phase 2c actuals; 1 s batches decode at 67× RT. |
 
-**Frame total ≈ 45–55 ms of an 80 ms budget with the MLX-4-bit projection above —
-SUPERSEDED by the quant-quality results below**: 4-bit RTN is not shippable on the
-fine-tuned weights, so the shipping configuration is **CoreML int8 (lossless,
-43.5 ms/step) → frame total ≈ 65–72 ms of 80 ms, ~13 GB resident** (thin but
-real-time on M5 Pro). The MLX rows remain as the fallback-path baseline.
+**Frame total (all components now measured): encoder 12 + LLM int8 43.5 +
+TTS 22 + RNNT 0.5 + codec 3.2 ≈ 81 ms vs the 80 ms budget — serial
+worst-case is right at the line.** Paths back under budget: disable CFG
+(batch-1 backbone, saves ~5–7 ms; quality impact is an open question below),
+fewer MoG refinement iterations, amortized chunked encoding (~11 ms → ~1
+ms/frame at +latency), or pipelining the LLM (GPU) against TTS/codec across
+frames. The earlier 45–55 ms MLX-4-bit projection is superseded (4-bit RTN
+fails the quality gate); MLX rows remain as the fallback-path baseline.
+~13 GB resident with the int8 LLM.
 
 ### CoreML 9B floor benchmark (`bench_llm_coreml_floor.py`) — MLX-vs-CoreML revisited
 
@@ -219,9 +223,30 @@ not otherwise carry, which is another reason it is not the primary path.
     real mel history (left-padded only for missing frames) and processes the
     zero-padded final partial chunk. Real-audio behavioral parity for the
     full user-transcription chain.
-- [ ] **Phase 2b — TTS backbone + MoG head**: gemma3 28L×1152 stateful KV single-step,
-  magpie/neutts decoder-step playbook applies (host-cache if needed)
-- [ ] **Phase 2c — codec decoder (+ prvq dequant)**: conv stack, straightforward
+- [x] **Phase 2b — TTS backbone + MoG head** (`convert_tts.py`): two CoreML models
+      + host glue. `backbone_step_fp16`: manual gemma3_text single-frame step
+      (28L h1152, 16 heads hd72, q/k RMSNorm, sandwich norms, 5:1
+      sliding/full layer pattern with RoPE theta 10k/1M, scale 256^-0.5),
+      batch 2 for CFG, rolling 1024-slot KV `ct.StateType` with pos masking —
+      parity vs the HF backbone 2.96e-05 (12-step prefill), fp16 chained
+      7.7e-02. `mog_dense`: mlp_stack + CFG combine → mixture logits / logs /
+      mu_res / guided hidden; sampling + the low-rank mu gathers
+      (proj_mus[idx] 64×1152, low_mat[idx] 512×64) and the RVQ
+      depthsum encode/decode run host-side (npy exports). Deterministic
+      e2e (argmax pick, noise 0): torch vs CoreML codes **identical 4/4
+      frames**; full fp16 chain 124/124 code agreement. **Measured M5 Pro:
+      backbone step 14.2 ms GPU (ANE rejects the stateful graph), MoG dense
+      0.96 ms GPU / 0.82 ms ANE × 8 iterations → TTS ≈ 22 ms/frame.**
+      Notes: `disable_eos_prediction` (EOS comes from the LLM text channel);
+      per-frame generation is 8-iteration MaskGIT-style RVQ refinement, not
+      one decoder call — the old ~6 ms proxy under-counted it.
+- [x] **Phase 2c — codec decoder** (`convert_codec.py`): conv stack in CoreML
+      (flexible T), PRVQ code→latent (31 embedding sums; codebooks ==
+      tts rvq_embs, exported npy) + 16-point iSTFT tail host-side. Parity on
+      real audio through the codec's own encoder: fp32 wav 7.5e-07 corr
+      1.000000, fp16 wav 7.5e-03 corr 0.99995; round-trip corr vs source
+      0.941. **Measured: 3.2 ms GPU per 80 ms frame (T=1); 15.6 ms for 1 s
+      batches (67× RT).**
 - [x] **Phase 3 — LLM on CoreML (real weights)** (`convert_llm_real.py`): the
       fine-tuned 9B converted to 4 stateful int8 shards (~1.9 GB each) + heads
       (1.2 GB) + fp16 embedding table for host-side lookup (1.1 GB, consumes
