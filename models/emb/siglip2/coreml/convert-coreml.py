@@ -99,6 +99,7 @@ def main():
         "precision": args.precision,
     }
     (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
+    processor.tokenizer.save_pretrained(str(out))
     print(json.dumps(config, indent=2))
 
 

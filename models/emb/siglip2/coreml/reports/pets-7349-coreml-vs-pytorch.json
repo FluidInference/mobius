@@ -1,0 +1,10 @@
+{
+  "machine": "Apple M5 Pro, 24 GB, macOS 27",
+  "photos": 7349,
+  "dataset": "Oxford-IIIT Pets test + train (timm/oxford-iiit-pet), 37 breeds, zero-shot, prompt 'a photo of a {breed}, a type of pet.'",
+  "coreml": {"runtime": "FluidUse ImageSortCheck (Swift), fp16 packages, CPU + Neural Engine, 4 in flight", "seconds": 36.34, "photos_per_s": 202, "ms_per_photo": 4.95, "accuracy": 0.9426, "peak_memory_footprint_mb": 262, "model_mb": {"image": 176, "text": 539}},
+  "pytorch_mps_batch32": {"runtime": "transformers SiglipModel fp32 on MPS, HF processor, batch 32", "seconds": 102.24, "photos_per_s": 71.9, "ms_per_photo": 13.91, "accuracy": 0.9411, "peak_memory_footprint_mb": 4238, "model_mb": 1501},
+  "pytorch_mps_batch1": {"runtime": "same, batch 1", "seconds": 153.48, "photos_per_s": 47.9, "ms_per_photo": 20.88, "accuracy": 0.9411, "peak_memory_footprint_mb": 3639},
+  "timing": "end to end after model load: JPEG decode, resize, encoder, scoring against 37 cached text embeddings",
+  "memory": "/usr/bin/time -l peak memory footprint of the process"
+}
