@@ -1,0 +1,10 @@
+{
+  "model_id": "google/siglip2-base-patch16-256",
+  "dataset": "timm/oxford-iiit-pet test",
+  "template": "a photo of a {}, a type of pet.",
+  "images": 3669,
+  "top1_pytorch": 0.9473971109294086,
+  "top1_coreml": 0.9476696647587899,
+  "top1_agreement": 0.9989097846824748,
+  "image_latency_ms_median": 5.635395471472293
+}

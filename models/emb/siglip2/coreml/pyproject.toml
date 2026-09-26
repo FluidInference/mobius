@@ -12,4 +12,5 @@ dependencies = [
     "huggingface_hub",
     "sentencepiece",
     "protobuf",
+    "pyarrow>=25.0.1",
 ]
