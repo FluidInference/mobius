@@ -1,0 +1,29 @@
+{
+  "run": "jaredpalmer/kev-0.8b",
+  "device": "mps",
+  "start": 1000,
+  "end": 2000,
+  "load_s": 1.8143250942230225,
+  "errors": 0,
+  "error_details": [],
+  "ms_p50": 222.3,
+  "ms_p95": 679.2,
+  "suites": {
+    "jev.emotion": {
+      "n": 100,
+      "ok": 52
+    },
+    "app.support_triage": {
+      "n": 400,
+      "ok": 150
+    },
+    "app.email_spam": {
+      "n": 400,
+      "ok": 207
+    },
+    "app.phishing": {
+      "n": 100,
+      "ok": 63
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "model": "knowledgator/gliclass-base-v3.0",
+  "params_m": 186.545922,
+  "rows": 200,
+  "label_format": "description",
+  "instruction_in_text": false,
+  "max_length": 512,
+  "macro": 0.425,
+  "micro": 0.425,
+  "ms_p50": 49.34418751508929,
+  "ms_p95": 126.39037502231076,
+  "suites": {
+    "massive_intent.en": {
+      "n": 20,
+      "ok": 12,
+      "accuracy": 0.6
+    },
+    "jev.ag_news": {
+      "n": 20,
+      "ok": 14,
+      "accuracy": 0.7
+    },
+    "jev.emotion": {
+      "n": 20,
+      "ok": 10,
+      "accuracy": 0.5
+    },
+    "app.support_triage": {
+      "n": 20,
+      "ok": 6,
+      "accuracy": 0.3
+    },
+    "app.email_spam": {
+      "n": 20,
+      "ok": 9,
+      "accuracy": 0.45
+    },
+    "app.phishing": {
+      "n": 20,
+      "ok": 6,
+      "accuracy": 0.3
+    },
+    "app.guardrails_jailbreak": {
+      "n": 20,
+      "ok": 3,
+      "accuracy": 0.15
+    },
+    "app.moderation_toxicity": {
+      "n": 20,
+      "ok": 8,
+      "accuracy": 0.4
+    },
+    "app.rag_relevance": {
+      "n": 20,
+      "ok": 10,
+      "accuracy": 0.5
+    },
+    "app.model_routing_domain": {
+      "n": 20,
+      "ok": 7,
+      "accuracy": 0.35
+    }
+  }
+}

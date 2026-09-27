@@ -3,6 +3,7 @@ license: apache-2.0
 library_name: coreml
 pipeline_tag: text-classification
 base_model: convaiinnovations/laya
+base_model_relation: quantized
 tags:
   - coreml
   - laya

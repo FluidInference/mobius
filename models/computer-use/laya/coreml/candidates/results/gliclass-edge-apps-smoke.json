@@ -1,0 +1,64 @@
+{
+  "model": "candidates/work/gliclass-edge-apps",
+  "params_m": 32.705154,
+  "rows": 200,
+  "label_format": "description",
+  "instruction_in_text": false,
+  "max_length": 512,
+  "macro": 0.65,
+  "micro": 0.65,
+  "ms_p50": 7.898062496678904,
+  "ms_p95": 23.306625022087246,
+  "suites": {
+    "massive_intent.en": {
+      "n": 20,
+      "ok": 5,
+      "accuracy": 0.25
+    },
+    "jev.ag_news": {
+      "n": 20,
+      "ok": 16,
+      "accuracy": 0.8
+    },
+    "jev.emotion": {
+      "n": 20,
+      "ok": 12,
+      "accuracy": 0.6
+    },
+    "app.support_triage": {
+      "n": 20,
+      "ok": 4,
+      "accuracy": 0.2
+    },
+    "app.email_spam": {
+      "n": 20,
+      "ok": 19,
+      "accuracy": 0.95
+    },
+    "app.phishing": {
+      "n": 20,
+      "ok": 19,
+      "accuracy": 0.95
+    },
+    "app.guardrails_jailbreak": {
+      "n": 20,
+      "ok": 17,
+      "accuracy": 0.85
+    },
+    "app.moderation_toxicity": {
+      "n": 20,
+      "ok": 15,
+      "accuracy": 0.75
+    },
+    "app.rag_relevance": {
+      "n": 20,
+      "ok": 8,
+      "accuracy": 0.4
+    },
+    "app.model_routing_domain": {
+      "n": 20,
+      "ok": 15,
+      "accuracy": 0.75
+    }
+  }
+}

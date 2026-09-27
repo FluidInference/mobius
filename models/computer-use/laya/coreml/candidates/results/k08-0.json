@@ -1,0 +1,25 @@
+{
+  "run": "jaredpalmer/kev-0.8b",
+  "device": "mps",
+  "start": 0,
+  "end": 1000,
+  "load_s": 1.6855337619781494,
+  "errors": 0,
+  "error_details": [],
+  "ms_p50": 120.45,
+  "ms_p95": 227.0,
+  "suites": {
+    "massive_intent.en": {
+      "n": 300,
+      "ok": 246
+    },
+    "jev.ag_news": {
+      "n": 400,
+      "ok": 357
+    },
+    "jev.emotion": {
+      "n": 300,
+      "ok": 168
+    }
+  }
+}

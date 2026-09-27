@@ -1,0 +1,37 @@
+{
+  "run": "jaredpalmer/kev-0.5b",
+  "device": "mps",
+  "start": 0,
+  "end": 2000,
+  "load_s": 2.269052267074585,
+  "errors": 0,
+  "error_details": [],
+  "ms_p50": 49.7,
+  "ms_p95": 134.1,
+  "suites": {
+    "massive_intent.en": {
+      "n": 300,
+      "ok": 230
+    },
+    "jev.ag_news": {
+      "n": 400,
+      "ok": 360
+    },
+    "jev.emotion": {
+      "n": 400,
+      "ok": 191
+    },
+    "app.support_triage": {
+      "n": 400,
+      "ok": 148
+    },
+    "app.email_spam": {
+      "n": 400,
+      "ok": 188
+    },
+    "app.phishing": {
+      "n": 100,
+      "ok": 37
+    }
+  }
+}

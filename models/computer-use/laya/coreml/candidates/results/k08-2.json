@@ -1,0 +1,25 @@
+{
+  "run": "jaredpalmer/kev-0.8b",
+  "device": "mps",
+  "start": 2000,
+  "end": 3000,
+  "load_s": 5.4672369956970215,
+  "errors": 0,
+  "error_details": [],
+  "ms_p50": 123.95,
+  "ms_p95": 707.5,
+  "suites": {
+    "app.phishing": {
+      "n": 300,
+      "ok": 186
+    },
+    "app.guardrails_jailbreak": {
+      "n": 400,
+      "ok": 337
+    },
+    "app.moderation_toxicity": {
+      "n": 300,
+      "ok": 174
+    }
+  }
+}

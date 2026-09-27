@@ -1,0 +1,25 @@
+{
+  "run": "jaredpalmer/kev-0.8b",
+  "device": "mps",
+  "start": 3000,
+  "end": 3899,
+  "load_s": 1.8511838912963867,
+  "errors": 0,
+  "error_details": [],
+  "ms_p50": 172.2,
+  "ms_p95": 224.3,
+  "suites": {
+    "app.moderation_toxicity": {
+      "n": 100,
+      "ok": 50
+    },
+    "app.rag_relevance": {
+      "n": 400,
+      "ok": 215
+    },
+    "app.model_routing_domain": {
+      "n": 399,
+      "ok": 326
+    }
+  }
+}

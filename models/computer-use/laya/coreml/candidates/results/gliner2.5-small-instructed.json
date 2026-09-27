@@ -1,0 +1,55 @@
+{
+  "model": "fastino/gliner2.5-small-v1",
+  "params_m": 73.881879,
+  "device": "cpu",
+  "format": "instructed",
+  "threads": 4,
+  "load_s": 2.135474920272827,
+  "micro": 0.4352398050782252,
+  "macro": 0.4398565162907268,
+  "ms_p50": 19.620499981101602,
+  "ms_p95": 66.25525001436472,
+  "unparsed": 0,
+  "suites": {
+    "massive_intent.en": {
+      "n": 300,
+      "accuracy": 0.6233333333333333
+    },
+    "jev.ag_news": {
+      "n": 400,
+      "accuracy": 0.735
+    },
+    "jev.emotion": {
+      "n": 400,
+      "accuracy": 0.4775
+    },
+    "app.support_triage": {
+      "n": 400,
+      "accuracy": 0.2975
+    },
+    "app.email_spam": {
+      "n": 400,
+      "accuracy": 0.53
+    },
+    "app.phishing": {
+      "n": 400,
+      "accuracy": 0.3825
+    },
+    "app.guardrails_jailbreak": {
+      "n": 400,
+      "accuracy": 0.2275
+    },
+    "app.moderation_toxicity": {
+      "n": 400,
+      "accuracy": 0.5
+    },
+    "app.rag_relevance": {
+      "n": 400,
+      "accuracy": 0.5325
+    },
+    "app.model_routing_domain": {
+      "n": 399,
+      "accuracy": 0.09273182957393483
+    }
+  }
+}

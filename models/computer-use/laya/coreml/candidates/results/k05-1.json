@@ -1,0 +1,33 @@
+{
+  "run": "jaredpalmer/kev-0.5b",
+  "device": "mps",
+  "start": 2000,
+  "end": 3899,
+  "load_s": 2.1882057189941406,
+  "errors": 0,
+  "error_details": [],
+  "ms_p50": 50.5,
+  "ms_p95": 115.1,
+  "suites": {
+    "app.phishing": {
+      "n": 300,
+      "ok": 116
+    },
+    "app.guardrails_jailbreak": {
+      "n": 400,
+      "ok": 314
+    },
+    "app.moderation_toxicity": {
+      "n": 400,
+      "ok": 206
+    },
+    "app.rag_relevance": {
+      "n": 400,
+      "ok": 211
+    },
+    "app.model_routing_domain": {
+      "n": 399,
+      "ok": 228
+    }
+  }
+}

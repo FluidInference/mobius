@@ -1,0 +1,61 @@
+{
+  "model": "notnotsamuel/LFM2.5-350M-RLCD",
+  "revision": "deb589d803d141cabd158ef55f6617b128529f36",
+  "rows": 100,
+  "macro": 0.36,
+  "micro": 0.36,
+  "ms_p50": 295.21639601443894,
+  "ms_p95": 693.4360000304878,
+  "suites": {
+    "massive_intent.en": {
+      "n": 10,
+      "ok": 1,
+      "accuracy": 0.1
+    },
+    "jev.ag_news": {
+      "n": 10,
+      "ok": 3,
+      "accuracy": 0.3
+    },
+    "jev.emotion": {
+      "n": 10,
+      "ok": 4,
+      "accuracy": 0.4
+    },
+    "app.support_triage": {
+      "n": 10,
+      "ok": 3,
+      "accuracy": 0.3
+    },
+    "app.email_spam": {
+      "n": 10,
+      "ok": 4,
+      "accuracy": 0.4
+    },
+    "app.phishing": {
+      "n": 10,
+      "ok": 5,
+      "accuracy": 0.5
+    },
+    "app.guardrails_jailbreak": {
+      "n": 10,
+      "ok": 5,
+      "accuracy": 0.5
+    },
+    "app.moderation_toxicity": {
+      "n": 10,
+      "ok": 3,
+      "accuracy": 0.3
+    },
+    "app.rag_relevance": {
+      "n": 10,
+      "ok": 5,
+      "accuracy": 0.5
+    },
+    "app.model_routing_domain": {
+      "n": 10,
+      "ok": 3,
+      "accuracy": 0.3
+    }
+  }
+}
