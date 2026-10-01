@@ -65,4 +65,51 @@ not care. The published repo therefore carries both: `Encoder.mlmodelc` = lut6 (
 
 ## Results
 
-WER_TABLE_PLACEHOLDER
+End-to-end, FluidAudio `asr-benchmark`, **full** LibriSpeech, M5 Pro, models run back to back. Corpus WER = total edit
+distance / total reference words; RTFx = total audio / total processing time.
+
+| Set | Encoder units | v3 WER | phonon2 WER | v3 RTFx | phonon2 lut6 RTFx | phonon2 lut3 RTFx |
+|-----|---------------|-------:|------------:|--------:|------------------:|------------------:|
+| test-clean (2620) | ANE | 2.27 % | 2.47 % | 148.7× | **155.1×** | 70.0× |
+| test-other (2939) | ANE | 4.12 % | 4.62 % | 138.1× | **143.0×** | 64.6× |
+| test-clean (2620) | GPU | 2.30 % | 2.46 % | 171.9× | 150.6× | 154.1× |
+
+lut3 and lut6 give identical transcripts (2620 / 2620); the ANE WER / GPU WER difference is the usual fp16 pipeline
+noise. The +0.20 / +0.50 gap to v3 reproduces the card's own deltas to its teacher (+0.20 / +0.79, leaderboard
+protocol). NeMo fp32 full-context decode of the first 100 test-clean files: Phonon-2 1.79 % vs Core ML 1.83 %,
+Core ML-vs-NeMo hypothesis WER 0.34 % (stock v3 for comparison: 1.88 %, 1.36 % against its own Core ML build) — the
+conversion is lossless to within fp16.
+
+### Sparse encoding (the 164 MB question)
+
+The upstream 164 MB is a zstd archive of a ~2.1-bit custom packing (trits 5 per byte + a bitmask over the non-zeros);
+Core ML has no entropy-coded weight format, and a five-value palette needs 3-bit indices. The Core ML route that gets
+close is iOS 18 sparsity: 51 % of the weights are zero and the non-zeros take four values per row, so
+`constexpr_lut_to_sparse` (palette over the non-zeros only) + `constexpr_sparse_to_dense` (1-bit mask) is exact at
+1 + 0.49 × nbits bits per weight. Grouping rows per palette costs bits but, as with the dense LUTs, buys ANE speed:
+
+| `--mode` | Rows per LUT | Non-zero index bits | Encoder | ANE latency | ANE first load | GPU |
+|---|---:|---:|---:|---:|---:|---|
+| `sparse-g1` | 1 | 2 | **176 MB** | 70.0 ms | 90 s | 16.1 ms, but ~150 s load **every** time |
+| `sparse-g2` | 2 | 3 | 211 MB | — | — | 17.2 ms, 164 s load |
+| `sparse-g4` | 4 | 4 | **246 MB** | **24.3 ms** (v3: 23.5) | 56 s | 15.9 ms, 158 s load |
+| `sparse-g8` | 8 | 6 | 321 MB | **18.6 ms** (= lut6) | 52 s | — |
+
+All exact (same parity as the dense builds). The ANE compiles the sparse weights on first load; Core ML's cache made a
+second `sparse-g1` load take 0.1 s, but `sparse-g4`/`g8` recompiled (52–55 s) on their second load after several other
+large encoders had been compiled in between, so treat the compile as "usually cached" rather than guaranteed. The GPU
+path instead materializes the sparse weights at every load (~2.5 min of CPU, never cached), so a sparse file is wrong
+for `.cpuAndGPU` users — keep `lut3` for them.
+
+End-to-end on the ANE (full test-clean, same session, v3 control 148.7–151.5×): `sparse-g8` **159.0×**, `lut6` 155.1×,
+`sparse-g4` 140.0×, `lut3` 70.0×; all four produce the same 2620 transcripts (2.47 %).
+
+**Shipping candidates**, all exact and WER-identical:
+
+| File | Size | ANE RTFx | GPU | Role |
+|---|---:|---:|---|---|
+| `lut6` | 470 MB | 155× | 16 ms, 0.6 s load | fastest everywhere, biggest |
+| `sparse-g8` | 321 MB | 159× | 150 s load | ANE-only default candidate: lut6 speed at 68 % of the size |
+| `sparse-g4` | 246 MB | 140× | 150 s load | ANE-only, v3 speed, half of lut6 |
+| `lut3` | 253 MB | 70× | 16 ms, 0.7 s load | the GPU / Mac file |
+| `sparse-g1` | 176 MB | ~70× (70 ms) | 150 s load | size floor, 7 % above the upstream download |

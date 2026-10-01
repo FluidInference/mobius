@@ -10,6 +10,13 @@ only difference from the fp16 encoder is the storage format.
   --mode lut4   G=2 rows / 16 palettes (4 bits per weight)
   --mode lut6   G=8 rows / 64 palettes (6 bits per weight)   same bit width as the shipped v3 encoder
 
+Sparse variants exploit the 51 % zeros: a 1-bit mask (constexpr_sparse_to_dense) plus a palette over the non-zeros only,
+which take four values {-hi, -lo, +lo, +hi} per row (constexpr_lut_to_sparse):
+  --mode sparse-g1  per row, 2-bit non-zero indices   ≈ 1 + 0.49*2 = 2.0 bits per weight  (upstream download: ~2.1)
+  --mode sparse-g2  2 rows, 3-bit                     ≈ 2.5 bits per weight
+  --mode sparse-g4  4 rows, 4-bit                     ≈ 3.0 bits per weight
+  --mode sparse-g8  8 rows, 6-bit                     ≈ 3.9 bits per weight
+
 hi/lo is not an integer (median 2.1, up to 100x), so no affine (shift-scale) encoding is exact here; the LUT is.
 """
 from __future__ import annotations
@@ -27,6 +34,8 @@ sys.path.insert(0, str(HERE))
 
 import coremltools as ct  # noqa: E402
 from coremltools.converters.mil.frontend._utils import _construct_constexpr_lut_op  # noqa: E402
+from coremltools.converters.mil.mil import Builder as mb  # noqa: E402
+from coremltools.converters.mil.mil import types  # noqa: E402
 from coremltools.converters.mil.mil.passes.graph_pass import AbstractGraphPass  # noqa: E402
 from coremltools.converters.mil.mil.passes.helper import block_context_manager  # noqa: E402
 from coremltools.models.utils import _apply_graph_pass  # noqa: E402
@@ -34,6 +43,11 @@ from coremltools.models.utils import _apply_graph_pass  # noqa: E402
 from phonon2_weights import DEFAULT_CONTAINER, FiveValue, load_phonon2  # noqa: E402
 
 MODES = {"lut3": (1, 3), "lut4": (2, 4), "lut6": (8, 6)}  # mode -> (rows per group, nbits)
+SPARSE_MODES = {"sparse-g1": (1, 2), "sparse-g2": (2, 3), "sparse-g4": (4, 4), "sparse-g8": (8, 6)}  # mode -> (rows per group, nbits)
+
+
+def _np_dtype(bits: int):
+    return types.nptype_from_builtin(types.string_to_builtin(f"uint{bits}"))
 
 
 def const_name_for(nemo_key: str) -> str:
@@ -67,10 +81,36 @@ def grouped_palette(fv: FiveValue, rows_per_group: int, nbits: int):
     return indices, lut16.reshape(out_f // g, 1, n_pal, 1)
 
 
+def grouped_sparse_palette(fv: FiveValue, rows_per_group: int, nbits: int):
+    """-> (mask uint8 [out, in] in {0,1}, nonzero indices uint8 [nnz], lut fp16 [out/G, 1, 2^nbits, 1]).
+
+    The palette of a group holds the sorted non-zero values {-hi, -lo, +lo, +hi} of its G rows (4G entries, zero-padded);
+    every non-zero weight stores its index, row-major over the mask's 1 bits."""
+    out_f, in_f = fv.shape
+    g = rows_per_group
+    assert out_f % g == 0 and 4 * g <= 2 ** nbits, (out_f, g, nbits)
+    n_pal = 2 ** nbits
+    lo, hi = fv.lo.astype(np.float32), fv.hi.astype(np.float32)
+    cand = np.stack([-hi, -lo, lo, hi], axis=1).reshape(out_f // g, 4 * g)
+    order = np.argsort(cand, axis=1, kind="stable")
+    inv = np.empty_like(order)
+    np.put_along_axis(inv, order, np.arange(4 * g)[None, :].repeat(out_f // g, axis=0), axis=1)
+    lut = np.zeros((out_f // g, n_pal), dtype=np.float32)
+    lut[:, : 4 * g] = np.take_along_axis(cand, order, axis=1)
+    # per-row non-zero code k in 0..3 for [-hi, -lo, +lo, +hi]: sign<0 -> (0 if hi else 1), sign>0 -> (3 if hi else 2)
+    sign, is_hi = fv.sign.astype(np.int8), fv.is_hi
+    k = np.where(sign < 0, np.where(is_hi, 0, 1), np.where(is_hi, 3, 2)).astype(np.int64)
+    pos = (np.arange(out_f) % g)[:, None] * 4 + k
+    indices = np.take_along_axis(inv.repeat(g, axis=0), pos, axis=1)
+    mask = (sign != 0).astype(np.uint8)
+    return mask, indices[mask != 0].astype(np.uint8), lut.astype(np.float16).reshape(out_f // g, 1, n_pal, 1)
+
+
 class FiveValueLutPass(AbstractGraphPass):
     def __init__(self, five: dict, mode: str) -> None:
         super().__init__()
-        self.rows_per_group, self.nbits = MODES[mode]
+        self.sparse = mode in SPARSE_MODES
+        self.rows_per_group, self.nbits = (SPARSE_MODES if self.sparse else MODES)[mode]
         self.by_const_name = {const_name_for(k): (k, fv) for k, fv in five.items()}
         self.replaced: list = []
         self.mismatched: list = []
@@ -92,20 +132,48 @@ class FiveValueLutPass(AbstractGraphPass):
             if val.dtype != np.float16 or not np.array_equal(val, expect):
                 self.mismatched.append(op.name)
                 continue
-            indices, lut = grouped_palette(fv, self.rows_per_group, self.nbits)
-            # verify the palette reconstructs the const bit-exactly before touching the graph
-            recon = np.take_along_axis(lut[:, 0, :, 0].repeat(self.rows_per_group, axis=0), indices.astype(np.int64), axis=1)
-            assert np.array_equal(recon.reshape(val.shape), val), op.name
-            if val.ndim == 3:  # pointwise conv1d k=1: [out, in, 1]
-                assert val.shape[2] == 1
-                indices = indices[:, :, None]
-                lut = lut[:, :, None]
-            new_var = _construct_constexpr_lut_op(indices, lut, None, name=op.name + "_fivevalue", before_op=op)
+            if self.sparse:
+                new_var = self._sparse_var(op, fv, val)
+            else:
+                new_var = self._dense_var(op, fv, val)
             block.replace_uses_of_var_after_op(
                 anchor_op=op, old_var=op.outputs[0], new_var=new_var, no_check_var_types=True
             )
             block.remove_ops([op])
             self.replaced.append(op.name)
+
+    def _dense_var(self, op, fv: FiveValue, val: np.ndarray):
+        indices, lut = grouped_palette(fv, self.rows_per_group, self.nbits)
+        # verify the palette reconstructs the const bit-exactly before touching the graph
+        recon = np.take_along_axis(lut[:, 0, :, 0].repeat(self.rows_per_group, axis=0), indices.astype(np.int64), axis=1)
+        assert np.array_equal(recon.reshape(val.shape), val), op.name
+        if val.ndim == 3:  # pointwise conv1d k=1: [out, in, 1]
+            assert val.shape[2] == 1
+            indices = indices[:, :, None]
+            lut = lut[:, :, None]
+        return _construct_constexpr_lut_op(indices, lut, None, name=op.name + "_fivevalue", before_op=op)
+
+    def _sparse_var(self, op, fv: FiveValue, val: np.ndarray):
+        mask, nz_idx, lut = grouped_sparse_palette(fv, self.rows_per_group, self.nbits)
+        pal = lut[:, 0, :, 0].repeat(self.rows_per_group, axis=0)  # [out, 2^nbits]
+        rows = np.nonzero(mask)[0]
+        recon = np.zeros(mask.shape, dtype=np.float16)
+        recon[mask != 0] = pal[rows, nz_idx.astype(np.int64)]
+        assert np.array_equal(recon.reshape(val.shape), val), op.name
+        if val.ndim == 3:
+            assert val.shape[2] == 1
+            mask = mask[:, :, None]
+            lut = lut[:, :, None]
+        mask_var, nz_var = mb.constexpr_lut_to_sparse(
+            indices_mask=mask.astype(_np_dtype(1)),
+            indices_nonzero_data=nz_idx.astype(_np_dtype(self.nbits)),
+            lut=lut,
+            name=op.name + "_fivevalue_lut",
+            before_op=op,
+        )
+        return mb.constexpr_sparse_to_dense(
+            nonzero_data=nz_var, mask=mask_var, name=op.name + "_fivevalue", before_op=op
+        )
 
 
 def dir_size(p: Path) -> int:
@@ -117,7 +185,7 @@ def main() -> None:
     ap.add_argument("--container", type=Path, default=DEFAULT_CONTAINER)
     ap.add_argument("--work", type=Path, default=Path("~/Documents/phonon2-work").expanduser())
     ap.add_argument("--fp16", type=Path, default=None, help="fp16 encoder mlpackage (default <work>/encoder_fp16_phonon2.mlpackage)")
-    ap.add_argument("--mode", default="lut3", choices=sorted(MODES))
+    ap.add_argument("--mode", default="lut3", choices=sorted(MODES) + sorted(SPARSE_MODES))
     ap.add_argument("--out-name", default=None, help="default Encoder_<mode>")
     args = ap.parse_args()
     fp16_path = args.fp16 or (args.work / "encoder_fp16_phonon2.mlpackage")
@@ -141,8 +209,9 @@ def main() -> None:
     if p.mismatched or missing:
         raise SystemExit("five-value pass incomplete")
 
-    g, nbits = MODES[args.mode]
-    out.short_description = f"Phonon-2 encoder (exact five-value palette, {nbits}-bit LUT per {g} row(s), 15 s window)"
+    g, nbits = (SPARSE_MODES if args.mode in SPARSE_MODES else MODES)[args.mode]
+    kind = "sparse mask + " if args.mode in SPARSE_MODES else ""
+    out.short_description = f"Phonon-2 encoder (exact five-value palette, {kind}{nbits}-bit LUT per {g} row(s), 15 s window)"
     out.author = "Fluid Inference"
     pkg = args.work / "components" / f"{out_name}.mlpackage"
     pkg.parent.mkdir(parents=True, exist_ok=True)
