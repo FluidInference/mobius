@@ -1,8 +1,4 @@
 [project]
-
-[project.optional-dependencies]
-# host-contract helpers in vision_export.prepare_inputs / lm_export.mrope_position_ids and vision_parity.py
-check = ["transformers>=5.17", "pillow>=10"]
 name = "clef-vision-coreml"
 version = "0.1.0"
 description = "Core ML export of clef-vision-0.8b (Qwen3.5-0.8B + Clef joint schema head): vision tower, LM rows, head"
@@ -14,3 +10,7 @@ dependencies = [
   "numpy<2.3",
   "huggingface-hub>=0.30",
 ]
+
+[project.optional-dependencies]
+# host-contract helpers (vision_export.prepare_inputs, lm_export.mrope_position_ids) and vision_parity.py
+check = ["transformers>=5.17", "pillow>=10"]
