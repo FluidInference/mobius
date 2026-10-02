@@ -1,0 +1,12 @@
+[project]
+name = "clef-vision-coreml"
+version = "0.1.0"
+description = "Core ML export of clef-vision-0.8b (Qwen3.5-0.8B + Clef joint schema head): vision tower, LM rows, head"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "torch==2.7.0",
+  "coremltools==9.0",
+  "safetensors>=0.5",
+  "numpy<2.3",
+  "huggingface-hub>=0.30",
+]

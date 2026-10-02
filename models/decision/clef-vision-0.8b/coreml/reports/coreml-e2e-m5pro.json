@@ -1,0 +1,107 @@
+{
+  "summary": {
+    "records": 9,
+    "units": "CPU_AND_GPU",
+    "max_logit_diff": 0.006300091743469238,
+    "max_prob_drift": 0.00023096799850463867,
+    "argmax_agreement": 1.0,
+    "median_ms": {
+      "vision_ms": 51.401374861598015,
+      "lm_ms": 189.79379115626216,
+      "head_ms": 13.567165937274694
+    },
+    "median_ms_total_per_record": 261.75008321126154
+  },
+  "results": [
+    {
+      "id": "pets_breed-2f161aabfeb3",
+      "task": "pets_breed",
+      "tokens": 498,
+      "images": 1,
+      "questions": 2,
+      "max_logit_diff": 0.0029654502868652344,
+      "argmax_agree": 2,
+      "max_prob_drift": 0.00010287761688232422
+    },
+    {
+      "id": "food_dish-b398ad0b70a8",
+      "task": "food_dish",
+      "tokens": 477,
+      "images": 1,
+      "questions": 2,
+      "max_logit_diff": 0.006300091743469238,
+      "argmax_agree": 2,
+      "max_prob_drift": 0.00023096799850463867
+    },
+    {
+      "id": "pets_breed-6549d84ac277",
+      "task": "pets_breed",
+      "tokens": 575,
+      "images": 1,
+      "questions": 2,
+      "max_logit_diff": 0.002515137195587158,
+      "argmax_agree": 2,
+      "max_prob_drift": 7.021427154541016e-05
+    },
+    {
+      "id": "pets_breed-728304bb009e",
+      "task": "pets_breed",
+      "tokens": 409,
+      "images": 1,
+      "questions": 2,
+      "max_logit_diff": 0.0034475326538085938,
+      "argmax_agree": 2,
+      "max_prob_drift": 0.00012614205479621887
+    },
+    {
+      "id": "match_pair_food-dcc924076000",
+      "task": "match_pair_food",
+      "tokens": 526,
+      "images": 2,
+      "questions": 1,
+      "max_logit_diff": 0.0020294189453125,
+      "argmax_agree": 1,
+      "max_prob_drift": 2.7954578399658203e-05
+    },
+    {
+      "id": "coco_objects-8bf983aaccfe",
+      "task": "coco_objects",
+      "tokens": 343,
+      "images": 1,
+      "questions": 1,
+      "max_logit_diff": 0.00034546852111816406,
+      "argmax_agree": 1,
+      "max_prob_drift": 1.7501413822174072e-05
+    },
+    {
+      "id": "match_grid_pets-8e23e388d668",
+      "task": "match_grid_pets",
+      "tokens": 885,
+      "images": 4,
+      "questions": 1,
+      "max_logit_diff": 0.0027043819427490234,
+      "argmax_agree": 1,
+      "max_prob_drift": 9.936094284057617e-05
+    },
+    {
+      "id": "match_pair_pets-1e97af1c8ce4",
+      "task": "match_pair_pets",
+      "tokens": 542,
+      "images": 2,
+      "questions": 1,
+      "max_logit_diff": 0.0025377273559570312,
+      "argmax_agree": 1,
+      "max_prob_drift": 0.00012546777725219727
+    },
+    {
+      "id": "match_grid_food-d2386e30f439",
+      "task": "match_grid_food",
+      "tokens": 990,
+      "images": 4,
+      "questions": 1,
+      "max_logit_diff": 0.002859354019165039,
+      "argmax_agree": 1,
+      "max_prob_drift": 0.00022137165069580078
+    }
+  ]
+}

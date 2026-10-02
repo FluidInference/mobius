@@ -1,0 +1,365 @@
+{
+  "summary": {
+    "questions": 15,
+    "max_diff_mlx_vs_fp32": 0.0018095970153808594,
+    "max_diff_bf16_vs_fp32": 0.03280973434448242,
+    "argmax_agree_mlx_fp32": 1.0
+  },
+  "results": [
+    {
+      "record": "text-smoke",
+      "question": "department",
+      "options": 2,
+      "max_diff_mlx_vs_fp32": 0.0002963542938232422,
+      "max_diff_bf16_vs_fp32": 0.005911409854888916,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -2.6542,
+        0.5528
+      ],
+      "fp32_logits": [
+        -2.6545,
+        0.5528
+      ]
+    },
+    {
+      "record": "text-smoke",
+      "question": "urgency",
+      "options": 3,
+      "max_diff_mlx_vs_fp32": 0.0005803108215332031,
+      "max_diff_bf16_vs_fp32": 0.011418819427490234,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -3.1141,
+        -3.1046,
+        -0.595
+      ],
+      "fp32_logits": [
+        -3.1147,
+        -3.1052,
+        -0.595
+      ]
+    },
+    {
+      "record": "text-smoke",
+      "question": "outage",
+      "options": 2,
+      "max_diff_mlx_vs_fp32": 0.00043654441833496094,
+      "max_diff_bf16_vs_fp32": 0.014493227005004883,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -0.3588,
+        -2.0319
+      ],
+      "fp32_logits": [
+        -0.3589,
+        -2.0324
+      ]
+    },
+    {
+      "record": "pets_breed-e40ee8d36ec1",
+      "question": "is_cat",
+      "options": 2,
+      "max_diff_mlx_vs_fp32": 0.0015659332275390625,
+      "max_diff_bf16_vs_fp32": 0.013021469116210938,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -3.574,
+        1.7591
+      ],
+      "fp32_logits": [
+        -3.5755,
+        1.7594
+      ]
+    },
+    {
+      "record": "pets_breed-e40ee8d36ec1",
+      "question": "breed",
+      "options": 4,
+      "max_diff_mlx_vs_fp32": 0.001361846923828125,
+      "max_diff_bf16_vs_fp32": 0.015585899353027344,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -0.9893,
+        -4.9518,
+        -5.1778,
+        -5.0268
+      ],
+      "fp32_logits": [
+        -0.99,
+        -4.9532,
+        -5.179,
+        -5.028
+      ]
+    },
+    {
+      "record": "pets_breed-c4592d64406c",
+      "question": "breed",
+      "options": 37,
+      "max_diff_mlx_vs_fp32": 0.0016245245933532715,
+      "max_diff_bf16_vs_fp32": 0.03280973434448242,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -4.6104,
+        -4.3245,
+        -4.7801,
+        -4.286,
+        -3.4895,
+        -4.6251,
+        -4.3055,
+        -4.906,
+        -3.6966,
+        -4.6657,
+        -3.0745,
+        -5.0325,
+        -3.6423,
+        -3.9198,
+        -3.3541,
+        -2.7393,
+        -2.2353,
+        -2.0039,
+        0.7098,
+        -3.358,
+        -3.523,
+        -4.3415,
+        -3.2801,
+        -4.0698,
+        -0.5924,
+        -3.504,
+        -4.3497,
+        -4.4043,
+        -3.8603,
+        -2.0901,
+        -3.1919,
+        -2.2195,
+        -4.2366,
+        -4.8727,
+        -4.7183,
+        -2.984,
+        -3.2291
+      ],
+      "fp32_logits": [
+        -4.6106,
+        -4.3244,
+        -4.7806,
+        -4.2856,
+        -3.4886,
+        -4.6254,
+        -4.3053,
+        -4.9066,
+        -3.6958,
+        -4.666,
+        -3.0734,
+        -5.0332,
+        -3.6414,
+        -3.9191,
+        -3.353,
+        -2.738,
+        -2.2339,
+        -2.0023,
+        0.7113,
+        -3.3569,
+        -3.5221,
+        -4.3412,
+        -3.279,
+        -4.0693,
+        -0.5908,
+        -3.5031,
+        -4.3495,
+        -4.4041,
+        -3.8596,
+        -2.0885,
+        -3.1909,
+        -2.2181,
+        -4.2365,
+        -4.8734,
+        -4.7185,
+        -2.9829,
+        -3.2281
+      ]
+    },
+    {
+      "record": "pets_breed-c4592d64406c",
+      "question": "is_cat",
+      "options": 2,
+      "max_diff_mlx_vs_fp32": 0.0011272430419921875,
+      "max_diff_bf16_vs_fp32": 0.007747173309326172,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -2.6943,
+        2.1996
+      ],
+      "fp32_logits": [
+        -2.6954,
+        2.2001
+      ]
+    },
+    {
+      "record": "match_grid_pets-6c9c0af094f3",
+      "question": "match",
+      "options": 3,
+      "max_diff_mlx_vs_fp32": 0.0006850957870483398,
+      "max_diff_bf16_vs_fp32": 0.018170595169067383,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -1.4204,
+        -1.5644,
+        0.9045
+      ],
+      "fp32_logits": [
+        -1.421,
+        -1.565,
+        0.9045
+      ]
+    },
+    {
+      "record": "pets_breed-3ead2d9f011e",
+      "question": "breed",
+      "options": 4,
+      "max_diff_mlx_vs_fp32": 0.0013718605041503906,
+      "max_diff_bf16_vs_fp32": 0.015181541442871094,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -0.6667,
+        -4.8762,
+        -4.5765,
+        -4.9198
+      ],
+      "fp32_logits": [
+        -0.6674,
+        -4.8776,
+        -4.5777,
+        -4.9212
+      ]
+    },
+    {
+      "record": "pets_breed-3ead2d9f011e",
+      "question": "is_cat",
+      "options": 2,
+      "max_diff_mlx_vs_fp32": 0.0014295578002929688,
+      "max_diff_bf16_vs_fp32": 0.004375457763671875,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -3.7192,
+        1.4958
+      ],
+      "fp32_logits": [
+        -3.7206,
+        1.4966
+      ]
+    },
+    {
+      "record": "match_pair_pets-5b13b0baf497",
+      "question": "same",
+      "options": 2,
+      "max_diff_mlx_vs_fp32": 0.001211404800415039,
+      "max_diff_bf16_vs_fp32": 0.0046689510345458984,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -2.7441,
+        0.2015
+      ],
+      "fp32_logits": [
+        -2.7453,
+        0.2012
+      ]
+    },
+    {
+      "record": "match_grid_pets-3ca8fe8f7efa",
+      "question": "match",
+      "options": 3,
+      "max_diff_mlx_vs_fp32": 0.0017857551574707031,
+      "max_diff_bf16_vs_fp32": 0.026595234870910645,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        0.6834,
+        -3.2775,
+        -3.3129
+      ],
+      "fp32_logits": [
+        0.6828,
+        -3.2792,
+        -3.3146
+      ]
+    },
+    {
+      "record": "pets_breed-fbd95a1a3f3a",
+      "question": "breed",
+      "options": 8,
+      "max_diff_mlx_vs_fp32": 0.0018095970153808594,
+      "max_diff_bf16_vs_fp32": 0.0314631462097168,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -5.092,
+        -5.0408,
+        -0.0495,
+        -3.247,
+        -4.9793,
+        -4.8997,
+        -4.9469,
+        -4.9169
+      ],
+      "fp32_logits": [
+        -5.0935,
+        -5.0426,
+        -0.0499,
+        -3.2478,
+        -4.981,
+        -4.9016,
+        -4.9486,
+        -4.9186
+      ]
+    },
+    {
+      "record": "pets_breed-5a63ed3635b5",
+      "question": "breed",
+      "options": 4,
+      "max_diff_mlx_vs_fp32": 0.0012960433959960938,
+      "max_diff_bf16_vs_fp32": 0.015241622924804688,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -2.6394,
+        -0.1626,
+        -5.2974,
+        -5.0777
+      ],
+      "fp32_logits": [
+        -2.6402,
+        -0.1632,
+        -5.2987,
+        -5.0789
+      ]
+    },
+    {
+      "record": "pets_breed-5a63ed3635b5",
+      "question": "is_cat",
+      "options": 2,
+      "max_diff_mlx_vs_fp32": 0.0014133453369140625,
+      "max_diff_bf16_vs_fp32": 0.0038683414459228516,
+      "argmax_agree_mlx_fp32": true,
+      "argmax_agree_bf16_fp32": true,
+      "mlx_logits": [
+        -3.7147,
+        1.8157
+      ],
+      "fp32_logits": [
+        -3.7161,
+        1.8164
+      ]
+    }
+  ]
+}
