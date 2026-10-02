@@ -1,4 +1,4 @@
-"""Trace-friendly, prefill-only Qwen3.5 text decoder (copied from models/computer-use/cua-s1-4b/coreml, mobius PR #104).
+"""Trace-friendly, prefill-only Qwen3.5 text decoder (same module as models/computer-use/kev-0.8b/coreml/qwen35_export.py; keep the two copies identical).
 
 Cua-S1-4B reads one forward pass: the logits of the answer letters A..Z at the
 last prompt position. Nothing is generated, so this graph has no KV cache, no

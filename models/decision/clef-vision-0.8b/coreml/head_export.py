@@ -85,7 +85,9 @@ class DecoderLayer(nn.Module):
 
 
 class FixedHead(nn.Module):
-    def __init__(self, hidden_size, width, routing_layers, layers, heads, feedforward, **_):
+    def __init__(self, hidden_size, width, routing_layers, layers, heads, feedforward, dropout=0.0, **unexpected):
+        if unexpected:  # a head config with options this rewrite does not implement must not export silently
+            raise ValueError(f"unsupported joint_head_config keys: {sorted(unexpected)}")
         super().__init__()
         self.width = width
         self.hidden_norm = nn.LayerNorm(hidden_size)
@@ -119,10 +121,11 @@ class FixedHead(nn.Module):
         scores = (routed * field_per_option).sum(-1) / math.sqrt(self.width) + o_mask  # [O]
         # softmax within each question's options: subtract the per-question max (a global max would underflow the
         # weaker questions' exponentials), then normalise by the per-question sum.
-        group_max = (scores.unsqueeze(-1) + (1.0 - o2q) * -1e9).max(dim=0).values  # [Q]
+        # constants stay fp16-representable (-1e9 / 1e-30 would turn into inf*0 = NaN under --precision fp16)
+        group_max = (scores.unsqueeze(-1) + (1.0 - o2q) * -1e4).max(dim=0).values  # [Q]
         exp = torch.exp(scores - torch.matmul(o2q, group_max.unsqueeze(-1)).squeeze(-1))
-        group = torch.matmul(o2q.transpose(0, 1), exp.unsqueeze(-1)).squeeze(-1)  # [Q]
-        weights = exp / (torch.matmul(o2q, group.unsqueeze(-1)).squeeze(-1) + 1e-30)  # [O]
+        group = torch.matmul(o2q.transpose(0, 1), exp.unsqueeze(-1)).squeeze(-1)  # [Q]; >= 1 for real questions
+        weights = exp / torch.clamp(torch.matmul(o2q, group.unsqueeze(-1)).squeeze(-1), min=1e-4)  # [O]
         summaries = torch.matmul(o2q.transpose(0, 1), weights.unsqueeze(-1) * routed)  # [Q, W]
         fields = (base_fields + self.option_summary_norm(summaries) + self.global_projection(global_vector)[None, :]
                   + self.type_embedding(type_oh))
@@ -196,7 +199,7 @@ def head_inputs(encoded, states: torch.Tensor, output_embed: torch.Tensor, seq_l
     return (states, mem_mask, last, q_mean, o_mean, o2q, lexical, type_oh, q_mask, o_mask), n_o
 
 
-def load_head(student_dir: Path, **shape):
+def load_head(student_dir: Path):
     from safetensors.torch import load_file
 
     config = json.loads((student_dir / "joint_head_config.json").read_text())

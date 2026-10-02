@@ -47,6 +47,19 @@ def load_lm(merged_backbone: Path, seq_len: int, chunk_size: int = 64):
     return rows.eval(), cfg, embed, config
 
 
+def pad_token_id(merged_backbone: Path) -> int:
+    """The tokenizer's pad token id (Qwen3.5: <|endoftext|>), read from the checkpoint's tokenizer files."""
+    tokenizer_config = json.loads((merged_backbone / "tokenizer_config.json").read_text())
+    pad = tokenizer_config.get("pad_token")
+    if isinstance(pad, dict):
+        pad = pad.get("content")
+    added = json.loads((merged_backbone / "tokenizer.json").read_text())["added_tokens"]
+    for token in added:
+        if token["content"] == pad:
+            return int(token["id"])
+    raise ValueError(f"pad token {pad!r} not found in tokenizer.json added_tokens")
+
+
 def mrope_position_ids(hf_model, input_ids: torch.Tensor, image_grid_thw: torch.Tensor | None,
                        image_token_id: int) -> torch.Tensor:
     """[3, n] M-RoPE positions for one row, from the HF model's own ``get_rope_index`` (host side)."""
@@ -90,10 +103,8 @@ def main() -> None:
 
     rows, cfg, embed, config = load_lm(args.merged, args.length, args.chunk_size)
     L = args.length
-    emb_path = args.out / "embeddings.f16"
     args.out.mkdir(parents=True, exist_ok=True)
-    if not emb_path.exists():
-        embed.to(torch.float16).numpy().tofile(emb_path)
+    embed.to(torch.float16).numpy().tofile(args.out / "embeddings.f16")  # always rewrite: it must match this checkpoint
     example = (torch.zeros(1, L, cfg.hidden_size), torch.zeros(L, cfg.rotary_dim), torch.zeros(L, cfg.rotary_dim))
     started = time.time()
     with torch.no_grad():
@@ -115,7 +126,7 @@ def main() -> None:
     (out / "config.json").write_text(json.dumps({
         "length": L, "hidden_size": cfg.hidden_size, "rotary_dim": cfg.rotary_dim, "rope_theta": cfg.rope_theta,
         "mrope_section": cfg.mrope_section, "vocab_size": int(embed.shape[0]), "image_token_id": config["image_token_id"],
-        "pad_id": 248044 if "pad_token_id" not in config else config["pad_token_id"], "precision": args.precision,
+        "pad_id": pad_token_id(args.merged), "precision": args.precision,
     }, indent=2) + "\n")
     print(f"saved {package} in {time.time() - started:.0f} s")
 

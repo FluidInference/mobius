@@ -13,9 +13,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import numpy as np
-from safetensors.torch import load_file
-
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -24,6 +21,7 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=Path("build/coreml"))
     ap.add_argument("--buckets", default="512,1024,2048")
     args = ap.parse_args()
+    args.merged, args.student, args.out = args.merged.resolve(), args.student.resolve(), args.out.resolve()  # subprocesses cwd differs
     here = Path(__file__).parent
     run = lambda *cmd: subprocess.run([sys.executable, *cmd], check=True, cwd=here)  # noqa: E731
     run("vision_export.py", "--merged", str(args.merged), "--patches", "784", "--precision", "fp32", "--out", str(args.out))
@@ -31,11 +29,7 @@ def main() -> None:
         run("lm_export.py", "--merged", str(args.merged), "--length", L, "--precision", "fp16", "--out", str(args.out))
         run("head_export.py", "--student", str(args.student), "--length", L, "--max-q", "16", "--max-o", "64",
             "--precision", "fp32", "--out", str(args.out))
-    state = load_file(str(args.merged / "model.safetensors"))
-    pos = state["model.visual.pos_embed.weight"].float().numpy().astype(np.float32)
-    (args.out / "Vision_P784").mkdir(parents=True, exist_ok=True)
-    pos.tofile(args.out / "Vision_P784" / "pos_embed.f32")
-    print("done:", sorted(p.name for p in args.out.iterdir()))
+    print("done:", sorted(p.name for p in args.out.iterdir()))  # vision_export.py also wrote Vision_P784/pos_embed.f32
 
 
 if __name__ == "__main__":

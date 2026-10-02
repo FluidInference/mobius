@@ -188,7 +188,7 @@ def main() -> None:
     args = ap.parse_args()
     import coremltools as ct
 
-    tower, cfg, _ = load_vision(args.merged, args.patches)
+    tower, cfg, pos_table = load_vision(args.merged, args.patches)
     N = args.patches
     example = (torch.zeros(N, cfg.patch_dim), torch.zeros(N, cfg.hidden), torch.zeros(N, cfg.head_dim),
                torch.zeros(N, cfg.head_dim), torch.zeros(1, 1, N, N))
@@ -217,6 +217,7 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     package = out / f"VisionTower_{args.precision}.mlpackage"
     model.save(str(package))
+    pos_table.numpy().astype(np.float32).tofile(out / "pos_embed.f32")  # the host resamples this per image
     (out / "config.json").write_text(json.dumps({"patches": N, "tokens": N // cfg.merge**2, "patch_dim": cfg.patch_dim,
                                                   "hidden": cfg.hidden, "head_dim": cfg.head_dim,
                                                   "out_hidden": cfg.out_hidden, "precision": args.precision},
