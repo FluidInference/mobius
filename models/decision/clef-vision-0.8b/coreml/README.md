@@ -39,7 +39,7 @@ uv run python convert-coreml.py --merged <student>/merged/backbone --student <st
 | LM rows torch module vs HF text model (records with 1–2 images) | 4.0e-5 relative |
 | head torch module vs Clef's head | 1.2e-6 (after switching the option softmax to a per-question max: a global max underflowed weaker questions' exponentials) |
 | end to end, 9 held-out records, `CPU_AND_GPU` | max logit diff 6.3e-3, probability drift 2.3e-4, argmax 100%, ≈ 260 ms / record vs 604 ms torch MPS (`reports/coreml-e2e-m5pro.json`) |
-| Swift host (FluidUse `ClefVisionCheck`) vs Python reference on 4 fixtures | token ids / spans / M-RoPE positions exact; logits see FluidUse PR |
+| Swift host (FluidUse `ClefVisionCheck parity`) vs Python reference on 4 fixtures (1–4 images) | token ids / spans / M-RoPE positions exact; max logit diff 2.2e-2, max probability drift 8.2e-3, argmax 8/8; warm 136–157 ms per single-image record (vision 39, LM 95–113, head 5 ms), 640 ms for a 4-image / 1,111-token grid |
 
 ## Host contract (what FluidUse implements)
 
