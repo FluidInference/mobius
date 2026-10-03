@@ -51,8 +51,8 @@ tar xzf cloud-bundle.tar.gz && BASE=Qwen/Qwen3.5-0.8B sh cloud/run.sh
 # optional: HF_REPO=FluidInference/<name> pushes the adapter + reports to a private repo
 ```
 
-`cloud/run.sh` pins Cua's source at `a5f18829`, installs transformers 5.17 (Cua's `four-b-train`
-extra pins `<5`, which cannot load `qwen3_5`), scores the zero-shot base, trains, and scores the
+`cloud/run.sh` pins Cua's source at `a5f18829`, syncs the locked environment in `cloud/uv.lock` (torch 2.7.0,
+transformers 5.17.0 — Cua's `four-b-train` extra pins `<5`, which cannot load `qwen3_5`), scores the zero-shot base, trains, and scores the
 adapter with `cloud/eval_gui360.py` (the same readout and scoring as `coreml/bench_gui360.py`).
 Cua's trainer was smoke-tested locally on transformers 5.17 with the 0.8B tokenizer (data
 planning, letter tokens, per-element groups); training itself needs CUDA.

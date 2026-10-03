@@ -17,11 +17,9 @@ export PATH="$HOME/.local/bin:$PATH"
 git -C cua checkout -q "$CUA_COMMIT"
 export PYTHONPATH="$PWD/cua/libs/cua-bench-s1/python/src:$PWD/cua/libs/cua-s1/python/src"
 
-uv venv -q --python 3.12 .venv
-# Cua's four-b-train extra pins transformers<5, but Qwen3.5 (qwen3_5) needs transformers 5.x.
-uv pip install -q --python .venv "torch==2.7.0" "torchvision==0.22.0" "transformers==5.17.0" "peft>=0.18.1" \
-    "accelerate>=0.34" "safetensors>=0.5" "pillow>=10,<12" "numpy<2.3" "huggingface-hub>=0.34"
-PY=.venv/bin/python
+# Locked env (cloud/uv.lock). Cua's four-b-train extra pins transformers<5, which cannot load qwen3_5.
+uv sync -q --frozen --project cloud
+PY=cloud/.venv/bin/python
 
 mkdir -p runs reports
 $PY cloud/eval_gui360.py --base-model "$BASE" --tasks splits/test.jsonl --out "reports/$NAME-zeroshot.json"
@@ -31,8 +29,8 @@ $PY cloud/eval_gui360.py --base-model "$BASE" --adapter "runs/$NAME" --tasks spl
     --out "reports/$NAME-sft.json"
 
 if [ -n "${HF_REPO:-}" ]; then
-    .venv/bin/hf repos create "$HF_REPO" --type model --private 2>/dev/null || true
-    .venv/bin/hf upload "$HF_REPO" "runs/$NAME" "$NAME" --commit-message "SFT adapter on $BASE"
-    .venv/bin/hf upload "$HF_REPO" reports reports --commit-message "GUI-360 text reports"
+    cloud/.venv/bin/hf repos create "$HF_REPO" --type model --private 2>/dev/null || true
+    cloud/.venv/bin/hf upload "$HF_REPO" "runs/$NAME" "$NAME" --commit-message "SFT adapter on $BASE"
+    cloud/.venv/bin/hf upload "$HF_REPO" reports reports --commit-message "GUI-360 text reports"
 fi
 echo "done: runs/$NAME, reports/$NAME-{zeroshot,sft}.json"
