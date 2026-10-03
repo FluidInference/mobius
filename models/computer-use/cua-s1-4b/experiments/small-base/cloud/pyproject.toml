@@ -1,0 +1,18 @@
+[project]
+name = "cua-s1-small-base-experiment"
+version = "0.1.0"
+description = "Cua's train_4b_v2 SFT recipe on Qwen3.5-0.8B (cloud GPU env; mirrors mobius #107 cloud/run.sh pins)"
+requires-python = ">=3.12,<3.13"
+# Cua's four-b-train extra pins transformers<5, which cannot load qwen3_5; Cua source is used from
+# trycua/cua@a5f18829 on PYTHONPATH, not installed.
+dependencies = [
+    "accelerate>=0.34",
+    "huggingface-hub>=0.34",
+    "numpy<2.3",
+    "peft>=0.18.1",
+    "pillow>=10,<12",
+    "safetensors>=0.5",
+    "torch==2.7.0",
+    "torchvision==0.22.0",
+    "transformers==5.17.0",
+]
