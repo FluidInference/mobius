@@ -1,6 +1,6 @@
 # Adapted from FluidInference/mobius PR #111 (e35c1953), Apache-2.0.
 #!/usr/bin/env python3
-"""Export the Phonon-2 decoder (RNNT prediction net) and single-step JointDecision (v3 contract, top-K=64).
+"""Export the Phonon-2.5 decoder (RNNT prediction net) and single-step JointDecision (v3 contract, top-K=64).
 
 Mirrors the nvidia v3 export in ../../parakeet-tdt-v3-0.6b/coreml/convert-parakeet.py so the outputs are drop-in
 replacements for Decoder.mlmodelc / JointDecisionv3.mlmodelc (same I/O names and shapes, iOS17, fp16 storage).

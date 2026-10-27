@@ -1,6 +1,6 @@
 # Adapted from FluidInference/mobius PR #111 (e35c1953), Apache-2.0.
 #!/usr/bin/env python3
-"""Phase 1: export the Phonon-2 encoder as an fp16 mlprogram (iOS18) and inventory its weight consts.
+"""Phase 1: export the Phonon-2.5 encoder as an fp16 mlprogram (iOS18) and inventory its weight consts.
 
 The fp16 mlpackage is the parity reference; the const inventory drives the five-value LUT pass (fivevalue_encoder.py).
 """

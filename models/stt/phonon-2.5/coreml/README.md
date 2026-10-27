@@ -2,7 +2,7 @@
 
 Experimental conversion of [FermionResearch/Phonon-2.5](https://huggingface.co/FermionResearch/Phonon-2.5)
 into FluidAudio's existing v3-family component contract. **No new inference runtime is required.**
-The resulting directory loads through unmodified FluidAudio **0.17.3**:
+The resulting directory loads through unmodified FluidAudio **0.17.3 and 0.17.7**:
 
 ```swift
 let models = try AsrModels.loadLocal(from: directory, version: .v3,
@@ -74,7 +74,7 @@ isolated release benchmarks.
 
 | Execution path | Encoder size | Cosine vs fp32 encoder | Normalized transcripts identical to fp32 | Numerical gate |
 |---|---:|---:|---:|---|
-| Sparse + CPU | 321 MB | 0.999985 | 10/12 (initial smoke set) | Pass |
+| Sparse + CPU | 321 MB | 0.999985 | 10/12 (initial smoke set) | Cosine only; NRMSE not recorded |
 | Sparse + Neural Engine | 321 MB | 0.997446 | 72/83 | **Fail**: NRMSE 0.0714 |
 | Dense 3-bit + GPU | 253 MB | 0.999997 | 72/83 | Pass: NRMSE 0.00149 |
 
@@ -90,8 +90,8 @@ encoder), so an app needs an explicit preparation phase.
 
 - The conversion and reuse of the existing Swift backend are demonstrated.
 - The GPU encoder passes the strict single-window numerical check. Its actual
-  transcripts still differ in some cases due to fp16/runtime and window/decode
-  differences; it is not byte-identical to full-context NeMo.
+  transcripts still differ in some cases from full-context NeMo. The relative
+  contributions of fp16/runtime and window/decode differences are not isolated.
 - The Neural Engine **fails the retained** cosine >0.999 / NRMSE <0.05 gate.
   Its sample transcript WER is close to fp32, but the threshold was not relaxed.
   More corpus/device evidence is needed before treating ANE as validated for a
@@ -99,15 +99,66 @@ encoder), so an app needs an explicit preparation phase.
 - The 25-language model was exercised in four languages. The English-only 2.5
   checkpoint, the remaining languages, other chips and first-use experience in a
   signed app have not been validated here.
-- No model artifacts have been uploaded and no upstream PR has been opened.
-  An eventual model-registration PR also needs a hosted, licensed artifact repo.
+- No model artifacts have been uploaded. This is a draft conversion contribution,
+  not a shipping FluidAudio model registration. A registration PR also needs a
+  hosted, licensed artifact repository.
+- Automatic language detection only was tested. Explicit language hints/top-K
+  filtering remain untested. A random joint trace-input comparison matched top-1
+  blank but reported max top-K logit difference 1.0777; this has not yet been
+  aligned by token or investigated. Full joint numerical parity is not claimed.
 
 ## Independent reference
 
 `reference.py CHECKPOINT/model.fermion rows.json reference.json` runs fp32 NeMo
-TDT decoding. `rows.json` contains `{id, path, language, ref}` objects. The paired
-Muesli investigation branch contains a standalone FluidAudio probe and comparison
-driver. `validate_encoder.py MODEL.mlmodelc encoder_ref_phonon25.npz report.json
+TDT decoding. `rows.json` contains `{id, path, language, ref}` objects. A standalone Swift package in `fluidaudio-probe/` pins FluidAudio 0.17.7;
+`validate.py` compares its output with the independent reference. `validate_encoder.py MODEL.mlmodelc encoder_ref_phonon25.npz report.json
 --units ane|gpu|cpu` preserves the strict numerical gate; failures still save their
 measured metrics. Corpus-level checks must follow numerical checks, not replace
 failed results silently.
+
+
+## FluidAudio smoke reproduction
+
+Use a scratch path outside the checkout and build sequentially when comparing
+versions. The probe accepts `cpu`, `ane` or `gpu` **for the encoder**; decoder and
+joint retain FluidAudio's CPU+Neural Engine defaults in every run. Stage each
+encoder as `Encoder.mlmodelc` in a complete, separate component directory.
+
+```sh
+python fetch_fixtures.py /path/to/public-fixture-cache --per-language 20
+uv run python reference.py checkpoint/model.fermion /path/to/public-fixture-cache/rows.json reference.json
+swift build --package-path fluidaudio-probe --scratch-path /path/to/probe-cache --jobs 4
+# Use the same arguments plus --show-bin-path to locate phonon-probe.
+uv run python validate.py /path/to/phonon-probe /path/to/components \
+  /path/to/public-fixture-cache/rows.json reference.json result.json --units ane
+```
+
+### Does newer FluidAudio resolve the ANE discrepancy?
+
+No improvement was measured in **0.17.7**, the latest published release checked
+on 2026-10-27. The encoder loaded by `AsrModels.loadLocal` produced **bit-identical
+outputs (192,512 Float32 values)** in 0.17.3 and 0.17.7 on the same saved mel
+input. Both fail the unchanged cosine >0.999 / NRMSE <0.05 gate. All **83/83 raw
+transcripts** also match exactly between versions; per-language WER is unchanged.
+The `loadLocal` implementation is unchanged between these releases. This rules
+out an improvement from this version update on this host; it does not establish
+the underlying numerical cause. [Exact comparison](reports/fluid-audio-version-comparison.json).
+
+`phonon-probe encoder-parity MODEL_DIR ane FIXTURE_DIR parity.json` saves the raw
+encoder output as `parity.json.f32`, alongside metrics and a gate result. Its
+fixture directory contains little-endian Float32 `mel.f32` and `encoder.f32`
+exported from `encoder_ref_phonon25.npz`, plus `metadata.json` with `mel_shape`,
+`encoder_shape`, `mel_length` and `encoder_length`. This probe's Float64 reductions
+explain the slight difference from the original NumPy Float32 printed metrics.
+For a version-only comparison, copy the package to a separate experiment folder,
+replace the exact dependency and report-version literals with 0.17.3, and rebuild
+sequentially using the same scratch path. Keep artifacts and fixture inputs fixed.
+
+### Feedback requested before leaving draft
+
+- Is this encoder activation drift expected for the sparse five-value ANE layout,
+  and is there an established tensor/decoder validation protocol for it?
+- Should we investigate a different ANE conversion layout or restrict an initial
+  contribution to the validated GPU encoder path?
+- What corpus/device coverage and artifact hosting do maintainers require before
+  a follow-up FluidAudio registry PR?

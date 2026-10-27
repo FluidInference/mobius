@@ -3,3 +3,5 @@ __pycache__/
 *.mlpackage/
 *.mlmodelc/
 build/
+.build/
+.swiftpm/
