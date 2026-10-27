@@ -1,0 +1,152 @@
+{
+  "date": "2026-10-27",
+  "host": {
+    "chip": "Apple M5",
+    "macos": "26.6.2",
+    "build": "SwiftPM debug"
+  },
+  "clips": 83,
+  "fixture_source": "LibriSpeech (3) and first 20 FLEURS test archive members each for en_us/fr_fr/de_de/es_419",
+  "scope": "Small comparative smoke sample; not full FLEURS or an Open ASR Leaderboard reproduction. Timing is diagnostic and not an isolated release benchmark.",
+  "provenance": {
+    "source_repo": "FermionResearch/Phonon-2.5",
+    "source_container_sha256": "17cb62d08e751a41819eb779db089aa7ac4eb2bab433ba5c2991d8cbd3cfefb9",
+    "source_archive_sha256": "1faa04053a472cabab3bc31d07f30c23f22906f71044ca10eb1f0de36d1f19a9",
+    "mobius_base": "26f5fa8059d5ab3d34449adce6ff6ed86734e522",
+    "recovered_recipe": "https://github.com/FluidInference/mobius/pull/111",
+    "recovered_recipe_head": "e35c19537b4e70d298cbd8436f731e1717b3dcc9",
+    "probe_fluid_audio": "0.17.3",
+    "probe_fluid_audio_revision": "a6b826ce9a09028fc685a4b32a8927ec920c3188",
+    "host_chip": "Apple M5",
+    "host_os": "26.6.2",
+    "source_weights_license": "CC-BY-4.0",
+    "converter_license": "Apache-2.0",
+    "palette_replaced": 240,
+    "palette_mismatches": 0,
+    "source_revision": "2673618ad8636c8dfd20fe57e94d1f67f75bdeaa",
+    "fleurs_revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd"
+  },
+  "ane": {
+    "scores": {
+      "en": {
+        "clips": 3,
+        "fp32_wer": 0.0,
+        "coreml_wer": 0.0,
+        "coreml_vs_fp32_wer": 0.0,
+        "identical_normalized_transcripts": 3
+      },
+      "en_us": {
+        "clips": 20,
+        "fp32_wer": 0.04090909090909091,
+        "coreml_wer": 0.045454545454545456,
+        "coreml_vs_fp32_wer": 0.011363636363636364,
+        "identical_normalized_transcripts": 18
+      },
+      "fr_fr": {
+        "clips": 20,
+        "fp32_wer": 0.07051282051282051,
+        "coreml_wer": 0.0673076923076923,
+        "coreml_vs_fp32_wer": 0.008,
+        "identical_normalized_transcripts": 16
+      },
+      "de_de": {
+        "clips": 20,
+        "fp32_wer": 0.051111111111111114,
+        "coreml_wer": 0.05555555555555555,
+        "coreml_vs_fp32_wer": 0.013392857142857142,
+        "identical_normalized_transcripts": 16
+      },
+      "es_419": {
+        "clips": 20,
+        "fp32_wer": 0.037578288100208766,
+        "coreml_wer": 0.03549060542797495,
+        "coreml_vs_fp32_wer": 0.0021008403361344537,
+        "identical_normalized_transcripts": 19
+      }
+    },
+    "load_seconds": 1.9306820631027222,
+    "audio_seconds": 961.205,
+    "wall_seconds": 38.17242503166199,
+    "normalized_transcript_matches": 72,
+    "encoder_parity": {
+      "units": "ane",
+      "load_seconds": 0.22851250017993152,
+      "cosine": 0.9974462389945984,
+      "nrmse": 0.07141883671283722,
+      "encoder_frames": 188,
+      "median_prediction_seconds": 0.0419682499486953
+    },
+    "encoder_gate_passed": false
+  },
+  "gpu": {
+    "scores": {
+      "en": {
+        "clips": 3,
+        "fp32_wer": 0.0,
+        "coreml_wer": 0.0,
+        "coreml_vs_fp32_wer": 0.0,
+        "identical_normalized_transcripts": 3
+      },
+      "en_us": {
+        "clips": 20,
+        "fp32_wer": 0.04090909090909091,
+        "coreml_wer": 0.045454545454545456,
+        "coreml_vs_fp32_wer": 0.011363636363636364,
+        "identical_normalized_transcripts": 18
+      },
+      "fr_fr": {
+        "clips": 20,
+        "fp32_wer": 0.07051282051282051,
+        "coreml_wer": 0.07532051282051282,
+        "coreml_vs_fp32_wer": 0.0128,
+        "identical_normalized_transcripts": 14
+      },
+      "de_de": {
+        "clips": 20,
+        "fp32_wer": 0.051111111111111114,
+        "coreml_wer": 0.05555555555555555,
+        "coreml_vs_fp32_wer": 0.011160714285714286,
+        "identical_normalized_transcripts": 17
+      },
+      "es_419": {
+        "clips": 20,
+        "fp32_wer": 0.037578288100208766,
+        "coreml_wer": 0.037578288100208766,
+        "coreml_vs_fp32_wer": 0.0,
+        "identical_normalized_transcripts": 20
+      }
+    },
+    "load_seconds": 3.6175520420074463,
+    "audio_seconds": 961.205,
+    "wall_seconds": 103.28691852092743,
+    "normalized_transcript_matches": 72,
+    "encoder_parity": {
+      "units": "gpu",
+      "load_seconds": 13.359942540992051,
+      "cosine": 0.9999973773956299,
+      "nrmse": 0.001492687501013279,
+      "encoder_frames": 188,
+      "median_prediction_seconds": 0.10188479209318757
+    },
+    "encoder_gate_passed": true
+  },
+  "edge_cases": {
+    "warm_ane_model_load_seconds": 0.763558030128479,
+    "silent_inputs_seconds": [
+      2,
+      15,
+      30
+    ],
+    "all_silent_outputs_empty": true,
+    "multiwindow_audio_seconds": 43.74,
+    "expected_repeated_sentence_count": 4,
+    "actual_repeated_sentence_count": 4
+  },
+  "compiled_component_bytes": {
+    "Encoder": 321141092,
+    "Decoder": 23618895,
+    "JointDecisionv3": 12655366,
+    "Preprocessor": 522823,
+    "EncoderGPU": 252853614
+  }
+}

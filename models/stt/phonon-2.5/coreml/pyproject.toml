@@ -1,0 +1,11 @@
+[project]
+name = "phonon25-coreml"
+version = "0.1.0"
+description = "Convert Phonon-2.5 to FluidAudio's existing Core ML component contract"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "torch==2.7.0", "torchaudio==2.7.0", "coremltools==9.0", "numpy==1.26.4",
+  "nemo_toolkit[asr]==2.3.1", "transformers==4.51.3", "peft==0.15.2",
+  "setuptools==80.9.0", "pyarrow==23.0.1", "datasets==3.6.0",
+  "soundfile==0.14.0", "zstandard==0.25.0", "jiwer==4.0.0",
+]
