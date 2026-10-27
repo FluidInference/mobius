@@ -99,9 +99,12 @@ encoder), so an app needs an explicit preparation phase.
 - The 25-language model was exercised in four languages. The English-only 2.5
   checkpoint, the remaining languages, other chips and first-use experience in a
   signed app have not been validated here.
-- No model artifacts have been uploaded. This is a draft conversion contribution,
-  not a shipping FluidAudio model registration. A registration PR also needs a
-  hosted, licensed artifact repository.
+- The tested GPU component set is hosted at
+  [Muesli-HQ/phonon-2.5-coreml](https://huggingface.co/Muesli-HQ/phonon-2.5-coreml/tree/a042ef89966d289df295709b58ffdabb50bd2510)
+  (revision `a042ef89966d289df295709b58ffdabb50bd2510`), with source notices,
+  CC-BY-4.0 terms and per-file SHA256 checksums. The sparse ANE encoder is not
+  published there. This is still a draft conversion contribution; no upstream
+  FluidAudio registry entry is included.
 - Automatic language detection only was tested. Explicit language hints/top-K
   filtering remain untested. A random joint trace-input comparison matched top-1
   blank but reported max top-K logit difference 1.0777; this has not yet been
