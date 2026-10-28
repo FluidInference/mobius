@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+upstream/
+weights/
+weights-v1.2/
+lexicon/
+build/
+build-int8/
+build-v1.2/
+build-v1.2-int8/
+out/
