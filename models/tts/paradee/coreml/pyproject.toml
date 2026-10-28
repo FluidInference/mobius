@@ -1,0 +1,22 @@
+[project]
+name = "paradee-coreml"
+version = "0.1.0"
+description = "Paradee-8M (Kokoro-82M distill) -> Core ML conversion"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "kokoro>=0.9.4",
+    "coremltools==9.0",
+    "torch==2.7.0",
+    "numpy",
+    "scipy",
+    "soundfile",
+    "onnx",
+    "onnxruntime",
+    "huggingface_hub",
+    "misaki[en]>=0.9.4",
+    "scikit-learn",
+    "transformers>=4.40",
+    "torchaudio==2.7.0",
+    "mlx-whisper>=0.4.3",
+    "jiwer>=4.0.0",
+]
