@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-27",
+  "host": "Apple M5 / macOS 26.6.2",
+  "units": "cpuAndNeuralEngine",
+  "scope": "Same converted models, fixed mel/reference, 83 public fixtures; version-only change. Encoder parity through AsrModels.loadLocal with .v3. Float64 metric accumulation differs slightly from earlier NumPy float32 metrics.",
+  "fluid_audio_revisions": {
+    "0.17.3": "a6b826ce9a09028fc685a4b32a8927ec920c3188",
+    "0.17.7": "503b4bd1bbf7220882de39fe8ae6716aae4132da"
+  },
+  "encoder_parity": {
+    "0.17.3": {
+      "allow_low_precision_accumulation_on_gpu": true,
+      "cosine": 0.997448309560469,
+      "encoder_frames": 188,
+      "fluid_audio": "0.17.3",
+      "gate_passed": false,
+      "loaded_encoder_compute_units": 3,
+      "nrmse": 0.07141897429899917,
+      "units": "ane"
+    },
+    "0.17.7": {
+      "allow_low_precision_accumulation_on_gpu": true,
+      "cosine": 0.997448309560469,
+      "encoder_frames": 188,
+      "fluid_audio": "0.17.7",
+      "gate_passed": false,
+      "loaded_encoder_compute_units": 3,
+      "nrmse": 0.07141897429899917,
+      "units": "ane"
+    }
+  },
+  "encoder_output_bit_identical_between_versions": true,
+  "encoder_max_abs_difference_between_versions": 0.0,
+  "transcription": {
+    "clips": 83,
+    "exact_text_matches_between_versions": 83,
+    "baseline_scores": {
+      "en": {
+        "clips": 3,
+        "fp32_wer": 0.0,
+        "coreml_wer": 0.0,
+        "coreml_vs_fp32_wer": 0.0,
+        "identical_normalized_transcripts": 3
+      },
+      "en_us": {
+        "clips": 20,
+        "fp32_wer": 0.04090909090909091,
+        "coreml_wer": 0.045454545454545456,
+        "coreml_vs_fp32_wer": 0.011363636363636364,
+        "identical_normalized_transcripts": 18
+      },
+      "fr_fr": {
+        "clips": 20,
+        "fp32_wer": 0.07051282051282051,
+        "coreml_wer": 0.0673076923076923,
+        "coreml_vs_fp32_wer": 0.008,
+        "identical_normalized_transcripts": 16
+      },
+      "de_de": {
+        "clips": 20,
+        "fp32_wer": 0.051111111111111114,
+        "coreml_wer": 0.05555555555555555,
+        "coreml_vs_fp32_wer": 0.013392857142857142,
+        "identical_normalized_transcripts": 16
+      },
+      "es_419": {
+        "clips": 20,
+        "fp32_wer": 0.037578288100208766,
+        "coreml_wer": 0.03549060542797495,
+        "coreml_vs_fp32_wer": 0.0021008403361344537,
+        "identical_normalized_transcripts": 19
+      }
+    },
+    "updated_scores": {
+      "en": {
+        "clips": 3,
+        "fp32_wer": 0.0,
+        "coreml_wer": 0.0,
+        "coreml_vs_fp32_wer": 0.0,
+        "identical_normalized_transcripts": 3
+      },
+      "en_us": {
+        "clips": 20,
+        "fp32_wer": 0.04090909090909091,
+        "coreml_wer": 0.045454545454545456,
+        "coreml_vs_fp32_wer": 0.011363636363636364,
+        "identical_normalized_transcripts": 18
+      },
+      "fr_fr": {
+        "clips": 20,
+        "fp32_wer": 0.07051282051282051,
+        "coreml_wer": 0.0673076923076923,
+        "coreml_vs_fp32_wer": 0.008,
+        "identical_normalized_transcripts": 16
+      },
+      "de_de": {
+        "clips": 20,
+        "fp32_wer": 0.051111111111111114,
+        "coreml_wer": 0.05555555555555555,
+        "coreml_vs_fp32_wer": 0.013392857142857142,
+        "identical_normalized_transcripts": 16
+      },
+      "es_419": {
+        "clips": 20,
+        "fp32_wer": 0.037578288100208766,
+        "coreml_wer": 0.03549060542797495,
+        "coreml_vs_fp32_wer": 0.0021008403361344537,
+        "identical_normalized_transcripts": 19
+      }
+    }
+  },
+  "conclusion": "Latest released FluidAudio does not resolve the ANE discrepancy; encoder loading is unchanged. No app dependency update or artifact conversion was performed."
+}

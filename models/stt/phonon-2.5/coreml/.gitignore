@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.mlpackage/
+*.mlmodelc/
+build/
+.build/
+.swiftpm/
